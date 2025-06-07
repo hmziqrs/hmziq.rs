@@ -111,27 +111,12 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
     // Add some spin
     rocket.rotation.z += rotation.z
 
-    // Engine glow effect with twinkling - also affected by rocket scale
-    const twinkle = Math.sin(time * 15) * 0.3 + 0.7 + Math.sin(time * 23) * 0.2
-    const flicker = Math.random() * 0.1 + 0.95
-    const exhaustScale = (1 + Math.sin(time * 10) * 0.2) * (dynamicScale / baseScale)
+    // Engine glow effect - subtle size variation only
+    const exhaustScale = (1 + Math.sin(time * 10) * 0.15) * (dynamicScale / baseScale)
     const exhaust = rocket.getObjectByName('exhaust')
     if (exhaust) {
-      exhaust.scale.x = exhaustScale * flicker
+      exhaust.scale.x = exhaustScale
       exhaust.scale.y = exhaustScale
-      
-      // Update flame materials for twinkling effect
-      exhaust.traverse((child) => {
-        if (child instanceof THREE.Mesh && child.material) {
-          child.material.emissiveIntensity = child.material.userData.baseIntensity * twinkle
-        }
-      })
-    }
-    
-    // Update engine light intensity
-    const engineLight = rocket.getObjectByName('engineLight')
-    if (engineLight && engineLight instanceof THREE.PointLight) {
-      engineLight.intensity = 2 * twinkle * flicker
     }
     
     // Adjust material opacity based on Z position for depth effect
@@ -317,7 +302,6 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
               emissiveIntensity={2}
               transparent
               opacity={0.4}
-              userData={{ baseIntensity: 2 }}
             />
           </mesh>
           
@@ -330,7 +314,6 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
               emissiveIntensity={4}
               transparent
               opacity={0.8}
-              userData={{ baseIntensity: 4 }}
             />
           </mesh>
           
@@ -343,7 +326,6 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
               emissiveIntensity={1}
               transparent
               opacity={0.2}
-              userData={{ baseIntensity: 1 }}
             />
           </mesh>
           
@@ -356,7 +338,6 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
               emissiveIntensity={2}
               transparent
               opacity={0.1}
-              userData={{ baseIntensity: 2 }}
             />
           </mesh>
         </group>
