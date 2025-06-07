@@ -119,20 +119,6 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
       exhaust.scale.y = exhaustScale
     }
     
-    // Update smoke trail positions
-    const smokeTrail = rocket.getObjectByName('smokeTrail')
-    if (smokeTrail) {
-      smokeTrail.children.forEach((smoke, index) => {
-        // Fade out smoke particles over distance
-        const fadeDistance = index * 0.15
-        smoke.material.opacity = Math.max(0, 0.3 - fadeDistance * 0.05)
-        
-        // Expand smoke as it gets older
-        const expansion = 1 + index * 0.2
-        smoke.scale.setScalar(expansion)
-      })
-    }
-    
     // Adjust material opacity based on Z position for depth effect
     rocket.traverse((child) => {
       if (child instanceof THREE.Mesh && child.material) {
@@ -306,76 +292,46 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
           ))}
         </group>
         
-        {/* Engine Exhaust - Enhanced Blue Flame */}
+        {/* Engine Exhaust - Clean Blue Flame */}
         <group position={[0, -3, 0]} name="exhaust">
-          {/* Main flame cone */}
           <mesh>
-            <coneGeometry args={[0.6, 2, 12]} />
+            <coneGeometry args={[0.6, 1.8, 12]} />
             <meshStandardMaterial
               color="#4d94ff"
               emissive="#0066ff"
-              emissiveIntensity={3}
+              emissiveIntensity={2}
               transparent
-              opacity={0.5}
+              opacity={0.4}
             />
           </mesh>
           
           {/* Inner flame - Hot White Core */}
           <mesh scale={0.6}>
-            <coneGeometry args={[0.4, 1.8, 12]} />
+            <coneGeometry args={[0.4, 1.5, 12]} />
             <meshStandardMaterial
               color="#ffffff"
-              emissive="#ffffff"
-              emissiveIntensity={5}
+              emissive="#cce6ff"
+              emissiveIntensity={3}
               transparent
-              opacity={0.9}
+              opacity={0.7}
             />
           </mesh>
           
-          {/* Outer glow halo */}
-          <mesh scale={1.5}>
-            <coneGeometry args={[0.8, 1.5, 12]} />
+          {/* Outer glow */}
+          <mesh scale={1.2}>
+            <coneGeometry args={[0.7, 1.2, 12]} />
             <meshStandardMaterial
               color="#6bb6ff"
               emissive="#0066ff"
-              emissiveIntensity={2}
+              emissiveIntensity={1}
               transparent
-              opacity={0.15}
-            />
-          </mesh>
-          
-          {/* Extra wide glow */}
-          <mesh scale={[2, 0.8, 2]} position={[0, 0.5, 0]}>
-            <sphereGeometry args={[0.5, 12, 12]} />
-            <meshStandardMaterial
-              color="#4d94ff"
-              emissive="#0066ff"
-              emissiveIntensity={3}
-              transparent
-              opacity={0.1}
+              opacity={0.2}
             />
           </mesh>
         </group>
         
-        {/* Smoke Trail */}
-        <group name="smokeTrail" position={[0, -4, 0]}>
-          {[0, 1, 2, 3, 4].map((i) => (
-            <mesh key={i} position={[0, -i * 0.8, 0]}>
-              <sphereGeometry args={[0.4 + i * 0.1, 8, 8]} />
-              <meshStandardMaterial
-                color="#e0e0e0"
-                emissive="#cccccc"
-                emissiveIntensity={0.3}
-                transparent
-                opacity={0.3 - i * 0.06}
-              />
-            </mesh>
-          ))}
-        </group>
-        
-        {/* Engine Lights */}
-        <pointLight position={[0, -3.5, 0]} color="#4d94ff" intensity={3} distance={12} />
-        <pointLight position={[0, -4, 0]} color="#ffffff" intensity={1} distance={8} />
+        {/* Engine Glow - Blue */}
+        <pointLight position={[0, -3.5, 0]} color="#4d94ff" intensity={2} distance={10} />
       </group>
     </group>
   )
