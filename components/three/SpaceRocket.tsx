@@ -146,17 +146,32 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
           />
         </mesh>
         
-        {/* Nose Cone - Sleek White */}
-        <mesh position={[0, 2.5, 0]} name="nose">
-          <coneGeometry args={[0.7, 1.5, 12]} />
-          <meshStandardMaterial 
-            color="#ffffff" 
-            metalness={0.3} 
-            roughness={0.3}
-            emissive="#ffffff"
-            emissiveIntensity={0.08}
-          />
-        </mesh>
+        {/* Nose Cone - Smooth Rounded */}
+        <group position={[0, 2.5, 0]} name="nose">
+          {/* Rounded tip using sphere */}
+          <mesh position={[0, 0.5, 0]}>
+            <sphereGeometry args={[0.5, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+            <meshStandardMaterial 
+              color="#ffffff" 
+              metalness={0.3} 
+              roughness={0.3}
+              emissive="#ffffff"
+              emissiveIntensity={0.08}
+            />
+          </mesh>
+          
+          {/* Tapered section */}
+          <mesh position={[0, -0.5, 0]}>
+            <cylinderGeometry args={[0.5, 0.7, 1, 16]} />
+            <meshStandardMaterial 
+              color="#ffffff" 
+              metalness={0.3} 
+              roughness={0.3}
+              emissive="#ffffff"
+              emissiveIntensity={0.08}
+            />
+          </mesh>
+        </group>
         
         {/* Black Accent Band */}
         <mesh position={[0, 1, 0]}>
