@@ -193,24 +193,58 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
           />
         </mesh>
         
-        {/* Fins - Clean White */}
-        {[0, 90, 180, 270].map((angle, i) => (
-          <mesh
+        {/* Fins - Aerodynamic Curved Design */}
+        {[0, 120, 240].map((angle, i) => (
+          <group
             key={i}
             position={[
-              Math.sin((angle * Math.PI) / 180) * 1.1,
+              Math.sin((angle * Math.PI) / 180) * 0.9,
               -1.5,
-              Math.cos((angle * Math.PI) / 180) * 1.1
+              Math.cos((angle * Math.PI) / 180) * 0.9
             ]}
             rotation={[0, (angle * Math.PI) / 180, 0]}
           >
-            <boxGeometry args={[0.08, 1.8, 0.8]} />
-            <meshStandardMaterial 
-              color="#f8f9fa" 
-              metalness={0.2} 
-              roughness={0.4}
-            />
-          </mesh>
+            {/* Main fin body - tapered */}
+            <mesh position={[0, 0, 0.3]} rotation={[0.2, 0, 0]}>
+              <extrudeGeometry
+                args={[
+                  (() => {
+                    const shape = new THREE.Shape();
+                    shape.moveTo(0, -0.8);
+                    shape.lineTo(0.6, -0.8);
+                    shape.quadraticCurveTo(0.8, -0.6, 0.8, -0.3);
+                    shape.lineTo(0.8, 0.5);
+                    shape.quadraticCurveTo(0.7, 0.8, 0.4, 0.9);
+                    shape.lineTo(0, 0.9);
+                    shape.closePath();
+                    return shape;
+                  })(),
+                  {
+                    depth: 0.06,
+                    bevelEnabled: true,
+                    bevelThickness: 0.02,
+                    bevelSize: 0.02,
+                    bevelSegments: 3
+                  }
+                ]}
+              />
+              <meshStandardMaterial 
+                color="#f8f9fa" 
+                metalness={0.2} 
+                roughness={0.4}
+              />
+            </mesh>
+            
+            {/* Fin root fairing - smooth transition to body */}
+            <mesh position={[0, 0, 0]}>
+              <cylinderGeometry args={[0.15, 0.25, 1.8, 8, 1, false, 0, Math.PI]} />
+              <meshStandardMaterial 
+                color="#f8f9fa" 
+                metalness={0.2} 
+                roughness={0.4}
+              />
+            </mesh>
+          </group>
         ))}
         
         {/* Engine Nozzles */}
