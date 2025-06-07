@@ -36,7 +36,7 @@ const Hero: React.FC = () => {
       transition: {
         duration: 6,
         repeat: Infinity,
-        ease: "easeInOut",
+        ease: 'easeInOut',
       },
     },
   }
@@ -83,25 +83,32 @@ const Hero: React.FC = () => {
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
           variants={itemVariants}
         >
-          <motion.div
-            className="w-6 h-10 border-2 border-gray-600 rounded-full flex justify-center"
-            whileHover={{ borderColor: '#ffffff', scale: 1.1 }}
-            transition={{ duration: 0.2 }}
-          >
+          <div className="flex flex-col items-center">
             <motion.div
-              className="w-1 h-3 bg-gray-400 rounded-full mt-2"
-              animate={prefersReducedMotion ? {} : {
-                y: [0, 12, 0],
-                opacity: [1, 0.3, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          </motion.div>
-          <p className="text-gray-600 text-sm mt-2 tracking-widest">SCROLL</p>
+              className="w-6 h-10 border-2 -right-1 border-gray-600 rounded-full flex justify-center"
+              whileHover={{ borderColor: '#ffffff', scale: 1.2 }}
+              transition={{ duration: 0.2 }}
+            >
+              <motion.div
+                className="w-1 h-3 bg-gray-400 rounded-full mt-2"
+                animate={
+                  prefersReducedMotion
+                    ? {}
+                    : {
+                        y: [0, 12, 0],
+                        opacity: [1, 0.3, 1],
+                      }
+                }
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+              />
+            </motion.div>
+            <div className="h-2" />
+            <p className="text-gray-600 text-sm tracking-widest">SCROLL</p>
+          </div>
         </motion.div>
       </motion.div>
     </section>
