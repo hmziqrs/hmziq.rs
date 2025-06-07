@@ -134,90 +134,131 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
     <group ref={rocketRef} position={[0, 0, 0]} scale={0.3}>
       {/* Main Rocket Group */}
       <group rotation={[Math.PI / 2, 0, 0]}>
-        {/* Rocket Body */}
+        {/* Rocket Body - Clean White */}
         <mesh name="body">
-          <cylinderGeometry args={[0.6, 0.8, 4, 6]} />
+          <cylinderGeometry args={[0.7, 0.8, 4, 12]} />
           <meshStandardMaterial 
-            color="#c0c0c0" 
-            metalness={0.9} 
-            roughness={0.1}
+            color="#f8f9fa" 
+            metalness={0.2} 
+            roughness={0.4}
             emissive="#ffffff"
-            emissiveIntensity={0.1}
+            emissiveIntensity={0.05}
           />
         </mesh>
         
-        {/* Nose Cone */}
+        {/* Nose Cone - Sleek White */}
         <mesh position={[0, 2.5, 0]} name="nose">
-          <coneGeometry args={[0.6, 1.5, 6]} />
+          <coneGeometry args={[0.7, 1.5, 12]} />
           <meshStandardMaterial 
-            color="#ff6b6b" 
+            color="#ffffff" 
+            metalness={0.3} 
+            roughness={0.3}
+            emissive="#ffffff"
+            emissiveIntensity={0.08}
+          />
+        </mesh>
+        
+        {/* Black Accent Band */}
+        <mesh position={[0, 1, 0]}>
+          <cylinderGeometry args={[0.72, 0.72, 0.3, 12]} />
+          <meshStandardMaterial 
+            color="#1a1a1a" 
             metalness={0.8} 
             roughness={0.2}
-            emissive="#ff4444"
-            emissiveIntensity={0.2}
           />
         </mesh>
         
-        {/* Engine Section */}
+        {/* Engine Section - Metallic */}
         <mesh position={[0, -2, 0]}>
-          <cylinderGeometry args={[0.8, 0.9, 1, 6]} />
+          <cylinderGeometry args={[0.8, 0.9, 1, 12]} />
           <meshStandardMaterial 
-            color="#4a4a4a" 
-            metalness={0.7} 
-            roughness={0.3}
+            color="#e0e0e0" 
+            metalness={0.9} 
+            roughness={0.1}
           />
         </mesh>
         
-        {/* Fins */}
-        {[0, 120, 240].map((angle, i) => (
+        {/* Fins - Clean White */}
+        {[0, 90, 180, 270].map((angle, i) => (
           <mesh
             key={i}
             position={[
-              Math.sin((angle * Math.PI) / 180) * 1,
+              Math.sin((angle * Math.PI) / 180) * 1.1,
               -1.5,
-              Math.cos((angle * Math.PI) / 180) * 1
+              Math.cos((angle * Math.PI) / 180) * 1.1
             ]}
             rotation={[0, (angle * Math.PI) / 180, 0]}
           >
-            <boxGeometry args={[0.1, 1.5, 1]} />
+            <boxGeometry args={[0.08, 1.8, 0.8]} />
             <meshStandardMaterial 
-              color="#ff6b6b" 
-              metalness={0.7} 
-              roughness={0.3}
-              emissive="#ff4444"
-              emissiveIntensity={0.1}
+              color="#f8f9fa" 
+              metalness={0.2} 
+              roughness={0.4}
             />
           </mesh>
         ))}
         
-        {/* Engine Exhaust */}
-        <group position={[0, -2.8, 0]} name="exhaust">
+        {/* Engine Nozzles */}
+        <group position={[0, -2.5, 0]}>
+          {[0, 120, 240].map((angle, i) => (
+            <mesh
+              key={i}
+              position={[
+                Math.sin((angle * Math.PI) / 180) * 0.3,
+                0,
+                Math.cos((angle * Math.PI) / 180) * 0.3
+              ]}
+            >
+              <cylinderGeometry args={[0.15, 0.2, 0.5, 8]} />
+              <meshStandardMaterial 
+                color="#2a2a2a" 
+                metalness={0.9} 
+                roughness={0.1}
+              />
+            </mesh>
+          ))}
+        </group>
+        
+        {/* Engine Exhaust - Clean Blue Flame */}
+        <group position={[0, -3, 0]} name="exhaust">
           <mesh>
-            <coneGeometry args={[0.7, 1.5, 6]} />
+            <coneGeometry args={[0.6, 1.8, 12]} />
             <meshStandardMaterial
-              color="#ffaa00"
-              emissive="#ff6600"
-              emissiveIntensity={3}
+              color="#4d94ff"
+              emissive="#0066ff"
+              emissiveIntensity={2}
               transparent
-              opacity={0.6}
+              opacity={0.4}
             />
           </mesh>
           
-          {/* Inner flame */}
-          <mesh scale={0.7}>
-            <coneGeometry args={[0.5, 1.2, 6]} />
+          {/* Inner flame - Hot White Core */}
+          <mesh scale={0.6}>
+            <coneGeometry args={[0.4, 1.5, 12]} />
             <meshStandardMaterial
               color="#ffffff"
-              emissive="#ffff00"
-              emissiveIntensity={4}
+              emissive="#cce6ff"
+              emissiveIntensity={3}
               transparent
-              opacity={0.8}
+              opacity={0.7}
+            />
+          </mesh>
+          
+          {/* Outer glow */}
+          <mesh scale={1.2}>
+            <coneGeometry args={[0.7, 1.2, 12]} />
+            <meshStandardMaterial
+              color="#6bb6ff"
+              emissive="#0066ff"
+              emissiveIntensity={1}
+              transparent
+              opacity={0.2}
             />
           </mesh>
         </group>
         
-        {/* Engine Glow */}
-        <pointLight position={[0, -3.5, 0]} color="#ff6600" intensity={3} distance={8} />
+        {/* Engine Glow - Blue */}
+        <pointLight position={[0, -3.5, 0]} color="#4d94ff" intensity={2} distance={10} />
       </group>
     </group>
   )
