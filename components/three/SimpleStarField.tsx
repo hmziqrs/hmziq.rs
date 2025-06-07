@@ -49,8 +49,21 @@ function Stars() {
         colors[i3 + 2] = 1
       }
       
-      // Sizes
-      sizes[i] = 0.5 + Math.random() * 2
+      // Sizes - much larger with more variation
+      const sizeRandom = Math.random()
+      if (sizeRandom < 0.5) {
+        // Small stars (50%)
+        sizes[i] = 1 + Math.random() * 2
+      } else if (sizeRandom < 0.8) {
+        // Medium stars (30%)
+        sizes[i] = 3 + Math.random() * 3
+      } else if (sizeRandom < 0.95) {
+        // Large stars (15%)
+        sizes[i] = 6 + Math.random() * 4
+      } else {
+        // Extra large stars (5%)
+        sizes[i] = 10 + Math.random() * 5
+      }
     }
     
     return { particles, colors, sizes }
@@ -71,7 +84,7 @@ function Stars() {
           vColor = customColor;
           vSize = size;
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = size * (200.0 / -mvPosition.z);
+          gl_PointSize = size * (300.0 / -mvPosition.z);
           gl_Position = projectionMatrix * mvPosition;
         }
       `,
@@ -87,8 +100,8 @@ function Stars() {
           // Create soft circular shape
           float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
           
-          // Add glow effect
-          float glow = exp(-dist * 3.0) * 0.5;
+          // Add glow effect - stronger for larger stars
+          float glow = exp(-dist * 2.0) * 0.8 * (vSize / 10.0);
           
           // Twinkle effect
           float twinkle = sin(time + gl_FragCoord.x * 0.1) * 0.1 + 0.9;
