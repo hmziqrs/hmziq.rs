@@ -13,7 +13,7 @@ export default function SpaceRocket({ bounds = { x: 30, y: 20 } }: RocketProps) 
   const [velocity] = useState(() => ({
     x: (Math.random() - 0.5) * 0.2,
     y: (Math.random() - 0.5) * 0.2,
-    z: (Math.random() - 0.5) * 0.1
+    z: (Math.random() - 0.5) * 0.15  // Increased Z velocity for more noticeable depth changes
   }))
   
   const [rotation] = useState(() => ({
@@ -32,6 +32,13 @@ export default function SpaceRocket({ bounds = { x: 30, y: 20 } }: RocketProps) 
     rocket.position.x += velocity.x
     rocket.position.y += velocity.y
     rocket.position.z += velocity.z
+
+    // Dynamic scaling based on Z position
+    // Rocket appears smaller when far away (negative Z) and larger when close (positive Z)
+    const baseScale = 0.3
+    const scaleMultiplier = 1 + (rocket.position.z / 20) // Scale changes with depth
+    const dynamicScale = baseScale * Math.max(0.5, Math.min(1.5, scaleMultiplier))
+    rocket.scale.setScalar(dynamicScale)
 
     // Smooth boundary detection and bounce
     const dampingFactor = 0.95
@@ -79,13 +86,22 @@ export default function SpaceRocket({ bounds = { x: 30, y: 20 } }: RocketProps) 
     // Add some spin
     rocket.rotation.z += rotation.z
 
-    // Engine glow effect
-    const exhaustScale = 1 + Math.sin(time * 10) * 0.2
+    // Engine glow effect - also affected by rocket scale
+    const exhaustScale = (1 + Math.sin(time * 10) * 0.2) * (dynamicScale / baseScale)
     const exhaust = rocket.getObjectByName('exhaust')
     if (exhaust) {
       exhaust.scale.x = exhaustScale
       exhaust.scale.y = exhaustScale
     }
+    
+    // Adjust material opacity based on Z position for depth effect
+    rocket.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.material) {
+        const opacity = 0.7 + (rocket.position.z / 30) * 0.3
+        child.material.opacity = Math.max(0.5, Math.min(1, opacity))
+        child.material.transparent = true
+      }
+    })
   })
 
   return (
