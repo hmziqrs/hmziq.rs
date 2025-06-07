@@ -42,7 +42,7 @@ const Hero: React.FC = () => {
   }
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-6">
+    <section id="hero" className="relative min-h-screen flex items-center justify-center px-6">
       <motion.div
         className="text-center max-w-4xl mx-auto"
         variants={containerVariants}

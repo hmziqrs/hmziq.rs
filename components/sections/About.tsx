@@ -30,7 +30,7 @@ const About: React.FC = () => {
   }
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-6 py-20">
+    <section id="about" className="relative min-h-screen flex items-center justify-center px-6 py-20">
       <motion.div
         className="max-w-4xl mx-auto text-center"
         variants={containerVariants}

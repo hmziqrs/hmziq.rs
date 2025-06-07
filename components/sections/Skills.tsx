@@ -66,7 +66,7 @@ const Skills: React.FC = () => {
   }
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-6 py-20">
+    <section id="skills" className="relative min-h-screen flex items-center justify-center px-6 py-20">
       <motion.div
         className="max-w-6xl mx-auto"
         variants={containerVariants}
