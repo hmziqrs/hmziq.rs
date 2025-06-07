@@ -40,11 +40,16 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
     rocket.position.z += velocity.z
 
     // Dynamic scaling based on Z position and screen size
-    const baseScale = isMobile ? 0.2 : 0.3
-    const minScale = isMobile ? 0.4 : 0.7  // Higher minimum for desktop
-    const maxScale = isMobile ? 1.2 : 1.5
-    const scaleMultiplier = 1 + (rocket.position.z / 20)
-    const dynamicScale = baseScale * Math.max(minScale, Math.min(maxScale, scaleMultiplier))
+    const baseScale = isMobile ? 0.25 : 0.35
+    const minScale = isMobile ? 0.8 : 1.0  // Much higher minimum - never goes below base size
+    const maxScale = isMobile ? 1.5 : 2.0
+    
+    // Map Z position (-15 to 15) to scale (minScale to maxScale)
+    const normalizedZ = (rocket.position.z + 15) / 30  // 0 to 1
+    const scaleRange = maxScale - minScale
+    const scaleMultiplier = minScale + (normalizedZ * scaleRange)
+    
+    const dynamicScale = baseScale * scaleMultiplier
     rocket.scale.setScalar(dynamicScale)
 
     // Smooth velocity interpolation for curved motion
@@ -117,8 +122,9 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
     // Adjust material opacity based on Z position for depth effect
     rocket.traverse((child) => {
       if (child instanceof THREE.Mesh && child.material) {
-        const opacity = 0.7 + (rocket.position.z / 30) * 0.3
-        child.material.opacity = Math.max(0.5, Math.min(1, opacity))
+        // Keep opacity between 0.8 and 1.0 for better visibility
+        const opacity = 0.9 + (rocket.position.z / 30) * 0.1
+        child.material.opacity = Math.max(0.8, Math.min(1, opacity))
         child.material.transparent = true
       }
     })
