@@ -111,12 +111,27 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
     // Add some spin
     rocket.rotation.z += rotation.z
 
-    // Engine glow effect - also affected by rocket scale
+    // Engine glow effect with twinkling - also affected by rocket scale
+    const twinkle = Math.sin(time * 15) * 0.3 + 0.7 + Math.sin(time * 23) * 0.2
+    const flicker = Math.random() * 0.1 + 0.95
     const exhaustScale = (1 + Math.sin(time * 10) * 0.2) * (dynamicScale / baseScale)
     const exhaust = rocket.getObjectByName('exhaust')
     if (exhaust) {
-      exhaust.scale.x = exhaustScale
+      exhaust.scale.x = exhaustScale * flicker
       exhaust.scale.y = exhaustScale
+      
+      // Update flame materials for twinkling effect
+      exhaust.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material) {
+          child.material.emissiveIntensity = child.material.userData.baseIntensity * twinkle
+        }
+      })
+    }
+    
+    // Update engine light intensity
+    const engineLight = rocket.getObjectByName('engineLight')
+    if (engineLight && engineLight instanceof THREE.PointLight) {
+      engineLight.intensity = 2 * twinkle * flicker
     }
     
     // Adjust material opacity based on Z position for depth effect
@@ -292,7 +307,7 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
           ))}
         </group>
         
-        {/* Engine Exhaust - Clean Blue Flame */}
+        {/* Engine Exhaust - Clean Blue Flame with Twinkling */}
         <group position={[0, -3, 0]} name="exhaust">
           <mesh>
             <coneGeometry args={[0.6, 1.8, 12]} />
@@ -302,6 +317,7 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
               emissiveIntensity={2}
               transparent
               opacity={0.4}
+              userData={{ baseIntensity: 2 }}
             />
           </mesh>
           
@@ -310,10 +326,11 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
             <coneGeometry args={[0.4, 1.5, 12]} />
             <meshStandardMaterial
               color="#ffffff"
-              emissive="#cce6ff"
-              emissiveIntensity={3}
+              emissive="#ffffff"
+              emissiveIntensity={4}
               transparent
-              opacity={0.7}
+              opacity={0.8}
+              userData={{ baseIntensity: 4 }}
             />
           </mesh>
           
@@ -326,12 +343,32 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
               emissiveIntensity={1}
               transparent
               opacity={0.2}
+              userData={{ baseIntensity: 1 }}
+            />
+          </mesh>
+          
+          {/* Flickering particles */}
+          <mesh scale={1.8} position={[0, -0.5, 0]}>
+            <sphereGeometry args={[0.3, 8, 8]} />
+            <meshStandardMaterial
+              color="#ffffff"
+              emissive="#4d94ff"
+              emissiveIntensity={2}
+              transparent
+              opacity={0.1}
+              userData={{ baseIntensity: 2 }}
             />
           </mesh>
         </group>
         
         {/* Engine Glow - Blue */}
-        <pointLight position={[0, -3.5, 0]} color="#4d94ff" intensity={2} distance={10} />
+        <pointLight 
+          name="engineLight"
+          position={[0, -3.5, 0]} 
+          color="#4d94ff" 
+          intensity={2} 
+          distance={10} 
+        />
       </group>
     </group>
   )
