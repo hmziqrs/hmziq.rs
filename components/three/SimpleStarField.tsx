@@ -3,6 +3,7 @@
 import { useRef, useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import SpaceRocket from './SpaceRocket'
 
 function Stars() {
   const meshRef = useRef<THREE.Points>(null)
@@ -204,8 +205,11 @@ export default function SimpleStarField() {
   return (
     <div className="fixed inset-0" style={{ zIndex: 1 }}>
       <Canvas camera={{ position: [0, 0, 50], fov: 75 }} style={{ background: '#000000' }}>
+        <ambientLight intensity={0.3} />
+        <pointLight position={[10, 10, 10]} intensity={0.5} />
         <Nebula />
         <Stars />
+        <SpaceRocket bounds={{ x: 40, y: 25 }} />
       </Canvas>
     </div>
   )
