@@ -1,20 +1,26 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
 interface RocketProps {
   bounds?: { x: number; y: number }
 }
 
-export default function SpaceRocket({ bounds = { x: 30, y: 20 } }: RocketProps) {
+export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) {
   const rocketRef = useRef<THREE.Group>(null)
+  const { viewport } = useThree()
+  const isMobile = viewport.width < 10 // Roughly mobile if viewport width is less than 10 units
+  
   const [velocity] = useState(() => ({
-    x: (Math.random() - 0.5) * 0.2,
-    y: (Math.random() - 0.5) * 0.2,
-    z: (Math.random() - 0.5) * 0.15  // Increased Z velocity for more noticeable depth changes
+    x: (Math.random() - 0.5) * 0.3,  // Increased velocity
+    y: (Math.random() - 0.5) * 0.3,
+    z: (Math.random() - 0.5) * 0.2
   }))
+  
+  // Store target velocity for smooth transitions
+  const targetVelocity = useRef({ ...velocity })
   
   const [rotation] = useState(() => ({
     x: Math.random() * 0.02,
@@ -33,48 +39,62 @@ export default function SpaceRocket({ bounds = { x: 30, y: 20 } }: RocketProps) 
     rocket.position.y += velocity.y
     rocket.position.z += velocity.z
 
-    // Dynamic scaling based on Z position
-    // Rocket appears smaller when far away (negative Z) and larger when close (positive Z)
-    const baseScale = 0.3
-    const scaleMultiplier = 1 + (rocket.position.z / 20) // Scale changes with depth
-    const dynamicScale = baseScale * Math.max(0.5, Math.min(1.5, scaleMultiplier))
+    // Dynamic scaling based on Z position and screen size
+    const baseScale = isMobile ? 0.2 : 0.3
+    const minScale = isMobile ? 0.4 : 0.7  // Higher minimum for desktop
+    const maxScale = isMobile ? 1.2 : 1.5
+    const scaleMultiplier = 1 + (rocket.position.z / 20)
+    const dynamicScale = baseScale * Math.max(minScale, Math.min(maxScale, scaleMultiplier))
     rocket.scale.setScalar(dynamicScale)
 
-    // Smooth boundary detection and bounce
-    const dampingFactor = 0.95
-    const boundaryBuffer = 5 // Start slowing down before hitting boundary
+    // Smooth velocity interpolation for curved motion
+    const lerpFactor = 0.05
+    velocity.x = THREE.MathUtils.lerp(velocity.x, targetVelocity.current.x, lerpFactor)
+    velocity.y = THREE.MathUtils.lerp(velocity.y, targetVelocity.current.y, lerpFactor)
+    velocity.z = THREE.MathUtils.lerp(velocity.z, targetVelocity.current.z, lerpFactor)
 
-    // X boundary
+    // Smooth boundary detection with curved turns
+    const dampingFactor = 0.98
+    const boundaryBuffer = 8
+    const curveStrength = 0.02  // How much to curve when approaching boundary
+
+    // X boundary with smooth curves
     if (rocket.position.x > bounds.x - boundaryBuffer) {
-      velocity.x = -Math.abs(velocity.x) * dampingFactor
-      rocket.position.x = bounds.x - boundaryBuffer
+      const distance = rocket.position.x - (bounds.x - boundaryBuffer)
+      targetVelocity.current.x = -Math.abs(targetVelocity.current.x) * dampingFactor
+      targetVelocity.current.y += curveStrength * distance * (Math.random() - 0.5)
     } else if (rocket.position.x < -bounds.x + boundaryBuffer) {
-      velocity.x = Math.abs(velocity.x) * dampingFactor
-      rocket.position.x = -bounds.x + boundaryBuffer
+      const distance = (-bounds.x + boundaryBuffer) - rocket.position.x
+      targetVelocity.current.x = Math.abs(targetVelocity.current.x) * dampingFactor
+      targetVelocity.current.y += curveStrength * distance * (Math.random() - 0.5)
     }
 
-    // Y boundary
+    // Y boundary with smooth curves
     if (rocket.position.y > bounds.y - boundaryBuffer) {
-      velocity.y = -Math.abs(velocity.y) * dampingFactor
-      rocket.position.y = bounds.y - boundaryBuffer
+      const distance = rocket.position.y - (bounds.y - boundaryBuffer)
+      targetVelocity.current.y = -Math.abs(targetVelocity.current.y) * dampingFactor
+      targetVelocity.current.x += curveStrength * distance * (Math.random() - 0.5)
     } else if (rocket.position.y < -bounds.y + boundaryBuffer) {
-      velocity.y = Math.abs(velocity.y) * dampingFactor
-      rocket.position.y = -bounds.y + boundaryBuffer
+      const distance = (-bounds.y + boundaryBuffer) - rocket.position.y
+      targetVelocity.current.y = Math.abs(targetVelocity.current.y) * dampingFactor
+      targetVelocity.current.x += curveStrength * distance * (Math.random() - 0.5)
     }
 
-    // Z boundary (depth)
-    if (rocket.position.z > 10) {
-      velocity.z = -Math.abs(velocity.z) * dampingFactor
-      rocket.position.z = 10
-    } else if (rocket.position.z < -10) {
-      velocity.z = Math.abs(velocity.z) * dampingFactor
-      rocket.position.z = -10
+    // Z boundary with smooth curves
+    if (rocket.position.z > 15) {
+      targetVelocity.current.z = -Math.abs(targetVelocity.current.z) * dampingFactor
+    } else if (rocket.position.z < -15) {
+      targetVelocity.current.z = Math.abs(targetVelocity.current.z) * dampingFactor
     }
 
     // Maintain minimum velocity
-    const minVelocity = 0.05
-    if (Math.abs(velocity.x) < minVelocity) velocity.x = minVelocity * Math.sign(velocity.x)
-    if (Math.abs(velocity.y) < minVelocity) velocity.y = minVelocity * Math.sign(velocity.y)
+    const minVelocity = 0.1
+    if (Math.abs(targetVelocity.current.x) < minVelocity) {
+      targetVelocity.current.x = minVelocity * Math.sign(targetVelocity.current.x || 1)
+    }
+    if (Math.abs(targetVelocity.current.y) < minVelocity) {
+      targetVelocity.current.y = minVelocity * Math.sign(targetVelocity.current.y || 1)
+    }
 
     // Rotate rocket to face direction of movement
     const targetRotationY = Math.atan2(velocity.x, velocity.z)
