@@ -63,12 +63,12 @@ function Stars() {
       },
       vertexShader: `
         attribute float size;
-        attribute vec3 color;
+        attribute vec3 customColor;
         varying vec3 vColor;
         varying float vSize;
         
         void main() {
-          vColor = color;
+          vColor = customColor;
           vSize = size;
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
           gl_PointSize = size * (200.0 / -mvPosition.z);
@@ -99,8 +99,7 @@ function Stars() {
       `,
       transparent: true,
       blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      vertexColors: true
+      depthWrite: false
     })
   }, [])
   
@@ -121,7 +120,7 @@ function Stars() {
           args={[particles, 3]}
         />
         <bufferAttribute
-          attach="attributes-color"
+          attach="attributes-customColor"
           args={[colors, 3]}
         />
         <bufferAttribute
