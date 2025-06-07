@@ -49,20 +49,17 @@ function Stars() {
         colors[i3 + 2] = 1
       }
       
-      // Sizes - much larger with more variation
+      // Sizes - varied but not too large
       const sizeRandom = Math.random()
-      if (sizeRandom < 0.5) {
-        // Small stars (50%)
-        sizes[i] = 1 + Math.random() * 2
-      } else if (sizeRandom < 0.8) {
-        // Medium stars (30%)
-        sizes[i] = 3 + Math.random() * 3
-      } else if (sizeRandom < 0.95) {
-        // Large stars (15%)
-        sizes[i] = 6 + Math.random() * 4
+      if (sizeRandom < 0.6) {
+        // Small stars (60%)
+        sizes[i] = 1 + Math.random() * 1.5
+      } else if (sizeRandom < 0.85) {
+        // Medium stars (25%)
+        sizes[i] = 2.5 + Math.random() * 2
       } else {
-        // Extra large stars (5%)
-        sizes[i] = 10 + Math.random() * 5
+        // Large stars (15%)
+        sizes[i] = 4.5 + Math.random() * 2.5
       }
     }
     
