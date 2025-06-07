@@ -115,7 +115,7 @@ const Stars: React.FC = () => {
 
 const StarField: React.FC = () => {
   return (
-    <div className="fixed inset-0 z-background">
+    <div className="fixed inset-0" style={{ zIndex: -10 }}>
       <Canvas
         camera={{
           position: [0, 0, 100],

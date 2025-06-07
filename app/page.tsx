@@ -7,9 +7,9 @@ import Skills from '@/components/sections/Skills'
 import Contact from '@/components/sections/Contact'
 
 // Dynamically import Three.js components to avoid SSR issues
-const StarField = dynamic(() => import('@/components/three/StarField'), {
+const StarField = dynamic(() => import('@/components/three/SimpleStarField'), {
   ssr: false,
-  loading: () => <div className="fixed inset-0 bg-space z-background" />
+  loading: () => <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
 })
 
 export default function Home() {
@@ -19,7 +19,7 @@ export default function Home() {
       <StarField />
       
       {/* Content sections */}
-      <div className="relative z-content">
+      <div className="relative" style={{ zIndex: 10 }}>
         <Hero />
         <About />
         <Skills />

@@ -57,7 +57,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className={inter.className}>
+      <body className={inter.className} style={{ backgroundColor: '#000000', color: '#ffffff', minHeight: '100vh' }}>
         <div id="root">
           {children}
         </div>
