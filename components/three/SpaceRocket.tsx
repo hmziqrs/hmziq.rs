@@ -135,8 +135,8 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
       {/* Main Rocket Group */}
       <group rotation={[Math.PI / 2, 0, 0]}>
         {/* Rocket Body - Clean White */}
-        <mesh name="body">
-          <cylinderGeometry args={[0.7, 0.8, 4, 12]} />
+        <mesh name="body" position={[0, -0.5, 0]}>
+          <cylinderGeometry args={[0.7, 0.8, 3, 16]} />
           <meshStandardMaterial 
             color="#f8f9fa" 
             metalness={0.2} 
@@ -146,23 +146,47 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
           />
         </mesh>
         
-        {/* Nose Cone - Smooth Rounded */}
-        <group position={[0, 2.5, 0]} name="nose">
-          {/* Rounded tip using sphere */}
-          <mesh position={[0, 0.5, 0]}>
-            <sphereGeometry args={[0.5, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        {/* Upper Body Transition */}
+        <mesh position={[0, 1.5, 0]}>
+          <cylinderGeometry args={[0.7, 0.7, 1, 16]} />
+          <meshStandardMaterial 
+            color="#f8f9fa" 
+            metalness={0.2} 
+            roughness={0.4}
+            emissive="#ffffff"
+            emissiveIntensity={0.05}
+          />
+        </mesh>
+        
+        {/* Nose Cone - Integrated Design */}
+        <group name="nose">
+          {/* Smooth transition from body to nose */}
+          <mesh position={[0, 2.2, 0]}>
+            <cylinderGeometry args={[0.65, 0.7, 0.6, 16]} />
             <meshStandardMaterial 
               color="#ffffff" 
-              metalness={0.3} 
-              roughness={0.3}
+              metalness={0.25} 
+              roughness={0.35}
               emissive="#ffffff"
-              emissiveIntensity={0.08}
+              emissiveIntensity={0.06}
             />
           </mesh>
           
           {/* Tapered section */}
-          <mesh position={[0, -0.5, 0]}>
-            <cylinderGeometry args={[0.5, 0.7, 1, 16]} />
+          <mesh position={[0, 2.8, 0]}>
+            <cylinderGeometry args={[0.4, 0.65, 1.2, 16]} />
+            <meshStandardMaterial 
+              color="#ffffff" 
+              metalness={0.25} 
+              roughness={0.35}
+              emissive="#ffffff"
+              emissiveIntensity={0.06}
+            />
+          </mesh>
+          
+          {/* Rounded tip */}
+          <mesh position={[0, 3.5, 0]}>
+            <sphereGeometry args={[0.4, 16, 16]} />
             <meshStandardMaterial 
               color="#ffffff" 
               metalness={0.3} 
