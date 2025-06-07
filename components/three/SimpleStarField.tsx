@@ -49,17 +49,14 @@ function Stars() {
         colors[i3 + 2] = 1
       }
       
-      // Sizes - varied but not too large
+      // Sizes - small and medium only
       const sizeRandom = Math.random()
-      if (sizeRandom < 0.6) {
-        // Small stars (60%)
+      if (sizeRandom < 0.7) {
+        // Small stars (70%)
         sizes[i] = 1 + Math.random() * 1.5
-      } else if (sizeRandom < 0.85) {
-        // Medium stars (25%)
-        sizes[i] = 2.5 + Math.random() * 2
       } else {
-        // Large stars (15%)
-        sizes[i] = 4.5 + Math.random() * 2.5
+        // Medium stars (30%)
+        sizes[i] = 2.5 + Math.random() * 2
       }
     }
     
@@ -76,10 +73,12 @@ function Stars() {
         attribute vec3 customColor;
         varying vec3 vColor;
         varying float vSize;
+        varying vec3 vPosition;
         
         void main() {
           vColor = customColor;
           vSize = size;
+          vPosition = position;
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
           gl_PointSize = size * (300.0 / -mvPosition.z);
           gl_Position = projectionMatrix * mvPosition;
@@ -89,6 +88,7 @@ function Stars() {
         uniform float time;
         varying vec3 vColor;
         varying float vSize;
+        varying vec3 vPosition;
         
         void main() {
           vec2 center = gl_PointCoord - 0.5;
@@ -100,8 +100,8 @@ function Stars() {
           // Add glow effect - stronger for larger stars
           float glow = exp(-dist * 2.0) * 0.8 * (vSize / 10.0);
           
-          // Twinkle effect
-          float twinkle = sin(time + gl_FragCoord.x * 0.1) * 0.1 + 0.9;
+          // Twinkle effect - more pronounced and varied per star
+          float twinkle = sin(time * 3.0 + vPosition.x * 10.0 + vPosition.y * 10.0) * 0.3 + 0.7;
           
           vec3 finalColor = vColor + glow;
           gl_FragColor = vec4(finalColor * twinkle, alpha);
