@@ -24,7 +24,7 @@ function Box() {
 
 export default function TestCube() {
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: -10, background: '#000' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1, background: '#000' }}>
       <Canvas>
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />

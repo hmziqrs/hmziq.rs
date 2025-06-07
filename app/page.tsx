@@ -19,7 +19,7 @@ export default function Home() {
       <StarField />
       
       {/* Content sections */}
-      <div className="relative" style={{ zIndex: 10 }}>
+      <div className="relative" style={{ zIndex: 2 }}>
         <Hero />
         <About />
         <Skills />

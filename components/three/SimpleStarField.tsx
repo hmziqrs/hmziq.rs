@@ -48,7 +48,7 @@ function Stars() {
 
 export default function SimpleStarField() {
   return (
-    <div className="fixed inset-0" style={{ zIndex: -10 }}>
+    <div className="fixed inset-0" style={{ zIndex: 1 }}>
       <Canvas
         camera={{ position: [0, 0, 50], fov: 75 }}
         style={{ background: '#000000' }}
