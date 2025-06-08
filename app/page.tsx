@@ -6,8 +6,8 @@ import About from '@/components/sections/About'
 import Skills from '@/components/sections/Skills'
 import Contact from '@/components/sections/Contact'
 
-// Dynamically import Three.js components to avoid SSR issues
-const StarField = dynamic(() => import('@/components/three/SimpleStarField'), {
+// Dynamically import Three.js components to avoid SSR issues (deprecated)
+const StarField3D = dynamic(() => import('@/components/three/SimpleStarField'), {
   ssr: false,
   loading: () => (
     <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
@@ -27,11 +27,15 @@ const LightNebula2D = dynamic(() => import('@/components/effects/LightNebula2D')
   ssr: false,
 })
 
+const StarField2D = dynamic(() => import('@/components/effects/StarField2D'), {
+  ssr: false,
+})
+
 export default function Home() {
   return (
     <main className="relative min-h-screen">
-      {/* Background star field */}
-      <StarField />
+      {/* 2D Background star field */}
+      <StarField2D />
 
       {/* 2D Nebula clouds - lightweight version */}
       <LightNebula2D />
