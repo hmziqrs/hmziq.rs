@@ -359,7 +359,7 @@ export default function MeteorShower2D() {
         )
         
         // Inner core
-        const coreSize = meteor.type === 'bright' ? meteor.size * 4 : meteor.size * 3
+        const coreSize = meteor.type === 'bright' ? 2.5 + meteor.size * 2.14 : 2.0 + meteor.size * 1.43
         const coreGradient = ctx.createRadialGradient(
           meteor.x, meteor.y, 0,
           meteor.x, meteor.y, coreSize
