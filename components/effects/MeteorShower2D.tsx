@@ -147,7 +147,7 @@ export default function MeteorShower2D() {
 
       // Size-based speed: larger meteors = slower (0.3-0.5 range)
       const sizeRatio = (meteor.size - 0.3) / 0.7 // Normalize size to 0-1 range
-      const speed = 0.5 - sizeRatio * 0.2 // Larger size = slower: 0.5 to 0.3
+      const speed = 0.25 - sizeRatio * 0.08 // Larger size = slower: 0.25 to 0.08
 
       const angleRad = (meteor.angle * Math.PI) / 180
 
@@ -198,18 +198,19 @@ export default function MeteorShower2D() {
       const interactionTime = Date.now()
       let speedMultiplier = 1
 
-      // Mouse movement boost (3x speed while moving)
-      if (isMovingRef.current) {
-        speedMultiplier *= 3
-      }
-
-      // Click boost (5x speed that decays over 1200ms)
+      // Single acceleration source - click boost blocks all other boosts
       const timeSinceClick = interactionTime - clickBoostRef.current
-      if (timeSinceClick < 1200) {
-        const clickDecay = 1 - timeSinceClick / 1200 // 1 to 0 over 1200ms
-        const clickBoost = 1 + 4 * clickDecay // 1 to 5x speed
-        speedMultiplier *= clickBoost
+      const isClickBoostActive = timeSinceClick < 1200
+      
+      if (isClickBoostActive) {
+        // Click boost active: 1.15x speed that decays to 1x over 1200ms
+        const clickDecay = 1 - timeSinceClick / 1200
+        speedMultiplier = 1 + 0.15 * clickDecay // 1.15x → 1x smooth decay
+      } else if (isMovingRef.current) {
+        // Mouse/scroll boost ONLY when click boost is completely finished
+        speedMultiplier = 1.15 // Consistent 1.15x speed while moving
       }
+      // else speedMultiplier stays at 1 (no interaction)
 
       // Smooth transition for speed changes to prevent bounce-back
       const targetSpeed = speedMultiplier
