@@ -107,13 +107,17 @@ export default function MeteorShower2D() {
         meteor.angle = 135 + Math.random() * 30 // 135-165 degrees
       }
 
-      const speed = 0.3 + Math.random() * 0.2 // Much slower speed: 0.3-0.5
+      meteor.size = 0.3 + Math.random() * 0.7 // Reduced from 0.5-2.0 to 0.3-1.0
+      
+      // Size-based speed: larger meteors = slower (0.3-0.5 range)
+      const sizeRatio = (meteor.size - 0.3) / 0.7 // Normalize size to 0-1 range
+      const speed = 0.5 - (sizeRatio * 0.2) // Larger size = slower: 0.5 to 0.3
+      
       const angleRad = (meteor.angle * Math.PI) / 180
       
       meteor.vx = Math.cos(angleRad) * speed
       meteor.vy = Math.sin(angleRad) * speed
       meteor.speed = speed
-      meteor.size = 0.3 + Math.random() * 0.7 // Reduced from 0.5-2.0 to 0.3-1.0
       meteor.life = 0
       
       // Calculate lifetime based on screen diagonal distance and speed
