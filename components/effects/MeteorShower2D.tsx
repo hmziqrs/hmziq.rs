@@ -126,13 +126,13 @@ export default function MeteorShower2D() {
       glowIntensity: 1,
       active: false,
       type: 'cool',
-      particles: []
+      particles: [],
     }))
 
     // Spawn a meteor
     const spawnMeteor = (meteor: Meteor) => {
       const side = Math.random() < 0.7 ? 'top' : 'right'
-      
+
       if (side === 'top') {
         meteor.x = Math.random() * canvas.width
         meteor.y = -10
@@ -144,26 +144,26 @@ export default function MeteorShower2D() {
       }
 
       meteor.size = 0.3 + Math.random() * 0.7 // Reduced from 0.5-2.0 to 0.3-1.0
-      
+
       // Size-based speed: larger meteors = slower (0.3-0.5 range)
       const sizeRatio = (meteor.size - 0.3) / 0.7 // Normalize size to 0-1 range
-      const speed = 0.5 - (sizeRatio * 0.2) // Larger size = slower: 0.5 to 0.3
-      
+      const speed = 0.5 - sizeRatio * 0.2 // Larger size = slower: 0.5 to 0.3
+
       const angleRad = (meteor.angle * Math.PI) / 180
-      
+
       meteor.vx = Math.cos(angleRad) * speed
       meteor.vy = Math.sin(angleRad) * speed
       meteor.speed = speed
       meteor.life = 0
-      
+
       // Calculate lifetime based on screen diagonal distance and speed
       const screenDiagonal = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height)
       const travelDistance = screenDiagonal * 1.5 // Extra margin to ensure it goes off screen
       meteor.maxLife = Math.floor(travelDistance / speed) + 60 // Extra frames for margin
-      
+
       meteor.trail = []
       meteor.particles = []
-      
+
       // Dynamic color types
       const typeRandom = Math.random()
       if (typeRandom < 0.4) {
@@ -186,7 +186,7 @@ export default function MeteorShower2D() {
         meteor.glowIntensity = 1.2 + Math.random() * 0.3
         meteor.size *= 1.2 // Slightly bigger, but not too much
       }
-      
+
       meteor.active = true
     }
 
@@ -217,20 +217,20 @@ export default function MeteorShower2D() {
 
       // Spawn new meteors
       if (Math.random() < SPAWN_RATE) {
-        const inactiveMeteor = meteorsRef.current.find(m => !m.active)
+        const inactiveMeteor = meteorsRef.current.find((m) => !m.active)
         if (inactiveMeteor) {
           spawnMeteor(inactiveMeteor)
         }
       }
 
       // Update and draw meteors
-      meteorsRef.current.forEach(meteor => {
+      meteorsRef.current.forEach((meteor) => {
         if (!meteor.active) return
 
         // Update position with speed multiplier
         meteor.x += meteor.vx * speedMultiplierRef.current
         meteor.y += meteor.vy * speedMultiplierRef.current
-        
+
         // Add very slight gravity effect for natural arc (also affected by speed)
         meteor.vy += 0.01 * speedMultiplierRef.current // Minimal gravity for slow, graceful movement
 
@@ -238,7 +238,7 @@ export default function MeteorShower2D() {
         meteor.trail.unshift({
           x: meteor.x,
           y: meteor.y,
-          opacity: 1
+          opacity: 1,
         })
 
         // Limit trail length
@@ -248,13 +248,21 @@ export default function MeteorShower2D() {
 
         // Update trail opacity
         meteor.trail.forEach((point, i) => {
-          point.opacity = 1 - (i / TRAIL_LENGTH)
+          point.opacity = 1 - i / TRAIL_LENGTH
         })
 
-        // Generate sparkle particles
-        if (Math.random() < 0.35 && meteor.particles.length < 20) { // More frequent particle generation
-          const sparkleCount = meteor.type === 'bright' ? 2 : 1
-          for (let i = 0; i < sparkleCount; i++) {
+        // Generate sparkle particles (more when speed is accelerated)
+        const baseSpawnRate = 0.35
+        const speedBasedSpawnRate = baseSpawnRate * speedMultiplierRef.current * 20 // Increase with speed
+        const minRange = 15 + Math.floor(speedMultiplierRef.current * 35)
+        const maxParticles = Math.min(minRange + Math.floor(speedMultiplierRef.current * 10), 120) // Cap at 150
+
+        if (Math.random() < speedBasedSpawnRate && meteor.particles.length < maxParticles) {
+          const baseSparkleCount = meteor.type === 'bright' ? 2 : 1
+          const speedBasedSparkleCount = Math.floor(
+            baseSparkleCount * Math.min(speedMultiplierRef.current, 2)
+          ) // More particles when fast
+          for (let i = 0; i < speedBasedSparkleCount; i++) {
             meteor.particles.push({
               x: meteor.x + (Math.random() - 0.5) * meteor.size * 4, // Wider spawn area
               y: meteor.y + (Math.random() - 0.5) * meteor.size * 4, // Wider spawn area
@@ -262,13 +270,13 @@ export default function MeteorShower2D() {
               vy: (Math.random() - 0.5) * 0.8 - meteor.vy * 0.08, // Increased spread and opposing force
               life: 0,
               size: meteor.size * (0.15 + Math.random() * 0.25),
-              color: { ...meteor.color }
+              color: { ...meteor.color },
             })
           }
         }
 
         // Update particles
-        meteor.particles = meteor.particles.filter(particle => {
+        meteor.particles = meteor.particles.filter((particle) => {
           particle.x += particle.vx
           particle.y += particle.vy
           particle.vy += 0.005 // Very light gravity for particles
@@ -283,7 +291,7 @@ export default function MeteorShower2D() {
         // Deactivate only when truly off screen with margin
         const margin = 100 + meteor.size * 20 // Larger margin for glow
         if (
-          meteor.x < -margin || 
+          meteor.x < -margin ||
           meteor.x > canvas.width + margin ||
           meteor.y > canvas.height + margin ||
           meteor.life > meteor.maxLife
@@ -295,7 +303,7 @@ export default function MeteorShower2D() {
         // Draw trail
         if (meteor.trail.length > 1) {
           ctx.save()
-          
+
           // Create gradient along trail
           const gradient = ctx.createLinearGradient(
             meteor.trail[meteor.trail.length - 1].x,
@@ -303,11 +311,23 @@ export default function MeteorShower2D() {
             meteor.x,
             meteor.y
           )
-          
-          gradient.addColorStop(0, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, 0)`)
-          gradient.addColorStop(0.3, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.2)`)
-          gradient.addColorStop(0.7, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.5)`)
-          gradient.addColorStop(1, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.8)`)
+
+          gradient.addColorStop(
+            0,
+            `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, 0)`
+          )
+          gradient.addColorStop(
+            0.3,
+            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.2)`
+          )
+          gradient.addColorStop(
+            0.7,
+            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.5)`
+          )
+          gradient.addColorStop(
+            1,
+            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.8)`
+          )
 
           ctx.strokeStyle = gradient
           ctx.lineWidth = meteor.size * 2
@@ -318,13 +338,13 @@ export default function MeteorShower2D() {
           // Draw smooth trail using quadratic curves
           ctx.beginPath()
           ctx.moveTo(meteor.trail[0].x, meteor.trail[0].y)
-          
+
           for (let i = 1; i < meteor.trail.length - 1; i++) {
             const xc = (meteor.trail[i].x + meteor.trail[i + 1].x) / 2
             const yc = (meteor.trail[i].y + meteor.trail[i + 1].y) / 2
             ctx.quadraticCurveTo(meteor.trail[i].x, meteor.trail[i].y, xc, yc)
           }
-          
+
           ctx.stroke()
           ctx.restore()
         }
@@ -332,25 +352,38 @@ export default function MeteorShower2D() {
         // Draw meteor head with glow
         ctx.save()
         ctx.globalCompositeOperation = 'screen'
-        
+
         // Draw particles first (behind meteor)
-        meteor.particles.forEach(particle => {
-          const particleOpacity = 1 - (particle.life / 60) // Match extended particle life
+        meteor.particles.forEach((particle) => {
+          const particleOpacity = 1 - particle.life / 60 // Match extended particle life
           ctx.save()
           ctx.globalCompositeOperation = 'screen'
-          
+
           // Enhanced particle glow - multiple layers for stronger effect
-          
+
           // Outer glow (large, soft)
           const outerGlow = ctx.createRadialGradient(
-            particle.x, particle.y, 0,
-            particle.x, particle.y, particle.size * 8
+            particle.x,
+            particle.y,
+            0,
+            particle.x,
+            particle.y,
+            particle.size * 8
           )
-          outerGlow.addColorStop(0, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.6})`)
-          outerGlow.addColorStop(0.3, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.4})`)
-          outerGlow.addColorStop(0.6, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.2})`)
+          outerGlow.addColorStop(
+            0,
+            `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.6})`
+          )
+          outerGlow.addColorStop(
+            0.3,
+            `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.4})`
+          )
+          outerGlow.addColorStop(
+            0.6,
+            `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.2})`
+          )
           outerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)')
-          
+
           ctx.fillStyle = outerGlow
           ctx.fillRect(
             particle.x - particle.size * 8,
@@ -358,17 +391,30 @@ export default function MeteorShower2D() {
             particle.size * 16,
             particle.size * 16
           )
-          
+
           // Inner glow (medium, brighter)
           const innerGlow = ctx.createRadialGradient(
-            particle.x, particle.y, 0,
-            particle.x, particle.y, particle.size * 4
+            particle.x,
+            particle.y,
+            0,
+            particle.x,
+            particle.y,
+            particle.size * 4
           )
-          innerGlow.addColorStop(0, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.8})`)
-          innerGlow.addColorStop(0.4, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.6})`)
-          innerGlow.addColorStop(0.8, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.3})`)
+          innerGlow.addColorStop(
+            0,
+            `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.8})`
+          )
+          innerGlow.addColorStop(
+            0.4,
+            `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.6})`
+          )
+          innerGlow.addColorStop(
+            0.8,
+            `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.3})`
+          )
           innerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)')
-          
+
           ctx.fillStyle = innerGlow
           ctx.fillRect(
             particle.x - particle.size * 4,
@@ -376,75 +422,116 @@ export default function MeteorShower2D() {
             particle.size * 8,
             particle.size * 8
           )
-          
+
           // Particle core with enhanced brightness
           const coreGradient = ctx.createRadialGradient(
-            particle.x, particle.y, 0,
-            particle.x, particle.y, particle.size * 1.5
+            particle.x,
+            particle.y,
+            0,
+            particle.x,
+            particle.y,
+            particle.size * 1.5
           )
           coreGradient.addColorStop(0, `rgba(255, 255, 255, ${particleOpacity})`)
-          coreGradient.addColorStop(0.4, `rgba(${particle.color.r + 30}, ${particle.color.g + 30}, ${particle.color.b + 30}, ${particleOpacity * 0.9})`)
-          coreGradient.addColorStop(0.8, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.6})`)
+          coreGradient.addColorStop(
+            0.4,
+            `rgba(${particle.color.r + 30}, ${particle.color.g + 30}, ${particle.color.b + 30}, ${particleOpacity * 0.9})`
+          )
+          coreGradient.addColorStop(
+            0.8,
+            `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.6})`
+          )
           coreGradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
-          
+
           ctx.fillStyle = coreGradient
           ctx.beginPath()
           ctx.arc(particle.x, particle.y, particle.size * 1.5, 0, Math.PI * 2)
           ctx.fill()
-          
+
           ctx.restore()
         })
-        
+
         // Outer glow
         const glowSize = meteor.type === 'bright' ? meteor.size * 15 : meteor.size * 10
         const glowGradient = ctx.createRadialGradient(
-          meteor.x, meteor.y, 0,
-          meteor.x, meteor.y, glowSize
+          meteor.x,
+          meteor.y,
+          0,
+          meteor.x,
+          meteor.y,
+          glowSize
         )
-        glowGradient.addColorStop(0, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity})`)
-        glowGradient.addColorStop(0.2, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.6})`)
-        glowGradient.addColorStop(0.4, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.3})`)
-        glowGradient.addColorStop(0.7, `rgba(${meteor.glowColor.r * 0.8}, ${meteor.glowColor.g * 0.8}, ${meteor.glowColor.b * 0.8}, ${meteor.glowIntensity * 0.1})`)
+        glowGradient.addColorStop(
+          0,
+          `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity})`
+        )
+        glowGradient.addColorStop(
+          0.2,
+          `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.6})`
+        )
+        glowGradient.addColorStop(
+          0.4,
+          `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.3})`
+        )
+        glowGradient.addColorStop(
+          0.7,
+          `rgba(${meteor.glowColor.r * 0.8}, ${meteor.glowColor.g * 0.8}, ${meteor.glowColor.b * 0.8}, ${meteor.glowIntensity * 0.1})`
+        )
         glowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
-        
+
         ctx.fillStyle = glowGradient
-        ctx.fillRect(
-          meteor.x - glowSize,
-          meteor.y - glowSize,
-          glowSize * 2,
-          glowSize * 2
-        )
-        
+        ctx.fillRect(meteor.x - glowSize, meteor.y - glowSize, glowSize * 2, glowSize * 2)
+
         // Inner core
-        const coreSize = meteor.type === 'bright' ? 2.5 + meteor.size * 2.14 : 2.0 + meteor.size * 1.43
+        const coreSize =
+          meteor.type === 'bright' ? 2.5 + meteor.size * 2.14 : 2.0 + meteor.size * 1.43
         const coreGradient = ctx.createRadialGradient(
-          meteor.x, meteor.y, 0,
-          meteor.x, meteor.y, coreSize
+          meteor.x,
+          meteor.y,
+          0,
+          meteor.x,
+          meteor.y,
+          coreSize
         )
-        
+
         if (meteor.type === 'warm') {
           coreGradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
           coreGradient.addColorStop(0.3, `rgba(255, 245, 230, 0.9)`)
-          coreGradient.addColorStop(0.6, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.7)`)
-          coreGradient.addColorStop(1, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, 0)`)
+          coreGradient.addColorStop(
+            0.6,
+            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.7)`
+          )
+          coreGradient.addColorStop(
+            1,
+            `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, 0)`
+          )
         } else if (meteor.type === 'cool') {
           coreGradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
           coreGradient.addColorStop(0.3, `rgba(240, 248, 255, 0.9)`)
-          coreGradient.addColorStop(0.6, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.7)`)
-          coreGradient.addColorStop(1, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, 0)`)
+          coreGradient.addColorStop(
+            0.6,
+            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.7)`
+          )
+          coreGradient.addColorStop(
+            1,
+            `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, 0)`
+          )
         } else {
           // Bright type
           coreGradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
           coreGradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.9)')
-          coreGradient.addColorStop(0.7, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.6)`)
+          coreGradient.addColorStop(
+            0.7,
+            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.6)`
+          )
           coreGradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
         }
-        
+
         ctx.fillStyle = coreGradient
         ctx.beginPath()
         ctx.arc(meteor.x, meteor.y, coreSize, 0, Math.PI * 2)
         ctx.fill()
-        
+
         ctx.restore()
 
         // Only fade out when very close to screen edge or end of life
@@ -453,16 +540,13 @@ export default function MeteorShower2D() {
           canvas.width + margin - meteor.x,
           canvas.height + margin - meteor.y
         )
-        
+
         if (edgeDistance < 50 || lifeRatio > 0.9) {
-          const fadeOpacity = edgeDistance < 50 
-            ? edgeDistance / 50 
-            : (1 - (lifeRatio - 0.9) / 0.1)
-          
+          const fadeOpacity = edgeDistance < 50 ? edgeDistance / 50 : 1 - (lifeRatio - 0.9) / 0.1
+
           // Preserve type-based intensity while fading
-          const baseIntensity = meteor.type === 'bright' ? 1.35 
-            : meteor.type === 'warm' ? 1.1 
-            : 0.95
+          const baseIntensity =
+            meteor.type === 'bright' ? 1.35 : meteor.type === 'warm' ? 1.1 : 0.95
           meteor.glowIntensity = baseIntensity * fadeOpacity
         }
       })
