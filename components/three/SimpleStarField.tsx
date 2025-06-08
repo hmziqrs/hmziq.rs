@@ -18,6 +18,11 @@ function Stars() {
   const lastMouseMoveRef = useRef(0)
   const clickBoostRef = useRef(0)
   const mouseMoveTimeoutRef = useRef<NodeJS.Timeout>()
+  
+  // Rotation tracking to prevent bouncing
+  const rotationXRef = useRef(0)
+  const rotationYRef = useRef(0)
+  const lastFrameTimeRef = useRef(0)
 
   useEffect(() => {
     const handleResize = () => {
@@ -204,33 +209,47 @@ function Stars() {
 
   useFrame((state) => {
     if (meshRef.current) {
+      // Calculate delta time for smooth incremental rotation
+      const currentFrameTime = state.clock.elapsedTime
+      const deltaTime = lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
+      lastFrameTimeRef.current = currentFrameTime
+
       // Calculate speed multiplier based on mouse interaction
       const currentTime = Date.now()
       let speedMultiplier = 1
 
-      // Mouse movement boost (2x speed while moving)
+      // Mouse movement boost (1.5x speed while moving)
       if (isMovingRef.current) {
-        speedMultiplier *= 2
+        speedMultiplier *= 1.5
       }
 
-      // Click boost (3x speed that decays over 600ms)
+      // Click boost (1.3x speed that decays over 600ms)
       const timeSinceClick = currentTime - clickBoostRef.current
       if (timeSinceClick < 600) {
         const clickDecay = 1 - (timeSinceClick / 600) // 1 to 0 over 600ms
-        const clickBoost = 1 + (2 * clickDecay) // 1 to 3x speed
+        const clickBoost = 1 + (0.3 * clickDecay) // 1 to 1.3x speed
         speedMultiplier *= clickBoost
       }
 
-      // Smooth transition for speed changes
+      // Smooth transition for speed changes (faster response)
       const targetSpeed = speedMultiplier
-      speedMultiplierRef.current += (targetSpeed - speedMultiplierRef.current) * 0.1
+      speedMultiplierRef.current += (targetSpeed - speedMultiplierRef.current) * 0.2
 
-      // Apply speed to rotations
-      const baseRotationX = 0.02
-      const baseRotationY = 0.01
+      // Base rotation speeds
+      const baseRotationSpeedX = 0.02
+      const baseRotationSpeedY = 0.01
       
-      meshRef.current.rotation.x = state.clock.elapsedTime * baseRotationX * speedMultiplierRef.current
-      meshRef.current.rotation.y = state.clock.elapsedTime * baseRotationY * speedMultiplierRef.current
+      // Calculate incremental rotation for this frame
+      const rotationIncrementX = baseRotationSpeedX * speedMultiplierRef.current * deltaTime
+      const rotationIncrementY = baseRotationSpeedY * speedMultiplierRef.current * deltaTime
+      
+      // Add incremental rotation to tracked rotation
+      rotationXRef.current += rotationIncrementX
+      rotationYRef.current += rotationIncrementY
+      
+      // Apply the tracked rotation
+      meshRef.current.rotation.x = rotationXRef.current
+      meshRef.current.rotation.y = rotationYRef.current
       
       // Update time uniform for twinkle effect
       const material = meshRef.current.material as THREE.ShaderMaterial
