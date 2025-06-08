@@ -9,6 +9,12 @@ export default function LightNebula2D() {
   const timeRef = useRef(Math.random() * 100) // Start at random time offset
   const prefersReducedMotion = useReducedMotion()
 
+  // Mouse interaction state for speed control
+  const speedMultiplierRef = useRef(1)
+  const isMovingRef = useRef(false)
+  const clickBoostRef = useRef(0)
+  const mouseMoveTimeoutRef = useRef<NodeJS.Timeout>()
+
   // Cloud system with orbital movement and shape morphing
   const cloudsRef = useRef<
     {
@@ -153,6 +159,36 @@ export default function LightNebula2D() {
     resizeCanvas()
     window.addEventListener('resize', resizeCanvas)
 
+    // Mouse interaction handlers for speed control
+    const handleMouseMove = () => {
+      if (!isMovingRef.current) {
+        isMovingRef.current = true
+      }
+
+      // Clear existing timeout and set new one
+      if (mouseMoveTimeoutRef.current) {
+        clearTimeout(mouseMoveTimeoutRef.current)
+      }
+      
+      mouseMoveTimeoutRef.current = setTimeout(() => {
+        isMovingRef.current = false
+      }, 100) // Consider stopped after 100ms of no movement
+    }
+
+    const handleClick = () => {
+      // Add click boost that decays over 1200ms
+      clickBoostRef.current = Date.now()
+    }
+
+    const handleScroll = () => {
+      // Treat scroll like mouse movement
+      handleMouseMove()
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('click', handleClick)
+    window.addEventListener('scroll', handleScroll)
+
     // Enhanced render function with shape morphing
     const renderCloud = (cloud: (typeof cloudsRef.current)[0], pulseAmount: number) => {
       ctx.save()
@@ -211,11 +247,32 @@ export default function LightNebula2D() {
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      timeRef.current += 0.01
+      // Calculate speed multiplier based on mouse interaction
+      const currentTime = Date.now()
+      let speedMultiplier = 1
 
-      // Update orbital centers with subtle pulsing
+      // Mouse movement boost (2x speed while moving)
+      if (isMovingRef.current) {
+        speedMultiplier *= 2
+      }
+
+      // Click boost (2.5x speed that decays over 1200ms)
+      const timeSinceClick = currentTime - clickBoostRef.current
+      if (timeSinceClick < 1200) {
+        const clickDecay = 1 - timeSinceClick / 1200 // 1 to 0 over 1200ms
+        const clickBoost = 1 + 1.5 * clickDecay // 1 to 2.5x speed
+        speedMultiplier *= clickBoost
+      }
+
+      // Smooth transition for speed changes
+      const targetSpeed = speedMultiplier
+      speedMultiplierRef.current += (targetSpeed - speedMultiplierRef.current) * 0.15
+
+      timeRef.current += 0.01 * speedMultiplierRef.current
+
+      // Update orbital centers with subtle pulsing (affected by interaction)
       orbitalCentersRef.current.forEach((center) => {
-        center.pulsePhase += 0.01
+        center.pulsePhase += 0.01 * speedMultiplierRef.current
         const pulse = Math.sin(center.pulsePhase) * 0.5 + 1 // 0.5 to 1.5 range
         center.influence = pulse
       })
@@ -225,8 +282,8 @@ export default function LightNebula2D() {
         // Get current orbital center
         const orbitCenter = orbitalCentersRef.current[cloud.orbitIndex]
         
-        // Update orbital angle
-        cloud.orbitAngle += cloud.orbitSpeed * orbitCenter.influence
+        // Update orbital angle (accelerated by interaction)
+        cloud.orbitAngle += cloud.orbitSpeed * orbitCenter.influence * speedMultiplierRef.current
         
         // Calculate attraction forces from other clouds
         let totalAttractionX = 0
@@ -249,36 +306,38 @@ export default function LightNebula2D() {
           }
         })
         
-        // Apply attraction to orbital center (clouds pull orbital centers slightly)
+        // Apply attraction to orbital center (clouds pull orbital centers slightly, enhanced during interaction)
         if (nearbyCloudInfluence > 0) {
-          cloud.orbitCenterX += totalAttractionX * 0.1
-          cloud.orbitCenterY += totalAttractionY * 0.1
+          const attractionMultiplier = speedMultiplierRef.current * 0.1
+          cloud.orbitCenterX += totalAttractionX * attractionMultiplier
+          cloud.orbitCenterY += totalAttractionY * attractionMultiplier
           
-          // Gradually return to original center
+          // Gradually return to original center (faster during interaction)
           const originalCenter = orbitalCentersRef.current[cloud.orbitIndex]
-          cloud.orbitCenterX += (originalCenter.x - cloud.orbitCenterX) * 0.02
-          cloud.orbitCenterY += (originalCenter.y - cloud.orbitCenterY) * 0.02
+          const returnSpeed = 0.02 * speedMultiplierRef.current
+          cloud.orbitCenterX += (originalCenter.x - cloud.orbitCenterX) * returnSpeed
+          cloud.orbitCenterY += (originalCenter.y - cloud.orbitCenterY) * returnSpeed
         }
         
-        // Dynamic orbital radius based on nearby clouds and time
-        const radiusVariation = Math.sin(timeRef.current * 0.5 + cloud.phase) * 0.3
-        const attractionRadiusChange = nearbyCloudInfluence * 30
+        // Dynamic orbital radius based on nearby clouds and time (more dramatic during interaction)
+        const radiusVariation = Math.sin(timeRef.current * 0.5 + cloud.phase) * 0.3 * speedMultiplierRef.current
+        const attractionRadiusChange = nearbyCloudInfluence * 30 * speedMultiplierRef.current
         cloud.orbitRadius = cloud.baseOrbitRadius * (1 + radiusVariation) + attractionRadiusChange
         
         // Calculate new position based on orbital mechanics
         cloud.x = cloud.orbitCenterX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius
         cloud.y = cloud.orbitCenterY + Math.sin(cloud.orbitAngle) * cloud.orbitRadius
 
-        // Update rotation
-        cloud.rotation += cloud.rotationSpeed
+        // Update rotation (faster during interaction)
+        cloud.rotation += cloud.rotationSpeed * speedMultiplierRef.current
 
-        // Enhanced shape morphing based on interactions
+        // Enhanced shape morphing based on interactions (more dramatic during interaction)
         const morphTime = timeRef.current * cloud.morphSpeed
-        const baseScaleX = 1 + Math.sin(morphTime) * 0.4
-        const baseScaleY = 1 + Math.cos(morphTime * 1.1) * 0.4
+        const baseScaleX = 1 + Math.sin(morphTime) * (0.4 * speedMultiplierRef.current)
+        const baseScaleY = 1 + Math.cos(morphTime * 1.1) * (0.4 * speedMultiplierRef.current)
         
-        // Additional morphing from nearby cloud interactions
-        const interactionMorph = nearbyCloudInfluence * 0.5
+        // Additional morphing from nearby cloud interactions (enhanced during interaction)
+        const interactionMorph = nearbyCloudInfluence * 0.5 * speedMultiplierRef.current
         cloud.scaleX = baseScaleX + interactionMorph
         cloud.scaleY = baseScaleY + interactionMorph * 0.7
         
@@ -287,8 +346,8 @@ export default function LightNebula2D() {
           Math.pow(cloud.x - cloud.orbitCenterX, 2) + 
           Math.pow(cloud.y - cloud.orbitCenterY, 2)
         )
-        const speedMultiplier = 1 + (cloud.baseOrbitRadius - distanceToCenter) * 0.00001
-        cloud.orbitSpeed *= speedMultiplier
+        const orbitalSpeedMultiplier = 1 + (cloud.baseOrbitRadius - distanceToCenter) * 0.00001
+        cloud.orbitSpeed *= orbitalSpeedMultiplier
       })
 
       // Sort clouds by size for proper layering (smaller on top)
@@ -367,6 +426,12 @@ export default function LightNebula2D() {
     // Cleanup
     return () => {
       window.removeEventListener('resize', resizeCanvas)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('click', handleClick)
+      window.removeEventListener('scroll', handleScroll)
+      if (mouseMoveTimeoutRef.current) {
+        clearTimeout(mouseMoveTimeoutRef.current)
+      }
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current)
       }
