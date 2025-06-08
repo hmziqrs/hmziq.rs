@@ -56,6 +56,12 @@ export default function MeteorShower2D() {
   const animationIdRef = useRef<number>()
   const prefersReducedMotion = useReducedMotion()
 
+  // Mouse interaction state for speed control
+  const speedMultiplierRef = useRef(1)
+  const isMovingRef = useRef(false)
+  const clickBoostRef = useRef(0)
+  const mouseMoveTimeoutRef = useRef<NodeJS.Timeout>()
+
   useEffect(() => {
     if (prefersReducedMotion) return
 
@@ -72,6 +78,36 @@ export default function MeteorShower2D() {
     }
     resizeCanvas()
     window.addEventListener('resize', resizeCanvas)
+
+    // Mouse interaction handlers for speed control
+    const handleMouseMove = () => {
+      if (!isMovingRef.current) {
+        isMovingRef.current = true
+      }
+
+      // Clear existing timeout and set new one
+      if (mouseMoveTimeoutRef.current) {
+        clearTimeout(mouseMoveTimeoutRef.current)
+      }
+
+      mouseMoveTimeoutRef.current = setTimeout(() => {
+        isMovingRef.current = false
+      }, 100) // Consider stopped after 100ms of no movement
+    }
+
+    const handleClick = () => {
+      // Add click boost that decays over 1200ms
+      clickBoostRef.current = Date.now()
+    }
+
+    const handleScroll = () => {
+      // Treat scroll like mouse movement
+      handleMouseMove()
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('click', handleClick)
+    window.addEventListener('scroll', handleScroll)
 
     // Initialize meteor pool
     meteorsRef.current = Array.from({ length: METEOR_COUNT }, () => ({
@@ -158,6 +194,27 @@ export default function MeteorShower2D() {
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
+      // Calculate speed multiplier based on mouse interaction
+      const interactionTime = Date.now()
+      let speedMultiplier = 1
+
+      // Mouse movement boost (3x speed while moving)
+      if (isMovingRef.current) {
+        speedMultiplier *= 3
+      }
+
+      // Click boost (5x speed that decays over 1200ms)
+      const timeSinceClick = interactionTime - clickBoostRef.current
+      if (timeSinceClick < 1200) {
+        const clickDecay = 1 - timeSinceClick / 1200 // 1 to 0 over 1200ms
+        const clickBoost = 1 + 4 * clickDecay // 1 to 5x speed
+        speedMultiplier *= clickBoost
+      }
+
+      // Smooth transition for speed changes to prevent bounce-back
+      const targetSpeed = speedMultiplier
+      speedMultiplierRef.current += (targetSpeed - speedMultiplierRef.current) * 0.2
+
       // Spawn new meteors
       if (Math.random() < SPAWN_RATE) {
         const inactiveMeteor = meteorsRef.current.find(m => !m.active)
@@ -170,12 +227,12 @@ export default function MeteorShower2D() {
       meteorsRef.current.forEach(meteor => {
         if (!meteor.active) return
 
-        // Update position
-        meteor.x += meteor.vx
-        meteor.y += meteor.vy
+        // Update position with speed multiplier
+        meteor.x += meteor.vx * speedMultiplierRef.current
+        meteor.y += meteor.vy * speedMultiplierRef.current
         
-        // Add very slight gravity effect for natural arc
-        meteor.vy += 0.01 // Minimal gravity for slow, graceful movement
+        // Add very slight gravity effect for natural arc (also affected by speed)
+        meteor.vy += 0.01 * speedMultiplierRef.current // Minimal gravity for slow, graceful movement
 
         // Update trail
         meteor.trail.unshift({
@@ -419,6 +476,12 @@ export default function MeteorShower2D() {
     // Cleanup
     return () => {
       window.removeEventListener('resize', resizeCanvas)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('click', handleClick)
+      window.removeEventListener('scroll', handleScroll)
+      if (mouseMoveTimeoutRef.current) {
+        clearTimeout(mouseMoveTimeoutRef.current)
+      }
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current)
       }
