@@ -191,14 +191,14 @@ export default function MeteorShower2D() {
         })
 
         // Generate sparkle particles
-        if (Math.random() < 0.2 && meteor.particles.length < 15) { // Less frequent for slower meteors
+        if (Math.random() < 0.35 && meteor.particles.length < 20) { // More frequent particle generation
           const sparkleCount = meteor.type === 'bright' ? 2 : 1
           for (let i = 0; i < sparkleCount; i++) {
             meteor.particles.push({
-              x: meteor.x + (Math.random() - 0.5) * meteor.size * 2,
-              y: meteor.y + (Math.random() - 0.5) * meteor.size * 2,
-              vx: (Math.random() - 0.5) * 0.3 - meteor.vx * 0.05,
-              vy: (Math.random() - 0.5) * 0.3 - meteor.vy * 0.05,
+              x: meteor.x + (Math.random() - 0.5) * meteor.size * 4, // Wider spawn area
+              y: meteor.y + (Math.random() - 0.5) * meteor.size * 4, // Wider spawn area
+              vx: (Math.random() - 0.5) * 0.8 - meteor.vx * 0.08, // Increased spread and opposing force
+              vy: (Math.random() - 0.5) * 0.8 - meteor.vy * 0.08, // Increased spread and opposing force
               life: 0,
               size: meteor.size * (0.15 + Math.random() * 0.25),
               color: { ...meteor.color }
@@ -212,7 +212,7 @@ export default function MeteorShower2D() {
           particle.y += particle.vy
           particle.vy += 0.005 // Very light gravity for particles
           particle.life++
-          return particle.life < 40 // Longer particle life
+          return particle.life < 60 // Extended particle life for better spread visibility
         })
 
         // Update life
@@ -274,31 +274,61 @@ export default function MeteorShower2D() {
         
         // Draw particles first (behind meteor)
         meteor.particles.forEach(particle => {
-          const particleOpacity = 1 - (particle.life / 40) // Match longer particle life
+          const particleOpacity = 1 - (particle.life / 60) // Match extended particle life
           ctx.save()
           ctx.globalCompositeOperation = 'screen'
           
-          // Particle glow
-          const particleGlow = ctx.createRadialGradient(
+          // Enhanced particle glow - multiple layers for stronger effect
+          
+          // Outer glow (large, soft)
+          const outerGlow = ctx.createRadialGradient(
             particle.x, particle.y, 0,
-            particle.x, particle.y, particle.size * 3
+            particle.x, particle.y, particle.size * 8
           )
-          particleGlow.addColorStop(0, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity})`)
-          particleGlow.addColorStop(0.5, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.5})`)
-          particleGlow.addColorStop(1, 'rgba(0, 0, 0, 0)')
+          outerGlow.addColorStop(0, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.6})`)
+          outerGlow.addColorStop(0.3, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.4})`)
+          outerGlow.addColorStop(0.6, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.2})`)
+          outerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)')
           
-          ctx.fillStyle = particleGlow
+          ctx.fillStyle = outerGlow
           ctx.fillRect(
-            particle.x - particle.size * 3,
-            particle.y - particle.size * 3,
-            particle.size * 6,
-            particle.size * 6
+            particle.x - particle.size * 8,
+            particle.y - particle.size * 8,
+            particle.size * 16,
+            particle.size * 16
           )
           
-          // Particle core
-          ctx.fillStyle = `rgba(255, 255, 255, ${particleOpacity * 0.8})`
+          // Inner glow (medium, brighter)
+          const innerGlow = ctx.createRadialGradient(
+            particle.x, particle.y, 0,
+            particle.x, particle.y, particle.size * 4
+          )
+          innerGlow.addColorStop(0, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.8})`)
+          innerGlow.addColorStop(0.4, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.6})`)
+          innerGlow.addColorStop(0.8, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.3})`)
+          innerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)')
+          
+          ctx.fillStyle = innerGlow
+          ctx.fillRect(
+            particle.x - particle.size * 4,
+            particle.y - particle.size * 4,
+            particle.size * 8,
+            particle.size * 8
+          )
+          
+          // Particle core with enhanced brightness
+          const coreGradient = ctx.createRadialGradient(
+            particle.x, particle.y, 0,
+            particle.x, particle.y, particle.size * 1.5
+          )
+          coreGradient.addColorStop(0, `rgba(255, 255, 255, ${particleOpacity})`)
+          coreGradient.addColorStop(0.4, `rgba(${particle.color.r + 30}, ${particle.color.g + 30}, ${particle.color.b + 30}, ${particleOpacity * 0.9})`)
+          coreGradient.addColorStop(0.8, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.6})`)
+          coreGradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
+          
+          ctx.fillStyle = coreGradient
           ctx.beginPath()
-          ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
+          ctx.arc(particle.x, particle.y, particle.size * 1.5, 0, Math.PI * 2)
           ctx.fill()
           
           ctx.restore()
