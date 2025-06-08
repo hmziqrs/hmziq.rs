@@ -12,13 +12,58 @@ function Stars() {
     height: typeof window !== 'undefined' ? window.innerHeight : 1080 
   })
 
+  // Mouse interaction state
+  const speedMultiplierRef = useRef(1)
+  const isMovingRef = useRef(false)
+  const lastMouseMoveRef = useRef(0)
+  const clickBoostRef = useRef(0)
+  const mouseMoveTimeoutRef = useRef<NodeJS.Timeout>()
+
   useEffect(() => {
     const handleResize = () => {
       setScreenDimensions({ width: window.innerWidth, height: window.innerHeight })
     }
+
+    const handleMouseMove = () => {
+      lastMouseMoveRef.current = Date.now()
+      if (!isMovingRef.current) {
+        isMovingRef.current = true
+      }
+
+      // Clear existing timeout and set new one
+      if (mouseMoveTimeoutRef.current) {
+        clearTimeout(mouseMoveTimeoutRef.current)
+      }
+      
+      mouseMoveTimeoutRef.current = setTimeout(() => {
+        isMovingRef.current = false
+      }, 100) // Consider stopped after 100ms of no movement
+    }
+
+    const handleClick = () => {
+      // Add click boost that decays over 600ms
+      clickBoostRef.current = Date.now()
+    }
+
+    const handleScroll = () => {
+      // Treat scroll like mouse movement
+      handleMouseMove()
+    }
     
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('click', handleClick)
+    window.addEventListener('scroll', handleScroll)
+    
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('click', handleClick)
+      window.removeEventListener('scroll', handleScroll)
+      if (mouseMoveTimeoutRef.current) {
+        clearTimeout(mouseMoveTimeoutRef.current)
+      }
+    }
   }, [])
 
   const { particles, colors, sizes } = useMemo(() => {
@@ -159,8 +204,34 @@ function Stars() {
 
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.x = state.clock.elapsedTime * 0.02
-      meshRef.current.rotation.y = state.clock.elapsedTime * 0.01
+      // Calculate speed multiplier based on mouse interaction
+      const currentTime = Date.now()
+      let speedMultiplier = 1
+
+      // Mouse movement boost (2x speed while moving)
+      if (isMovingRef.current) {
+        speedMultiplier *= 2
+      }
+
+      // Click boost (3x speed that decays over 600ms)
+      const timeSinceClick = currentTime - clickBoostRef.current
+      if (timeSinceClick < 600) {
+        const clickDecay = 1 - (timeSinceClick / 600) // 1 to 0 over 600ms
+        const clickBoost = 1 + (2 * clickDecay) // 1 to 3x speed
+        speedMultiplier *= clickBoost
+      }
+
+      // Smooth transition for speed changes
+      const targetSpeed = speedMultiplier
+      speedMultiplierRef.current += (targetSpeed - speedMultiplierRef.current) * 0.1
+
+      // Apply speed to rotations
+      const baseRotationX = 0.02
+      const baseRotationY = 0.01
+      
+      meshRef.current.rotation.x = state.clock.elapsedTime * baseRotationX * speedMultiplierRef.current
+      meshRef.current.rotation.y = state.clock.elapsedTime * baseRotationY * speedMultiplierRef.current
+      
       // Update time uniform for twinkle effect
       const material = meshRef.current.material as THREE.ShaderMaterial
       if (material && material.uniforms && material.uniforms.time) {
