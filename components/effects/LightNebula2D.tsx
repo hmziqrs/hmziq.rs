@@ -255,22 +255,22 @@ export default function LightNebula2D() {
       const interactionTime = Date.now()
       let speedMultiplier = 1
 
-      // Mouse movement boost (2x speed while moving)
+      // Mouse movement boost (4x speed while moving)
       if (isMovingRef.current) {
-        speedMultiplier *= 2
+        speedMultiplier *= 4
       }
 
-      // Click boost (2.5x speed that decays over 1200ms)
+      // Click boost (6x speed that decays over 1200ms)
       const timeSinceClick = interactionTime - clickBoostRef.current
       if (timeSinceClick < 1200) {
         const clickDecay = 1 - timeSinceClick / 1200 // 1 to 0 over 1200ms
-        const clickBoost = 1 + 1.5 * clickDecay // 1 to 2.5x speed
+        const clickBoost = 1 + 5 * clickDecay // 1 to 6x speed
         speedMultiplier *= clickBoost
       }
 
-      // Smooth transition for speed changes
+      // Faster transition for speed changes to make it more responsive
       const targetSpeed = speedMultiplier
-      speedMultiplierRef.current += (targetSpeed - speedMultiplierRef.current) * 0.15
+      speedMultiplierRef.current += (targetSpeed - speedMultiplierRef.current) * 0.3
 
       timeRef.current += 0.01 * speedMultiplierRef.current
 
@@ -317,13 +317,13 @@ export default function LightNebula2D() {
         
         // Attraction forces from nearby clouds (only during interaction)
         if (nearbyCloudInfluence > 0) {
-          const attractionStrength = 0.05 * speedMultiplierRef.current
+          const attractionStrength = 0.1 * speedMultiplierRef.current // Doubled from 0.05
           forceX += totalAttractionX * attractionStrength
           forceY += totalAttractionY * attractionStrength
         }
         
-        // Gentle return force to original position (slightly faster during interaction)
-        const returnStrength = 0.008 * (1 + (speedMultiplierRef.current - 1) * 0.5) // Slightly faster during interaction
+        // Gentle return force to original position (much faster during interaction)
+        const returnStrength = 0.008 * (1 + (speedMultiplierRef.current - 1) * 1.5) // Much faster during interaction
         const centerDx = originalCenter.x - cloud.orbitCenterX
         const centerDy = originalCenter.y - cloud.orbitCenterY
         forceX += centerDx * returnStrength
@@ -340,16 +340,16 @@ export default function LightNebula2D() {
           forceY += centerDy * boundaryForce
         }
         
-        // Apply forces to velocity (momentum-based, faster during interaction)
-        const forceMultiplier = speedMultiplierRef.current * 0.5 + 0.5 // 0.5 to 1.75x range
+        // Apply forces to velocity (momentum-based, much faster during interaction)
+        const forceMultiplier = speedMultiplierRef.current * 1.5 + 0.5 // 0.5 to 9.5x range
         cloud.centerVelocityX += forceX * forceMultiplier
         cloud.centerVelocityY += forceY * forceMultiplier
         
-        // Apply damping to velocity (less damping during interaction for more responsiveness)
+        // Apply damping to velocity (much less damping during interaction for more responsiveness)
         const baseDamping = 0.92
-        const interactiveDamping = baseDamping + (1 - baseDamping) * (speedMultiplierRef.current - 1) * 0.1
-        cloud.centerVelocityX *= Math.min(interactiveDamping, 0.98) // Cap at 0.98
-        cloud.centerVelocityY *= Math.min(interactiveDamping, 0.98)
+        const interactiveDamping = baseDamping + (1 - baseDamping) * (speedMultiplierRef.current - 1) * 0.2
+        cloud.centerVelocityX *= Math.min(interactiveDamping, 0.99) // Cap at 0.99
+        cloud.centerVelocityY *= Math.min(interactiveDamping, 0.99)
         
         // Update orbital center position based on velocity
         cloud.orbitCenterX += cloud.centerVelocityX
