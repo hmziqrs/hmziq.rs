@@ -24,9 +24,12 @@ export default function LightNebula2D() {
       color: { r: number; g: number; b: number }
 
       // Orbital properties
+      orbitCenterX: number // Individual orbital center
+      orbitCenterY: number // Individual orbital center  
       orbitRadius: number
       orbitAngle: number
       orbitSpeed: number // Base orbital speed
+      orbitIndex: number // Which orbital center this belongs to
 
       // Animation properties (accumulative - no reset)
       timeOffset: number // Individual time offset for variations
@@ -39,6 +42,16 @@ export default function LightNebula2D() {
       currentOpacity: number
       scaleX: number
       scaleY: number
+    }[]
+  >([])
+
+  // Multiple orbital centers for overlapping paths
+  const orbitalCentersRef = useRef<
+    {
+      x: number
+      y: number
+      baseRadius: number // Base orbital radius for this center
+      radiusVariation: number // Additional radius variation range
     }[]
   >([])
 
@@ -61,6 +74,34 @@ export default function LightNebula2D() {
         const centerX = canvas.width / 2
         const centerY = canvas.height / 2
         const baseSize = Math.min(canvas.width, canvas.height)
+
+        // Create multiple orbital centers with slight offsets
+        orbitalCentersRef.current = [
+          {
+            x: centerX - baseSize * 0.08, // Slightly left
+            y: centerY - baseSize * 0.05, // Slightly up
+            baseRadius: baseSize * 0.18,
+            radiusVariation: baseSize * 0.12
+          },
+          {
+            x: centerX + baseSize * 0.06, // Slightly right
+            y: centerY - baseSize * 0.03, // Slightly up
+            baseRadius: baseSize * 0.22,
+            radiusVariation: baseSize * 0.15
+          },
+          {
+            x: centerX - baseSize * 0.03, // Slightly left
+            y: centerY + baseSize * 0.07, // Slightly down
+            baseRadius: baseSize * 0.15,
+            radiusVariation: baseSize * 0.10
+          },
+          {
+            x: centerX + baseSize * 0.09, // More right
+            y: centerY + baseSize * 0.04, // Slightly down
+            baseRadius: baseSize * 0.25,
+            radiusVariation: baseSize * 0.18
+          }
+        ]
 
         // Color variations for each cloud type
         const colorPalettes = {
@@ -109,9 +150,13 @@ export default function LightNebula2D() {
           const opacityVariation = 0.7 + Math.random() * 0.6 // 0.7 to 1.3 multiplier
           const baseOpacity = config.baseOpacity * opacityVariation
 
-          // Orbital properties based on size (larger = further out, slower)
+          // Assign cloud to orbital center (distribute evenly)
+          const orbitIndex = index % orbitalCentersRef.current.length
+          const orbitCenter = orbitalCentersRef.current[orbitIndex]
+          
+          // Orbital properties based on size and assigned center
           const sizeInfluence = radius / (baseSize * 0.4) // Normalize to size factor
-          const orbitRadius = (canvas.width + canvas.height) * (0.15 + sizeInfluence * 0.1) // 15-25% of screen
+          const orbitRadius = orbitCenter.baseRadius + (Math.random() * orbitCenter.radiusVariation)
           const orbitAngle = Math.random() * Math.PI * 2
           const orbitSpeed = (0.5 + Math.random() * 0.3) / Math.sqrt(sizeInfluence) // Clearly visible orbital motion
 
@@ -122,14 +167,17 @@ export default function LightNebula2D() {
             radius,
             baseOpacity,
             color,
+            orbitCenterX: orbitCenter.x,
+            orbitCenterY: orbitCenter.y,
             orbitRadius,
             orbitAngle,
             orbitSpeed,
+            orbitIndex,
             timeOffset,
             opacityPhase: 0,
             morphPhase: 0,
-            x: centerX + Math.cos(orbitAngle) * orbitRadius,
-            y: centerY + Math.sin(orbitAngle) * orbitRadius,
+            x: orbitCenter.x + Math.cos(orbitAngle) * orbitRadius,
+            y: orbitCenter.y + Math.sin(orbitAngle) * orbitRadius,
             currentOpacity: baseOpacity,
             scaleX: 1,
             scaleY: 1,
@@ -137,20 +185,53 @@ export default function LightNebula2D() {
         })
       }
 
-      // Update cloud orbital radii based on new canvas size
+      // Update orbital centers and cloud positions based on new canvas size
       if (cloudsRef.current.length > 0) {
         const centerX = canvas.width / 2
         const centerY = canvas.height / 2
+        const baseSize = Math.min(canvas.width, canvas.height)
+
+        // Update orbital centers for new screen size
+        orbitalCentersRef.current = [
+          {
+            x: centerX - baseSize * 0.08, // Slightly left
+            y: centerY - baseSize * 0.05, // Slightly up
+            baseRadius: baseSize * 0.18,
+            radiusVariation: baseSize * 0.12
+          },
+          {
+            x: centerX + baseSize * 0.06, // Slightly right
+            y: centerY - baseSize * 0.03, // Slightly up
+            baseRadius: baseSize * 0.22,
+            radiusVariation: baseSize * 0.15
+          },
+          {
+            x: centerX - baseSize * 0.03, // Slightly left
+            y: centerY + baseSize * 0.07, // Slightly down
+            baseRadius: baseSize * 0.15,
+            radiusVariation: baseSize * 0.10
+          },
+          {
+            x: centerX + baseSize * 0.09, // More right
+            y: centerY + baseSize * 0.04, // Slightly down
+            baseRadius: baseSize * 0.25,
+            radiusVariation: baseSize * 0.18
+          }
+        ]
 
         cloudsRef.current.forEach((cloud) => {
-          // Recalculate orbital radius for new screen size
-          const baseSize = Math.min(canvas.width, canvas.height)
-          const sizeInfluence = cloud.radius / (baseSize * 0.4)
-          cloud.orbitRadius = (canvas.width + canvas.height) * (0.15 + sizeInfluence * 0.1)
+          // Update orbital center for this cloud
+          const orbitCenter = orbitalCentersRef.current[cloud.orbitIndex]
+          cloud.orbitCenterX = orbitCenter.x
+          cloud.orbitCenterY = orbitCenter.y
 
-          // Update position based on current angle
-          cloud.x = centerX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius
-          cloud.y = centerY + Math.sin(cloud.orbitAngle) * cloud.orbitRadius
+          // Recalculate orbital radius based on the new center
+          const sizeInfluence = cloud.radius / (baseSize * 0.4)
+          cloud.orbitRadius = orbitCenter.baseRadius + (Math.random() * orbitCenter.radiusVariation)
+
+          // Update position based on current angle and new orbital center
+          cloud.x = cloud.orbitCenterX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius
+          cloud.y = cloud.orbitCenterY + Math.sin(cloud.orbitAngle) * cloud.orbitRadius
         })
       }
     }
@@ -258,14 +339,11 @@ export default function LightNebula2D() {
       const deltaTime = 0.008 * speedMultiplierRef.current // Adjusted for visible orbital motion
 
       // Update each cloud independently
-      const centerX = canvas.width / 2
-      const centerY = canvas.height / 2
-
       cloudsRef.current.forEach((cloud) => {
         // Update orbital position (accumulative - no reset)
         cloud.orbitAngle += cloud.orbitSpeed * deltaTime
-        cloud.x = centerX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius
-        cloud.y = centerY + Math.sin(cloud.orbitAngle) * cloud.orbitRadius
+        cloud.x = cloud.orbitCenterX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius
+        cloud.y = cloud.orbitCenterY + Math.sin(cloud.orbitAngle) * cloud.orbitRadius
 
         // Update opacity phase (accumulative - no reset)
         cloud.opacityPhase += deltaTime * 2 // Opacity pulsing speed

@@ -107,7 +107,7 @@ export default function MeteorShower2D() {
         meteor.angle = 135 + Math.random() * 30 // 135-165 degrees
       }
 
-      const speed = 0.8 + Math.random() * 1.2 // Further reduced to 0.8-2.0
+      const speed = 0.4 + Math.random() * 0.8 // Slower speed: 0.4-1.2
       const angleRad = (meteor.angle * Math.PI) / 180
       
       meteor.vx = Math.cos(angleRad) * speed
