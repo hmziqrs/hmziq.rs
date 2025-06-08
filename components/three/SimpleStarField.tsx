@@ -14,20 +14,26 @@ function Stars() {
     const colors = new Float32Array(count * 3)
     const sizes = new Float32Array(count)
 
+    // Use a deterministic seed-based approach for consistent values between server and client
+    const seed = (i: number) => {
+      let x = Math.sin(i * 12.9898 + 78.233) * 43758.5453
+      return x - Math.floor(x)
+    }
+
     for (let i = 0; i < count; i++) {
       const i3 = i * 3
 
-      // Position
-      const radius = 50 + Math.random() * 100
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos(2 * Math.random() - 1)
+      // Position - using deterministic pseudo-random based on index
+      const radius = 50 + seed(i) * 100
+      const theta = seed(i + 1000) * Math.PI * 2
+      const phi = Math.acos(2 * seed(i + 2000) - 1)
 
       particles[i3] = radius * Math.sin(phi) * Math.cos(theta)
       particles[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta)
       particles[i3 + 2] = radius * Math.cos(phi)
 
       // Colors - mix of white, blue, orange, and purple stars
-      const colorChoice = Math.random()
+      const colorChoice = seed(i + 3000)
       if (colorChoice < 0.5) {
         // White stars (most common)
         colors[i3] = 1
@@ -51,13 +57,13 @@ function Stars() {
       }
 
       // Sizes - small and medium only
-      const sizeRandom = Math.random()
+      const sizeRandom = seed(i + 4000)
       if (sizeRandom < 0.7) {
         // Small stars (70%)
-        sizes[i] = 1 + Math.random() * 1.5
+        sizes[i] = 1 + seed(i + 5000) * 1.5
       } else {
         // Medium stars (30%)
-        sizes[i] = 2.5 + Math.random() * 2
+        sizes[i] = 2.5 + seed(i + 6000) * 2
       }
     }
 
@@ -101,11 +107,31 @@ function Stars() {
           // Add glow effect - stronger for larger stars
           float glow = exp(-dist * 2.0) * 0.8 * (vSize / 10.0);
 
-          // Twinkle effect - more pronounced and varied per star
-          float twinkle = sin(time * 3.0 + vPosition.x * 10.0 + vPosition.y * 10.0) * 0.3 + 0.7;
-
+          // Enhanced twinkle effect with sparkles
+          float twinkleBase = sin(time * 3.0 + vPosition.x * 10.0 + vPosition.y * 10.0) * 0.3 + 0.7;
+          
+          // Sparkle effect - occasional bright flashes
+          float sparklePhase = sin(time * 15.0 + vPosition.x * 20.0 + vPosition.y * 30.0 + vPosition.z * 40.0);
+          float sparkle = 0.0;
+          if (sparklePhase > 0.98) {
+            sparkle = pow((sparklePhase - 0.98) / 0.02, 2.0) * 3.0;
+          }
+          
+          // Create spike/ray effect for sparkles
+          float spike = 0.0;
+          if (sparkle > 0.1) {
+            vec2 coord = gl_PointCoord - 0.5;
+            float angle = atan(coord.y, coord.x);
+            float rays = sin(angle * 8.0) * 0.5 + 0.5;
+            spike = rays * sparkle * (1.0 - dist * 2.0);
+          }
+          
+          float twinkle = twinkleBase + sparkle;
+          
           vec3 finalColor = vColor + glow;
-          gl_FragColor = vec4(finalColor * twinkle, alpha);
+          float finalAlpha = alpha + spike * 0.5;
+          
+          gl_FragColor = vec4(finalColor * twinkle, finalAlpha);
         }
       `,
       transparent: true,
@@ -119,8 +145,10 @@ function Stars() {
       meshRef.current.rotation.x = state.clock.elapsedTime * 0.02
       meshRef.current.rotation.y = state.clock.elapsedTime * 0.01
       // Update time uniform for twinkle effect
-      ;(meshRef.current.material as THREE.ShaderMaterial).uniforms.time.value =
-        state.clock.elapsedTime
+      const material = meshRef.current.material as THREE.ShaderMaterial
+      if (material && material.uniforms && material.uniforms.time) {
+        material.uniforms.time.value = state.clock.elapsedTime
+      }
     }
   })
 
@@ -141,7 +169,10 @@ function Nebula() {
   useFrame((state) => {
     if (mesh.current) {
       mesh.current.rotation.z = state.clock.elapsedTime * 0.005
-      ;(mesh.current.material as THREE.ShaderMaterial).uniforms.time.value = state.clock.elapsedTime
+      const material = mesh.current.material as THREE.ShaderMaterial
+      if (material && material.uniforms && material.uniforms.time) {
+        material.uniforms.time.value = state.clock.elapsedTime
+      }
     }
   })
 
@@ -202,6 +233,11 @@ function Nebula() {
 }
 
 export default function SimpleStarField() {
+  // Ensure we're on the client side
+  if (typeof window === 'undefined') {
+    return <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: 1 }} />
+  }
+
   return (
     <div className="fixed inset-0" style={{ zIndex: 1 }}>
       <Canvas camera={{ position: [0, 0, 50], fov: 75 }} style={{ background: '#000000' }}>

@@ -12,11 +12,19 @@ const StarField = dynamic(() => import('@/components/three/SimpleStarField'), {
   loading: () => <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
 })
 
+// Dynamically import 2D effects
+const MeteorShower2D = dynamic(() => import('@/components/effects/MeteorShower2D'), {
+  ssr: false
+})
+
 export default function Home() {
   return (
     <main className="relative min-h-screen">
       {/* Background star field */}
       <StarField />
+      
+      {/* 2D Meteor shower overlay */}
+      <MeteorShower2D />
       
       {/* Content sections */}
       <div className="relative" style={{ zIndex: 2 }}>
