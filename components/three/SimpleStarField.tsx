@@ -209,7 +209,7 @@ export default function SimpleStarField() {
         <pointLight position={[10, 10, 10]} intensity={0.5} />
         <Nebula />
         <Stars />
-        <SpaceRocket bounds={{ x: 50, y: 30 }} />
+        {/* <SpaceRocket bounds={{ x: 50, y: 30 }} /> */}
       </Canvas>
     </div>
   )

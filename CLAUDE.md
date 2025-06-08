@@ -32,38 +32,6 @@ This is a personal landing page for @hmziqrs (hmziq.rs domain). It's designed to
 
 **IMPORTANT**: This project uses Bun as the package manager and runtime. Always use `bun` instead of `npm` or `node`.
 
-```bash
-# Install dependencies
-bun install
-
-# Run development server
-bun dev
-
-# Build for production
-bun run build
-
-# Run production build locally
-bun start
-
-# Type checking
-bun run type-check
-
-# Linting
-bun run lint
-
-# Format code
-bun run format
-
-# Install shadcn/ui components (example)
-bunx shadcn@latest add button
-
-# Add a new dependency
-bun add <package-name>
-
-# Add a dev dependency
-bun add -d <package-name>
-```
-
 ## Project Structure
 
 ```
@@ -71,7 +39,7 @@ bun add -d <package-name>
 │   ├── layout.tsx         # Root layout with providers
 │   ├── page.tsx           # Main landing page
 │   └── globals.css        # Global styles and Tailwind v4 imports
-├── components/            
+├── components/
 │   ├── ui/                # shadcn/ui components
 │   ├── three/             # Three.js components (StarField, etc.)
 │   └── sections/          # Page sections (Hero, About, etc.)
