@@ -248,7 +248,7 @@ export default function LightNebula2D() {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
       // Calculate speed multiplier based on mouse interaction
-      const currentTime = Date.now()
+      const interactionTime = Date.now()
       let speedMultiplier = 1
 
       // Mouse movement boost (2x speed while moving)
@@ -257,7 +257,7 @@ export default function LightNebula2D() {
       }
 
       // Click boost (2.5x speed that decays over 1200ms)
-      const timeSinceClick = currentTime - clickBoostRef.current
+      const timeSinceClick = interactionTime - clickBoostRef.current
       if (timeSinceClick < 1200) {
         const clickDecay = 1 - timeSinceClick / 1200 // 1 to 0 over 1200ms
         const clickBoost = 1 + 1.5 * clickDecay // 1 to 2.5x speed
