@@ -6,7 +6,7 @@ import { useReducedMotion } from '@/hooks/useReducedMotion'
 export default function LightNebula2D() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationIdRef = useRef<number>()
-  const timeRef = useRef(0)
+  const timeRef = useRef(Math.random() * 100) // Start at random time offset
   const prefersReducedMotion = useReducedMotion()
 
   // Cloud system with movement and shape morphing
@@ -45,98 +45,65 @@ export default function LightNebula2D() {
       // Initialize clouds only once if empty
       if (cloudsRef.current.length === 0) {
         const baseSize = Math.min(canvas.width, canvas.height)
+        
+        // Helper function to generate random cloud properties
+        const createCloud = (color: string, sizeMultiplier: number, opacity: number, index: number) => {
+          // Distribute clouds across screen sections to avoid clustering
+          const sections = 3
+          const sectionX = index % sections
+          const sectionY = Math.floor(index / sections)
+          
+          // Random position within section with overlap
+          const sectionWidth = canvas.width / sections
+          const sectionHeight = canvas.height / 2
+          const overlap = 0.3 // 30% overlap between sections
+          
+          const x = (sectionX * sectionWidth * (1 - overlap)) + 
+                   (Math.random() * sectionWidth * (1 + overlap))
+          const y = (sectionY * sectionHeight * (1 - overlap)) + 
+                   (Math.random() * sectionHeight * (1 + overlap))
+          
+          // Random velocity with direction
+          const speed = 0.03 + Math.random() * 0.07
+          const angle = Math.random() * Math.PI * 2
+          const vx = Math.cos(angle) * speed
+          const vy = Math.sin(angle) * speed
+          
+          // Random shape properties
+          const scaleX = 0.6 + Math.random() * 0.8
+          const scaleY = 0.6 + Math.random() * 0.8
+          const rotation = Math.random() * Math.PI * 2
+          const rotationSpeed = (Math.random() - 0.5) * 0.0004
+          
+          // Random animation properties
+          const phase = Math.random() * Math.PI * 2
+          const morphSpeed = 0.0002 + Math.random() * 0.0003
+          
+          return {
+            x,
+            y,
+            vx,
+            vy,
+            radius: baseSize * sizeMultiplier,
+            scaleX,
+            scaleY,
+            rotation,
+            rotationSpeed,
+            color,
+            opacity,
+            phase,
+            morphSpeed,
+          }
+        }
+        
+        // Create clouds with random properties but controlled colors/sizes
         cloudsRef.current = [
-          {
-            x: canvas.width * 0.3,
-            y: canvas.height * 0.4,
-            vx: 0.1,
-            vy: 0.05,
-            radius: baseSize * 0.4,
-            scaleX: 1,
-            scaleY: 0.7,
-            rotation: 0,
-            rotationSpeed: 0.0002,
-            color: 'pink',
-            opacity: 0.09,
-            phase: 0,
-            morphSpeed: 0.0003,
-          },
-          {
-            x: canvas.width * 0.7,
-            y: canvas.height * 0.6,
-            vx: -0.08,
-            vy: 0.06,
-            radius: baseSize * 0.35,
-            scaleX: 0.8,
-            scaleY: 1.2,
-            rotation: Math.PI / 4,
-            rotationSpeed: -0.0001,
-            color: 'blue',
-            opacity: 0.06,
-            phase: Math.PI / 3,
-            morphSpeed: 0.0004,
-          },
-          {
-            x: canvas.width * 0.5,
-            y: canvas.height * 0.3,
-            vx: 0.06,
-            vy: -0.04,
-            radius: baseSize * 0.3,
-            scaleX: 1.1,
-            scaleY: 0.9,
-            rotation: Math.PI / 6,
-            rotationSpeed: 0.00015,
-            color: 'purple',
-            opacity: 0.05,
-            phase: Math.PI / 2,
-            morphSpeed: 0.0002,
-          },
-          {
-            x: canvas.width * 0.2,
-            y: canvas.height * 0.7,
-            vx: -0.05,
-            vy: -0.03,
-            radius: baseSize * 0.25,
-            scaleX: 0.9,
-            scaleY: 1.1,
-            rotation: -Math.PI / 3,
-            rotationSpeed: -0.00025,
-            color: 'cyan',
-            opacity: 0.04,
-            phase: Math.PI,
-            morphSpeed: 0.0005,
-          },
-          // Add more overlapping clouds
-          {
-            x: canvas.width * 0.6,
-            y: canvas.height * 0.5,
-            vx: 0.07,
-            vy: 0.07,
-            radius: baseSize * 0.32,
-            scaleX: 1.3,
-            scaleY: 0.8,
-            rotation: Math.PI / 8,
-            rotationSpeed: 0.0003,
-            color: 'pink',
-            opacity: 0.03,
-            phase: Math.PI * 1.5,
-            morphSpeed: 0.00035,
-          },
-          {
-            x: canvas.width * 0.4,
-            y: canvas.height * 0.6,
-            vx: -0.04,
-            vy: 0.05,
-            radius: baseSize * 0.28,
-            scaleX: 0.7,
-            scaleY: 1.4,
-            rotation: -Math.PI / 5,
-            rotationSpeed: -0.0002,
-            color: 'blue',
-            opacity: 0.04,
-            phase: Math.PI * 0.7,
-            morphSpeed: 0.00025,
-          },
+          createCloud('pink', 0.4, 0.09, 0),
+          createCloud('blue', 0.35, 0.06, 1),
+          createCloud('purple', 0.3, 0.05, 2),
+          createCloud('cyan', 0.25, 0.04, 3),
+          createCloud('pink', 0.32, 0.03, 4),
+          createCloud('blue', 0.28, 0.04, 5),
         ]
       }
 
