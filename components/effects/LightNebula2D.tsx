@@ -353,9 +353,9 @@ export default function LightNebula2D() {
         cloud.orbitCenterX += cloud.centerVelocityX
         cloud.orbitCenterY += cloud.centerVelocityY
         
-        // Dynamic orbital radius based on nearby clouds and time (more dramatic during interaction)
-        const radiusVariation = Math.sin(timeRef.current * 0.5 + cloud.phase) * 0.3 * speedMultiplierRef.current
-        const attractionRadiusChange = nearbyCloudInfluence * 30 * speedMultiplierRef.current
+        // Dynamic orbital radius - keep amplitude constant to avoid snap-back
+        const radiusVariation = Math.sin(timeRef.current * 0.5 + cloud.phase) * 0.3 // Constant amplitude
+        const attractionRadiusChange = nearbyCloudInfluence * 25 // Constant, slightly reduced
         cloud.orbitRadius = cloud.baseOrbitRadius * (1 + radiusVariation) + attractionRadiusChange
         
         // Limit maximum orbital radius to prevent clouds from going too far off screen
@@ -385,13 +385,13 @@ export default function LightNebula2D() {
         // Update rotation (faster during interaction)
         cloud.rotation += cloud.rotationSpeed * speedMultiplierRef.current
 
-        // Enhanced shape morphing based on interactions (more dramatic during interaction)
+        // Enhanced shape morphing - separate speed from amplitude to avoid snap-back
         const morphTime = timeRef.current * cloud.morphSpeed
-        const baseScaleX = 1 + Math.sin(morphTime) * (0.4 * speedMultiplierRef.current)
-        const baseScaleY = 1 + Math.cos(morphTime * 1.1) * (0.4 * speedMultiplierRef.current)
+        const baseScaleX = 1 + Math.sin(morphTime) * 0.4 // Constant amplitude
+        const baseScaleY = 1 + Math.cos(morphTime * 1.1) * 0.4 // Constant amplitude
         
-        // Additional morphing from nearby cloud interactions (enhanced during interaction)
-        const interactionMorph = nearbyCloudInfluence * 0.5 * speedMultiplierRef.current
+        // Additional morphing from nearby cloud interactions (gentle, independent of speed)
+        const interactionMorph = nearbyCloudInfluence * 0.3 // Reduced and constant
         cloud.scaleX = baseScaleX + interactionMorph
         cloud.scaleY = baseScaleY + interactionMorph * 0.7
         
