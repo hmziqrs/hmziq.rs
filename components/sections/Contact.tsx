@@ -20,7 +20,7 @@ const socialLinks: SocialLink[] = [
   {
     name: "LinkedIn",
     url: "https://linkedin.com/in/hmziqrs",
-    username: "Hamza Iqbal",
+    username: "hmziqrs",
     description: "Professional network & experience"
   },
   {
@@ -123,7 +123,7 @@ const Contact: React.FC = () => {
           variants={itemVariants}
         >
           <p className="text-gray-600 text-sm">
-            © 2025 Hamza Iqbal. Crafted with passion and attention to detail.
+            © 2025 hmziqrs. Crafted with passion and attention to detail.
           </p>
           
           {/* Scroll to top */}

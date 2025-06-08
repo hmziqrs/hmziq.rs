@@ -55,9 +55,7 @@ const Hero: React.FC = () => {
             className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tight mb-4"
             variants={itemVariants}
           >
-            <span className="text-gradient">Hamza</span>
-            <br />
-            <span className="text-white">Iqbal</span>
+            <span className="text-gradient">hmziqrs</span>
           </motion.h1>
         </motion.div>
 

@@ -9,25 +9,25 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Hamza Iqbal - Senior Software Engineer',
-  description: 'Personal landing page of Hamza Iqbal (@hmziqrs) - Senior Software Engineer with 9 years of experience in full-stack development, TypeScript, React, and modern web technologies.',
-  keywords: ['Hamza Iqbal', 'Software Engineer', 'TypeScript', 'React', 'Next.js', 'Frontend', 'Backend'],
-  authors: [{ name: 'Hamza Iqbal', url: 'https://hmziq.rs' }],
-  creator: 'Hamza Iqbal',
-  publisher: 'Hamza Iqbal',
+  title: 'hmziqrs - Senior Software Engineer',
+  description: 'Personal landing page of hmziqrs - Senior Software Engineer with 9 years of experience in full-stack development, TypeScript, React, and modern web technologies.',
+  keywords: ['hmziqrs', 'Software Engineer', 'TypeScript', 'React', 'Next.js', 'Frontend', 'Backend'],
+  authors: [{ name: 'hmziqrs', url: 'https://hmziq.rs' }],
+  creator: 'hmziqrs',
+  publisher: 'hmziqrs',
   metadataBase: new URL('https://hmziq.rs'),
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: 'https://hmziq.rs',
-    title: 'Hamza Iqbal - Senior Software Engineer',
-    description: 'Personal landing page of Hamza Iqbal (@hmziqrs) - Senior Software Engineer with 9 years of experience in full-stack development.',
+    title: 'hmziqrs - Senior Software Engineer',
+    description: 'Personal landing page of hmziqrs - Senior Software Engineer with 9 years of experience in full-stack development.',
     siteName: 'hmziq.rs',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Hamza Iqbal - Senior Software Engineer',
-    description: 'Personal landing page of Hamza Iqbal (@hmziqrs) - Senior Software Engineer with 9 years of experience in full-stack development.',
+    title: 'hmziqrs - Senior Software Engineer',
+    description: 'Personal landing page of hmziqrs - Senior Software Engineer with 9 years of experience in full-stack development.',
     creator: '@hmziqrs',
   },
   robots: {
