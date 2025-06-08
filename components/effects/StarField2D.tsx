@@ -136,6 +136,10 @@ export default function StarField2D() {
       const rotationX = elapsedTime * 0.02
       const rotationY = elapsedTime * 0.01
       
+      // Define center points
+      const centerX = canvas.width / 2
+      const centerY = canvas.height / 2
+      
       // Update and draw stars
       starsRef.current.forEach((star, index) => {
         // Apply 3D rotation (simulate X and Y rotation)
