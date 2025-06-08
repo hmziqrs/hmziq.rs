@@ -96,7 +96,7 @@ export default function MeteorShower2D() {
     }
 
     const handleClick = () => {
-      // Add click boost that decays over 1200ms
+      // Add click boost that decays over 600ms
       clickBoostRef.current = Date.now()
     }
 
@@ -200,11 +200,11 @@ export default function MeteorShower2D() {
 
       // Single acceleration source - click boost blocks all other boosts
       const timeSinceClick = interactionTime - clickBoostRef.current
-      const isClickBoostActive = timeSinceClick < 1200
-      
+      const isClickBoostActive = timeSinceClick < 600
+
       if (isClickBoostActive) {
-        // Click boost active: 1.15x speed that decays to 1x over 1200ms
-        const clickDecay = 1 - timeSinceClick / 1200
+        // Click boost active: 1.15x speed that decays to 1x over 600ms
+        const clickDecay = 1 - timeSinceClick / 600
         speedMultiplier = 1 + 0.15 * clickDecay // 1.15x → 1x smooth decay
       } else if (isMovingRef.current) {
         // Mouse/scroll boost ONLY when click boost is completely finished
@@ -253,12 +253,17 @@ export default function MeteorShower2D() {
         })
 
         // Generate sparkle particles (more when speed is accelerated)
-        const baseSpawnRate = 0.35
-        const speedBasedSpawnRate = baseSpawnRate * speedMultiplierRef.current * 20 // Increase with speed
-        const minRange = 15 + Math.floor(speedMultiplierRef.current * 35)
-        const maxParticles = Math.min(minRange + Math.floor(speedMultiplierRef.current * 10), 120) // Cap at 150
+        let spawnRate = 0.35
+        let minRange = 15
+        if (speedMultiplierRef.current > 1.005) {
+          console.log('Speed multiplier is greater than 1.005')
+          spawnRate += speedMultiplierRef.current * 20
+          minRange += speedMultiplierRef.current * 20
+        }
+        console.log('Spawn rate:', spawnRate)
+        const maxParticles = Math.min(minRange, 120) // Cap at 150
 
-        if (Math.random() < speedBasedSpawnRate && meteor.particles.length < maxParticles) {
+        if (Math.random() < spawnRate && meteor.particles.length < maxParticles) {
           const baseSparkleCount = meteor.type === 'bright' ? 2 : 1
           const speedBasedSparkleCount = Math.floor(
             baseSparkleCount * Math.min(speedMultiplierRef.current, 2)
