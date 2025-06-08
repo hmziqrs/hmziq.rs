@@ -147,7 +147,7 @@ export default function MeteorShower2D() {
 
       // Size-based speed: larger meteors = slower (0.3-0.5 range)
       const sizeRatio = (meteor.size - 0.3) / 0.7 // Normalize size to 0-1 range
-      const speed = 0.25 - sizeRatio * 0.08 // Larger size = slower: 0.25 to 0.08
+      const speed = 0.15 - sizeRatio * 0.025 // Larger size = slower: 0.25 to 0.08
 
       const angleRad = (meteor.angle * Math.PI) / 180
 
