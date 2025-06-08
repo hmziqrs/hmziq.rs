@@ -9,13 +9,18 @@ export default function LightNebula2D() {
   const timeRef = useRef(Math.random() * 100) // Start at random time offset
   const prefersReducedMotion = useReducedMotion()
 
-  // Cloud system with movement and shape morphing
+  // Cloud system with orbital movement and shape morphing
   const cloudsRef = useRef<
     {
       x: number
       y: number
-      vx: number
-      vy: number
+      orbitCenterX: number
+      orbitCenterY: number
+      orbitRadius: number
+      baseOrbitRadius: number
+      orbitAngle: number
+      orbitSpeed: number
+      orbitIndex: number // Which orbital center this belongs to
       radius: number
       scaleX: number
       scaleY: number
@@ -25,6 +30,17 @@ export default function LightNebula2D() {
       opacity: number
       phase: number
       morphSpeed: number
+      attractionInfluence: number // How much other clouds affect this one
+    }[]
+  >([])
+
+  // Orbital centers that clouds orbit around
+  const orbitalCentersRef = useRef<
+    {
+      x: number
+      y: number
+      influence: number
+      pulsePhase: number
     }[]
   >([])
 
@@ -42,48 +58,67 @@ export default function LightNebula2D() {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
 
-      // Initialize clouds only once if empty
+      // Initialize orbital centers and clouds only once if empty
       if (cloudsRef.current.length === 0) {
         const baseSize = Math.min(canvas.width, canvas.height)
         
-        // Helper function to generate random cloud properties
+        // Create 3 orbital centers
+        orbitalCentersRef.current = [
+          {
+            x: canvas.width * 0.3,
+            y: canvas.height * 0.4,
+            influence: 1.0,
+            pulsePhase: 0
+          },
+          {
+            x: canvas.width * 0.7,
+            y: canvas.height * 0.6,
+            influence: 0.8,
+            pulsePhase: Math.PI * 0.5
+          },
+          {
+            x: canvas.width * 0.5,
+            y: canvas.height * 0.3,
+            influence: 0.6,
+            pulsePhase: Math.PI
+          }
+        ]
+        
+        // Helper function to create orbital clouds
         const createCloud = (color: string, sizeMultiplier: number, opacity: number, index: number) => {
-          // Distribute clouds across screen sections to avoid clustering
-          const sections = 3
-          const sectionX = index % sections
-          const sectionY = Math.floor(index / sections)
+          // Assign cloud to an orbital center
+          const orbitIndex = index % orbitalCentersRef.current.length
+          const orbitCenter = orbitalCentersRef.current[orbitIndex]
           
-          // Random position within section with overlap
-          const sectionWidth = canvas.width / sections
-          const sectionHeight = canvas.height / 2
-          const overlap = 0.3 // 30% overlap between sections
+          // Orbital parameters
+          const baseOrbitRadius = (canvas.width + canvas.height) * (0.1 + Math.random() * 0.15)
+          const orbitAngle = Math.random() * Math.PI * 2
+          const orbitSpeed = (0.0003 + Math.random() * 0.0007) * (1 + orbitIndex * 0.3) // Different speeds per orbit
           
-          const x = (sectionX * sectionWidth * (1 - overlap)) + 
-                   (Math.random() * sectionWidth * (1 + overlap))
-          const y = (sectionY * sectionHeight * (1 - overlap)) + 
-                   (Math.random() * sectionHeight * (1 + overlap))
+          // Calculate initial position
+          const x = orbitCenter.x + Math.cos(orbitAngle) * baseOrbitRadius
+          const y = orbitCenter.y + Math.sin(orbitAngle) * baseOrbitRadius
           
-          // Random velocity with direction
-          const speed = 0.03 + Math.random() * 0.07
-          const angle = Math.random() * Math.PI * 2
-          const vx = Math.cos(angle) * speed
-          const vy = Math.sin(angle) * speed
-          
-          // Random shape properties
-          const scaleX = 0.6 + Math.random() * 0.8
-          const scaleY = 0.6 + Math.random() * 0.8
+          // Shape properties with more variation
+          const scaleX = 0.4 + Math.random() * 1.2
+          const scaleY = 0.4 + Math.random() * 1.2
           const rotation = Math.random() * Math.PI * 2
-          const rotationSpeed = (Math.random() - 0.5) * 0.0004
+          const rotationSpeed = (Math.random() - 0.5) * 0.001
           
-          // Random animation properties
+          // Animation properties
           const phase = Math.random() * Math.PI * 2
-          const morphSpeed = 0.0002 + Math.random() * 0.0003
+          const morphSpeed = 0.0001 + Math.random() * 0.0005
           
           return {
             x,
             y,
-            vx,
-            vy,
+            orbitCenterX: orbitCenter.x,
+            orbitCenterY: orbitCenter.y,
+            orbitRadius: baseOrbitRadius,
+            baseOrbitRadius,
+            orbitAngle,
+            orbitSpeed,
+            orbitIndex,
             radius: baseSize * sizeMultiplier,
             scaleX,
             scaleY,
@@ -93,6 +128,7 @@ export default function LightNebula2D() {
             opacity,
             phase,
             morphSpeed,
+            attractionInfluence: 0.2 + Math.random() * 0.3
           }
         }
         
@@ -177,34 +213,82 @@ export default function LightNebula2D() {
 
       timeRef.current += 0.01
 
-      // Update cloud properties
-      cloudsRef.current.forEach((cloud) => {
-        // Update position
-        cloud.x += cloud.vx
-        cloud.y += cloud.vy
+      // Update orbital centers with subtle pulsing
+      orbitalCentersRef.current.forEach((center) => {
+        center.pulsePhase += 0.01
+        const pulse = Math.sin(center.pulsePhase) * 0.5 + 1 // 0.5 to 1.5 range
+        center.influence = pulse
+      })
 
-        // Boundary check with wrapping
-        const margin = cloud.radius * 2
-        if (cloud.x < -margin) cloud.x = canvas.width + margin
-        if (cloud.x > canvas.width + margin) cloud.x = -margin
-        if (cloud.y < -margin) cloud.y = canvas.height + margin
-        if (cloud.y > canvas.height + margin) cloud.y = -margin
+      // Update cloud properties with orbital mechanics
+      cloudsRef.current.forEach((cloud, index) => {
+        // Get current orbital center
+        const orbitCenter = orbitalCentersRef.current[cloud.orbitIndex]
+        
+        // Update orbital angle
+        cloud.orbitAngle += cloud.orbitSpeed * orbitCenter.influence
+        
+        // Calculate attraction forces from other clouds
+        let totalAttractionX = 0
+        let totalAttractionY = 0
+        let nearbyCloudInfluence = 0
+        
+        cloudsRef.current.forEach((otherCloud, otherIndex) => {
+          if (index === otherIndex) return
+          
+          const dx = otherCloud.x - cloud.x
+          const dy = otherCloud.y - cloud.y
+          const distance = Math.sqrt(dx * dx + dy * dy)
+          const maxInfluenceDistance = cloud.radius + otherCloud.radius + 100
+          
+          if (distance < maxInfluenceDistance && distance > 0) {
+            const influence = (1 - distance / maxInfluenceDistance) * cloud.attractionInfluence
+            totalAttractionX += (dx / distance) * influence * 2
+            totalAttractionY += (dy / distance) * influence * 2
+            nearbyCloudInfluence += influence
+          }
+        })
+        
+        // Apply attraction to orbital center (clouds pull orbital centers slightly)
+        if (nearbyCloudInfluence > 0) {
+          cloud.orbitCenterX += totalAttractionX * 0.1
+          cloud.orbitCenterY += totalAttractionY * 0.1
+          
+          // Gradually return to original center
+          const originalCenter = orbitalCentersRef.current[cloud.orbitIndex]
+          cloud.orbitCenterX += (originalCenter.x - cloud.orbitCenterX) * 0.02
+          cloud.orbitCenterY += (originalCenter.y - cloud.orbitCenterY) * 0.02
+        }
+        
+        // Dynamic orbital radius based on nearby clouds and time
+        const radiusVariation = Math.sin(timeRef.current * 0.5 + cloud.phase) * 0.3
+        const attractionRadiusChange = nearbyCloudInfluence * 30
+        cloud.orbitRadius = cloud.baseOrbitRadius * (1 + radiusVariation) + attractionRadiusChange
+        
+        // Calculate new position based on orbital mechanics
+        cloud.x = cloud.orbitCenterX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius
+        cloud.y = cloud.orbitCenterY + Math.sin(cloud.orbitAngle) * cloud.orbitRadius
 
         // Update rotation
         cloud.rotation += cloud.rotationSpeed
 
-        // Morph shape using sine waves
+        // Enhanced shape morphing based on interactions
         const morphTime = timeRef.current * cloud.morphSpeed
-        cloud.scaleX = 1 + Math.sin(morphTime) * 0.3
-        cloud.scaleY = 1 + Math.cos(morphTime * 1.1) * 0.3
-
-        // Slight velocity variation for organic movement
-        cloud.vx += (Math.random() - 0.5) * 0.001
-        cloud.vy += (Math.random() - 0.5) * 0.001
-
-        // Limit velocity
-        cloud.vx = Math.max(-0.2, Math.min(0.2, cloud.vx))
-        cloud.vy = Math.max(-0.2, Math.min(0.2, cloud.vy))
+        const baseScaleX = 1 + Math.sin(morphTime) * 0.4
+        const baseScaleY = 1 + Math.cos(morphTime * 1.1) * 0.4
+        
+        // Additional morphing from nearby cloud interactions
+        const interactionMorph = nearbyCloudInfluence * 0.5
+        cloud.scaleX = baseScaleX + interactionMorph
+        cloud.scaleY = baseScaleY + interactionMorph * 0.7
+        
+        // Orbital speed changes based on distance to center
+        const distanceToCenter = Math.sqrt(
+          Math.pow(cloud.x - cloud.orbitCenterX, 2) + 
+          Math.pow(cloud.y - cloud.orbitCenterY, 2)
+        )
+        const speedMultiplier = 1 + (cloud.baseOrbitRadius - distanceToCenter) * 0.00001
+        cloud.orbitSpeed *= speedMultiplier
       })
 
       // Sort clouds by size for proper layering (smaller on top)
