@@ -318,15 +318,68 @@ export default function LightNebula2D() {
           cloud.orbitCenterX += (originalCenter.x - cloud.orbitCenterX) * returnSpeed
           cloud.orbitCenterY += (originalCenter.y - cloud.orbitCenterY) * returnSpeed
         }
+
+        // Apply boundary constraints to orbital centers
+        const margin = cloud.radius * 1.5 // Allow some orbital center movement but keep reasonable
+        const maxShift = Math.min(canvas.width, canvas.height) * 0.2 // Max 20% of screen size shift
+        const originalCenter = orbitalCentersRef.current[cloud.orbitIndex]
+        
+        // Constrain orbital center movement
+        const centerDx = cloud.orbitCenterX - originalCenter.x
+        const centerDy = cloud.orbitCenterY - originalCenter.y
+        const centerDistance = Math.sqrt(centerDx * centerDx + centerDy * centerDy)
+        
+        if (centerDistance > maxShift) {
+          const constrainFactor = maxShift / centerDistance
+          cloud.orbitCenterX = originalCenter.x + centerDx * constrainFactor
+          cloud.orbitCenterY = originalCenter.y + centerDy * constrainFactor
+        }
         
         // Dynamic orbital radius based on nearby clouds and time (more dramatic during interaction)
         const radiusVariation = Math.sin(timeRef.current * 0.5 + cloud.phase) * 0.3 * speedMultiplierRef.current
         const attractionRadiusChange = nearbyCloudInfluence * 30 * speedMultiplierRef.current
         cloud.orbitRadius = cloud.baseOrbitRadius * (1 + radiusVariation) + attractionRadiusChange
         
+        // Limit maximum orbital radius to prevent clouds from going too far off screen
+        const maxOrbitRadius = Math.min(canvas.width, canvas.height) * 0.4 // Max 40% of screen size
+        cloud.orbitRadius = Math.min(cloud.orbitRadius, maxOrbitRadius)
+        
         // Calculate new position based on orbital mechanics
         cloud.x = cloud.orbitCenterX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius
         cloud.y = cloud.orbitCenterY + Math.sin(cloud.orbitAngle) * cloud.orbitRadius
+
+        // Apply gentle boundary forces to keep clouds mostly on screen
+        const screenMargin = cloud.radius * 0.5 // Allow clouds to be half outside
+        const boundaryForce = 0.02 // Gentle correction force
+        let adjustedCenter = false
+        
+        // Left/right boundaries
+        if (cloud.x < -screenMargin) {
+          const pushForce = (-screenMargin - cloud.x) * boundaryForce
+          cloud.orbitCenterX += pushForce
+          adjustedCenter = true
+        } else if (cloud.x > canvas.width + screenMargin) {
+          const pushForce = (canvas.width + screenMargin - cloud.x) * boundaryForce
+          cloud.orbitCenterX += pushForce
+          adjustedCenter = true
+        }
+        
+        // Top/bottom boundaries
+        if (cloud.y < -screenMargin) {
+          const pushForce = (-screenMargin - cloud.y) * boundaryForce
+          cloud.orbitCenterY += pushForce
+          adjustedCenter = true
+        } else if (cloud.y > canvas.height + screenMargin) {
+          const pushForce = (canvas.height + screenMargin - cloud.y) * boundaryForce
+          cloud.orbitCenterY += pushForce
+          adjustedCenter = true
+        }
+        
+        // Recalculate position if orbital center was adjusted
+        if (adjustedCenter) {
+          cloud.x = cloud.orbitCenterX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius
+          cloud.y = cloud.orbitCenterY + Math.sin(cloud.orbitAngle) * cloud.orbitRadius
+        }
 
         // Update rotation (faster during interaction)
         cloud.rotation += cloud.rotationSpeed * speedMultiplierRef.current
