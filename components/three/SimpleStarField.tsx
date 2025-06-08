@@ -7,9 +7,9 @@ import SpaceRocket from './SpaceRocket'
 
 function Stars() {
   const meshRef = useRef<THREE.Points>(null)
-  const [screenDimensions, setScreenDimensions] = useState({ 
-    width: typeof window !== 'undefined' ? window.innerWidth : 1920, 
-    height: typeof window !== 'undefined' ? window.innerHeight : 1080 
+  const [screenDimensions, setScreenDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1920,
+    height: typeof window !== 'undefined' ? window.innerHeight : 1080,
   })
 
   // Mouse interaction state
@@ -18,7 +18,7 @@ function Stars() {
   const lastMouseMoveRef = useRef(0)
   const clickBoostRef = useRef(0)
   const mouseMoveTimeoutRef = useRef<NodeJS.Timeout>()
-  
+
   // Rotation tracking to prevent bouncing
   const rotationXRef = useRef(0)
   const rotationYRef = useRef(0)
@@ -39,7 +39,7 @@ function Stars() {
       if (mouseMoveTimeoutRef.current) {
         clearTimeout(mouseMoveTimeoutRef.current)
       }
-      
+
       mouseMoveTimeoutRef.current = setTimeout(() => {
         isMovingRef.current = false
       }, 100) // Consider stopped after 100ms of no movement
@@ -54,12 +54,12 @@ function Stars() {
       // Treat scroll like mouse movement
       handleMouseMove()
     }
-    
+
     window.addEventListener('resize', handleResize)
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('click', handleClick)
     window.addEventListener('scroll', handleScroll)
-    
+
     return () => {
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('mousemove', handleMouseMove)
@@ -76,7 +76,7 @@ function Stars() {
     const baseStarDensity = 0.6 // Stars per 1000 pixels
     const screenArea = screenDimensions.width * screenDimensions.height
     const count = Math.floor((screenArea / 1000) * baseStarDensity)
-    
+
     const particles = new Float32Array(count * 3)
     const colors = new Float32Array(count * 3)
     const sizes = new Float32Array(count)
@@ -176,14 +176,14 @@ function Stars() {
 
           // Enhanced twinkle effect with sparkles
           float twinkleBase = sin(time * 3.0 + vPosition.x * 10.0 + vPosition.y * 10.0) * 0.3 + 0.7;
-          
+
           // Sparkle effect - occasional bright flashes
           float sparklePhase = sin(time * 15.0 + vPosition.x * 20.0 + vPosition.y * 30.0 + vPosition.z * 40.0);
           float sparkle = 0.0;
           if (sparklePhase > 0.98) {
             sparkle = pow((sparklePhase - 0.98) / 0.02, 2.0) * 3.0;
           }
-          
+
           // Create spike/ray effect for sparkles
           float spike = 0.0;
           if (sparkle > 0.1) {
@@ -192,12 +192,12 @@ function Stars() {
             float rays = sin(angle * 8.0) * 0.5 + 0.5;
             spike = rays * sparkle * (1.0 - dist * 2.0);
           }
-          
+
           float twinkle = twinkleBase + sparkle;
-          
+
           vec3 finalColor = vColor + glow;
           float finalAlpha = alpha + spike * 0.5;
-          
+
           gl_FragColor = vec4(finalColor * twinkle, finalAlpha);
         }
       `,
@@ -211,7 +211,8 @@ function Stars() {
     if (meshRef.current) {
       // Calculate delta time for smooth incremental rotation
       const currentFrameTime = state.clock.elapsedTime
-      const deltaTime = lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
+      const deltaTime =
+        lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
       lastFrameTimeRef.current = currentFrameTime
 
       // Calculate speed multiplier based on mouse interaction
@@ -220,14 +221,14 @@ function Stars() {
 
       // Mouse movement boost (1.5x speed while moving)
       if (isMovingRef.current) {
-        speedMultiplier *= 1.5
+        speedMultiplier *= 4.5
       }
 
       // Click boost (1.3x speed that decays over 600ms)
       const timeSinceClick = currentTime - clickBoostRef.current
-      if (timeSinceClick < 600) {
-        const clickDecay = 1 - (timeSinceClick / 600) // 1 to 0 over 600ms
-        const clickBoost = 1 + (0.3 * clickDecay) // 1 to 1.3x speed
+      if (timeSinceClick < 1200) {
+        const clickDecay = 1 - timeSinceClick / 1200 // 1 to 0 over 1200ms
+        const clickBoost = 1 + 4.3 * clickDecay // 1 to 1.3x speed
         speedMultiplier *= clickBoost
       }
 
@@ -238,19 +239,19 @@ function Stars() {
       // Base rotation speeds
       const baseRotationSpeedX = 0.02
       const baseRotationSpeedY = 0.01
-      
+
       // Calculate incremental rotation for this frame
       const rotationIncrementX = baseRotationSpeedX * speedMultiplierRef.current * deltaTime
       const rotationIncrementY = baseRotationSpeedY * speedMultiplierRef.current * deltaTime
-      
+
       // Add incremental rotation to tracked rotation
       rotationXRef.current += rotationIncrementX
       rotationYRef.current += rotationIncrementY
-      
+
       // Apply the tracked rotation
       meshRef.current.rotation.x = rotationXRef.current
       meshRef.current.rotation.y = rotationYRef.current
-      
+
       // Update time uniform for twinkle effect
       const material = meshRef.current.material as THREE.ShaderMaterial
       if (material && material.uniforms && material.uniforms.time) {
@@ -269,7 +270,6 @@ function Stars() {
     </points>
   )
 }
-
 
 export default function SimpleStarField() {
   // Ensure we're on the client side
