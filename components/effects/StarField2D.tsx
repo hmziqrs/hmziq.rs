@@ -17,7 +17,7 @@ interface Star {
   sparkleOffset: number
 }
 
-const STAR_COUNT = 2000
+const STAR_COUNT = 1000 // Reduce density for cleaner look
 
 export default function StarField2D() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -46,15 +46,26 @@ export default function StarField2D() {
       }
       
       for (let i = 0; i < STAR_COUNT; i++) {
-        // Position - using deterministic pseudo-random based on index
-        const radius = 50 + seed(i) * 100
-        const theta = seed(i + 1000) * Math.PI * 2
-        const phi = Math.acos(2 * seed(i + 2000) - 1)
+        // Create more natural distribution with some clustering
+        let x, y
         
-        // Convert spherical to 2D projection
-        const x = radius * Math.sin(phi) * Math.cos(theta) + width / 2
-        const y = radius * Math.sin(phi) * Math.sin(theta) + height / 2
-        const z = radius * Math.cos(phi)
+        // 30% of stars in loose clusters
+        if (seed(i + 10000) < 0.3) {
+          // Pick a cluster center
+          const clusterX = seed(Math.floor(i / 20) * 1000) * width
+          const clusterY = seed(Math.floor(i / 20) * 2000) * height
+          // Add random offset from cluster center
+          const angle = seed(i + 3000) * Math.PI * 2
+          const distance = seed(i + 4000) * width * 0.1 // Cluster radius
+          x = clusterX + Math.cos(angle) * distance
+          y = clusterY + Math.sin(angle) * distance
+        } else {
+          // Rest distributed randomly
+          x = seed(i) * width * 1.2 - width * 0.1
+          y = seed(i + 1000) * height * 1.2 - height * 0.1
+        }
+        
+        const z = seed(i + 2000) // Depth for parallax
         
         // Colors - exact same as 3D version
         const colorChoice = seed(i + 3000)
@@ -88,12 +99,12 @@ export default function StarField2D() {
           x,
           y,
           z,
-          initialX: x - width / 2,
-          initialY: y - height / 2,
+          initialX: x,
+          initialY: y,
           initialZ: z,
           size,
           color,
-          brightness: 0.8 + seed(i + 7000) * 0.2,
+          brightness: 0.5 + seed(i + 7000) * 0.3, // Reduced overall brightness
           canSparkle: size > 3 && seed(i + 8000) < 0.4, // Larger stars can sparkle
           sparkleOffset: seed(i + 9000) * 40 // Random offset for sparkle timing
         })
@@ -142,28 +153,26 @@ export default function StarField2D() {
       
       // Update and draw stars
       starsRef.current.forEach((star, index) => {
-        // Apply 3D rotation (simulate X and Y rotation)
-        const cosX = Math.cos(rotationX)
-        const sinX = Math.sin(rotationX)
-        const cosY = Math.cos(rotationY)
-        const sinY = Math.sin(rotationY)
+        // Simple rotation around center for subtle movement
+        const dx = star.initialX - centerX
+        const dy = star.initialY - centerY
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        const angle = Math.atan2(dy, dx)
         
-        // Rotate around Y axis first
-        let x1 = star.initialX * cosY - star.initialZ * sinY
-        let z1 = star.initialX * sinY + star.initialZ * cosY
-        let y1 = star.initialY
+        // Slow rotation based on distance from center and depth
+        const rotSpeed = 0.0001 * (1 - star.z * 0.5) // Closer stars rotate slightly faster
+        const newAngle = angle + elapsedTime * rotSpeed
         
-        // Then rotate around X axis
-        let y2 = y1 * cosX - z1 * sinX
-        let z2 = y1 * sinX + z1 * cosX
+        star.x = centerX + Math.cos(newAngle) * distance
+        star.y = centerY + Math.sin(newAngle) * distance
         
-        // Project to 2D
-        const perspective = 300 / (300 + z2)
-        star.x = centerX + x1 * perspective
-        star.y = centerY + y2 * perspective
+        // Subtle parallax based on depth
+        const parallaxScale = 1 - star.z * 0.1
+        const px = (star.x - centerX) * parallaxScale + centerX
+        const py = (star.y - centerY) * parallaxScale + centerY
         
-        // Calculate point size based on perspective
-        const pointSize = star.size * perspective
+        // Calculate point size based on depth
+        const pointSize = star.size * (0.8 + star.z * 0.2) // Closer stars (low z) are slightly larger
         
         // Match shader twinkle effect
         const twinkleBase = Math.sin(elapsedTime * 3.0 + star.initialX * 10.0 + star.initialY * 10.0) * 0.3 + 0.7
@@ -179,33 +188,32 @@ export default function StarField2D() {
         const alpha = star.brightness * twinkle
         
         // Draw based on size
-        if (pointSize < 2) {
-          // Small stars - simple dots
-          ctx.fillStyle = `rgba(${star.color.r}, ${star.color.g}, ${star.color.b}, ${alpha})`
-          ctx.fillRect(star.x - pointSize/2, star.y - pointSize/2, pointSize, pointSize)
+        if (pointSize < 1.5) {
+          // Small stars - simple dots with reduced opacity
+          ctx.fillStyle = `rgba(${star.color.r}, ${star.color.g}, ${star.color.b}, ${alpha * 0.7})`
+          ctx.fillRect(px - pointSize/2, py - pointSize/2, pointSize, pointSize)
         } else {
-          // Larger stars with glow
-          const glowFactor = pointSize / 10.0
-          const glowSize = pointSize * 3
+          // Larger stars with subtle glow
+          const glowSize = pointSize * 2 // Reduced from 3
           
           // Main glow
-          const gradient = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, glowSize)
-          const glowIntensity = 0.8 * glowFactor
+          const gradient = ctx.createRadialGradient(px, py, 0, px, py, glowSize)
           
-          gradient.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
-          gradient.addColorStop(0.4, `rgba(${star.color.r}, ${star.color.g}, ${star.color.b}, ${alpha * 0.8})`)
+          gradient.addColorStop(0, `rgba(255, 255, 255, ${alpha * 0.9})`);
+          gradient.addColorStop(0.3, `rgba(${star.color.r}, ${star.color.g}, ${star.color.b}, ${alpha * 0.6})`)
+          gradient.addColorStop(0.6, `rgba(${star.color.r}, ${star.color.g}, ${star.color.b}, ${alpha * 0.2})`)
           gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
           
           ctx.fillStyle = gradient
-          ctx.fillRect(star.x - glowSize, star.y - glowSize, glowSize * 2, glowSize * 2)
+          ctx.fillRect(px - glowSize, py - glowSize, glowSize * 2, glowSize * 2)
           
           // Draw sparkle rays if active
-          if (sparkle > 0.1 && star.canSparkle) {
+          if (sparkle > 0.5 && star.canSparkle) { // Make sparkles less frequent
             ctx.save()
             ctx.globalCompositeOperation = 'screen'
             
             // Create 8-ray pattern like the shader
-            const spikeAlpha = sparkle * 0.5
+            const spikeAlpha = sparkle * 0.3 // Reduced intensity
             ctx.globalAlpha = spikeAlpha
             
             for (let i = 0; i < 8; i++) {
@@ -214,7 +222,7 @@ export default function StarField2D() {
               const rayWidth = pointSize * 0.1
               
               ctx.save()
-              ctx.translate(star.x, star.y)
+              ctx.translate(px, py)
               ctx.rotate(angle)
               
               // Ray gradient
