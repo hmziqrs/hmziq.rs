@@ -35,7 +35,7 @@ export default function Home() {
   return (
     <main className="relative min-h-screen">
       {/* 2D Background star field */}
-      <StarField2D />
+      <StarField3D />
 
       {/* 2D Nebula clouds - lightweight version */}
       <LightNebula2D />

@@ -1,15 +1,32 @@
 'use client'
 
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import SpaceRocket from './SpaceRocket'
 
 function Stars() {
   const meshRef = useRef<THREE.Points>(null)
+  const [screenDimensions, setScreenDimensions] = useState({ 
+    width: typeof window !== 'undefined' ? window.innerWidth : 1920, 
+    height: typeof window !== 'undefined' ? window.innerHeight : 1080 
+  })
+
+  useEffect(() => {
+    const handleResize = () => {
+      setScreenDimensions({ width: window.innerWidth, height: window.innerHeight })
+    }
+    
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const { particles, colors, sizes } = useMemo(() => {
-    const count = 2000
+    // Calculate star count based on screen dimensions
+    const baseStarDensity = 0.6 // Stars per 1000 pixels
+    const screenArea = screenDimensions.width * screenDimensions.height
+    const count = Math.floor((screenArea / 1000) * baseStarDensity)
+    
     const particles = new Float32Array(count * 3)
     const colors = new Float32Array(count * 3)
     const sizes = new Float32Array(count)
@@ -68,7 +85,7 @@ function Stars() {
     }
 
     return { particles, colors, sizes }
-  }, [])
+  }, [screenDimensions])
 
   const shaderMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
