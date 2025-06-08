@@ -322,32 +322,34 @@ export default function LightNebula2D() {
           forceY += totalAttractionY * attractionStrength
         }
         
-        // Gentle return force to original position (always active but weak)
-        const returnStrength = 0.008 // Very gentle constant return force
+        // Gentle return force to original position (slightly faster during interaction)
+        const returnStrength = 0.008 * (1 + (speedMultiplierRef.current - 1) * 0.5) // Slightly faster during interaction
         const centerDx = originalCenter.x - cloud.orbitCenterX
         const centerDy = originalCenter.y - cloud.orbitCenterY
         forceX += centerDx * returnStrength
         forceY += centerDy * returnStrength
         
-        // Boundary forces (stronger as we approach limits)
+        // Boundary forces (stronger as we approach limits, faster during interaction)
         const maxShift = Math.min(canvas.width, canvas.height) * 0.25 // Allow more movement
         const currentDistance = Math.sqrt(centerDx * centerDx + centerDy * centerDy)
         
         if (currentDistance > maxShift * 0.8) {
           const boundaryStrength = (currentDistance - maxShift * 0.8) / (maxShift * 0.2)
-          const boundaryForce = boundaryStrength * 0.02
+          const boundaryForce = boundaryStrength * 0.02 * speedMultiplierRef.current
           forceX += centerDx * boundaryForce
           forceY += centerDy * boundaryForce
         }
         
-        // Apply forces to velocity (momentum-based)
-        cloud.centerVelocityX += forceX
-        cloud.centerVelocityY += forceY
+        // Apply forces to velocity (momentum-based, faster during interaction)
+        const forceMultiplier = speedMultiplierRef.current * 0.5 + 0.5 // 0.5 to 1.75x range
+        cloud.centerVelocityX += forceX * forceMultiplier
+        cloud.centerVelocityY += forceY * forceMultiplier
         
-        // Apply damping to velocity
-        const damping = 0.92 // Gradual slowdown
-        cloud.centerVelocityX *= damping
-        cloud.centerVelocityY *= damping
+        // Apply damping to velocity (less damping during interaction for more responsiveness)
+        const baseDamping = 0.92
+        const interactiveDamping = baseDamping + (1 - baseDamping) * (speedMultiplierRef.current - 1) * 0.1
+        cloud.centerVelocityX *= Math.min(interactiveDamping, 0.98) // Cap at 0.98
+        cloud.centerVelocityY *= Math.min(interactiveDamping, 0.98)
         
         // Update orbital center position based on velocity
         cloud.orbitCenterX += cloud.centerVelocityX
@@ -366,20 +368,21 @@ export default function LightNebula2D() {
         cloud.x = cloud.orbitCenterX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius
         cloud.y = cloud.orbitCenterY + Math.sin(cloud.orbitAngle) * cloud.orbitRadius
 
-        // Apply very gentle cloud position nudging only for extreme cases
+        // Apply very gentle cloud position nudging only for extreme cases (faster during interaction)
         const screenMargin = cloud.radius * 0.3 // Allow clouds to be mostly outside
+        const nudgeStrength = 0.001 * speedMultiplierRef.current
         
         // Only apply gentle nudges if clouds are completely off screen
         if (cloud.x < -cloud.radius) {
-          cloud.centerVelocityX += 0.001
+          cloud.centerVelocityX += nudgeStrength
         } else if (cloud.x > canvas.width + cloud.radius) {
-          cloud.centerVelocityX -= 0.001
+          cloud.centerVelocityX -= nudgeStrength
         }
         
         if (cloud.y < -cloud.radius) {
-          cloud.centerVelocityY += 0.001
+          cloud.centerVelocityY += nudgeStrength
         } else if (cloud.y > canvas.height + cloud.radius) {
-          cloud.centerVelocityY -= 0.001
+          cloud.centerVelocityY -= nudgeStrength
         }
 
         // Update rotation (faster during interaction)
