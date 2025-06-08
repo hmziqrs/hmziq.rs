@@ -163,74 +163,6 @@ function Stars() {
   )
 }
 
-function Nebula() {
-  const mesh = useRef<THREE.Mesh>(null)
-
-  useFrame((state) => {
-    if (mesh.current) {
-      mesh.current.rotation.z = state.clock.elapsedTime * 0.005
-      const material = mesh.current.material as THREE.ShaderMaterial
-      if (material && material.uniforms && material.uniforms.time) {
-        material.uniforms.time.value = state.clock.elapsedTime
-      }
-    }
-  })
-
-  return (
-    <mesh ref={mesh} position={[0, 0, -30]}>
-      <planeGeometry args={[300, 300]} />
-      <shaderMaterial
-        transparent
-        blending={THREE.AdditiveBlending}
-        uniforms={{
-          time: { value: 0 },
-        }}
-        vertexShader={`
-          varying vec2 vUv;
-          void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `}
-        fragmentShader={`
-          varying vec2 vUv;
-          uniform float time;
-
-          float random(vec2 st) {
-            return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
-          }
-
-          float noise(vec2 st) {
-            vec2 i = floor(st);
-            vec2 f = fract(st);
-            float a = random(i);
-            float b = random(i + vec2(1.0, 0.0));
-            float c = random(i + vec2(0.0, 1.0));
-            float d = random(i + vec2(1.0, 1.0));
-            vec2 u = f * f * (3.0 - 2.0 * f);
-            return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-          }
-
-          void main() {
-            vec2 st = vUv * 3.0;
-            float n = noise(st + time * 0.1);
-
-            // Create nebula colors - more vibrant for debugging
-            vec3 color1 = vec3(1.0, 0.0, 0.5); // Bright pink
-            vec3 color2 = vec3(0.0, 0.5, 1.0); // Bright blue
-            vec3 nebula = mix(color1, color2, n);
-
-            // Distance from center
-            float dist = length(vUv - 0.5);
-            float alpha = (1.0 - smoothstep(0.0, 0.5, dist)) * 0.15; // Reduced opacity to 25%
-
-            gl_FragColor = vec4(nebula, alpha);
-          }
-        `}
-      />
-    </mesh>
-  )
-}
 
 export default function SimpleStarField() {
   // Ensure we're on the client side
@@ -243,7 +175,6 @@ export default function SimpleStarField() {
       <Canvas camera={{ position: [0, 0, 50], fov: 75 }} style={{ background: '#000000' }}>
         <ambientLight intensity={0.3} />
         <pointLight position={[10, 10, 10]} intensity={0.5} />
-        <Nebula />
         <Stars />
         {/* <SpaceRocket bounds={{ x: 50, y: 30 }} /> */}
       </Canvas>

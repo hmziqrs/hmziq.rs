@@ -9,12 +9,22 @@ import Contact from '@/components/sections/Contact'
 // Dynamically import Three.js components to avoid SSR issues
 const StarField = dynamic(() => import('@/components/three/SimpleStarField'), {
   ssr: false,
-  loading: () => <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
+  loading: () => (
+    <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
+  ),
 })
 
 // Dynamically import 2D effects
 const MeteorShower2D = dynamic(() => import('@/components/effects/MeteorShower2D'), {
-  ssr: false
+  ssr: false,
+})
+
+const Nebula2D = dynamic(() => import('@/components/effects/Nebula2D'), {
+  ssr: false,
+})
+
+const LightNebula2D = dynamic(() => import('@/components/effects/LightNebula2D'), {
+  ssr: false,
 })
 
 export default function Home() {
@@ -22,12 +32,15 @@ export default function Home() {
     <main className="relative min-h-screen">
       {/* Background star field */}
       <StarField />
-      
+
+      {/* 2D Nebula clouds - lightweight version */}
+      <LightNebula2D />
+
       {/* 2D Meteor shower overlay */}
       <MeteorShower2D />
-      
+
       {/* Content sections */}
-      <div className="relative" style={{ zIndex: 2 }}>
+      <div className="relative" style={{ zIndex: 10 }}>
         <Hero />
         <About />
         <Skills />

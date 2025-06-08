@@ -399,7 +399,7 @@ export default function MeteorShower2D() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 5 }}
+      style={{ zIndex: 3 }} // Above nebula (2) but below content (10)
       aria-hidden="true"
     />
   )
