@@ -541,8 +541,10 @@ export default function MeteorShower2D() {
           ctx.restore()
         })
 
-        // Outer glow
-        const glowSize = meteor.type === 'bright' ? meteor.size * 15 : meteor.size * 10
+        // Outer glow - increase size when accelerating
+        const glowBoost = speedMultiplierRef.current > 1.1 ? speedMultiplierRef.current * 0.8 : 1
+        const baseGlowSize = meteor.type === 'bright' ? meteor.size * 15 : meteor.size * 10
+        const glowSize = baseGlowSize * glowBoost
         const glowGradient = ctx.createRadialGradient(
           meteor.x,
           meteor.y,
@@ -551,30 +553,35 @@ export default function MeteorShower2D() {
           meteor.y,
           glowSize
         )
+        // Boost glow intensity when accelerating
+        const intensityBoost = speedMultiplierRef.current > 1.1 ? speedMultiplierRef.current * 0.7 : 1
+        const boostedIntensity = Math.min(meteor.glowIntensity * intensityBoost, 2) // Cap at 2x intensity
+        
         glowGradient.addColorStop(
           0,
-          `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity})`
+          `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${boostedIntensity})`
         )
         glowGradient.addColorStop(
           0.2,
-          `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.6})`
+          `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${boostedIntensity * 0.6})`
         )
         glowGradient.addColorStop(
           0.4,
-          `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.3})`
+          `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${boostedIntensity * 0.3})`
         )
         glowGradient.addColorStop(
           0.7,
-          `rgba(${meteor.glowColor.r * 0.8}, ${meteor.glowColor.g * 0.8}, ${meteor.glowColor.b * 0.8}, ${meteor.glowIntensity * 0.1})`
+          `rgba(${meteor.glowColor.r * 0.8}, ${meteor.glowColor.g * 0.8}, ${meteor.glowColor.b * 0.8}, ${boostedIntensity * 0.1})`
         )
         glowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
 
         ctx.fillStyle = glowGradient
         ctx.fillRect(meteor.x - glowSize, meteor.y - glowSize, glowSize * 2, glowSize * 2)
 
-        // Inner core
-        const coreSize =
-          meteor.type === 'bright' ? 3.0 + meteor.size * 2.5 : 2.5 + meteor.size * 2.0
+        // Inner core - also boost size when accelerating
+        const coreSizeBoost = speedMultiplierRef.current > 1.1 ? 1 + (speedMultiplierRef.current - 1) * 0.3 : 1
+        const baseCoreSize = meteor.type === 'bright' ? 3.0 + meteor.size * 2.5 : 2.5 + meteor.size * 2.0
+        const coreSize = baseCoreSize * coreSizeBoost
         const coreGradient = ctx.createRadialGradient(
           meteor.x,
           meteor.y,
@@ -584,23 +591,26 @@ export default function MeteorShower2D() {
           coreSize
         )
 
+        // Make core brighter when accelerating
+        const brightBoost = speedMultiplierRef.current > 1.1 ? 1.2 : 1
+        
         if (meteor.type === 'warm') {
-          coreGradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
-          coreGradient.addColorStop(0.3, `rgba(255, 245, 230, 0.9)`)
+          coreGradient.addColorStop(0, `rgba(255, 255, 255, ${brightBoost})`)
+          coreGradient.addColorStop(0.3, `rgba(255, 245, 230, ${0.9 * brightBoost})`)
           coreGradient.addColorStop(
             0.6,
-            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.7)`
+            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, ${0.7 * brightBoost})`
           )
           coreGradient.addColorStop(
             1,
             `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, 0)`
           )
         } else if (meteor.type === 'cool') {
-          coreGradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
-          coreGradient.addColorStop(0.3, `rgba(240, 248, 255, 0.9)`)
+          coreGradient.addColorStop(0, `rgba(255, 255, 255, ${brightBoost})`)
+          coreGradient.addColorStop(0.3, `rgba(240, 248, 255, ${0.9 * brightBoost})`)
           coreGradient.addColorStop(
             0.6,
-            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.7)`
+            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, ${0.7 * brightBoost})`
           )
           coreGradient.addColorStop(
             1,
@@ -608,11 +618,11 @@ export default function MeteorShower2D() {
           )
         } else {
           // Bright type
-          coreGradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
-          coreGradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.9)')
+          coreGradient.addColorStop(0, `rgba(255, 255, 255, ${brightBoost})`)
+          coreGradient.addColorStop(0.4, `rgba(255, 255, 255, ${0.9 * brightBoost})`)
           coreGradient.addColorStop(
             0.7,
-            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.6)`
+            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, ${0.6 * brightBoost})`
           )
           coreGradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
         }
