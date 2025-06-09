@@ -30,6 +30,7 @@ interface Meteor {
   size: number
   speed: number
   angle: number
+  curve: number // Curve intensity for arc motion
   color: {
     r: number
     g: number
@@ -121,6 +122,7 @@ export default function MeteorShower2D() {
       size: 1,
       speed: 1,
       angle: 0,
+      curve: 0,
       color: { r: 255, g: 255, b: 255 },
       glowColor: { r: 255, g: 255, b: 255 },
       glowIntensity: 1,
@@ -131,16 +133,23 @@ export default function MeteorShower2D() {
 
     // Spawn a meteor
     const spawnMeteor = (meteor: Meteor) => {
-      const side = Math.random() < 0.7 ? 'top' : 'right'
-
-      if (side === 'top') {
+      const spawnType = Math.random()
+      
+      if (spawnType < 0.6) {
+        // Top spawn - anywhere across the top
         meteor.x = Math.random() * canvas.width
-        meteor.y = -20 // Start further off screen for fast meteors
-        meteor.angle = 50 + Math.random() * 25 // 50-75 degrees - slightly more downward
+        meteor.y = -20
+        meteor.angle = 60 + Math.random() * 60 // 60-120 degrees - always downward
+      } else if (spawnType < 0.8) {
+        // Left side spawn - upper portion only
+        meteor.x = -20
+        meteor.y = Math.random() * canvas.height * 0.3
+        meteor.angle = 30 + Math.random() * 40 // 30-70 degrees - downward and right
       } else {
+        // Right side spawn - upper portion only
         meteor.x = canvas.width + 20
-        meteor.y = Math.random() * canvas.height * 0.5
-        meteor.angle = 140 + Math.random() * 20 // 140-160 degrees - slightly more focused
+        meteor.y = Math.random() * canvas.height * 0.3
+        meteor.angle = 110 + Math.random() * 40 // 110-150 degrees - downward and left
       }
 
       meteor.size = 0.3 + Math.random() * 0.7 // Reduced from 0.5-2.0 to 0.3-1.0
@@ -155,11 +164,13 @@ export default function MeteorShower2D() {
       meteor.vy = Math.sin(angleRad) * speed
       meteor.speed = speed
       meteor.life = 0
+      
+      // Set curve intensity - random between -0.15 to 0.15 for subtle horizontal drift
+      meteor.curve = (Math.random() - 0.5) * 0.3
 
-      // Calculate lifetime based on screen diagonal distance and speed
-      const screenDiagonal = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height)
-      const travelDistance = screenDiagonal * 1.2 // Adjusted for faster meteors
-      meteor.maxLife = Math.floor(travelDistance / speed) // Frames needed to travel off screen
+      // Calculate lifetime based on expected travel distance
+      const maxTravelDistance = Math.max(canvas.width, canvas.height) * 1.5
+      meteor.maxLife = Math.floor(maxTravelDistance / speed) // Frames needed to travel off screen
 
       meteor.trail = []
       meteor.particles = []
@@ -228,8 +239,11 @@ export default function MeteorShower2D() {
       meteorsRef.current.forEach((meteor) => {
         if (!meteor.active) return
 
-        // Update position with speed multiplier
-        meteor.x += meteor.vx * speedMultiplierRef.current
+        // Apply horizontal curve only to ensure downward movement
+        const curveOffset = meteor.curve * meteor.life * 0.01
+        
+        // Update position with speed multiplier and horizontal curve
+        meteor.x += meteor.vx * speedMultiplierRef.current + curveOffset
         meteor.y += meteor.vy * speedMultiplierRef.current
 
         // Update trail
