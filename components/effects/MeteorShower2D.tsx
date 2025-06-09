@@ -96,7 +96,7 @@ export default function MeteorShower2D() {
 
       mouseMoveTimeoutRef.current = setTimeout(() => {
         isMovingRef.current = false
-      }, 100) // Consider stopped after 100ms of no movement
+      }, 150) // Consider stopped after 150ms of no movement
     }
 
     const handleClick = () => {
@@ -259,26 +259,30 @@ export default function MeteorShower2D() {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
       // Calculate speed multiplier based on mouse interaction
-      const interactionTime = Date.now()
-      let speedMultiplier = 1
+      const currentTime = Date.now()
+      let targetMultiplier = 1
 
-      // Single acceleration source - click boost blocks all other boosts
-      const timeSinceClick = interactionTime - clickBoostRef.current
-      const isClickBoostActive = timeSinceClick < 600
+      // Check for active interactions
+      const timeSinceClick = currentTime - clickBoostRef.current
+      const isClickActive = timeSinceClick < 600 && clickBoostRef.current > 0
 
-      if (isClickBoostActive) {
-        // Click boost active: 1.15x speed that decays to 1x over 600ms
-        const clickDecay = 1 - timeSinceClick / 600
-        speedMultiplier = 1 + 0.15 * clickDecay // 1.15x → 1x smooth decay
+      if (isClickActive) {
+        // Click boost with smooth decay
+        const decay = 1 - timeSinceClick / 600
+        targetMultiplier = 1 + 1.5 * decay // 2.5x → 1x over 600ms
       } else if (isMovingRef.current) {
-        // Mouse/scroll boost ONLY when click boost is completely finished
-        speedMultiplier = 1.15 // Consistent 1.15x speed while moving
+        // Mouse/scroll movement boost
+        targetMultiplier = 1.8 // 1.8x speed while moving
       }
-      // else speedMultiplier stays at 1 (no interaction)
 
-      // Smooth transition for speed changes to prevent bounce-back
-      const targetSpeed = speedMultiplier
-      speedMultiplierRef.current += (targetSpeed - speedMultiplierRef.current) * 0.2
+      // Smooth transition to prevent jumps
+      const smoothingFactor = 0.15
+      speedMultiplierRef.current += (targetMultiplier - speedMultiplierRef.current) * smoothingFactor
+      
+      // Ensure exact 1.0 when no interactions
+      if (targetMultiplier === 1 && Math.abs(speedMultiplierRef.current - 1) < 0.001) {
+        speedMultiplierRef.current = 1
+      }
 
       // Spawn new meteors
       if (Math.random() < SPAWN_RATE) {
@@ -344,25 +348,24 @@ export default function MeteorShower2D() {
         })
 
         // Generate sparkle particles (more when speed is accelerated)
-        let spawnRate = 0.35
-        let minRange = 15
-        if (speedMultiplierRef.current > 1.005) {
-          spawnRate += speedMultiplierRef.current * 20
-          minRange += speedMultiplierRef.current * 20
-        }
-        const maxParticles = Math.min(minRange, 120) // Cap at 120
-
+        const baseSpawnRate = 0.35
+        const baseMaxParticles = 15
+        
+        // Increase particle generation when accelerated
+        const particleBoost = speedMultiplierRef.current > 1.05 ? speedMultiplierRef.current : 1
+        const spawnRate = baseSpawnRate * particleBoost
+        const maxParticles = Math.floor(baseMaxParticles * particleBoost * 2) // More capacity when fast
+        
         if (Math.random() < spawnRate && meteor.particles.length < maxParticles) {
           const baseSparkleCount = meteor.type === 'bright' ? 2 : 1
-          const speedBasedSparkleCount = Math.floor(
-            baseSparkleCount * Math.min(speedMultiplierRef.current, 2)
-          ) // More particles when fast
-          for (let i = 0; i < speedBasedSparkleCount; i++) {
+          const sparkleCount = Math.ceil(baseSparkleCount * particleBoost)
+          
+          for (let i = 0; i < sparkleCount; i++) {
             meteor.particles.push({
               x: meteor.x + (Math.random() - 0.5) * meteor.size * 4, // Wider spawn area
               y: meteor.y + (Math.random() - 0.5) * meteor.size * 4, // Wider spawn area
-              vx: (Math.random() - 0.5) * 1.2 - meteor.vx * 0.3, // Adjusted for 9x speed meteors
-              vy: (Math.random() - 0.5) * 1.2 - meteor.vy * 0.3, // Adjusted for 9x speed meteors
+              vx: (Math.random() - 0.5) * 1.2 - meteor.vx * 0.5, // Trail behind meteor
+              vy: (Math.random() - 0.5) * 1.2 - meteor.vy * 0.5, // Trail behind meteor
               life: 0,
               size: meteor.size * (0.15 + Math.random() * 0.25),
               color: { ...meteor.color },
@@ -370,11 +373,11 @@ export default function MeteorShower2D() {
           }
         }
 
-        // Update particles
+        // Update particles with speed multiplier
         meteor.particles = meteor.particles.filter((particle) => {
-          particle.x += particle.vx
-          particle.y += particle.vy
-          particle.life++
+          particle.x += particle.vx * speedMultiplierRef.current
+          particle.y += particle.vy * speedMultiplierRef.current
+          particle.life += speedMultiplierRef.current
           return particle.life < 60 // Extended particle life for better spread visibility
         })
 
