@@ -541,8 +541,13 @@ export default function MeteorShower2D() {
           ctx.restore()
         })
 
-        // Outer glow - increase size when accelerating
-        const glowBoost = speedMultiplierRef.current > 1.1 ? speedMultiplierRef.current * 0.8 : 1
+        // Outer glow - increase size when accelerating (more for smaller meteors)
+        // Small meteors (0.3) get 2.0x boost factor, large meteors (1.3) get 0.3x boost factor
+        const sizeNormalized = (meteor.size - 0.3) / 1.0 // 0 to 1 range
+        const sizeBasedBoostFactor = 2.0 - (sizeNormalized * 1.7) // 2.0 to 0.3
+        const glowBoost = speedMultiplierRef.current > 1.1 ? 
+          1 + (speedMultiplierRef.current - 1) * sizeBasedBoostFactor : 1
+        
         const baseGlowSize = meteor.type === 'bright' ? meteor.size * 15 : meteor.size * 10
         const glowSize = baseGlowSize * glowBoost
         const glowGradient = ctx.createRadialGradient(
@@ -553,9 +558,11 @@ export default function MeteorShower2D() {
           meteor.y,
           glowSize
         )
-        // Boost glow intensity when accelerating
-        const intensityBoost = speedMultiplierRef.current > 1.1 ? speedMultiplierRef.current * 0.7 : 1
-        const boostedIntensity = Math.min(meteor.glowIntensity * intensityBoost, 2) // Cap at 2x intensity
+        // Boost glow intensity when accelerating (more for smaller meteors)
+        const intensityBoostFactor = 1.5 - (sizeNormalized * 1.2) // 1.5 to 0.3 for intensity
+        const intensityBoost = speedMultiplierRef.current > 1.1 ? 
+          1 + (speedMultiplierRef.current - 1) * intensityBoostFactor : 1
+        const boostedIntensity = Math.min(meteor.glowIntensity * intensityBoost, 3.0) // Cap at 3x intensity
         
         glowGradient.addColorStop(
           0,
@@ -578,8 +585,10 @@ export default function MeteorShower2D() {
         ctx.fillStyle = glowGradient
         ctx.fillRect(meteor.x - glowSize, meteor.y - glowSize, glowSize * 2, glowSize * 2)
 
-        // Inner core - also boost size when accelerating
-        const coreSizeBoost = speedMultiplierRef.current > 1.1 ? 1 + (speedMultiplierRef.current - 1) * 0.3 : 1
+        // Inner core - also boost size when accelerating (more for smaller meteors)
+        const coreSizeBoostFactor = 0.8 - (sizeNormalized * 0.6) // 0.8 to 0.2 for core
+        const coreSizeBoost = speedMultiplierRef.current > 1.1 ? 
+          1 + (speedMultiplierRef.current - 1) * coreSizeBoostFactor : 1
         const baseCoreSize = meteor.type === 'bright' ? 3.0 + meteor.size * 2.5 : 2.5 + meteor.size * 2.0
         const coreSize = baseCoreSize * coreSizeBoost
         const coreGradient = ctx.createRadialGradient(
@@ -591,8 +600,10 @@ export default function MeteorShower2D() {
           coreSize
         )
 
-        // Make core brighter when accelerating
-        const brightBoost = speedMultiplierRef.current > 1.1 ? 1.2 : 1
+        // Make core brighter when accelerating (more for smaller meteors)
+        const brightBoostFactor = 0.6 - (sizeNormalized * 0.45) // 0.6 to 0.15 for brightness
+        const brightBoost = speedMultiplierRef.current > 1.1 ? 
+          1 + (speedMultiplierRef.current - 1) * brightBoostFactor : 1
         
         if (meteor.type === 'warm') {
           coreGradient.addColorStop(0, `rgba(255, 255, 255, ${brightBoost})`)
