@@ -30,7 +30,10 @@ interface Meteor {
   size: number
   speed: number
   angle: number
-  curve: number // Curve intensity for arc motion
+  startX: number // Starting X position
+  startY: number // Starting Y position
+  endX: number // Predetermined end X position at bottom
+  endY: number // Predetermined end Y position at bottom
   color: {
     r: number
     g: number
@@ -122,7 +125,10 @@ export default function MeteorShower2D() {
       size: 1,
       speed: 1,
       angle: 0,
-      curve: 0,
+      startX: 0,
+      startY: 0,
+      endX: 0,
+      endY: 0,
       color: { r: 255, g: 255, b: 255 },
       glowColor: { r: 255, g: 255, b: 255 },
       glowIntensity: 1,
@@ -134,43 +140,90 @@ export default function MeteorShower2D() {
     // Spawn a meteor
     const spawnMeteor = (meteor: Meteor) => {
       const spawnType = Math.random()
+      const centerX = canvas.width / 2
+      const bottomY = canvas.height + 50
       
-      if (spawnType < 0.6) {
-        // Top spawn - anywhere across the top
-        meteor.x = Math.random() * canvas.width
-        meteor.y = -20
-        meteor.angle = 60 + Math.random() * 60 // 60-120 degrees - always downward
-      } else if (spawnType < 0.8) {
-        // Left side spawn - upper portion only
-        meteor.x = -20
-        meteor.y = Math.random() * canvas.height * 0.3
-        meteor.angle = 30 + Math.random() * 40 // 30-70 degrees - downward and right
+      // ALGORITHM: Predetermine EXACT end position at spawn time
+      
+      if (spawnType < 0.8) {
+        // Top spawn - distributed across top (80% of meteors)
+        meteor.startX = Math.random() * canvas.width
+        meteor.startY = -20
+        
+        // Determine which side of center
+        const isLeftSide = meteor.startX < centerX
+        const distanceFromCenter = Math.abs(meteor.startX - centerX)
+        const canCross = distanceFromCenter < centerX * 0.1 // Within 10% of center
+        
+        // CALCULATE EXACT END POSITION
+        if (canCross) {
+          // Can cross center by up to 15%
+          const crossAmount = centerX * 0.15
+          meteor.endX = isLeftSide ? 
+            centerX + Math.random() * crossAmount : 
+            centerX - Math.random() * crossAmount
+        } else {
+          // MUST NOT CROSS CENTER
+          if (isLeftSide) {
+            // Left side: converge toward center but stop before
+            const maxEndX = centerX - 10 // Hard boundary
+            const minEndX = meteor.startX // Can't go backwards
+            const idealEndX = meteor.startX + distanceFromCenter * 0.6 // Travel 60% toward center
+            meteor.endX = Math.min(maxEndX, minEndX + Math.random() * (idealEndX - minEndX))
+          } else {
+            // Right side: converge toward center but stop after
+            const minEndX = centerX + 10 // Hard boundary
+            const maxEndX = meteor.startX // Can't go backwards
+            const idealEndX = meteor.startX - distanceFromCenter * 0.6 // Travel 60% toward center
+            meteor.endX = Math.max(minEndX, maxEndX - Math.random() * (maxEndX - idealEndX))
+          }
+        }
+        
+      } else if (spawnType < 0.9) {
+        // Left side spawn (10% of meteors)
+        meteor.startX = -20
+        meteor.startY = Math.random() * canvas.height * 0.3
+        
+        // MUST END LEFT OF CENTER
+        meteor.endX = centerX * 0.2 + Math.random() * centerX * 0.6 // 10-40% of screen width
+        
       } else {
-        // Right side spawn - upper portion only
-        meteor.x = canvas.width + 20
-        meteor.y = Math.random() * canvas.height * 0.3
-        meteor.angle = 110 + Math.random() * 40 // 110-150 degrees - downward and left
+        // Right side spawn (10% of meteors)
+        meteor.startX = canvas.width + 20
+        meteor.startY = Math.random() * canvas.height * 0.3
+        
+        // MUST END RIGHT OF CENTER
+        meteor.endX = centerX * 1.2 + Math.random() * centerX * 0.6 // 60-90% of screen width
       }
+      
+      // Set end Y and initial position
+      meteor.endY = bottomY
+      meteor.x = meteor.startX
+      meteor.y = meteor.startY
 
       meteor.size = 0.3 + Math.random() * 0.7 // Reduced from 0.5-2.0 to 0.3-1.0
 
       // Size-based speed: larger meteors = slower
       const sizeRatio = (meteor.size - 0.3) / 0.7 // Normalize size to 0-1 range
       const speed = 1.35 - sizeRatio * 0.225 // Larger size = slower: 1.35 to 1.125 (9x faster)
-
-      const angleRad = (meteor.angle * Math.PI) / 180
-
-      meteor.vx = Math.cos(angleRad) * speed
-      meteor.vy = Math.sin(angleRad) * speed
       meteor.speed = speed
+      
+      // Calculate total distance for this predetermined path
+      const dx = meteor.endX - meteor.startX
+      const dy = meteor.endY - meteor.startY
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      
+      // Calculate lifetime based on distance and speed
+      meteor.maxLife = Math.floor(distance / speed)
       meteor.life = 0
       
-      // Set curve intensity - random between -0.15 to 0.15 for subtle horizontal drift
-      meteor.curve = (Math.random() - 0.5) * 0.3
-
-      // Calculate lifetime based on expected travel distance
-      const maxTravelDistance = Math.max(canvas.width, canvas.height) * 1.5
-      meteor.maxLife = Math.floor(maxTravelDistance / speed) // Frames needed to travel off screen
+      // Calculate initial angle for visual reference
+      meteor.angle = Math.atan2(dy, dx) * 180 / Math.PI
+      
+      // Set initial velocity for first frame particles
+      const angleRad = meteor.angle * Math.PI / 180
+      meteor.vx = Math.cos(angleRad) * speed
+      meteor.vy = Math.sin(angleRad) * speed
 
       meteor.trail = []
       meteor.particles = []
@@ -239,12 +292,35 @@ export default function MeteorShower2D() {
       meteorsRef.current.forEach((meteor) => {
         if (!meteor.active) return
 
-        // Apply horizontal curve only to ensure downward movement
-        const curveOffset = meteor.curve * meteor.life * 0.01
+        // Store previous position for velocity calculation
+        const prevX = meteor.x
+        const prevY = meteor.y
         
-        // Update position with speed multiplier and horizontal curve
-        meteor.x += meteor.vx * speedMultiplierRef.current + curveOffset
-        meteor.y += meteor.vy * speedMultiplierRef.current
+        // Update life progress with speed multiplier
+        meteor.life += speedMultiplierRef.current
+        const t = Math.min(meteor.life / meteor.maxLife, 1) // Progress from 0 to 1, capped at 1
+        
+        // Use quadratic Bezier curve for smooth arc
+        // Control point creates the curve
+        const isLeftSide = meteor.startX < canvas.width / 2
+        const controlX = isLeftSide ? 
+          meteor.startX + (meteor.endX - meteor.startX) * 0.8 : // Left side curves right
+          meteor.startX + (meteor.endX - meteor.startX) * 0.2  // Right side curves left
+        const controlY = meteor.startY + (meteor.endY - meteor.startY) * 0.6
+        
+        // Quadratic Bezier interpolation
+        const oneMinusT = 1 - t
+        meteor.x = oneMinusT * oneMinusT * meteor.startX + 
+                   2 * oneMinusT * t * controlX + 
+                   t * t * meteor.endX
+        
+        meteor.y = oneMinusT * oneMinusT * meteor.startY + 
+                   2 * oneMinusT * t * controlY + 
+                   t * t * meteor.endY
+                   
+        // Calculate current velocity for particles
+        meteor.vx = meteor.x - prevX
+        meteor.vy = meteor.y - prevY
 
         // Update trail
         meteor.trail.unshift({
@@ -302,18 +378,11 @@ export default function MeteorShower2D() {
           return particle.life < 60 // Extended particle life for better spread visibility
         })
 
-        // Update life
-        meteor.life++
-        const lifeRatio = meteor.life / meteor.maxLife
+        // Check life ratio
+        const lifeRatio = t
 
-        // Deactivate only when truly off screen with margin
-        const margin = 100 + meteor.size * 20 // Larger margin for glow
-        if (
-          meteor.x < -margin ||
-          meteor.x > canvas.width + margin ||
-          meteor.y > canvas.height + margin ||
-          meteor.life > meteor.maxLife
-        ) {
+        // Deactivate when reached end of predetermined path
+        if (t >= 1 || meteor.life >= meteor.maxLife) {
           meteor.active = false
           return
         }
@@ -552,16 +621,10 @@ export default function MeteorShower2D() {
 
         ctx.restore()
 
-        // Only fade out when very close to screen edge or end of life
-        const edgeDistance = Math.min(
-          meteor.x + margin,
-          canvas.width + margin - meteor.x,
-          canvas.height + margin - meteor.y
-        )
-
-        if (edgeDistance < 50 || lifeRatio > 0.9) {
-          const fadeOpacity = edgeDistance < 50 ? edgeDistance / 50 : 1 - (lifeRatio - 0.9) / 0.1
-
+        // Fade out near end of life
+        if (lifeRatio > 0.9) {
+          const fadeOpacity = 1 - (lifeRatio - 0.9) / 0.1
+          
           // Preserve type-based intensity while fading
           const baseIntensity =
             meteor.type === 'bright' ? 1.35 : meteor.type === 'warm' ? 1.1 : 0.95
