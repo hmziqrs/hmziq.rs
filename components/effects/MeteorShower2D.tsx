@@ -47,8 +47,8 @@ interface Meteor {
 }
 
 const METEOR_COUNT = 20
-const TRAIL_LENGTH = 30 // Longer trails for slower meteors
-const SPAWN_RATE = 0.035 // Higher spawn rate since meteors are slower
+const BASE_TRAIL_LENGTH = 34 // Base trail length, reduced by 15%
+const SPAWN_RATE = 0.06 // Increased spawn rate for very fast meteors
 
 export default function MeteorShower2D() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -135,19 +135,19 @@ export default function MeteorShower2D() {
 
       if (side === 'top') {
         meteor.x = Math.random() * canvas.width
-        meteor.y = -10
-        meteor.angle = 45 + Math.random() * 30 // 45-75 degrees
+        meteor.y = -20 // Start further off screen for fast meteors
+        meteor.angle = 50 + Math.random() * 25 // 50-75 degrees - slightly more downward
       } else {
-        meteor.x = canvas.width + 10
+        meteor.x = canvas.width + 20
         meteor.y = Math.random() * canvas.height * 0.5
-        meteor.angle = 135 + Math.random() * 30 // 135-165 degrees
+        meteor.angle = 140 + Math.random() * 20 // 140-160 degrees - slightly more focused
       }
 
       meteor.size = 0.3 + Math.random() * 0.7 // Reduced from 0.5-2.0 to 0.3-1.0
 
-      // Size-based speed: larger meteors = slower (0.3-0.5 range)
+      // Size-based speed: larger meteors = slower
       const sizeRatio = (meteor.size - 0.3) / 0.7 // Normalize size to 0-1 range
-      const speed = 0.15 - sizeRatio * 0.025 // Larger size = slower: 0.25 to 0.08
+      const speed = 1.35 - sizeRatio * 0.225 // Larger size = slower: 1.35 to 1.125 (9x faster)
 
       const angleRad = (meteor.angle * Math.PI) / 180
 
@@ -158,8 +158,8 @@ export default function MeteorShower2D() {
 
       // Calculate lifetime based on screen diagonal distance and speed
       const screenDiagonal = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height)
-      const travelDistance = screenDiagonal * 1.5 // Extra margin to ensure it goes off screen
-      meteor.maxLife = Math.floor(travelDistance / speed) + 60 // Extra frames for margin
+      const travelDistance = screenDiagonal * 1.2 // Adjusted for faster meteors
+      meteor.maxLife = Math.floor(travelDistance / speed) // Frames needed to travel off screen
 
       meteor.trail = []
       meteor.particles = []
@@ -184,7 +184,7 @@ export default function MeteorShower2D() {
         meteor.color = { r: 255, g: 255, b: 255 }
         meteor.glowColor = { r: 200, g: 220, b: 255 }
         meteor.glowIntensity = 1.2 + Math.random() * 0.3
-        meteor.size *= 1.2 // Slightly bigger, but not too much
+        meteor.size *= 1.3 // Bigger for visibility at high speed
       }
 
       meteor.active = true
@@ -232,9 +232,6 @@ export default function MeteorShower2D() {
         meteor.x += meteor.vx * speedMultiplierRef.current
         meteor.y += meteor.vy * speedMultiplierRef.current
 
-        // Add very slight gravity effect for natural arc (also affected by speed)
-        meteor.vy += 0.01 * speedMultiplierRef.current // Minimal gravity for slow, graceful movement
-
         // Update trail
         meteor.trail.unshift({
           x: meteor.x,
@@ -242,26 +239,28 @@ export default function MeteorShower2D() {
           opacity: 1,
         })
 
+        // Size-based trail length: larger meteors have longer trails but capped
+        const trailMultiplier = Math.min(0.5 + meteor.size, 1.2) // Cap at 1.2x for large meteors
+        const meteorTrailLength = Math.floor(BASE_TRAIL_LENGTH * trailMultiplier)
+        
         // Limit trail length
-        if (meteor.trail.length > TRAIL_LENGTH) {
+        if (meteor.trail.length > meteorTrailLength) {
           meteor.trail.pop()
         }
 
         // Update trail opacity
         meteor.trail.forEach((point, i) => {
-          point.opacity = 1 - i / TRAIL_LENGTH
+          point.opacity = 1 - i / meteorTrailLength
         })
 
         // Generate sparkle particles (more when speed is accelerated)
         let spawnRate = 0.35
         let minRange = 15
         if (speedMultiplierRef.current > 1.005) {
-          console.log('Speed multiplier is greater than 1.005')
           spawnRate += speedMultiplierRef.current * 20
           minRange += speedMultiplierRef.current * 20
         }
-        console.log('Spawn rate:', spawnRate)
-        const maxParticles = Math.min(minRange, 120) // Cap at 150
+        const maxParticles = Math.min(minRange, 120) // Cap at 120
 
         if (Math.random() < spawnRate && meteor.particles.length < maxParticles) {
           const baseSparkleCount = meteor.type === 'bright' ? 2 : 1
@@ -272,8 +271,8 @@ export default function MeteorShower2D() {
             meteor.particles.push({
               x: meteor.x + (Math.random() - 0.5) * meteor.size * 4, // Wider spawn area
               y: meteor.y + (Math.random() - 0.5) * meteor.size * 4, // Wider spawn area
-              vx: (Math.random() - 0.5) * 0.8 - meteor.vx * 0.08, // Increased spread and opposing force
-              vy: (Math.random() - 0.5) * 0.8 - meteor.vy * 0.08, // Increased spread and opposing force
+              vx: (Math.random() - 0.5) * 1.2 - meteor.vx * 0.3, // Adjusted for 9x speed meteors
+              vy: (Math.random() - 0.5) * 1.2 - meteor.vy * 0.3, // Adjusted for 9x speed meteors
               life: 0,
               size: meteor.size * (0.15 + Math.random() * 0.25),
               color: { ...meteor.color },
@@ -285,7 +284,6 @@ export default function MeteorShower2D() {
         meteor.particles = meteor.particles.filter((particle) => {
           particle.x += particle.vx
           particle.y += particle.vy
-          particle.vy += 0.005 // Very light gravity for particles
           particle.life++
           return particle.life < 60 // Extended particle life for better spread visibility
         })
@@ -323,20 +321,20 @@ export default function MeteorShower2D() {
             `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, 0)`
           )
           gradient.addColorStop(
-            0.3,
-            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.2)`
+            0.2,
+            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.3)`
           )
           gradient.addColorStop(
-            0.7,
-            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.5)`
+            0.5,
+            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.6)`
           )
           gradient.addColorStop(
             1,
-            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.8)`
+            `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.9)`
           )
 
           ctx.strokeStyle = gradient
-          ctx.lineWidth = meteor.size * 2
+          ctx.lineWidth = Math.min(meteor.size * 3, 2.5) // Cap thickness at 2.5 for large meteors
           ctx.lineCap = 'round'
           ctx.lineJoin = 'round'
           ctx.globalCompositeOperation = 'screen'
@@ -490,7 +488,7 @@ export default function MeteorShower2D() {
 
         // Inner core
         const coreSize =
-          meteor.type === 'bright' ? 2.5 + meteor.size * 2.14 : 2.0 + meteor.size * 1.43
+          meteor.type === 'bright' ? 3.0 + meteor.size * 2.5 : 2.5 + meteor.size * 2.0
         const coreGradient = ctx.createRadialGradient(
           meteor.x,
           meteor.y,
