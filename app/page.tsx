@@ -7,7 +7,7 @@ import Skills from '@/components/sections/Skills'
 import Contact from '@/components/sections/Contact'
 
 // Dynamically import Three.js components to avoid SSR issues (deprecated)
-const StarField3D = dynamic(() => import('@/components/three/SimpleStarField'), {
+const StarField3D = dynamic(() => import('@/components/three/OptimizedStarField'), {
   ssr: false,
   loading: () => (
     <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
