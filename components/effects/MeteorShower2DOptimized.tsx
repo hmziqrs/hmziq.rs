@@ -61,7 +61,7 @@ interface Meteor {
 type MeteorType = 'cool' | 'warm' | 'bright'
 
 const BASE_TRAIL_LENGTH = 34
-const SPAWN_RATE = 0.06
+const SPAWN_RATE = 0.08  // Increased from 0.06 for more frequent spawns
 const BEZIER_SEGMENTS = 60
 
 export default function MeteorShower2DOptimized() {
@@ -133,23 +133,49 @@ export default function MeteorShower2DOptimized() {
         canvas.height
       )
       
-      // Initialize or adjust meteor pool
+      // Initialize or adjust meteor pool while preserving active meteors
       if (meteorsRef.current.length !== meteorCount) {
-        meteorsRef.current = Array.from({ length: meteorCount }, () => createMeteor())
+        const currentMeteors = meteorsRef.current
+        const activeMeteors = currentMeteors.filter(m => m.active)
+        
+        if (meteorCount > currentMeteors.length) {
+          // Add more meteors
+          const additionalCount = meteorCount - currentMeteors.length
+          const newMeteors = Array.from({ length: additionalCount }, () => createMeteor())
+          meteorsRef.current = [...currentMeteors, ...newMeteors]
+        } else {
+          // Reduce meteors but keep active ones
+          // First, keep all active meteors
+          const inactiveMeteors = currentMeteors.filter(m => !m.active)
+          const meteorsToKeep = [...activeMeteors]
+          
+          // Add inactive meteors up to the new count
+          const inactiveNeeded = Math.max(0, meteorCount - activeMeteors.length)
+          meteorsToKeep.push(...inactiveMeteors.slice(0, inactiveNeeded))
+          
+          // Ensure we have exactly meteorCount meteors
+          while (meteorsToKeep.length < meteorCount) {
+            meteorsToKeep.push(createMeteor())
+          }
+          
+          meteorsRef.current = meteorsToKeep.slice(0, meteorCount)
+        }
       }
     }
     resizeCanvas()
     window.addEventListener('resize', resizeCanvas)
     
-    // Spawn some initial meteors
-    const initialMeteors = Math.min(5, meteorsRef.current.length)
-    for (let i = 0; i < initialMeteors; i++) {
-      if (meteorsRef.current[i]) {
+    // Spawn initial meteors (at least 30% of the pool)
+    const initialMeteorCount = Math.max(3, Math.floor(meteorsRef.current.length * 0.3))
+    let spawned = 0
+    for (let i = 0; i < meteorsRef.current.length && spawned < initialMeteorCount; i++) {
+      if (meteorsRef.current[i] && !meteorsRef.current[i].active) {
         spawnMeteor(meteorsRef.current[i])
+        spawned++
       }
     }
     
-    console.log('MeteorShower2DOptimized initialized with', meteorsRef.current.length, 'meteors')
+    console.log(`MeteorShower2DOptimized: Initialized with ${meteorsRef.current.length} meteors, spawned ${spawned} initially`)
 
     // Mouse interaction handlers
     const handleMouseMove = () => {
@@ -480,20 +506,23 @@ export default function MeteorShower2DOptimized() {
         console.log('Active meteors:', activeMeteors, '/', meteorsRef.current.length)
       }
 
-      // Calculate speed multiplier
+      // Calculate speed multiplier with limits to prevent meteors from disappearing
       let targetMultiplier = 1
       const timeSinceClick = currentTime - clickBoostRef.current
       const isClickActive = timeSinceClick < 600 && clickBoostRef.current > 0
 
       if (isClickActive) {
         const decay = 1 - timeSinceClick / 600
-        targetMultiplier = 1 + 1.5 * decay
+        targetMultiplier = 1 + 0.8 * decay  // Reduced from 1.5 to 0.8
       } else if (isMovingRef.current) {
-        targetMultiplier = 1.8
+        targetMultiplier = 1.3  // Reduced from 1.8
       }
 
       const smoothingFactor = 0.15
       speedMultiplierRef.current += (targetMultiplier - speedMultiplierRef.current) * smoothingFactor
+      
+      // Clamp speed multiplier to prevent meteors from completing too quickly
+      speedMultiplierRef.current = Math.min(speedMultiplierRef.current, 1.5)
 
       // Spawn new meteors
       if (Math.random() < SPAWN_RATE) {
@@ -519,8 +548,9 @@ export default function MeteorShower2DOptimized() {
           canvas.height
         )
 
-        // Update position from pre-calculated path
-        meteor.life += speedMultiplierRef.current
+        // Update position from pre-calculated path with safeguards
+        const lifeIncrement = Math.min(speedMultiplierRef.current, 2.0)  // Cap increment
+        meteor.life += lifeIncrement
         const t = Math.min(meteor.life / meteor.maxLife, 1)
         
         const newPos = interpolateBezierPoint(meteor.pathPoints, t)
@@ -553,11 +583,11 @@ export default function MeteorShower2DOptimized() {
           }
         }
 
-        // Update particles
+        // Update particles with same safeguards
         meteor.particles = meteor.particles.filter((particle) => {
-          particle.x += particle.vx * speedMultiplierRef.current
-          particle.y += particle.vy * speedMultiplierRef.current
-          particle.life += speedMultiplierRef.current
+          particle.x += particle.vx * lifeIncrement
+          particle.y += particle.vy * lifeIncrement
+          particle.life += lifeIncrement
           
           if (particle.life >= 60) {
             particlePool.current!.release(particle)
@@ -675,15 +705,41 @@ export default function MeteorShower2DOptimized() {
       const event = e as CustomEvent
       const newSettings = event.detail.settings
       
-      // Adjust meteor count
+      // Get new meteor count
       const newCount = qualityManager.current!.getAdaptiveCount(
         newSettings.meteorCount,
         canvas.width,
         canvas.height
       )
       
+      // Only adjust if count actually changed
       if (meteorsRef.current.length !== newCount) {
-        resizeCanvas()
+        // Preserve active meteors when adjusting count
+        const activeMeteors = meteorsRef.current.filter(m => m.active)
+        
+        if (newCount > meteorsRef.current.length) {
+          // Add more meteors
+          const additionalCount = newCount - meteorsRef.current.length
+          const newMeteors = Array.from({ length: additionalCount }, () => createMeteor())
+          meteorsRef.current = [...meteorsRef.current, ...newMeteors]
+        } else if (newCount < meteorsRef.current.length) {
+          // Reduce meteors but keep active ones
+          const inactiveMeteors = meteorsRef.current.filter(m => !m.active)
+          const meteorsToKeep = [...activeMeteors]
+          
+          // Add inactive meteors up to the new count
+          const inactiveNeeded = Math.max(0, newCount - activeMeteors.length)
+          meteorsToKeep.push(...inactiveMeteors.slice(0, inactiveNeeded))
+          
+          // Ensure we have exactly newCount meteors
+          while (meteorsToKeep.length < newCount) {
+            meteorsToKeep.push(createMeteor())
+          }
+          
+          meteorsRef.current = meteorsToKeep.slice(0, newCount)
+        }
+        
+        console.log('Quality changed: meteor count adjusted from', meteorsRef.current.length, 'to', newCount)
       }
     }
     window.addEventListener('qualityTierChanged', handleQualityChange)
