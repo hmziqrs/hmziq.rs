@@ -15,7 +15,7 @@ const StarField3D = dynamic(() => import('@/components/three/OptimizedStarFieldW
 })
 
 // Dynamically import 2D effects
-const MeteorShower2D = dynamic(() => import('@/components/effects/MeteorShower2D'), {
+const MeteorShower2D = dynamic(() => import('@/components/effects/MeteorShower2DOptimized'), {
   ssr: false,
 })
 
