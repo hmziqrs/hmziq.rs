@@ -537,7 +537,8 @@ export default function MeteorShower2DOptimized() {
       // Debug log every 60 frames
       if (frameCount++ % 60 === 0) {
         const activeMeteors = meteorsRef.current.filter(m => m.active).length
-        console.log('Active meteors:', activeMeteors, '/', meteorsRef.current.length)
+        const totalParticles = meteorsRef.current.reduce((sum, m) => sum + m.particles.length, 0)
+        console.log('Active meteors:', activeMeteors, '/', meteorsRef.current.length, 'Total particles:', totalParticles)
       }
 
       // Calculate speed multiplier with limits to prevent meteors from disappearing
