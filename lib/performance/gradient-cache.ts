@@ -10,6 +10,8 @@ export class GradientCache {
   private ctx: CanvasRenderingContext2D | null = null
   private maxSize: number
   private accessOrder: string[] = []
+  private hits: number = 0
+  private misses: number = 0
 
   constructor(maxSize: number = 100) {
     this.cache = new Map()
@@ -36,10 +38,14 @@ export class GradientCache {
     // Check cache first
     const cached = this.cache.get(key)
     if (cached) {
+      this.hits++
       this.updateAccessOrder(key)
       return cached
     }
 
+    // Cache miss
+    this.misses++
+    
     // Create new gradient
     try {
       const gradient = this.ctx.createLinearGradient(x0, y0, x1, y1)
@@ -70,10 +76,14 @@ export class GradientCache {
     // Check cache first
     const cached = this.cache.get(key)
     if (cached) {
+      this.hits++
       this.updateAccessOrder(key)
       return cached
     }
 
+    // Cache miss
+    this.misses++
+    
     // Create new gradient
     try {
       const gradient = this.ctx.createRadialGradient(x0, y0, r0, x1, y1, r1)
@@ -112,6 +122,8 @@ export class GradientCache {
   clear() {
     this.cache.clear()
     this.accessOrder = []
+    this.hits = 0
+    this.misses = 0
   }
 
   get size(): number {
@@ -119,8 +131,16 @@ export class GradientCache {
   }
 
   get hitRate(): number {
-    // This would need additional tracking in a real implementation
-    return 0
+    const total = this.hits + this.misses
+    return total > 0 ? this.hits / total : 0
+  }
+  
+  getStats(): { hits: number; misses: number; size: number } {
+    return {
+      hits: this.hits,
+      misses: this.misses,
+      size: this.cache.size
+    }
   }
 }
 
@@ -129,6 +149,11 @@ export const gradientCaches = {
   meteors: new GradientCache(50),
   stars: new GradientCache(30),
   nebula: new GradientCache(20)
+}
+
+// Make gradient caches accessible globally for debugging
+if (typeof window !== 'undefined') {
+  (window as any).gradientCaches = gradientCaches
 }
 
 // Utility function to generate consistent gradient keys

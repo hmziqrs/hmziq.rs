@@ -27,6 +27,8 @@ export interface QualitySettings {
   meteorGradientCaching: boolean
   
   // Nebula settings
+  nebulaCloudCount: number
+  nebulaComplexity: 'simple' | 'medium' | 'complex'
   nebulaUpdateFrequency: number
   nebulaGradientCaching: boolean
   nebulaOverlapChecks: boolean
@@ -101,6 +103,8 @@ export class QualityManager {
           meteorTrailQuality: 'simple',
           meteorParticleLimit: 10,
           meteorGradientCaching: true,
+          nebulaCloudCount: 4,
+          nebulaComplexity: 'simple',
           nebulaUpdateFrequency: 30,
           nebulaGradientCaching: true,
           nebulaOverlapChecks: false
@@ -116,6 +120,8 @@ export class QualityManager {
           meteorTrailQuality: 'smooth',
           meteorParticleLimit: 20,
           meteorGradientCaching: true,
+          nebulaCloudCount: 5,
+          nebulaComplexity: 'medium',
           nebulaUpdateFrequency: 60,
           nebulaGradientCaching: true,
           nebulaOverlapChecks: true
@@ -131,6 +137,8 @@ export class QualityManager {
           meteorTrailQuality: 'tapered',
           meteorParticleLimit: 30,
           meteorGradientCaching: true,
+          nebulaCloudCount: 6,
+          nebulaComplexity: 'complex',
           nebulaUpdateFrequency: 60,
           nebulaGradientCaching: false,
           nebulaOverlapChecks: true

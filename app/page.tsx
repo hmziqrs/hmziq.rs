@@ -6,8 +6,8 @@ import About from '@/components/sections/About'
 import Skills from '@/components/sections/Skills'
 import Contact from '@/components/sections/Contact'
 
-// Dynamically import Three.js components to avoid SSR issues (deprecated)
-const StarField3D = dynamic(() => import('@/components/three/OptimizedStarFieldWithCulling'), {
+// Dynamically import Three.js components to avoid SSR issues
+const StarField3D = dynamic(() => import('@/components/three/OptimizedStarField'), {
   ssr: false,
   loading: () => (
     <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
@@ -23,7 +23,7 @@ const Nebula2D = dynamic(() => import('@/components/effects/Nebula2D'), {
   ssr: false,
 })
 
-const LightNebula2D = dynamic(() => import('@/components/effects/LightNebula2D'), {
+const LightNebula2D = dynamic(() => import('@/components/effects/LightNebula2DOptimized'), {
   ssr: false,
 })
 
