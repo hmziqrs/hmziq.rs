@@ -165,17 +165,47 @@ export default function MeteorShower2DOptimized() {
     resizeCanvas()
     window.addEventListener('resize', resizeCanvas)
     
-    // Spawn initial meteors (at least 30% of the pool)
+    // Spawn initial meteors with clustered random delays
     const initialMeteorCount = Math.max(3, Math.floor(meteorsRef.current.length * 0.3))
-    let spawned = 0
-    for (let i = 0; i < meteorsRef.current.length && spawned < initialMeteorCount; i++) {
-      if (meteorsRef.current[i] && !meteorsRef.current[i].active) {
-        spawnMeteor(meteorsRef.current[i])
-        spawned++
+    let spawnIndex = 0
+    
+    // Create clusters of spawn times
+    const spawnClusters = []
+    const clusterCount = 3 + Math.floor(Math.random() * 2) // 3-4 clusters
+    
+    for (let i = 0; i < clusterCount; i++) {
+      const clusterTime = Math.random() * 3000 // Clusters spread over 3 seconds
+      const clusterSize = Math.ceil(initialMeteorCount / clusterCount)
+      
+      for (let j = 0; j < clusterSize && spawnIndex < initialMeteorCount; j++) {
+        // Add small random offset within cluster (0-300ms)
+        const spawnTime = clusterTime + Math.random() * 300
+        spawnClusters.push(spawnTime)
+        spawnIndex++
       }
     }
     
-    console.log(`MeteorShower2DOptimized: Initialized with ${meteorsRef.current.length} meteors, spawned ${spawned} initially`)
+    // Sort spawn times
+    spawnClusters.sort((a, b) => a - b)
+    
+    // Store timeouts for cleanup
+    const spawnTimeouts: NodeJS.Timeout[] = []
+    
+    // Schedule spawns
+    spawnClusters.forEach((delay, index) => {
+      const timeout = setTimeout(() => {
+        // Find next inactive meteor
+        for (let i = 0; i < meteorsRef.current.length; i++) {
+          if (meteorsRef.current[i] && !meteorsRef.current[i].active) {
+            spawnMeteor(meteorsRef.current[i])
+            break
+          }
+        }
+      }, delay)
+      spawnTimeouts.push(timeout)
+    })
+    
+    console.log(`MeteorShower2DOptimized: Initialized with ${meteorsRef.current.length} meteors, spawning ${initialMeteorCount} in ${clusterCount} clusters over 3 seconds`)
 
     // Mouse interaction handlers
     const handleMouseMove = () => {
@@ -277,7 +307,7 @@ export default function MeteorShower2DOptimized() {
 
       meteor.size = 0.3 + Math.random() * 0.7
       const sizeRatio = (meteor.size - 0.3) / 0.7
-      const speed = 1.35 - sizeRatio * 0.225
+      const speed = (1.35 - sizeRatio * 0.225) * 0.5  // Reduced speed by half
       meteor.speed = speed
       
       const dx = meteor.endX - meteor.startX
@@ -513,9 +543,9 @@ export default function MeteorShower2DOptimized() {
 
       if (isClickActive) {
         const decay = 1 - timeSinceClick / 600
-        targetMultiplier = 1 + 0.8 * decay  // Reduced from 1.5 to 0.8
+        targetMultiplier = 1 + 0.4 * decay  // Further reduced for slower effect
       } else if (isMovingRef.current) {
-        targetMultiplier = 1.3  // Reduced from 1.8
+        targetMultiplier = 1.15  // Further reduced for slower effect
       }
 
       const smoothingFactor = 0.15
@@ -664,19 +694,20 @@ export default function MeteorShower2DOptimized() {
         // Draw meteor head - simplified to reduce artifacts
         ctx.save()
         
-        // Single combined glow layer for shine effect
-        const shineBase = 15
-        const shineScale = meteor.size * 10
+        // Reduced shine area and brightness
+        const shineBase = 8  // Reduced from 15
+        const shineScale = meteor.size * 5  // Reduced from 10
         const shineSize = shineBase + shineScale
         
         const shineGradient = ctx.createRadialGradient(
           meteor.x, meteor.y, 0,
           meteor.x, meteor.y, shineSize
         )
-        shineGradient.addColorStop(0, `rgba(255, 255, 255, ${meteor.glowIntensity * 0.6})`)
-        shineGradient.addColorStop(0.1, `rgba(255, 255, 255, ${meteor.glowIntensity * 0.4})`)
-        shineGradient.addColorStop(0.3, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.3})`)
-        shineGradient.addColorStop(0.5, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.15})`)
+        // Reduced white intensity and faster fade
+        shineGradient.addColorStop(0, `rgba(255, 255, 255, ${meteor.glowIntensity * 0.3})`)  // Reduced from 0.6
+        shineGradient.addColorStop(0.1, `rgba(255, 255, 255, ${meteor.glowIntensity * 0.2})`)  // Reduced from 0.4
+        shineGradient.addColorStop(0.2, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.2})`)  // Faster fade to color
+        shineGradient.addColorStop(0.4, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.1})`)
         shineGradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
         
         ctx.globalCompositeOperation = 'screen'
@@ -688,15 +719,15 @@ export default function MeteorShower2DOptimized() {
           shineSize * 2
         )
         
-        // Bright core
+        // Bright core - reduced brightness
         const coreSize = meteor.size * 3
         const coreGradient = ctx.createRadialGradient(
           meteor.x, meteor.y, 0,
           meteor.x, meteor.y, coreSize
         )
-        coreGradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
-        coreGradient.addColorStop(0.3, `rgba(255, 255, 255, 0.9)`)
-        coreGradient.addColorStop(0.6, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.8)`)
+        coreGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)')  // Reduced from 1.0
+        coreGradient.addColorStop(0.2, `rgba(255, 255, 255, 0.7)`)  // Faster fade
+        coreGradient.addColorStop(0.5, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.6)`)
         coreGradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
         
         ctx.fillStyle = coreGradient
@@ -777,6 +808,8 @@ export default function MeteorShower2DOptimized() {
       if (mouseMoveTimeoutRef.current) {
         clearTimeout(mouseMoveTimeoutRef.current)
       }
+      // Clear spawn timeouts
+      spawnTimeouts.forEach(timeout => clearTimeout(timeout))
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current)
       }
