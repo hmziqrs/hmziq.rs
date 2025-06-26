@@ -82,34 +82,46 @@ const particleAngle = backwardAngle + spreadAngle
 - Natural-looking debris effect with proper physics
 
 ### 5. Refined Particle Behavior ✅
-**Problem**: Particles were moving too much laterally and travel distance was too long. Large meteors had particles that were too big.
+**Problem**: Particles were traveling too far (spread distance too large). Large meteors had particles that were too big.
 
 **Solution**:
-- **Reduced lateral spread**: Particles move in narrow ±17° cone backwards (was full 360°)
-- **Increased backward velocity**: 30-50% of meteor speed (was 10-30%)
-- **Reduced lateral component**: 0.2-0.4 units (was 0.8-1.6)
-- **Inverse size scaling**: Large meteors now have smaller particles
-  - Small meteors (0.3 size): ~0.12 size particles
-  - Large meteors (1.2+ size): ~0.05 size particles
+- **Restored natural spread**: Particles spread in all directions (360°) as before
+- **Reduced lateral speed**: 0.4-0.8 units (was 0.8-1.6) for shorter travel distance
+- **Backward velocity**: 10-25% of meteor speed
+- **Fixed visibility**: Increased base size to 0.15
+- **Simplified inverse size scaling**: 
+  - Small meteors (<0.5): 0.135-0.195 size particles
+  - Medium meteors (0.5-1.0): 0.105-0.135 size particles
+  - Large meteors (>1.0): 0.075-0.105 size particles
 
 ### Final Particle Physics
 ```javascript
-// Primary backward motion
-const backwardRatio = 0.3 + Math.random() * 0.2  // 30-50% speed
-particle.vx = -meteor.vx * backwardRatio
+// Base backward motion
+particle.vx = -meteor.vx * (0.1 + Math.random() * 0.15)  // 10-25% backward
+particle.vy = -meteor.vy * (0.1 + Math.random() * 0.15)
 
-// Subtle lateral deviation
-const lateralDeviation = (Math.random() - 0.5) * 0.6  // ±17°
-const particleAngle = meteorAngleRad + Math.PI + lateralDeviation
+// Natural lateral spread with reduced distance
+const lateralSpeed = 0.4 + Math.random() * 0.4  // 0.4-0.8 units
+const lateralAngle = Math.random() * Math.PI * 2  // Any direction
 
-// Inverse size scaling
-const sizeMultiplier = 1.2 - normalizedSize
-particle.size = baseParticleSize * sizeMultiplier * (0.8 + Math.random() * 0.4)
+particle.vx += Math.cos(lateralAngle) * lateralSpeed
+particle.vy += Math.sin(lateralAngle) * lateralSpeed
+
+// Size based on meteor size
+if (meteor.size < 0.5) {
+  particle.size = baseParticleSize * (0.9 + Math.random() * 0.3)
+} else if (meteor.size < 1.0) {
+  particle.size = baseParticleSize * (0.7 + Math.random() * 0.2)
+} else {
+  particle.size = baseParticleSize * (0.5 + Math.random() * 0.2)
+}
 ```
 
 ## Summary
 All meteor shower issues have been resolved:
 - Small meteors have visible, artifact-free trails
-- Particles move naturally backwards in a narrow cone
-- Particle sizes are proportionally smaller for larger meteors
+- Particles spread naturally in all directions with backward bias
+- Particle travel distance reduced by ~50% for more localized effect
+- Particle sizes are inversely proportional to meteor size
+- All particles are now visible with proper sizing
 - Overall effect is more realistic and visually balanced
