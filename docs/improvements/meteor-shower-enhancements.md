@@ -45,12 +45,22 @@
    - Glowing white-hot centers
    - Random motion with gravity for natural movement
 
+### 4. Fixed Glitching Artifacts ✅
+**Problem**: Some meteors were showing glitching/sparkling artifacts.
+
+**Solution**:
+- Removed gradient caching for meteor cores
+- Gradient cache conflicts were causing flickering when meteors shared properties
+- Now create gradients directly for each meteor
+- Simplified rendering from 4 layers to 2 (shine + core)
+- Eliminates artifacts when multiple meteors are on screen
+
 ## Visual Improvements
 
 - **Complete trajectories**: Meteors travel beyond screen boundaries
-- **Realistic sparks**: Trail-end particles fly off in random directions like fire sparks
+- **Natural debris**: Particles trail behind meteors like falling debris
 - **Dramatic shine**: Large radial glow creates star-like gleam effect
-- **Enhanced brightness**: Multiple layered glows for depth and brilliance
+- **No artifacts**: Smooth rendering without glitches
 
 ## Code Changes
 All modifications made to existing `MeteorShower2DOptimized.tsx` file as requested.
