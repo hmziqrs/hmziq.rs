@@ -26,6 +26,7 @@ interface Particle {
   vy: number
   life: number
   size: number
+  opacity: number
   color: { r: number; g: number; b: number }
   active: boolean
 }
@@ -106,19 +107,26 @@ export default function MeteorShower2DOptimized() {
     // Initialize gradient cache
     gradientCaches.meteors.setContext(ctx)
     
-    // Initialize particle pool
+    // Initialize particle pool - use reduced sizing for better performance
+    // Calculate pool size based on maximum meteors and reduced particle limits
+    const maxParticlesPerMeteor = 7 // Maximum from ultra quality tier
+    const maxMeteors = settings.meteorCount
+    const poolInitialSize = maxMeteors * maxParticlesPerMeteor
+    const poolMaxSize = poolInitialSize * 1.5 // Allow some growth but not excessive
+    
     particlePool.current = new ObjectPool<Particle>(
       () => ({
-        x: 0, y: 0, vx: 0, vy: 0, life: 0, size: 0,
+        x: 0, y: 0, vx: 0, vy: 0, life: 0, size: 0, opacity: 1,
         color: { r: 255, g: 255, b: 255 },
         active: false
       }),
       (particle) => {
         particle.active = false
         particle.life = 0
+        particle.opacity = 1
       },
-      settings.meteorParticleLimit * 2,
-      settings.meteorParticleLimit * 4
+      poolInitialSize,
+      poolMaxSize
     )
 
     // Set canvas size
@@ -229,6 +237,29 @@ export default function MeteorShower2DOptimized() {
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('click', handleClick)
 
+    // Calculate dynamic particle limit based on meteor size
+    function getDynamicParticleLimit(meteor: Meteor): number {
+      const settings = qualityManager.current!.getSettings()
+      const baseLimit = settings.meteorParticleLimit
+      
+      // Size-based multiplier: smaller meteors get fewer particles, larger get more
+      // But cap it to prevent outlandish amounts
+      const sizeMultiplier = Math.pow(meteor.size, 0.6) // Gentle scaling (0.3^0.6 ≈ 0.54, 1.0^0.6 = 1.0)
+      const dynamicLimit = Math.ceil(baseLimit * sizeMultiplier)
+      
+      // Reasonable caps based on quality tier
+      const maxLimits = {
+        performance: 3,
+        balanced: 5, 
+        ultra: 7
+      }
+      
+      const tierKey = settings.meteorTrailQuality === 'simple' ? 'performance' : 
+                     settings.meteorTrailQuality === 'smooth' ? 'balanced' : 'ultra'
+      
+      return Math.min(dynamicLimit, maxLimits[tierKey])
+    }
+
     // Create meteor object
     function createMeteor(): Meteor {
       return {
@@ -306,8 +337,15 @@ export default function MeteorShower2DOptimized() {
       )
 
       meteor.size = 0.3 + Math.random() * 0.7
-      const sizeRatio = (meteor.size - 0.3) / 0.7
-      const speed = (1.35 - sizeRatio * 0.225) * 0.5  // Reduced speed by half
+      
+      // Dynamic speed with 0-25% range based on size
+      const baseSpeed = 0.66  // Increased base speed by 10%
+      const sizeRatio = (meteor.size - 0.3) / 0.7  // 0 to 1 range
+      
+      // Speed increases from base (small meteors) to +25% (large meteors)
+      // No negative variations - all meteors at least base speed
+      const speedVariation = 0.25 * sizeRatio  // 0 to 0.25 range
+      const speed = baseSpeed * (1 + speedVariation)  // 0.66 to 0.825 range
       meteor.speed = speed
       
       const dx = meteor.endX - meteor.startX
@@ -602,13 +640,13 @@ export default function MeteorShower2DOptimized() {
 
         // Update particles if quality allows - particles are "left behind" along the path
         const settings = qualityManager.current!.getSettings()
-        if (settings.meteorParticleLimit > 0 && meteor.trail.length > 5) {
+        const dynamicParticleLimit = getDynamicParticleLimit(meteor)
+        if (dynamicParticleLimit > 0 && meteor.trail.length > 5) {
           // Spawn particles from current position (head) that get left behind
-          // Higher spawn rate for smaller meteors to ensure visibility
-          const sizeMultiplier = meteor.size < 0.5 ? 1.5 : 1.0
-          const baseSpawnRate = (meteor.type === 'bright' ? 0.4 : 0.3) * sizeMultiplier
+          // Adjusted spawn rate - reduced since we have fewer total particles
+          const baseSpawnRate = meteor.type === 'bright' ? 0.3 : 0.2 // Reduced from 0.4/0.3
           const spawnRate = baseSpawnRate * Math.max(1, speedMultiplierRef.current * 0.5) // Less sensitive to speed
-          if (Math.random() < spawnRate && meteor.particles.length < settings.meteorParticleLimit) {
+          if (Math.random() < spawnRate && meteor.particles.length < dynamicParticleLimit) {
             const particle = particlePool.current!.acquire()
             
             // Natural debris effect - particles spread with reduced distance
@@ -644,9 +682,21 @@ export default function MeteorShower2DOptimized() {
             }
             
             particle.life = 0
-            // Proper particle sizing with less variation
-            const baseParticleSize = 0.3  // Good base size for visibility
-            particle.size = baseParticleSize * (0.8 + Math.random() * 0.4)  // Size range: 0.24-0.42
+            
+            // Dynamic particle sizing with 30% reduced base size
+            const baseParticleSize = 0.21  // Reduced by 30% from 0.3
+            const meteorSizeRatio = (meteor.size - 0.3) / 0.7  // 0 to 1 range
+            
+            // Dynamic size range: base size to +25% for larger meteors
+            const sizeVariation = 0.25 * meteorSizeRatio  // 0 to 0.25 range
+            const dynamicSize = baseParticleSize * (1 + sizeVariation)  // 0.21 to 0.2625
+            particle.size = dynamicSize * (0.9 + Math.random() * 0.2)  // Add 10% random variation
+            
+            // Dynamic opacity with 25% range - reduced base by 20%
+            const baseOpacity = 0.64  // Reduced by 20% from 0.8
+            const opacityVariation = 0.25 * meteorSizeRatio  // 0 to 0.25 range 
+            particle.opacity = baseOpacity * (1 + opacityVariation)  // 0.64 to 0.8 range
+            
             particle.color = { ...meteor.glowColor } // Use meteor's glow color
             particle.active = true
             meteor.particles.push(particle)
@@ -691,8 +741,9 @@ export default function MeteorShower2DOptimized() {
 
         // Draw particles with radiant shine effect
         meteor.particles.forEach((particle) => {
-          // Fade opacity over lifetime
-          const particleOpacity = Math.pow(1 - particle.life / 50, 0.3)
+          // Combine dynamic opacity with lifetime fade
+          const lifetimeFade = Math.pow(1 - particle.life / 50, 0.3)
+          const finalOpacity = particle.opacity * lifetimeFade
           
           // Create radiant shine gradient
           const shineSize = particle.size * 8  // Larger area for shine effect
@@ -701,11 +752,11 @@ export default function MeteorShower2DOptimized() {
             particle.x, particle.y, shineSize
           )
           
-          // Bright white core with colored glow
-          gradient.addColorStop(0, `rgba(255, 255, 255, ${particleOpacity})`)  // White center
-          gradient.addColorStop(0.2, `rgba(255, 255, 255, ${particleOpacity * 0.8})`)
-          gradient.addColorStop(0.4, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.6})`)
-          gradient.addColorStop(0.7, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.3})`)
+          // Bright white core with colored glow using dynamic opacity
+          gradient.addColorStop(0, `rgba(255, 255, 255, ${finalOpacity})`)  // White center
+          gradient.addColorStop(0.2, `rgba(255, 255, 255, ${finalOpacity * 0.8})`)
+          gradient.addColorStop(0.4, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${finalOpacity * 0.6})`)
+          gradient.addColorStop(0.7, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${finalOpacity * 0.3})`)
           gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
           
           // Draw with screen blend for glow effect
