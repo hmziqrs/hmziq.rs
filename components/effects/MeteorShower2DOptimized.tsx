@@ -610,20 +610,30 @@ export default function MeteorShower2DOptimized() {
           if (Math.random() < spawnRate && meteor.particles.length < settings.meteorParticleLimit) {
             const particle = particlePool.current!.acquire()
             
-            // Start at current meteor position (head) with small offset
-            particle.x = meteor.x + (Math.random() - 0.5) * meteor.size
-            particle.y = meteor.y + (Math.random() - 0.5) * meteor.size
+            // Make particles trail BEHIND the meteor
+            const meteorAngleRad = meteor.angle * Math.PI / 180
             
-            // Inherit meteor's velocity with random perturbation
-            // This makes particles naturally trail behind
-            const angleRad = meteor.angle * Math.PI / 180
-            const inheritedVx = meteor.vx * 0.3 // Inherit 30% of meteor velocity
-            const inheritedVy = meteor.vy * 0.3
+            // Start slightly behind meteor head for more realistic debris
+            const behindDistance = meteor.size * 2  // Start 2x meteor size behind
+            particle.x = meteor.x - Math.cos(meteorAngleRad) * behindDistance + (Math.random() - 0.5) * meteor.size
+            particle.y = meteor.y - Math.sin(meteorAngleRad) * behindDistance + (Math.random() - 0.5) * meteor.size
             
-            // Add random deviation - increased for longer travel
-            const deviation = 1.6  // Doubled from 0.8
-            particle.vx = inheritedVx + (Math.random() - 0.5) * deviation
-            particle.vy = inheritedVy + (Math.random() - 0.5) * deviation
+            // Base velocity is opposite to meteor direction (backwards)
+            const backwardVx = -meteor.vx * 0.5  // Move backwards at 50% meteor speed
+            const backwardVy = -meteor.vy * 0.5
+            
+            // Add spread in a cone behind the meteor (±60 degrees from backward direction)
+            const spreadAngle = (Math.random() - 0.5) * (Math.PI / 3)  // ±60 degrees
+            const backwardAngle = meteorAngleRad + Math.PI  // Opposite direction
+            const particleAngle = backwardAngle + spreadAngle
+            
+            // Random speed variation (0.5 to 1.5 of base speed)
+            const speedVariation = 0.5 + Math.random()
+            const particleSpeed = Math.sqrt(backwardVx * backwardVx + backwardVy * backwardVy) * speedVariation
+            
+            // Calculate final velocity
+            particle.vx = Math.cos(particleAngle) * particleSpeed
+            particle.vy = Math.sin(particleAngle) * particleSpeed
             
             particle.life = 0
             // Ensure minimum particle size for small meteors
