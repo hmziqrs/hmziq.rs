@@ -616,36 +616,30 @@ export default function MeteorShower2DOptimized() {
             particle.x = meteor.x + (Math.random() - 0.5) * meteor.size * 3
             particle.y = meteor.y + (Math.random() - 0.5) * meteor.size * 3
             
-            // Base backward motion (opposite to meteor direction)
-            // Slower than meteor to create trailing effect
-            particle.vx = -meteor.vx * (0.1 + Math.random() * 0.2)  // 10-30% backward
-            particle.vy = -meteor.vy * (0.1 + Math.random() * 0.2)
+            // Primary backward motion (opposite to meteor direction)
+            const backwardRatio = 0.3 + Math.random() * 0.2  // 30-50% backward speed
+            particle.vx = -meteor.vx * backwardRatio
+            particle.vy = -meteor.vy * backwardRatio
             
-            // Add significant lateral spread for natural debris effect
-            // This creates the scattered backward motion instead of direct trailing
-            const lateralSpeed = 0.8 + Math.random() * 0.8  // Significant lateral motion
-            const lateralAngle = Math.random() * Math.PI * 2  // Any direction
-            
-            particle.vx += Math.cos(lateralAngle) * lateralSpeed
-            particle.vy += Math.sin(lateralAngle) * lateralSpeed
-            
-            // Ensure particles don't move too fast forward
-            // If particle is moving forward faster than 50% of meteor speed, reduce forward component
+            // Add subtle lateral spread (much less than before)
+            // Create cone spread: mostly backward with slight left/right deviation
             const meteorAngleRad = meteor.angle * Math.PI / 180
-            const meteorDirX = Math.cos(meteorAngleRad)
-            const meteorDirY = Math.sin(meteorAngleRad)
-            const forwardSpeed = particle.vx * meteorDirX + particle.vy * meteorDirY
+            const lateralDeviation = (Math.random() - 0.5) * 0.6  // ±0.3 radians (±17 degrees)
+            const particleAngle = meteorAngleRad + Math.PI + lateralDeviation  // Backward + small deviation
             
-            if (forwardSpeed > Math.sqrt(meteor.vx * meteor.vx + meteor.vy * meteor.vy) * 0.5) {
-              // Reduce forward component
-              particle.vx -= meteorDirX * forwardSpeed * 0.7
-              particle.vy -= meteorDirY * forwardSpeed * 0.7
-            }
+            // Small additional velocity in the deviated direction
+            const additionalSpeed = 0.2 + Math.random() * 0.2  // Much smaller lateral component
+            particle.vx += Math.cos(particleAngle) * additionalSpeed
+            particle.vy += Math.sin(particleAngle) * additionalSpeed
             
             particle.life = 0
-            // Ensure minimum particle size for small meteors
-            const baseParticleSize = 0.15  // Minimum particle size
-            particle.size = Math.max(baseParticleSize, meteor.size * (0.25 + Math.random() * 0.35))
+            // Inverse particle size scaling - smaller particles for larger meteors
+            const baseParticleSize = 0.12  // Base particle size
+            // Clamp meteor size for calculation (bright meteors can be up to 1.8)
+            const normalizedSize = Math.min(meteor.size, 1.2)
+            // Inverse scaling: small meteors (0.3) get 1.0x, large meteors (1.2+) get 0.4x
+            const sizeMultiplier = 1.2 - normalizedSize  // Simple inverse relationship
+            particle.size = baseParticleSize * sizeMultiplier * (0.8 + Math.random() * 0.4)
             particle.color = { ...meteor.glowColor } // Use glow color
             particle.active = true
             meteor.particles.push(particle)
