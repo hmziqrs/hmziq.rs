@@ -632,9 +632,9 @@ export default function MeteorShower2DOptimized() {
             
             // Ensure particles don't move too fast forward
             // If particle is moving forward faster than 50% of meteor speed, reduce forward component
-            const meteorAngleRad = meteor.angle * Math.PI / 180
-            const meteorDirX = Math.cos(meteorAngleRad)
-            const meteorDirY = Math.sin(meteorAngleRad)
+            const particleAngleRad = meteor.angle * Math.PI / 180
+            const meteorDirX = Math.cos(particleAngleRad)
+            const meteorDirY = Math.sin(particleAngleRad)
             const forwardSpeed = particle.vx * meteorDirX + particle.vy * meteorDirY
             
             if (forwardSpeed > Math.sqrt(meteor.vx * meteor.vx + meteor.vy * meteor.vy) * 0.5) {
@@ -644,9 +644,10 @@ export default function MeteorShower2DOptimized() {
             }
             
             particle.life = 0
-            // DEBUG: Make particles super visible
-            particle.size = 1.0  // Very large size
-            particle.color = { r: 255, g: 255, b: 255 } // Bright white for visibility
+            // Proper particle sizing with less variation
+            const baseParticleSize = 0.3  // Good base size for visibility
+            particle.size = baseParticleSize * (0.8 + Math.random() * 0.4)  // Size range: 0.24-0.42
+            particle.color = { ...meteor.glowColor } // Use meteor's glow color
             particle.active = true
             meteor.particles.push(particle)
           }
@@ -688,18 +689,35 @@ export default function MeteorShower2DOptimized() {
         // Draw trail
         drawTaperedTrail(meteor, ctx)
 
-        // Draw particles as visible debris - DEBUG: Simple circles
+        // Draw particles with radiant shine effect
         meteor.particles.forEach((particle) => {
-          // Strong opacity for visibility
-          const particleOpacity = 1.0 // Full opacity for debugging
+          // Fade opacity over lifetime
+          const particleOpacity = Math.pow(1 - particle.life / 50, 0.3)
           
-          // DEBUG: Draw simple white circles
+          // Create radiant shine gradient
+          const shineSize = particle.size * 8  // Larger area for shine effect
+          const gradient = ctx.createRadialGradient(
+            particle.x, particle.y, 0,
+            particle.x, particle.y, shineSize
+          )
+          
+          // Bright white core with colored glow
+          gradient.addColorStop(0, `rgba(255, 255, 255, ${particleOpacity})`)  // White center
+          gradient.addColorStop(0.2, `rgba(255, 255, 255, ${particleOpacity * 0.8})`)
+          gradient.addColorStop(0.4, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.6})`)
+          gradient.addColorStop(0.7, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.3})`)
+          gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
+          
+          // Draw with screen blend for glow effect
           ctx.save()
-          ctx.globalAlpha = particleOpacity
-          ctx.fillStyle = 'white'
-          ctx.beginPath()
-          ctx.arc(particle.x, particle.y, particle.size * 3, 0, Math.PI * 2)
-          ctx.fill()
+          ctx.globalCompositeOperation = 'screen'
+          ctx.fillStyle = gradient
+          ctx.fillRect(
+            particle.x - shineSize,
+            particle.y - shineSize,
+            shineSize * 2,
+            shineSize * 2
+          )
           ctx.restore()
         })
 
