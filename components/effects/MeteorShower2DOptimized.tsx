@@ -661,117 +661,53 @@ export default function MeteorShower2DOptimized() {
           }
         })
 
-        // Draw meteor head with enhanced glow and static shine
-        const glowBoost = speedMultiplierRef.current > 1.1 ? speedMultiplierRef.current : 1
-        const staticShine = 1.2 // Always have a base shine
-        const glowSize = meteor.size * 20 * staticShine // Larger static glow
+        // Draw meteor head - simplified to reduce artifacts
+        ctx.save()
         
-        // Outer glow with enhanced brightness
-        const outerGlow = gradientCaches.meteors.getRadialGradient(
-          generateGradientKey('meteor_outer', meteor.type, Math.floor(glowBoost * 10)),
+        // Single combined glow layer for shine effect
+        const shineBase = 15
+        const shineScale = meteor.size * 10
+        const shineSize = shineBase + shineScale
+        
+        const shineGradient = ctx.createRadialGradient(
           meteor.x, meteor.y, 0,
-          meteor.x, meteor.y, glowSize,
-          [
-            [0, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.7})`],
-            [0.3, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.5})`],
-            [0.6, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.2})`],
-            [1, 'rgba(0, 0, 0, 0)']
-          ]
+          meteor.x, meteor.y, shineSize
+        )
+        shineGradient.addColorStop(0, `rgba(255, 255, 255, ${meteor.glowIntensity * 0.6})`)
+        shineGradient.addColorStop(0.1, `rgba(255, 255, 255, ${meteor.glowIntensity * 0.4})`)
+        shineGradient.addColorStop(0.3, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.3})`)
+        shineGradient.addColorStop(0.5, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.15})`)
+        shineGradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
+        
+        ctx.globalCompositeOperation = 'screen'
+        ctx.fillStyle = shineGradient
+        ctx.fillRect(
+          meteor.x - shineSize,
+          meteor.y - shineSize,
+          shineSize * 2,
+          shineSize * 2
         )
         
-        if (outerGlow) {
-          ctx.fillStyle = outerGlow
-          ctx.fillRect(
-            meteor.x - glowSize,
-            meteor.y - glowSize,
-            glowSize * 2,
-            glowSize * 2
-          )
-        }
-        
-        // Inner bright core - enhanced for star-like appearance
-        const coreSize = meteor.size * 5 // Larger core
-        const coreGlow = gradientCaches.meteors.getRadialGradient(
-          generateGradientKey('meteor_core', meteor.type),
+        // Bright core
+        const coreSize = meteor.size * 3
+        const coreGradient = ctx.createRadialGradient(
           meteor.x, meteor.y, 0,
-          meteor.x, meteor.y, coreSize,
-          [
-            [0, 'rgba(255, 255, 255, 1)'],  // Bright white center
-            [0.2, `rgba(255, 255, 255, 0.95)`], // Extended bright area
-            [0.4, `rgba(255, 255, 255, 0.9)`],
-            [0.6, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.8)`],
-            [0.8, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.5)`],
-            [1, 'rgba(0, 0, 0, 0)']
-          ]
+          meteor.x, meteor.y, coreSize
+        )
+        coreGradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
+        coreGradient.addColorStop(0.3, `rgba(255, 255, 255, 0.9)`)
+        coreGradient.addColorStop(0.6, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.8)`)
+        coreGradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
+        
+        ctx.fillStyle = coreGradient
+        ctx.fillRect(
+          meteor.x - coreSize,
+          meteor.y - coreSize,
+          coreSize * 2,
+          coreSize * 2
         )
         
-        // Add extra bright center point for star-like shine
-        const centerSize = meteor.size * 1.5
-        const centerGlow = gradientCaches.meteors.getRadialGradient(
-          generateGradientKey('meteor_center_shine', meteor.type),
-          meteor.x, meteor.y, 0,
-          meteor.x, meteor.y, centerSize,
-          [
-            [0, 'rgba(255, 255, 255, 1)'],
-            [0.5, 'rgba(255, 255, 255, 1)'], // Keep bright longer
-            [1, 'rgba(255, 255, 255, 0.8)']
-          ]
-        )
-        
-        if (coreGlow) {
-          ctx.fillStyle = coreGlow
-          ctx.fillRect(
-            meteor.x - coreSize,
-            meteor.y - coreSize,
-            coreSize * 2,
-            coreSize * 2
-          )
-        }
-        
-        // Draw the extra bright center shine
-        if (centerGlow) {
-          ctx.fillStyle = centerGlow
-          ctx.fillRect(
-            meteor.x - centerSize,
-            meteor.y - centerSize,
-            centerSize * 2,
-            centerSize * 2
-          )
-        }
-        
-        // Add dramatic shine effect with better scaling
-        // Base size + proportional scaling ensures visibility on all meteors
-        const shineBase = 15 // Minimum shine size for small meteors
-        const shineScale = meteor.size * 10 // Proportional component
-        const shineSize = shineBase + shineScale // Combined for balanced effect
-        
-        const shine = gradientCaches.meteors.getRadialGradient(
-          generateGradientKey('meteor_shine', meteor.type, Math.floor(meteor.glowIntensity * 10)),
-          meteor.x, meteor.y, 0,
-          meteor.x, meteor.y, shineSize,
-          [
-            [0, `rgba(255, 255, 255, ${meteor.glowIntensity * 0.6})`], // Bright white center
-            [0.1, `rgba(255, 255, 255, ${meteor.glowIntensity * 0.4})`],
-            [0.2, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.3})`],
-            [0.4, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.15})`],
-            [0.6, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.08})`],
-            [0.8, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${meteor.glowIntensity * 0.03})`],
-            [1, 'rgba(0, 0, 0, 0)']
-          ]
-        )
-        
-        if (shine) {
-          ctx.save()
-          ctx.globalCompositeOperation = 'screen' // Use screen blend for shine effect
-          ctx.fillStyle = shine
-          ctx.fillRect(
-            meteor.x - shineSize,
-            meteor.y - shineSize,
-            shineSize * 2,
-            shineSize * 2
-          )
-          ctx.restore()
-        }
+        ctx.restore()
 
         // Fade out near end
         if (t > 0.9) {
