@@ -466,21 +466,28 @@ export default function MeteorShower2DOptimized() {
       
       ctx.closePath()
       
-      // Apply gradient - REVERSED: from head (current position) to tail
+      // Enhanced gradient with color transitions - from head to tail
       const gradient = gradientCaches.meteors.getLinearGradient(
-        generateGradientKey('trail_tapered', meteor.type, Math.floor(meteor.size * 10)),
+        generateGradientKey('trail_tapered_enhanced', meteor.type, Math.floor(meteor.size * 10)),
         meteor.x,  // Start from current position (head)
         meteor.y,
         meteor.trail[0].x,  // To oldest position (tail)
         meteor.trail[0].y,
         [
-          [0, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 1)`],  // Full opacity at head
-          [0.1, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.85)`],
-          [0.3, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.6)`],
-          [0.5, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.4)`],
-          [0.7, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.2)`],
-          [0.9, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.05)`],
-          [1, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, 0)`]  // Fade to nothing at tail
+          // Intense white-hot core at head
+          [0, `rgba(255, 255, 255, 1)`],
+          [0.02, `rgba(255, 255, 255, 0.9)`],
+          // Sharp transition to bright meteor color
+          [0.08, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.85)`],
+          [0.2, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.7)`],
+          // Transition to warmer glow tones
+          [0.35, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, 0.5)`],
+          // Cool down to blue/purple tones (realistic cooling)
+          [0.6, `rgba(${Math.floor(meteor.glowColor.r * 0.6)}, ${Math.floor(meteor.glowColor.g * 0.7)}, ${Math.min(255, Math.floor(meteor.glowColor.b * 1.3))}, 0.3)`],
+          [0.8, `rgba(${Math.floor(meteor.glowColor.r * 0.3)}, ${Math.floor(meteor.glowColor.g * 0.4)}, ${Math.min(255, Math.floor(meteor.glowColor.b * 1.5))}, 0.15)`],
+          // Dark red-orange ember effect at tail
+          [0.95, `rgba(80, 30, 20, 0.05)`],
+          [1, `rgba(0, 0, 0, 0)`]
         ]
       )
       
@@ -505,15 +512,25 @@ export default function MeteorShower2DOptimized() {
         ctx.lineCap = 'round'
         ctx.lineJoin = 'round'
         
+        // Enhanced color gradient for smooth trails
+        const headIntensity = opacity
         const gradient = gradientCaches.meteors.getLinearGradient(
-          generateGradientKey('trail_smooth', meteor.type, seg),
+          generateGradientKey('trail_smooth_enhanced', meteor.type, seg),
           meteor.x,  // From head
           meteor.y,
           meteor.trail[0].x,  // To tail
           meteor.trail[0].y,
           [
-            [0, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, ${opacity})`],
-            [1, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0)`]
+            // Intense white-hot at head
+            [0, `rgba(255, 255, 255, ${headIntensity})`],
+            [0.05, `rgba(255, 255, 255, ${headIntensity * 0.9})`],
+            // Sharp transition to meteor color
+            [0.15, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, ${headIntensity * 0.75})`],
+            [0.35, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${headIntensity * 0.5})`],
+            // Cool down with blue shift
+            [0.6, `rgba(${Math.floor(meteor.glowColor.r * 0.6)}, ${Math.floor(meteor.glowColor.g * 0.7)}, ${Math.min(255, Math.floor(meteor.glowColor.b * 1.2))}, ${headIntensity * 0.25})`],
+            [0.85, `rgba(60, 40, 120, ${headIntensity * 0.1})`], // Dark purple-blue
+            [1, `rgba(0, 0, 0, 0)`]
           ]
         )
         
@@ -538,15 +555,19 @@ export default function MeteorShower2DOptimized() {
       ctx.lineWidth = Math.max(baseWidth, Math.min(meteor.size * 3, 2.5))
       ctx.lineCap = 'round'
       
+      // Enhanced simple gradient with color transitions
       const gradient = gradientCaches.meteors.getLinearGradient(
-        generateGradientKey('trail_simple', meteor.type),
+        generateGradientKey('trail_simple_enhanced', meteor.type),
         meteor.x,  // From head
         meteor.y,
         meteor.trail[0].x,  // To tail
         meteor.trail[0].y,
         [
-          [0, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.9)`],
-          [1, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0)`]
+          // Simplified but still colorful gradient for performance
+          [0, `rgba(255, 255, 255, 0.7)`],  // White-hot head
+          [0.15, `rgba(${meteor.color.r}, ${meteor.color.g}, ${meteor.color.b}, 0.6)`],
+          [0.5, `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, 0.3)`],
+          [1, `rgba(0, 0, 0, 0)`]  // Fade to transparent
         ]
       )
       
