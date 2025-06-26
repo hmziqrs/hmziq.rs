@@ -80,3 +80,36 @@ const particleAngle = backwardAngle + spreadAngle
 - Particles now create realistic debris trails that only move backwards
 - No more particles flying ahead of meteors
 - Natural-looking debris effect with proper physics
+
+### 5. Refined Particle Behavior ✅
+**Problem**: Particles were moving too much laterally and travel distance was too long. Large meteors had particles that were too big.
+
+**Solution**:
+- **Reduced lateral spread**: Particles move in narrow ±17° cone backwards (was full 360°)
+- **Increased backward velocity**: 30-50% of meteor speed (was 10-30%)
+- **Reduced lateral component**: 0.2-0.4 units (was 0.8-1.6)
+- **Inverse size scaling**: Large meteors now have smaller particles
+  - Small meteors (0.3 size): ~0.12 size particles
+  - Large meteors (1.2+ size): ~0.05 size particles
+
+### Final Particle Physics
+```javascript
+// Primary backward motion
+const backwardRatio = 0.3 + Math.random() * 0.2  // 30-50% speed
+particle.vx = -meteor.vx * backwardRatio
+
+// Subtle lateral deviation
+const lateralDeviation = (Math.random() - 0.5) * 0.6  // ±17°
+const particleAngle = meteorAngleRad + Math.PI + lateralDeviation
+
+// Inverse size scaling
+const sizeMultiplier = 1.2 - normalizedSize
+particle.size = baseParticleSize * sizeMultiplier * (0.8 + Math.random() * 0.4)
+```
+
+## Summary
+All meteor shower issues have been resolved:
+- Small meteors have visible, artifact-free trails
+- Particles move naturally backwards in a narrow cone
+- Particle sizes are proportionally smaller for larger meteors
+- Overall effect is more realistic and visually balanced
