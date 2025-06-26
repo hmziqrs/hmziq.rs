@@ -610,30 +610,37 @@ export default function MeteorShower2DOptimized() {
           if (Math.random() < spawnRate && meteor.particles.length < settings.meteorParticleLimit) {
             const particle = particlePool.current!.acquire()
             
-            // Make particles trail BEHIND the meteor
+            // Natural debris effect - particles spread backwards with lateral motion
+            
+            // Start at meteor position with random offset
+            particle.x = meteor.x + (Math.random() - 0.5) * meteor.size * 3
+            particle.y = meteor.y + (Math.random() - 0.5) * meteor.size * 3
+            
+            // Base backward motion (opposite to meteor direction)
+            // Slower than meteor to create trailing effect
+            particle.vx = -meteor.vx * (0.1 + Math.random() * 0.2)  // 10-30% backward
+            particle.vy = -meteor.vy * (0.1 + Math.random() * 0.2)
+            
+            // Add significant lateral spread for natural debris effect
+            // This creates the scattered backward motion instead of direct trailing
+            const lateralSpeed = 0.8 + Math.random() * 0.8  // Significant lateral motion
+            const lateralAngle = Math.random() * Math.PI * 2  // Any direction
+            
+            particle.vx += Math.cos(lateralAngle) * lateralSpeed
+            particle.vy += Math.sin(lateralAngle) * lateralSpeed
+            
+            // Ensure particles don't move too fast forward
+            // If particle is moving forward faster than 50% of meteor speed, reduce forward component
             const meteorAngleRad = meteor.angle * Math.PI / 180
+            const meteorDirX = Math.cos(meteorAngleRad)
+            const meteorDirY = Math.sin(meteorAngleRad)
+            const forwardSpeed = particle.vx * meteorDirX + particle.vy * meteorDirY
             
-            // Start slightly behind meteor head for more realistic debris
-            const behindDistance = meteor.size * 2  // Start 2x meteor size behind
-            particle.x = meteor.x - Math.cos(meteorAngleRad) * behindDistance + (Math.random() - 0.5) * meteor.size
-            particle.y = meteor.y - Math.sin(meteorAngleRad) * behindDistance + (Math.random() - 0.5) * meteor.size
-            
-            // Base velocity is opposite to meteor direction (backwards)
-            const backwardVx = -meteor.vx * 0.5  // Move backwards at 50% meteor speed
-            const backwardVy = -meteor.vy * 0.5
-            
-            // Add spread in a cone behind the meteor (±60 degrees from backward direction)
-            const spreadAngle = (Math.random() - 0.5) * (Math.PI / 3)  // ±60 degrees
-            const backwardAngle = meteorAngleRad + Math.PI  // Opposite direction
-            const particleAngle = backwardAngle + spreadAngle
-            
-            // Random speed variation (0.5 to 1.5 of base speed)
-            const speedVariation = 0.5 + Math.random()
-            const particleSpeed = Math.sqrt(backwardVx * backwardVx + backwardVy * backwardVy) * speedVariation
-            
-            // Calculate final velocity
-            particle.vx = Math.cos(particleAngle) * particleSpeed
-            particle.vy = Math.sin(particleAngle) * particleSpeed
+            if (forwardSpeed > Math.sqrt(meteor.vx * meteor.vx + meteor.vy * meteor.vy) * 0.5) {
+              // Reduce forward component
+              particle.vx -= meteorDirX * forwardSpeed * 0.7
+              particle.vy -= meteorDirY * forwardSpeed * 0.7
+            }
             
             particle.life = 0
             // Ensure minimum particle size for small meteors
