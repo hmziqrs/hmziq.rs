@@ -644,9 +644,9 @@ export default function MeteorShower2DOptimized() {
             }
             
             particle.life = 0
-            // Simple static size for all particles to ensure visibility
-            particle.size = 0.5  // Larger static size to ensure visibility
-            particle.color = { ...meteor.glowColor } // Use glow color
+            // DEBUG: Make particles super visible
+            particle.size = 1.0  // Very large size
+            particle.color = { r: 255, g: 255, b: 255 } // Bright white for visibility
             particle.active = true
             meteor.particles.push(particle)
           }
@@ -688,32 +688,19 @@ export default function MeteorShower2DOptimized() {
         // Draw trail
         drawTaperedTrail(meteor, ctx)
 
-        // Draw particles as visible debris
+        // Draw particles as visible debris - DEBUG: Simple circles
         meteor.particles.forEach((particle) => {
-          // Stronger opacity for better visibility
-          const particleOpacity = Math.max(0.3, 1 - particle.life / 50) // Minimum 0.3 opacity
+          // Strong opacity for visibility
+          const particleOpacity = 1.0 // Full opacity for debugging
           
-          const gradient = gradientCaches.meteors.getRadialGradient(
-            generateGradientKey('debris', Math.floor(particle.size * 100)),
-            particle.x, particle.y, 0,
-            particle.x, particle.y, particle.size * 4, // Smaller, more concentrated glow
-            [
-              [0, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity})`], // Full opacity at center
-              [0.3, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.8})`],
-              [0.6, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.4})`],
-              [1, 'rgba(0, 0, 0, 0)']
-            ]
-          )
-          
-          if (gradient) {
-            ctx.fillStyle = gradient
-            ctx.fillRect(
-              particle.x - particle.size * 4,
-              particle.y - particle.size * 4,
-              particle.size * 8,
-              particle.size * 8
-            )
-          }
+          // DEBUG: Draw simple white circles
+          ctx.save()
+          ctx.globalAlpha = particleOpacity
+          ctx.fillStyle = 'white'
+          ctx.beginPath()
+          ctx.arc(particle.x, particle.y, particle.size * 3, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.restore()
         })
 
         // Draw meteor head - simplified to reduce artifacts
