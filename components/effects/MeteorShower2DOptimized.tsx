@@ -60,7 +60,7 @@ interface Meteor {
 
 type MeteorType = 'cool' | 'warm' | 'bright'
 
-const BASE_TRAIL_LENGTH = 34
+const BASE_TRAIL_LENGTH = 50  // Increased from 34 to compensate for slower speed
 const SPAWN_RATE = 0.08  // Increased from 0.06 for more frequent spawns
 const BEZIER_SEGMENTS = 60
 
@@ -599,7 +599,7 @@ export default function MeteorShower2DOptimized() {
         const settings = qualityManager.current!.getSettings()
         if (settings.meteorParticleLimit > 0 && meteor.trail.length > 5) {
           // Spawn particles from current position (head) that get left behind
-          const baseSpawnRate = meteor.type === 'bright' ? 0.3 : 0.2  // Consistent spawn rate
+          const baseSpawnRate = meteor.type === 'bright' ? 0.4 : 0.3  // Increased for better visibility
           const spawnRate = baseSpawnRate * Math.max(1, speedMultiplierRef.current * 0.5) // Less sensitive to speed
           if (Math.random() < spawnRate && meteor.particles.length < settings.meteorParticleLimit) {
             const particle = particlePool.current!.acquire()
@@ -620,7 +620,7 @@ export default function MeteorShower2DOptimized() {
             particle.vy = inheritedVy + (Math.random() - 0.5) * deviation
             
             particle.life = 0
-            particle.size = meteor.size * (0.15 + Math.random() * 0.25) // Slightly larger for visibility
+            particle.size = meteor.size * (0.2 + Math.random() * 0.3) // Increased size for better visibility
             particle.color = { ...meteor.glowColor } // Use glow color
             particle.active = true
             meteor.particles.push(particle)
@@ -641,8 +641,8 @@ export default function MeteorShower2DOptimized() {
           particle.vx += (Math.random() - 0.5) * 0.02 * lifeIncrement
           particle.vy += (Math.random() - 0.5) * 0.02 * lifeIncrement
           
-          // Longer lifespan for debris effect (30 frames)
-          if (particle.life >= 30) {
+          // Longer lifespan for debris effect (50 frames for better visibility)
+          if (particle.life >= 50) {
             particlePool.current!.release(particle)
             return false
           }
@@ -663,19 +663,19 @@ export default function MeteorShower2DOptimized() {
         // Draw trail
         drawTaperedTrail(meteor, ctx)
 
-        // Draw particles as subtle debris
+        // Draw particles as visible debris
         meteor.particles.forEach((particle) => {
-          const particleOpacity = Math.pow(1 - particle.life / 30, 0.3) // Slower fade for debris
+          const particleOpacity = Math.pow(1 - particle.life / 50, 0.25) // Adjusted for new lifetime
           
           const gradient = gradientCaches.meteors.getRadialGradient(
             generateGradientKey('debris', Math.floor(particle.size * 100)),
             particle.x, particle.y, 0,
             particle.x, particle.y, particle.size * 6, // Larger, softer glow
             [
-              [0, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.9})`], // Colored center, not white
-              [0.2, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.6})`],
-              [0.5, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.3})`],
-              [0.8, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.1})`],
+              [0, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity})`], // Full opacity at center
+              [0.2, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.8})`],
+              [0.5, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.5})`],
+              [0.8, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particleOpacity * 0.2})`],
               [1, 'rgba(0, 0, 0, 0)']
             ]
           )
@@ -694,9 +694,9 @@ export default function MeteorShower2DOptimized() {
         // Draw meteor head - simplified to reduce artifacts
         ctx.save()
         
-        // Reduced shine area and brightness
-        const shineBase = 8  // Reduced from 15
-        const shineScale = meteor.size * 5  // Reduced from 10
+        // Balanced shine for visibility on all sizes
+        const shineBase = 12  // Increased for small meteor visibility
+        const shineScale = meteor.size * 5  // Keep scale the same
         const shineSize = shineBase + shineScale
         
         const shineGradient = ctx.createRadialGradient(
