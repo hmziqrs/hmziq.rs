@@ -374,8 +374,10 @@ export default function MeteorShower2DOptimized() {
 
     function drawHighQualityTaperedTrail(meteor: Meteor, ctx: CanvasRenderingContext2D) {
       const trailLength = meteor.trail.length
-      const maxWidth = Math.min(meteor.size * 5, 4)
-      const minWidth = 0.1
+      // Ensure minimum width for small meteors to prevent artifacts
+      const baseWidth = 2  // Minimum base width
+      const maxWidth = Math.max(baseWidth, Math.min(meteor.size * 5, 4))
+      const minWidth = 0.5  // Increased from 0.1 for better visibility
       
       // Build the trail shape
       ctx.beginPath()
@@ -453,7 +455,8 @@ export default function MeteorShower2DOptimized() {
     function drawSmoothTrail(meteor: Meteor, ctx: CanvasRenderingContext2D) {
       // Medium quality - multiple strokes with decreasing width
       const segments = 5
-      const maxWidth = Math.min(meteor.size * 4, 3)
+      const baseWidth = 1.5  // Minimum base width for small meteors
+      const maxWidth = Math.max(baseWidth, Math.min(meteor.size * 4, 3))
       
       for (let seg = 0; seg < segments; seg++) {
         const segmentProgress = seg / segments
@@ -493,7 +496,8 @@ export default function MeteorShower2DOptimized() {
 
     function drawSimpleTrail(meteor: Meteor, ctx: CanvasRenderingContext2D) {
       // Simple performance mode
-      ctx.lineWidth = Math.min(meteor.size * 3, 2.5)
+      const baseWidth = 1.2  // Minimum width for small meteors
+      ctx.lineWidth = Math.max(baseWidth, Math.min(meteor.size * 3, 2.5))
       ctx.lineCap = 'round'
       
       const gradient = gradientCaches.meteors.getLinearGradient(
@@ -599,7 +603,9 @@ export default function MeteorShower2DOptimized() {
         const settings = qualityManager.current!.getSettings()
         if (settings.meteorParticleLimit > 0 && meteor.trail.length > 5) {
           // Spawn particles from current position (head) that get left behind
-          const baseSpawnRate = meteor.type === 'bright' ? 0.4 : 0.3  // Increased for better visibility
+          // Higher spawn rate for smaller meteors to ensure visibility
+          const sizeMultiplier = meteor.size < 0.5 ? 1.5 : 1.0
+          const baseSpawnRate = (meteor.type === 'bright' ? 0.4 : 0.3) * sizeMultiplier
           const spawnRate = baseSpawnRate * Math.max(1, speedMultiplierRef.current * 0.5) // Less sensitive to speed
           if (Math.random() < spawnRate && meteor.particles.length < settings.meteorParticleLimit) {
             const particle = particlePool.current!.acquire()
@@ -614,13 +620,15 @@ export default function MeteorShower2DOptimized() {
             const inheritedVx = meteor.vx * 0.3 // Inherit 30% of meteor velocity
             const inheritedVy = meteor.vy * 0.3
             
-            // Add random deviation
-            const deviation = 0.8
+            // Add random deviation - increased for longer travel
+            const deviation = 1.6  // Doubled from 0.8
             particle.vx = inheritedVx + (Math.random() - 0.5) * deviation
             particle.vy = inheritedVy + (Math.random() - 0.5) * deviation
             
             particle.life = 0
-            particle.size = meteor.size * (0.2 + Math.random() * 0.3) // Increased size for better visibility
+            // Ensure minimum particle size for small meteors
+            const baseParticleSize = 0.15  // Minimum particle size
+            particle.size = Math.max(baseParticleSize, meteor.size * (0.25 + Math.random() * 0.35))
             particle.color = { ...meteor.glowColor } // Use glow color
             particle.active = true
             meteor.particles.push(particle)
@@ -633,9 +641,9 @@ export default function MeteorShower2DOptimized() {
           particle.y += particle.vy * lifeIncrement
           particle.life += lifeIncrement
           
-          // Slow down particles over time (air resistance)
-          particle.vx *= 0.98
-          particle.vy *= 0.98
+          // Slow down particles over time (air resistance) - reduced for longer travel
+          particle.vx *= 0.99  // Less air resistance (was 0.98)
+          particle.vy *= 0.99
           
           // Very slight drift, no gravity for more ethereal effect
           particle.vx += (Math.random() - 0.5) * 0.02 * lifeIncrement
