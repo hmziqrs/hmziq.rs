@@ -1,124 +1,77 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+AI agent documentation for a creative landing page project with space-themed 3D animations.
 
 ## Project Overview
 
-This is a personal landing page for @hmziqrs (hmziq.rs domain). It's designed to be a creative and unique introduction page featuring:
+A minimal landing page featuring:
 - Canvas-based parallax animations
-- 3D components with animations
-- Space-themed background with star simulation
-- Subtle, non-bloated design that doesn't distract from content
+- 3D star field simulation
+- Space-themed design
+- Subtle, performance-focused animations
 
-**Important**: This is NOT a CV/Resume site. It's a subtle introduction page with focus on creative visual experience.
+**Focus**: Creative visual experience, not content-heavy presentation.
 
 ## Tech Stack
 
-- **Runtime & Package Manager**: Bun (latest version)
+- **Runtime**: Bun (package manager & runtime)
 - **Framework**: Next.js 15+ (App Router)
-- **UI Components**: shadcn/ui (latest version)
-- **Styling**: Tailwind CSS v4 (with CSS-first configuration)
-- **3D Graphics**: Three.js (for star simulation and 3D animations)
+- **UI**: shadcn/ui components
+- **Styling**: Tailwind CSS v4
+- **3D**: Three.js + React Three Fiber
 - **Language**: TypeScript
-
-### Tech Stack References
-- Bun: https://bun.sh/docs
-- Next.js: https://nextjs.org/docs
-- shadcn/ui: https://ui.shadcn.com/
-- Tailwind CSS v4: https://tailwindcss.com/docs/v4-beta
-- Three.js + React Three Fiber: https://docs.pmnd.rs/react-three-fiber/
-
-## Development Commands
-
-**IMPORTANT**: This project uses Bun as the package manager and runtime. Always use `bun` instead of `npm` or `node`.
 
 ## Project Structure
 
 ```
 ├── app/                    # Next.js app directory
-│   ├── layout.tsx         # Root layout with providers
-│   ├── page.tsx           # Main landing page
-│   └── globals.css        # Global styles and Tailwind v4 imports
+│   ├── layout.tsx         # Root layout
+│   ├── page.tsx           # Main page
+│   └── globals.css        # Global styles
 ├── components/
 │   ├── ui/                # shadcn/ui components
-│   ├── three/             # Three.js components (StarField, etc.)
-│   └── sections/          # Page sections (Hero, About, etc.)
-├── lib/                   # Utility functions and configurations
-│   ├── utils.ts           # Helper functions
-│   └── three-utils.ts     # Three.js specific utilities
+│   ├── three/             # Three.js components
+│   └── sections/          # Page sections
+├── lib/                   # Utilities
 └── public/                # Static assets
-
 ```
 
-## Key Implementation Guidelines
+## Key Guidelines
 
-### Three.js Integration
-- Use React Three Fiber (@react-three/fiber) for better React integration
-- Implement star field as a separate component with performance optimization
-- Use @react-three/drei for common Three.js utilities
-- Ensure proper cleanup of Three.js resources to prevent memory leaks
-- Consider using Suspense boundaries for 3D content loading
+### Development
+- Use `bun` for all package management (never npm/yarn)
+- Use `dynamic` imports for Three.js components (client-side only)
+- Implement proper Three.js cleanup to prevent memory leaks
 
-### Implementation Considerations
-- Implement lazy loading for Three.js components
-- Use `dynamic` imports from Next.js for client-side only components
-- Implement reduced motion preferences for accessibility
+### Three.js Implementation
+- Use React Three Fiber for React integration
+- Use @react-three/drei for utilities
+- Implement Suspense boundaries for 3D loading
+- Optimize star field performance
 
-### Animation Guidelines
-- Keep animations subtle and smooth (60fps target)
-- Implement parallax scrolling using Intersection Observer API
-- Use requestAnimationFrame for custom animations
-- Consider using Framer Motion for declarative animations
-- Ensure animations respect prefers-reduced-motion
+### Animations
+- Target 60fps performance
+- Use Intersection Observer for parallax triggers
+- Respect `prefers-reduced-motion`
+- Keep effects subtle and smooth
 
-### Content Structure
-- Hero section with name and brief tagline
-- Subtle skill indicators (not a full list)
-- Contact/social links (GitHub, LinkedIn, etc.)
-- Keep content minimal and impactful
+### Design Constraints
+- **Colors**: Black (#000000) background, white (#FFFFFF) text, gray accents
+- **Effects**: Blue/purple tints only for star glow
+- **Content**: Minimal sections (hero, skills, contacts)
+- **Accessibility**: Ensure content works without JavaScript
 
-## Professional Background Context
+## Common Patterns
 
-The site owner is a Senior Software Engineer with 9 years of experience, specializing in:
-- **Frontend**: TypeScript, Next.js, React.js, React Native
-- **Backend**: AdonisJS, Express.js, Rust (Axum)
-- **Cross-platform**: Flutter, Dioxus
-- **Expertise**: Complex problem-solving, full-stack development
+### 3D Components
+```typescript
+// Use dynamic imports
+const StarField = dynamic(() => import('@/components/three/StarField'), {
+  ssr: false
+})
+```
 
-This context helps in crafting appropriate content and choosing suitable technical implementations.
-
-## Design Principles
-
-1. **Subtlety First**: Animations and effects should enhance, not overwhelm
-2. **Smooth Experience**: Focus on fluid animations
-3. **Accessibility**: Ensure content is accessible without JavaScript
-4. **Uniqueness**: Stand out through creative implementation, not gimmicks
-5. **Professionalism**: Maintain a professional tone despite creative elements
-
-### Color Palette
-- **Primary**: Neutral monochrome palette (black, white, grays)
-- **Background**: Deep black (#000000) for space theme
-- **Text**: High contrast white (#FFFFFF) on dark backgrounds
-- **Accents**: Subtle gray variations (#111111, #222222, #888888)
-- **Effects**: Slight blue/purple tints for star glow effects only
-
-## Common Tasks
-
-### Adding New 3D Elements
-1. Create component in `components/three/`
-2. Use React Three Fiber patterns
-3. Implement proper lighting and camera setup
-4. Test performance impact
-5. Add loading states
-
-### Implementing Parallax Sections
-1. Use Intersection Observer for trigger points
-2. Calculate scroll progress for smooth transitions
-3. Use CSS transforms for smooth animations
-4. Test on various screen sizes
-
-
-## Testing Approach
-
-- Visual regression testing for animations
-- Accessibility testing with screen readers
+### Parallax Sections
+- Use Intersection Observer API
+- Calculate scroll progress for smooth transitions
+- Apply CSS transforms for performance
