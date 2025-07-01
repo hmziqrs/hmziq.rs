@@ -12,74 +12,25 @@ These rules must be followed unless explicitly overridden:
 
 ## Project Overview
 
-A minimal landing page featuring:
-- Canvas-based parallax animations
-- 3D star field simulation
-- Space-themed design
-- Subtle, performance-focused animations
-
-**Focus**: Creative visual experience, not content-heavy presentation.
+Space-themed landing page with 3D star field and parallax animations. Focus: creative visual experience.
 
 ## Tech Stack
 
-- **Runtime**: Bun (package manager & runtime)
-- **Framework**: Next.js 15+ (App Router)
-- **UI**: shadcn/ui components
-- **Styling**: Tailwind CSS v4
-- **3D**: Three.js + React Three Fiber
-- **Language**: TypeScript
+Bun, Next.js 15+ (App Router), shadcn/ui, Tailwind CSS v4, Three.js + React Three Fiber, TypeScript
 
 ## Project Structure
 
-```
-├── app/                    # Next.js app directory
-│   ├── layout.tsx         # Root layout
-│   ├── page.tsx           # Main page
-│   └── globals.css        # Global styles
-├── components/
-│   ├── ui/                # shadcn/ui components
-│   ├── three/             # Three.js components
-│   └── sections/          # Page sections
-├── lib/                   # Utilities
-└── public/                # Static assets
-```
+`app/` (Next.js), `components/ui/` (shadcn/ui), `components/three/` (3D), `components/sections/`, `lib/` (utils)
 
 ## Key Guidelines
 
-### Development
-- Use `bun` for all package management (never npm/yarn)
-- Use `dynamic` imports for Three.js components (client-side only)
-- Implement proper Three.js cleanup to prevent memory leaks
-
-### Three.js Implementation
-- Use React Three Fiber for React integration
-- Use @react-three/drei for utilities
-- Implement Suspense boundaries for 3D loading
-- Optimize star field performance
-
-### Animations
-- Target 60fps performance
-- Use Intersection Observer for parallax triggers
-- Respect `prefers-reduced-motion`
-- Keep effects subtle and smooth
-
-### Design Constraints
-- **Colors**: Black (#000000) background, white (#FFFFFF) text, gray accents
-- **Effects**: Blue/purple tints only for star glow
-- **Content**: Minimal sections (hero, skills, contacts)
-- **Accessibility**: Ensure content works without JavaScript
+- Use `bun` (never npm/yarn), `dynamic` imports for Three.js (client-side only)
+- React Three Fiber + @react-three/drei, Suspense boundaries, optimize star field
+- 60fps target, Intersection Observer for parallax, respect `prefers-reduced-motion`
+- Colors: Black bg (#000000), white text (#FFFFFF), gray accents, blue/purple star glow only
+- Content: hero, skills, contacts sections. Ensure accessibility without JS.
 
 ## Common Patterns
 
-### 3D Components
-```typescript
-// Use dynamic imports
-const StarField = dynamic(() => import('@/components/three/StarField'), {
-  ssr: false
-})
-```
-
-### Parallax Sections
-- Use Intersection Observer API
-- Calculate scroll progress for smooth transitions
-- Apply CSS transforms for performance
+3D: `const StarField = dynamic(() => import('@/components/three/StarField'), { ssr: false })`
+Parallax: Intersection Observer + CSS transforms for performance
