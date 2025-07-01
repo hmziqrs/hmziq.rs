@@ -19,15 +19,7 @@ const MeteorShower2D = dynamic(() => import('@/components/effects/MeteorShower2D
   ssr: false,
 })
 
-const Nebula2D = dynamic(() => import('@/components/effects/Nebula2D'), {
-  ssr: false,
-})
-
 const LightNebula2D = dynamic(() => import('@/components/effects/LightNebula2DOptimized'), {
-  ssr: false,
-})
-
-const StarField2D = dynamic(() => import('@/components/effects/StarField2D'), {
   ssr: false,
 })
 
