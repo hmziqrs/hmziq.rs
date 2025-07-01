@@ -7,7 +7,7 @@ import Skills from '@/components/sections/Skills'
 import Contact from '@/components/sections/Contact'
 
 // Dynamically import Three.js components to avoid SSR issues
-const StarField3D = dynamic(() => import('@/components/three/OptimizedStarField'), {
+const StarField3D = dynamic(() => import('@/components/three/StarField'), {
   ssr: false,
   loading: () => (
     <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
@@ -15,11 +15,11 @@ const StarField3D = dynamic(() => import('@/components/three/OptimizedStarField'
 })
 
 // Dynamically import 2D effects
-const MeteorShower2D = dynamic(() => import('@/components/effects/MeteorShower2DOptimized'), {
+const MeteorShower2D = dynamic(() => import('@/components/effects/MeteorShower'), {
   ssr: false,
 })
 
-const LightNebula2D = dynamic(() => import('@/components/effects/LightNebula2DOptimized'), {
+const LightNebula2D = dynamic(() => import('@/components/effects/LightNebula'), {
   ssr: false,
 })
 

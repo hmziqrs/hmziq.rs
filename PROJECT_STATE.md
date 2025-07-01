@@ -10,13 +10,13 @@
 - app/layout.tsx:8-41 (root_provider)
 
 ## 3D_SYSTEM
-- components/three/OptimizedStarField.tsx:1-912 (LOD_implementation)
+- components/three/StarField.tsx:1-912 (LOD_implementation)
   - nearStars:208-287, mediumStars:289-357, farStars:359-413
   - qualityTiers:665-687, shaders:80-206
 
 ## 2D_CANVAS_EFFECTS
-- components/effects/LightNebula2DOptimized.tsx:1-451 (gradient_cache:163-185)
-- components/effects/MeteorShower2DOptimized.tsx:1-1072 (particle_pool:421-461)
+- components/effects/LightNebula.tsx:1-451 (gradient_cache:163-185)
+- components/effects/MeteorShower.tsx:1-1072 (particle_pool:421-461)
 - components/effects/StarField2D.tsx:1-135 (simple_stars)
 
 ## PERFORMANCE_LAYER
