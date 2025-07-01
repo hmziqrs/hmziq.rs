@@ -9,6 +9,7 @@ These rules must be followed unless explicitly overridden:
 1. **No Planning Documents**: Never create plans, summaries, completion reports, or documentation files unless explicitly requested
 2. **Direct File Modification**: When asked to modify, revamp, or optimize files, edit the original file directly - never create copies or alternative versions
 3. **AI-Focused Documentation**: Create documentation optimized for AI consumption - brief, technical, with line number references when referencing code, not human-readable unless specified
+4. **No Legacy Directory**: Never use or reference legacy directory structure in any way unless explicitly mentioned
 
 ## Project Overview
 
