@@ -6,10 +6,11 @@ AI agent documentation for a creative landing page project with space-themed 3D 
 
 These rules must be followed unless explicitly overridden:
 
-1. **No Planning Documents**: Never create plans, summaries, completion reports, or documentation files unless explicitly requested
-2. **Direct File Modification**: When asked to modify, revamp, or optimize files, edit the original file directly - never create copies or alternative versions
-3. **AI-Focused Documentation**: Create documentation optimized for AI consumption - brief, technical, with line number references when referencing code, not human-readable unless specified
-4. **No Legacy Directory**: Never use or reference legacy directory structure in any way unless explicitly mentioned
+1. **No Planning Documents**: Never create plans/summaries/reports unless requested
+2. **Direct File Modification**: Edit original files directly, never create copies/alternatives  
+3. **AI-Focused Documentation**: Brief, technical docs with line references, not human-readable unless specified
+4. **No Legacy Directory**: Never use legacy directory structure unless mentioned
+5. **No Test/Demo Files**: Don't create test/demo files unless mentioned
 
 ## Project Overview
 
