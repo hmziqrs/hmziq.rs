@@ -30,3 +30,6 @@ next-env.d.ts
 
 # bun
 .bun/
+
+# serena cache
+.serena/cache
