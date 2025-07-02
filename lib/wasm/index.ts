@@ -13,6 +13,7 @@ export interface WASMModule {
   generate_star_colors: (count: number, start_index: number) => Float32Array;
   generate_star_sizes: (count: number, start_index: number, size_multiplier: number) => Float32Array;
   calculate_star_effects: (positions_ptr: number, count: number, time: number) => Float32Array;
+  calculate_star_effects_into_buffers: (positions_ptr: number, twinkles_ptr: number, sparkles_ptr: number, count: number, time: number) => void;
   calculate_twinkle_effects: (positions_ptr: number, count: number, time: number) => Float32Array;
   calculate_sparkle_effects: (positions_ptr: number, count: number, time: number) => Float32Array;
   calculate_rotation_delta: (base_speed_x: number, base_speed_y: number, speed_multiplier: number, delta_time: number) => Float32Array;
@@ -162,6 +163,7 @@ export async function loadWASM(): Promise<WASMModule | null> {
         generate_star_colors: wasm.generate_star_colors,
         generate_star_sizes: wasm.generate_star_sizes,
         calculate_star_effects: wasm.calculate_star_effects,
+        calculate_star_effects_into_buffers: wasm.calculate_star_effects_into_buffers,
         calculate_twinkle_effects: wasm.calculate_twinkle_effects,
         calculate_sparkle_effects: wasm.calculate_sparkle_effects,
         calculate_rotation_delta: wasm.calculate_rotation_delta,
@@ -298,6 +300,11 @@ export const jsFallbacks: WASMModule = {
   calculate_star_effects: (): Float32Array => {
     logFallback('calculate_star_effects', 'not implemented');
     return new Float32Array(0);
+  },
+  calculate_star_effects_into_buffers: (positions_ptr: number, twinkles_ptr: number, sparkles_ptr: number, count: number, time: number): void => {
+    logFallback('calculate_star_effects_into_buffers', 'not implemented - using manual update');
+    // This is a void function, so we don't need to return anything
+    // In the actual component, we'll fall back to the manual calculation
   },
   calculate_twinkle_effects: (): Float32Array => {
     logFallback('calculate_twinkle_effects', 'not implemented');

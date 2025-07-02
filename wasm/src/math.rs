@@ -8,7 +8,7 @@ const SIN_TABLE_SIZE: usize = 1024;
 static mut SIN_TABLE: Option<Vec<f32>> = None;
 
 // Initialize the sin lookup table
-fn init_sin_table() -> &'static Vec<f32> {
+pub fn init_sin_table() -> &'static Vec<f32> {
     unsafe {
         if SIN_TABLE.is_none() {
             let mut table = Vec::with_capacity(SIN_TABLE_SIZE);

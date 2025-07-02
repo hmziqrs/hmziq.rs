@@ -265,7 +265,7 @@ function Stars() {
       balanced: 1.0,
       ultra: 1.5
     }
-    const baseStarDensity = 0.6 * qualityMultipliers[qualityTier]
+    const baseStarDensity = 0.36 * qualityMultipliers[qualityTier]
     const screenArea = screenDimensions.width * screenDimensions.height
     const totalCount = Math.floor((screenArea / 1000) * baseStarDensity)
 
@@ -407,11 +407,38 @@ function Stars() {
 
     const { positions, twinkles, sparkles, count, mesh } = group
 
-    if (wasmModule) {
-      // For now, use the positions from the group directly
-      // In a production system, we'd use SharedArrayBuffer or direct memory access
-      
-      // Use fast_sin from WASM for calculations
+    if (wasmModule && wasmModule.calculate_star_effects_into_buffers) {
+      // Use optimized WASM function that writes directly to buffers
+      try {
+        // Get memory pointers for direct WASM access
+        const positionsPtr = (positions as any).byteOffset || 0
+        const twinklesPtr = (twinkles as any).byteOffset || 0
+        const sparklesPtr = (sparkles as any).byteOffset || 0
+        
+        // Call WASM function to update buffers directly
+        wasmModule.calculate_star_effects_into_buffers(
+          positionsPtr,
+          twinklesPtr,
+          sparklesPtr,
+          count,
+          time
+        )
+      } catch (e) {
+        // Fallback to standard WASM calculation if direct buffer access fails
+        const effects = wasmModule.calculate_star_effects(
+          (positions as any).byteOffset || 0,
+          count,
+          time
+        )
+        
+        // Copy results back to buffers
+        for (let i = 0; i < count; i++) {
+          twinkles[i] = effects[i * 2]
+          sparkles[i] = effects[i * 2 + 1]
+        }
+      }
+    } else if (wasmModule) {
+      // Use regular WASM functions if the optimized version isn't available
       for (let i = 0; i < count; i++) {
         const i3 = i * 3
         const x = positions[i3]
