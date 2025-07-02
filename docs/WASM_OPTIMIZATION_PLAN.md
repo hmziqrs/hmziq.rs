@@ -273,11 +273,11 @@ impl SharedBuffer {
   - [ ] Batch process all near stars
   - [ ] Direct buffer manipulation for GPU sync
 
-- [ ] **Task 8: Spatial Indexing for Overlap Detection (Nebula)**
-  - [ ] Replace O(n²) algorithm from `LightNebula.tsx:413-463`
-  - [ ] Implement spatial hash grid in `wasm/src/spatial.rs`
-  - [ ] Create efficient neighbor queries
-  - [ ] Cache-friendly data layout optimization
+- [x] **Task 8: Spatial Indexing for Overlap Detection (Nebula)**
+  - [x] Replace O(n²) algorithm from `LightNebula.tsx:413-463`
+  - [x] Implement spatial hash grid in `wasm/src/spatial.rs`
+  - [x] Create efficient neighbor queries
+  - [x] Cache-friendly data layout optimization
 
 - [ ] **Task 9: Particle System Manager**
   - [ ] Create unified particle pool in `wasm/src/particles.rs`
@@ -297,12 +297,14 @@ impl SharedBuffer {
 **WASM Integration:** ✅ Working  
 **Meteor System:** ✅ Complete (Task 7)
 **Debug Controls:** ✅ Complete (Task 15)
-**Ready for:** Advanced optimizations (Star twinkle effects, Nebula spatial indexing)
+**Spatial Indexing:** ✅ Complete (Task 8)
+**Ready for:** Star twinkle effects (Task 5), Particle system manager (Task 9)
 
 ## Testing & Access Points
 
 **Available Test Pages:**
 - `/test-meteor-wasm` - Comprehensive meteor system benchmarking
+- `/test-nebula-spatial` - Nebula spatial indexing benchmarking
 - Performance Monitor - Press `Ctrl+P` on any page to access console log controls and WASM status
 
 **Console Log Controls:**
@@ -313,7 +315,7 @@ impl SharedBuffer {
 ## Performance Targets
 - Star field calculations: 10x speedup
 - Particle updates: 5x speedup  
-- Overlap detection: O(n²) → O(n log n)
+- Overlap detection: O(n²) → O(n) ✅ Achieved with spatial hash grid
 - Overall frame time: <8ms → <4ms
 
 ## Implementation Details
@@ -349,31 +351,42 @@ pub fn fast_sin_batch(values: &[f32]) -> Vec<f32> {
 
 **Spatial Indexing:**
 ```rust
+// wasm/src/spatial.rs
 #[wasm_bindgen]
 pub struct SpatialGrid {
-    cells: Vec<Vec<usize>>,
     cell_size: f32,
+    cells: HashMap<(i32, i32), Vec<usize>>,
+    objects: Vec<SpatialObject>,
 }
 
 #[wasm_bindgen]
 impl SpatialGrid {
-    pub fn find_overlaps(&self) -> Vec<u32> {
-        // Replace O(n²) from LightNebula.tsx:413-463
-        // Efficient spatial hash grid
-    }
+    pub fn update_positions(&mut self, positions: &[f32], radii: &[f32], visibilities: &[u8])
+    pub fn find_overlaps(&self, overlap_factor: f32) -> Vec<f32>
 }
+
+// Integration in LightNebula.tsx
+const overlaps = spatialIndexingRef.current.findOverlaps(0.8)
+overlaps.forEach((overlap) => {
+    // Render overlap glow effect
+})
+
+// Singleton with smart initialization
+- Prevents double initialization in React StrictMode
+- Handles canvas resize automatically
+- Tracks dimensions to avoid redundant recreations
 ```
 
 ## Integration Points
 1. **StarField.tsx:390-443** - Replace animation loop with WASM calls
-2. **MeteorShower.tsx:625-850** - Delegate to WASM particle system  
-3. **LightNebula.tsx:360-463** - Use WASM for physics and overlap
+2. **MeteorShower.tsx:625-850** - ✅ Delegated to WASM particle system  
+3. **LightNebula.tsx:413-468** - ✅ Using WASM spatial indexing for overlap detection
 4. **performance-utils.ts** - Wrap WASM functions with fallbacks
 
 ## Performance Targets
 - Star field calculations: 10x speedup
 - Particle updates: 5x speedup  
-- Overlap detection: O(n²) → O(n log n)
+- Overlap detection: O(n²) → O(n) ✅ Achieved with spatial hash grid
 - Overall frame time: <8ms → <4ms
 
 ## 📊 Real-World Performance Test Results (Playwright)

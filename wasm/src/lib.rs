@@ -6,6 +6,7 @@ mod star_field;
 mod bezier;
 mod memory;
 mod particles;
+mod spatial;
 
 // Re-export public functions
 pub use math::*;
@@ -13,6 +14,7 @@ pub use star_field::*;
 pub use bezier::*;
 pub use memory::*;
 pub use particles::*;
+pub use spatial::*;
 
 #[wasm_bindgen]
 extern "C" {
@@ -40,4 +42,5 @@ pub fn main() {
     console_log!("WASM module loaded successfully!");
     console_log!("Star field optimization ready!");
     console_log!("Meteor particle system ready!");
+    console_log!("Spatial indexing ready!");
 }

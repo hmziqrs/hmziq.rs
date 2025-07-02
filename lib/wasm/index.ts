@@ -40,6 +40,8 @@ export interface WASMModule {
   MeteorSystem: any; // Constructor type
   Vec2: any; // Constructor type
   batch_interpolate_meteor_positions: (life_values: Float32Array, max_life_values: Float32Array, path_data: Float32Array, path_stride: number) => Float32Array;
+  // Spatial indexing system
+  SpatialGrid: any; // Constructor type
 }
 
 // Memory management classes interfaces
@@ -116,6 +118,17 @@ export interface MeteorSystem {
   free(): void;
 }
 
+export interface SpatialGrid {
+  new (cell_size: number, canvas_width: number, canvas_height: number): SpatialGrid;
+  clear(): void;
+  add_object(id: number, x: number, y: number, radius: number, is_visible: boolean): void;
+  update_positions(positions: Float32Array, radii: Float32Array, visibilities: Uint8Array): void;
+  find_overlaps(overlap_factor: number): Float32Array;
+  get_stats(): Float32Array;
+  get_cell_occupancy(): Float32Array;
+  free?(): void;
+}
+
 export async function loadWASM(): Promise<WASMModule | null> {
   // Return cached module if already loaded
   if (wasmModule) {
@@ -176,6 +189,8 @@ export async function loadWASM(): Promise<WASMModule | null> {
         MeteorSystem: wasm.MeteorSystem,
         Vec2: wasm.Vec2,
         batch_interpolate_meteor_positions: wasm.batch_interpolate_meteor_positions,
+        // Spatial indexing system
+        SpatialGrid: wasm.SpatialGrid,
       };
       
       const debugConfig = DebugConfigManager.getInstance();
@@ -527,6 +542,8 @@ export const jsFallbacks: WASMModule = {
     
     return positions;
   },
+  // Spatial indexing system fallback (not implemented)
+  SpatialGrid: null as any,
 };
 
 // Unified API that automatically uses WASM or JS fallback

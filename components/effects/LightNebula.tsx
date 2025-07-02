@@ -8,6 +8,7 @@ import {
   FrameTimer,
   isInViewport
 } from '@/lib/performance/performance-utils'
+import { getNebulaSpatialIndexing } from '@/lib/wasm/nebula-spatial'
 
 interface Cloud {
   // Core properties
@@ -106,6 +107,9 @@ export default function LightNebula2DOptimized() {
   // Frame counters for optimization
   const frameCountRef = useRef(0)
   const visibilityCheckInterval = useRef(10) // Check visibility every N frames
+  
+  // Spatial indexing for efficient overlap detection
+  const spatialIndexingRef = useRef(getNebulaSpatialIndexing())
 
   useEffect(() => {
     if (prefersReducedMotion) return
@@ -233,13 +237,15 @@ export default function LightNebula2DOptimized() {
           cloud.orbitCenterX = orbitCenter.x
           cloud.orbitCenterY = orbitCenter.y
           
-          const sizeInfluence = cloud.radius / (baseSize * 0.4)
           cloud.orbitRadius = orbitCenter.baseRadius + (Math.random() * orbitCenter.radiusVariation)
           
           cloud.x = cloud.orbitCenterX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius
           cloud.y = cloud.orbitCenterY + Math.sin(cloud.orbitAngle) * cloud.orbitRadius
         })
       }
+      
+      // Re-initialize spatial indexing with new canvas dimensions
+      spatialIndexingRef.current.initialize(canvas.width, canvas.height)
     }
     resizeCanvas()
     window.addEventListener('resize', resizeCanvas)
@@ -402,6 +408,9 @@ export default function LightNebula2DOptimized() {
         sortedCloudsRef.current = [...cloudsRef.current].sort((a, b) => b.radius - a.radius)
         cloudsSortNeeded.current = false
       }
+      
+      // Update spatial indexing with current cloud positions
+      spatialIndexingRef.current.updateCloudPositions(cloudsRef.current)
 
       // Render clouds
       ctx.globalCompositeOperation = 'screen'
@@ -413,54 +422,46 @@ export default function LightNebula2DOptimized() {
       if (settings.nebulaComplexity === 'complex' && frameCountRef.current % 2 === 0) {
         ctx.globalCompositeOperation = 'screen'
         
-        // Only check visible clouds
-        const visibleClouds = sortedCloudsRef.current.filter(c => c.isVisible)
+        // Use spatial indexing for efficient overlap detection
+        const overlaps = spatialIndexingRef.current.findOverlaps(0.8)
         
-        for (let i = 0; i < visibleClouds.length; i++) {
-          for (let j = i + 1; j < visibleClouds.length; j++) {
-            const cloud1 = visibleClouds[i]
-            const cloud2 = visibleClouds[j]
+        overlaps.forEach((overlap) => {
+          const cloud1 = cloudsRef.current[overlap.id1]
+          const cloud2 = cloudsRef.current[overlap.id2]
+          
+          // Check if both clouds are still visible
+          if (!cloud1.isVisible || !cloud2.isVisible) return
+          
+          const combinedRadius = (cloud1.radius + cloud2.radius) * 0.8
 
-            const dx = cloud1.x - cloud2.x
-            const dy = cloud1.y - cloud2.y
-            const distance = Math.sqrt(dx * dx + dy * dy)
-            const combinedRadius = (cloud1.radius + cloud2.radius) * 0.8
+          const overlapKey = generateGradientKey(
+            'nebula_overlap',
+            overlap.id1,
+            overlap.id2,
+            Math.floor(overlap.overlapStrength * 10)
+          )
+          
+          const overlapGlow = gradientCaches.nebula.getRadialGradient(
+            overlapKey,
+            overlap.midX, overlap.midY, 0,
+            overlap.midX, overlap.midY, combinedRadius * 0.3,
+            [
+              [0, `rgba(255, 255, 255, ${overlap.overlapStrength * 0.02})`],
+              [0.5, `rgba(200, 200, 255, ${overlap.overlapStrength * 0.01})`],
+              [1, 'rgba(0, 0, 0, 0)']
+            ]
+          )
 
-            if (distance < combinedRadius) {
-              const overlapStrength = 1 - distance / combinedRadius
-              const midX = (cloud1.x + cloud2.x) / 2
-              const midY = (cloud1.y + cloud2.y) / 2
-
-              const overlapKey = generateGradientKey(
-                'nebula_overlap',
-                i,
-                j,
-                Math.floor(overlapStrength * 10)
-              )
-              
-              const overlapGlow = gradientCaches.nebula.getRadialGradient(
-                overlapKey,
-                midX, midY, 0,
-                midX, midY, combinedRadius * 0.3,
-                [
-                  [0, `rgba(255, 255, 255, ${overlapStrength * 0.02})`],
-                  [0.5, `rgba(200, 200, 255, ${overlapStrength * 0.01})`],
-                  [1, 'rgba(0, 0, 0, 0)']
-                ]
-              )
-
-              if (overlapGlow) {
-                ctx.fillStyle = overlapGlow
-                ctx.fillRect(
-                  midX - combinedRadius * 0.3,
-                  midY - combinedRadius * 0.3,
-                  combinedRadius * 0.6,
-                  combinedRadius * 0.6
-                )
-              }
-            }
+          if (overlapGlow) {
+            ctx.fillStyle = overlapGlow
+            ctx.fillRect(
+              overlap.midX - combinedRadius * 0.3,
+              overlap.midY - combinedRadius * 0.3,
+              combinedRadius * 0.6,
+              combinedRadius * 0.6
+            )
           }
-        }
+        })
       }
 
       animationIdRef.current = requestAnimationFrame(animate)
@@ -565,6 +566,12 @@ export default function LightNebula2DOptimized() {
         cancelAnimationFrame(animationIdRef.current)
       }
       gradientCaches.nebula.clear()
+      
+      // Dispose spatial indexing
+      const spatialIndexing = spatialIndexingRef.current
+      if (spatialIndexing) {
+        spatialIndexing.dispose()
+      }
     }
   }, [prefersReducedMotion])
 
