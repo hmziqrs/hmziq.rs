@@ -33,3 +33,10 @@ next-env.d.ts
 
 # serena cache
 .serena/cache
+
+# WASM build artifacts
+/wasm/pkg/
+/wasm/target/
+/public/wasm/
+*.wasm
+Cargo.lock

@@ -23,6 +23,11 @@ const LightNebula2D = dynamic(() => import('@/components/effects/LightNebula'), 
   ssr: false,
 })
 
+// WASM Test Component (temporary for testing)
+const WASMTest = dynamic(() => import('@/components/debug/WASMTest').then(mod => ({ default: mod.WASMTest })), {
+  ssr: false,
+})
+
 export default function Home() {
   return (
     <main className="relative min-h-screen">
@@ -42,6 +47,9 @@ export default function Home() {
         <Skills />
         <Contact />
       </div>
+
+      {/* WASM Test (temporary) */}
+      <WASMTest />
     </main>
   )
 }

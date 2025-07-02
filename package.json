@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "bun run build:wasm && next build",
+    "build:wasm": "cd wasm && wasm-pack build --target web --out-dir pkg && node ../scripts/copy-wasm.js",
+    "build:wasm:dev": "cd wasm && wasm-pack build --target web --out-dir pkg --dev && node ../scripts/copy-wasm.js",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
