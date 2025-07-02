@@ -208,7 +208,21 @@ function Stars() {
       wasmLoadingRef.current = true
       getOptimizedFunctions().then(module => {
         setWasmModule(module)
-        console.log('WASM module loaded for StarField')
+        // Force console logs for debugging
+        const forceLog = (...args: any[]) => {
+          const originalWarn = console.warn
+          console.warn = () => {} // Temporarily disable suppression
+          console.log(...args)
+          console.warn = originalWarn
+        }
+        
+        forceLog('WASM module loaded for StarField', module)
+        // Test WASM fast_sin function
+        if (module && module.fast_sin) {
+          forceLog('Testing WASM fast_sin:', module.fast_sin(Math.PI / 2))
+          forceLog('Testing WASM fast_sin(0):', module.fast_sin(0))
+          forceLog('Testing WASM fast_sin(Math.PI):', module.fast_sin(Math.PI))
+        }
       }).catch(err => {
         console.warn('Failed to load WASM module for StarField:', err)
       })
@@ -347,8 +361,13 @@ function Stars() {
         }
       }
 
-      const twinkles = new Float32Array(count).fill(1.0)
-      const sparkles = new Float32Array(count).fill(0.0)
+      // Initialize with slightly varying values to ensure visibility
+      const twinkles = new Float32Array(count)
+      const sparkles = new Float32Array(count)
+      for (let i = 0; i < count; i++) {
+        twinkles[i] = 0.8 + Math.random() * 0.2 // 0.8 to 1.0
+        sparkles[i] = 0.0
+      }
 
       // Create appropriate material based on LOD
       let material: THREE.ShaderMaterial
@@ -407,38 +426,8 @@ function Stars() {
 
     const { positions, twinkles, sparkles, count, mesh } = group
 
-    if (wasmModule && wasmModule.calculate_star_effects_into_buffers) {
-      // Use optimized WASM function that writes directly to buffers
-      try {
-        // Get memory pointers for direct WASM access
-        const positionsPtr = (positions as any).byteOffset || 0
-        const twinklesPtr = (twinkles as any).byteOffset || 0
-        const sparklesPtr = (sparkles as any).byteOffset || 0
-        
-        // Call WASM function to update buffers directly
-        wasmModule.calculate_star_effects_into_buffers(
-          positionsPtr,
-          twinklesPtr,
-          sparklesPtr,
-          count,
-          time
-        )
-      } catch (e) {
-        // Fallback to standard WASM calculation if direct buffer access fails
-        const effects = wasmModule.calculate_star_effects(
-          (positions as any).byteOffset || 0,
-          count,
-          time
-        )
-        
-        // Copy results back to buffers
-        for (let i = 0; i < count; i++) {
-          twinkles[i] = effects[i * 2]
-          sparkles[i] = effects[i * 2 + 1]
-        }
-      }
-    } else if (wasmModule) {
-      // Use regular WASM functions if the optimized version isn't available
+    if (wasmModule && wasmModule.fast_sin) {
+      // Use WASM functions with proper array passing
       for (let i = 0; i < count; i++) {
         const i3 = i * 3
         const x = positions[i3]
@@ -473,8 +462,8 @@ function Stars() {
       }
     }
 
-    // Update attributes
-    if (mesh.current) {
+    // Update attributes - this is crucial for the GPU to see the changes
+    if (mesh.current && mesh.current.geometry) {
       const geometry = mesh.current.geometry
       const twinkleAttr = geometry.getAttribute('twinkle') as THREE.BufferAttribute
       const sparkleAttr = geometry.getAttribute('sparkle') as THREE.BufferAttribute
