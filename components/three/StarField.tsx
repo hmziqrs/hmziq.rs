@@ -276,8 +276,8 @@ function Stars() {
     // Calculate total star count based on quality tier
     const qualityMultipliers = {
       performance: 0.5,
-      balanced: 1.0,
-      ultra: 1.5
+      balanced: 0.75,
+      ultra: 1.125
     }
     const baseStarDensity = 0.36 * qualityMultipliers[qualityTier]
     const screenArea = screenDimensions.width * screenDimensions.height
