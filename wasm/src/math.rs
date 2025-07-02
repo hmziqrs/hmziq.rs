@@ -1,5 +1,5 @@
-use wasm_bindgen::prelude::*;
 use std::f32::consts::PI;
+use wasm_bindgen::prelude::*;
 
 // Pre-calculated sin lookup table size (matching JS implementation)
 const SIN_TABLE_SIZE: usize = 1024;
@@ -46,12 +46,15 @@ pub fn fast_cos(x: f32) -> f32 {
 #[wasm_bindgen]
 pub fn fast_sin_batch(values: &[f32]) -> Vec<f32> {
     let table = init_sin_table();
-    values.iter().map(|&x| {
-        let normalized = ((x % (PI * 2.0)) + PI * 2.0) % (PI * 2.0);
-        let index = ((normalized / (PI * 2.0)) * SIN_TABLE_SIZE as f32) as usize;
-        let index = index.min(SIN_TABLE_SIZE - 1);
-        table[index]
-    }).collect()
+    values
+        .iter()
+        .map(|&x| {
+            let normalized = ((x % (PI * 2.0)) + PI * 2.0) % (PI * 2.0);
+            let index = ((normalized / (PI * 2.0)) * SIN_TABLE_SIZE as f32) as usize;
+            let index = index.min(SIN_TABLE_SIZE - 1);
+            table[index]
+        })
+        .collect()
 }
 
 #[wasm_bindgen]
@@ -68,7 +71,8 @@ pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
 // Batch lerp for animation
 #[wasm_bindgen]
 pub fn lerp_batch(a_values: &[f32], b_values: &[f32], t: f32) -> Vec<f32> {
-    a_values.iter()
+    a_values
+        .iter()
         .zip(b_values.iter())
         .map(|(&a, &b)| a + (b - a) * t)
         .collect()
@@ -107,7 +111,7 @@ pub fn distance_3d(x1: f32, y1: f32, z1: f32, x2: f32, y2: f32, z2: f32) -> f32 
 // Seed function for consistent random values (matching StarField.tsx lines 242-245)
 #[wasm_bindgen]
 pub fn seed_random(i: i32) -> f32 {
-    let x = ((i as f32 * 12.9898 + 78.233).sin() * 43758.5453);
+    let x = (i as f32 * 12.9898 + 78.233).sin() * 43758.5453;
     x - x.floor()
 }
 

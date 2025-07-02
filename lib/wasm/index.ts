@@ -27,12 +27,16 @@ export interface WASMModule {
   precalculate_cubic_bezier_path: (p0x: number, p0y: number, p1x: number, p1y: number, p2x: number, p2y: number, p3x: number, p3y: number, segments: number) => Float32Array;
   calculate_bezier_length: (points: Float32Array) => number;
   // Memory management
-  SharedBuffer: typeof SharedBuffer;
-  DirectMemory: typeof DirectMemory;
-  MemoryPool: typeof MemoryPool;
+  SharedBuffer: any; // Constructor type
+  DirectMemory: any; // Static methods type
+  MemoryPool: any; // Constructor type
   batch_process_sin: (input: Float32Array) => Float32Array;
   batch_process_cos: (input: Float32Array) => Float32Array;
   batch_process_with_operation: (input: Float32Array, operation: string) => Float32Array;
+  // Meteor particle system
+  MeteorSystem: any; // Constructor type
+  Vec2: any; // Constructor type
+  batch_interpolate_meteor_positions: (life_values: Float32Array, max_life_values: Float32Array, path_data: Float32Array, path_stride: number) => Float32Array;
 }
 
 // Memory management classes interfaces
@@ -65,6 +69,47 @@ export interface MemoryPool {
   write_to_buffer(index: number, data: Float32Array, offset: number): boolean;
   read_from_buffer(index: number): Float32Array;
   apply_operation_to_buffer(index: number, operation: string): boolean;
+  free(): void;
+}
+
+export interface Vec2 {
+  new (x: number, y: number): Vec2;
+  x: number;
+  y: number;
+}
+
+export interface MeteorSystem {
+  new (canvas_width: number, canvas_height: number): MeteorSystem;
+  update_canvas_size(width: number, height: number): void;
+  init_meteor(
+    index: number,
+    start_x: number,
+    start_y: number,
+    control_x: number,
+    control_y: number,
+    end_x: number,
+    end_y: number,
+    size: number,
+    speed: number,
+    max_life: number,
+    meteor_type: number,
+    color_r: number,
+    color_g: number,
+    color_b: number,
+    glow_r: number,
+    glow_g: number,
+    glow_b: number,
+    glow_intensity: number,
+  ): void;
+  update_meteors(speed_multiplier: number, quality_tier: number): number;
+  update_particles(speed_multiplier: number): void;
+  spawn_particle(meteor_index: number, spawn_rate: number, max_particles: number): boolean;
+  get_meteor_positions(): Float32Array;
+  get_meteor_properties(): Float32Array;
+  get_particle_data(): Float32Array;
+  get_particle_colors(): Uint8Array;
+  get_active_meteor_count(): number;
+  get_active_particle_count(): number;
   free(): void;
 }
 
@@ -124,9 +169,13 @@ export async function loadWASM(): Promise<WASMModule | null> {
         batch_process_sin: wasm.batch_process_sin,
         batch_process_cos: wasm.batch_process_cos,
         batch_process_with_operation: wasm.batch_process_with_operation,
+        // Meteor particle system
+        MeteorSystem: wasm.MeteorSystem,
+        Vec2: wasm.Vec2,
+        batch_interpolate_meteor_positions: wasm.batch_interpolate_meteor_positions,
       };
       
-      console.log('WASM module loaded successfully with star field optimizations');
+      console.log('WASM module loaded successfully with star field and meteor optimizations');
     } catch (error) {
       console.warn('Failed to load WASM module, falling back to JS:', error);
       wasmModule = null;
@@ -389,6 +438,76 @@ export const jsFallbacks: WASMModule = {
     }
     
     return length;
+  },
+  // Memory management fallbacks (not implemented)
+  SharedBuffer: null as any,
+  DirectMemory: null as any,
+  MemoryPool: null as any,
+  batch_process_sin: (input: Float32Array): Float32Array => {
+    const result = new Float32Array(input.length);
+    for (let i = 0; i < input.length; i++) {
+      result[i] = Math.sin(input[i]);
+    }
+    return result;
+  },
+  batch_process_cos: (input: Float32Array): Float32Array => {
+    const result = new Float32Array(input.length);
+    for (let i = 0; i < input.length; i++) {
+      result[i] = Math.cos(input[i]);
+    }
+    return result;
+  },
+  batch_process_with_operation: (input: Float32Array, operation: string): Float32Array => {
+    console.log('Using JS fallback for batch_process_with_operation() - limited support');
+    const result = new Float32Array(input.length);
+    switch(operation) {
+      case 'sin':
+        for (let i = 0; i < input.length; i++) result[i] = Math.sin(input[i]);
+        break;
+      case 'cos':
+        for (let i = 0; i < input.length; i++) result[i] = Math.cos(input[i]);
+        break;
+      default:
+        console.warn(`Operation ${operation} not supported in JS fallback`);
+        return input;
+    }
+    return result;
+  },
+  // Meteor particle system fallbacks (not implemented)
+  MeteorSystem: null as any,
+  Vec2: null as any,
+  batch_interpolate_meteor_positions: (life_values: Float32Array, max_life_values: Float32Array, path_data: Float32Array, path_stride: number): Float32Array => {
+    console.log('Using JS fallback for batch_interpolate_meteor_positions()');
+    const meteorCount = life_values.length;
+    const positions = new Float32Array(meteorCount * 2);
+    const segments = 60; // Default segments
+    
+    for (let i = 0; i < meteorCount; i++) {
+      const t = Math.min(life_values[i] / max_life_values[i], 1.0);
+      const pathOffset = i * path_stride;
+      
+      const segmentFloat = t * segments;
+      const segment = Math.floor(segmentFloat);
+      const segmentT = segmentFloat - segment;
+      
+      if (segment < segments) {
+        const idx = pathOffset + segment * 2;
+        const nextIdx = idx + 2;
+        
+        const x = path_data[idx] + (path_data[nextIdx] - path_data[idx]) * segmentT;
+        const y = path_data[idx + 1] + (path_data[nextIdx + 1] - path_data[idx + 1]) * segmentT;
+        
+        positions[i * 2] = x;
+        positions[i * 2 + 1] = y;
+      } else {
+        // Use end position
+        const endIdx = pathOffset + segments * 2;
+        positions[i * 2] = path_data[endIdx];
+        positions[i * 2 + 1] = path_data[endIdx + 1];
+      }
+    }
+    
+    return positions;
   },
 };
 

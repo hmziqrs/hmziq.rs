@@ -5,12 +5,14 @@ mod math;
 mod star_field;
 mod bezier;
 mod memory;
+mod particles;
 
 // Re-export public functions
 pub use math::*;
 pub use star_field::*;
 pub use bezier::*;
 pub use memory::*;
+pub use particles::*;
 
 #[wasm_bindgen]
 extern "C" {
@@ -37,4 +39,5 @@ pub fn greet(name: &str) -> String {
 pub fn main() {
     console_log!("WASM module loaded successfully!");
     console_log!("Star field optimization ready!");
+    console_log!("Meteor particle system ready!");
 }
