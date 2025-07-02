@@ -1,5 +1,13 @@
 use wasm_bindgen::prelude::*;
 
+// Module imports
+mod math;
+mod star_field;
+
+// Re-export public functions
+pub use math::*;
+pub use star_field::*;
+
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_namespace = console)]
@@ -24,4 +32,5 @@ pub fn greet(name: &str) -> String {
 #[wasm_bindgen(start)]
 pub fn main() {
     console_log!("WASM module loaded successfully!");
+    console_log!("Star field optimization ready!");
 }

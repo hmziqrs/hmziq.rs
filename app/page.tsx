@@ -7,7 +7,8 @@ import Skills from '@/components/sections/Skills'
 import Contact from '@/components/sections/Contact'
 
 // Dynamically import Three.js components to avoid SSR issues
-const StarField3D = dynamic(() => import('@/components/three/StarField'), {
+// Use WASM-optimized version if available
+const StarField3D = dynamic(() => import('@/components/three/StarFieldWASM'), {
   ssr: false,
   loading: () => (
     <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
@@ -25,6 +26,11 @@ const LightNebula2D = dynamic(() => import('@/components/effects/LightNebula'), 
 
 // WASM Test Component (temporary for testing)
 const WASMTest = dynamic(() => import('@/components/debug/WASMTest').then(mod => ({ default: mod.WASMTest })), {
+  ssr: false,
+})
+
+// WASM Benchmark Component (temporary for performance testing)
+const WASMBenchmark = dynamic(() => import('@/components/debug/WASMBenchmark').then(mod => ({ default: mod.WASMBenchmark })), {
   ssr: false,
 })
 
@@ -49,7 +55,10 @@ export default function Home() {
       </div>
 
       {/* WASM Test (temporary) */}
-      <WASMTest />
+      {/* <WASMTest /> */}
+      
+      {/* WASM Benchmark (temporary) */}
+      <WASMBenchmark />
     </main>
   )
 }
