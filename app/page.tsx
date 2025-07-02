@@ -30,9 +30,9 @@ const WASMTest = dynamic(() => import('@/components/debug/WASMTest').then(mod =>
 })
 
 // WASM Benchmark Component (temporary for performance testing)
-const WASMBenchmark = dynamic(() => import('@/components/debug/WASMBenchmark').then(mod => ({ default: mod.WASMBenchmark })), {
-  ssr: false,
-})
+// const WASMBenchmark = dynamic(() => import('@/components/debug/WASMBenchmark').then(mod => ({ default: mod.WASMBenchmark })), {
+//   ssr: false,
+// })
 
 export default function Home() {
   return (
@@ -58,7 +58,7 @@ export default function Home() {
       {/* <WASMTest /> */}
       
       {/* WASM Benchmark (temporary) */}
-      <WASMBenchmark />
+      {/* <WASMBenchmark /> */}
     </main>
   )
 }

@@ -152,7 +152,7 @@ export function WASMBenchmark() {
 
   if (loading) {
     return (
-      <div className="fixed bottom-4 right-4 bg-black/90 border border-white/20 rounded p-4 text-xs font-mono text-white">
+      <div className="fixed bottom-4 right-4 z-[100] bg-black/90 border border-white/20 rounded p-4 text-xs font-mono text-white">
         <h3 className="text-sm font-bold mb-2">WASM Performance Benchmark</h3>
         <p className="text-gray-400">Running benchmarks...</p>
       </div>
@@ -161,7 +161,7 @@ export function WASMBenchmark() {
 
   if (error) {
     return (
-      <div className="fixed bottom-4 right-4 bg-black/90 border border-red-500/20 rounded p-4 text-xs font-mono text-white">
+      <div className="fixed bottom-4 right-4 z-[100] bg-black/90 border border-red-500/20 rounded p-4 text-xs font-mono text-white">
         <h3 className="text-sm font-bold mb-2 text-red-400">Benchmark Error</h3>
         <p className="text-red-300">{error}</p>
       </div>
@@ -169,7 +169,7 @@ export function WASMBenchmark() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 bg-black/90 border border-white/20 rounded p-4 text-xs font-mono text-white max-w-md">
+    <div className="fixed bottom-4 right-4 z-[100] bg-black/90 border border-white/20 rounded p-4 text-xs font-mono text-white max-w-md">
       <h3 className="text-sm font-bold mb-3">WASM vs JS Performance</h3>
       <div className="space-y-2">
         {results.map((result, i) => (
