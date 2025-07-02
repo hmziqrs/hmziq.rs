@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { QualityManager } from '@/lib/performance/quality-manager'
 import { gradientCaches, generateGradientKey } from '@/lib/performance/gradient-cache'
+import { DebugConfigManager } from '@/lib/performance/debug-config'
 import { 
   ObjectPool, 
   FrameTimer,
@@ -213,7 +214,10 @@ export default function MeteorShower2DOptimized() {
       spawnTimeouts.push(timeout)
     })
     
-    console.log(`MeteorShower2DOptimized: Initialized with ${meteorsRef.current.length} meteors, spawning ${initialMeteorCount} in ${clusterCount} clusters over 3 seconds`)
+    const debugConfig = DebugConfigManager.getInstance()
+    if (debugConfig.isEnabled('enableMeteorLogs') || debugConfig.isEnabled('enableConsoleLogs')) {
+      console.log(`MeteorShower2DOptimized: Initialized with ${meteorsRef.current.length} meteors, spawning ${initialMeteorCount} in ${clusterCount} clusters over 3 seconds`)
+    }
 
     // Mouse interaction handlers
     const handleMouseMove = () => {
@@ -595,9 +599,12 @@ export default function MeteorShower2DOptimized() {
       
       // Debug log every 60 frames
       if (frameCount++ % 60 === 0) {
-        const activeMeteors = meteorsRef.current.filter(m => m.active).length
-        const totalParticles = meteorsRef.current.reduce((sum, m) => sum + m.particles.length, 0)
-        console.log('Active meteors:', activeMeteors, '/', meteorsRef.current.length, 'Total particles:', totalParticles)
+        const debugConfig = DebugConfigManager.getInstance()
+        if (debugConfig.isEnabled('enableMeteorLogs') || debugConfig.isEnabled('enableConsoleLogs')) {
+          const activeMeteors = meteorsRef.current.filter(m => m.active).length
+          const totalParticles = meteorsRef.current.reduce((sum, m) => sum + m.particles.length, 0)
+          console.log('Active meteors:', activeMeteors, '/', meteorsRef.current.length, 'Total particles:', totalParticles)
+        }
       }
 
       // Calculate speed multiplier with limits to prevent meteors from disappearing
@@ -893,7 +900,10 @@ export default function MeteorShower2DOptimized() {
           meteorsRef.current = meteorsToKeep.slice(0, newCount)
         }
         
-        console.log('Quality changed: meteor count adjusted from', meteorsRef.current.length, 'to', newCount)
+        const debugConfig = DebugConfigManager.getInstance()
+        if (debugConfig.isEnabled('enableMeteorLogs') || debugConfig.isEnabled('enableConsoleLogs')) {
+          console.log('Quality changed: meteor count adjusted from', meteorsRef.current.length, 'to', newCount)
+        }
       }
     }
     window.addEventListener('qualityTierChanged', handleQualityChange)

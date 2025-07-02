@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { QualityManager, type QualityTier, type PerformanceMetrics } from '@/lib/performance/quality-manager'
+import { DebugConfigManager, type DebugConfig } from '@/lib/performance/debug-config'
+import { getWASMStatus } from '@/lib/wasm'
 
 interface PerformanceMonitorProps {
   enabled?: boolean
@@ -15,6 +17,10 @@ export default function PerformanceMonitor({
   const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null)
   const [tier, setTier] = useState<QualityTier>('balanced')
   const [isVisible, setIsVisible] = useState(enabled)
+  const [debugConfig, setDebugConfig] = useState<DebugConfig>(
+    DebugConfigManager.getInstance().getConfig()
+  )
+  const [wasmStatus, setWasmStatus] = useState(getWASMStatus())
   
   useEffect(() => {
     const qualityManager = QualityManager.getInstance()
@@ -24,6 +30,7 @@ export default function PerformanceMonitor({
     const updateMetrics = () => {
       setMetrics(qualityManager.getMetrics())
       setTier(qualityManager.getTier())
+      setWasmStatus(getWASMStatus())
       animationId = requestAnimationFrame(updateMetrics)
     }
     
@@ -47,10 +54,18 @@ export default function PerformanceMonitor({
     }
     window.addEventListener('keydown', handleKeyPress)
     
+    // Listen for debug config changes
+    const handleDebugConfigChange = (e: Event) => {
+      const event = e as CustomEvent<DebugConfig>
+      setDebugConfig(event.detail)
+    }
+    window.addEventListener('debugConfigChanged', handleDebugConfigChange)
+    
     return () => {
       if (animationId) cancelAnimationFrame(animationId)
       window.removeEventListener('qualityTierChanged', handleTierChange)
       window.removeEventListener('keydown', handleKeyPress)
+      window.removeEventListener('debugConfigChanged', handleDebugConfigChange)
     }
   }, [isVisible])
   
@@ -128,6 +143,13 @@ export default function PerformanceMonitor({
           </div>
         )}
         
+        <div className="flex justify-between">
+          <span>WASM Status:</span>
+          <span className={wasmStatus.loaded ? 'text-green-400' : (wasmStatus.usingFallback ? 'text-yellow-400' : 'text-gray-400')}>
+            {wasmStatus.loaded ? 'Loaded' : (wasmStatus.usingFallback ? 'Fallback' : 'Loading')}
+          </span>
+        </div>
+        
         <div className="mt-2 pt-2 border-t border-white/20 text-white/50">
           <div>Press Ctrl+P to toggle</div>
           <div className="mt-1">
@@ -150,6 +172,39 @@ export default function PerformanceMonitor({
             >
               Auto
             </button>
+          </div>
+          
+          {/* Console Logs Toggle Section */}
+          <div className="mt-2 pt-2 border-t border-white/20">
+            <div className="font-semibold mb-1">Console Logs:</div>
+            <div className="space-y-1">
+              <label className="flex items-center justify-between cursor-pointer hover:text-white">
+                <span>All Logs</span>
+                <input
+                  type="checkbox"
+                  checked={debugConfig.enableConsoleLogs}
+                  onChange={(e) => {
+                    DebugConfigManager.getInstance().setConfig({ 
+                      enableConsoleLogs: e.target.checked 
+                    })
+                  }}
+                  className="ml-2"
+                />
+              </label>
+              <label className="flex items-center justify-between cursor-pointer hover:text-white">
+                <span>Meteor Logs</span>
+                <input
+                  type="checkbox"
+                  checked={debugConfig.enableMeteorLogs}
+                  onChange={(e) => {
+                    DebugConfigManager.getInstance().setConfig({ 
+                      enableMeteorLogs: e.target.checked 
+                    })
+                  }}
+                  className="ml-2"
+                />
+              </label>
+            </div>
           </div>
         </div>
       </div>

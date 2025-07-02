@@ -1,6 +1,9 @@
 // WASM module loader with graceful fallback
+import { DebugConfigManager } from '@/lib/performance/debug-config'
+
 let wasmModule: any = null;
 let loadPromise: Promise<void> | null = null;
+let isUsingFallback = false;
 
 export interface WASMModule {
   add: (a: number, b: number) => number;
@@ -175,9 +178,16 @@ export async function loadWASM(): Promise<WASMModule | null> {
         batch_interpolate_meteor_positions: wasm.batch_interpolate_meteor_positions,
       };
       
-      console.log('WASM module loaded successfully with star field and meteor optimizations');
+      const debugConfig = DebugConfigManager.getInstance();
+      if (debugConfig.isEnabled('enableConsoleLogs')) {
+        console.log('WASM module loaded successfully with star field and meteor optimizations');
+      }
     } catch (error) {
-      console.warn('Failed to load WASM module, falling back to JS:', error);
+      isUsingFallback = true;
+      const debugConfig = DebugConfigManager.getInstance();
+      if (debugConfig.isEnabled('enableConsoleLogs')) {
+        console.warn('Failed to load WASM module, falling back to JS:', error);
+      }
       wasmModule = null;
     }
   })();
@@ -186,19 +196,27 @@ export async function loadWASM(): Promise<WASMModule | null> {
   return wasmModule;
 }
 
+// Helper to log fallback usage
+function logFallback(functionName: string, message?: string) {
+  const debugConfig = DebugConfigManager.getInstance();
+  if (debugConfig.isEnabled('enableConsoleLogs')) {
+    console.log(`Using JS fallback for ${functionName}()${message ? `: ${message}` : ''}`);
+  }
+}
+
 // JavaScript fallback implementations
 export const jsFallbacks: WASMModule = {
   add: (a: number, b: number): number => {
-    console.log('Using JS fallback for add()');
+    logFallback('add');
     return a + b;
   },
   greet: (name: string): string => {
-    console.log('Using JS fallback for greet()');
+    logFallback('greet');
     return `Hello from JS fallback, ${name}!`;
   },
   // Star field fallbacks (simplified versions)
   generate_star_positions: (count: number, start_index: number, min_radius: number, max_radius: number): Float32Array => {
-    console.log('Using JS fallback for generate_star_positions()');
+    logFallback('generate_star_positions');
     const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const globalIndex = start_index + i;
@@ -218,7 +236,7 @@ export const jsFallbacks: WASMModule = {
     return positions;
   },
   generate_star_colors: (count: number, start_index: number): Float32Array => {
-    console.log('Using JS fallback for generate_star_colors()');
+    logFallback('generate_star_colors');
     const colors = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const globalIndex = start_index + i;
@@ -246,7 +264,7 @@ export const jsFallbacks: WASMModule = {
     return colors;
   },
   generate_star_sizes: (count: number, start_index: number, size_multiplier: number): Float32Array => {
-    console.log('Using JS fallback for generate_star_sizes()');
+    logFallback('generate_star_sizes');
     const sizes = new Float32Array(count);
     for (let i = 0; i < count; i++) {
       const globalIndex = start_index + i;
@@ -263,15 +281,15 @@ export const jsFallbacks: WASMModule = {
     return sizes;
   },
   calculate_star_effects: (): Float32Array => {
-    console.log('Using JS fallback for calculate_star_effects() - not implemented');
+    logFallback('calculate_star_effects', 'not implemented');
     return new Float32Array(0);
   },
   calculate_twinkle_effects: (): Float32Array => {
-    console.log('Using JS fallback for calculate_twinkle_effects() - not implemented');
+    logFallback('calculate_twinkle_effects', 'not implemented');
     return new Float32Array(0);
   },
   calculate_sparkle_effects: (): Float32Array => {
-    console.log('Using JS fallback for calculate_sparkle_effects() - not implemented');
+    logFallback('calculate_sparkle_effects', 'not implemented');
     return new Float32Array(0);
   },
   calculate_rotation_delta: (base_speed_x: number, base_speed_y: number, speed_multiplier: number, delta_time: number): Float32Array => {
@@ -311,7 +329,7 @@ export const jsFallbacks: WASMModule = {
   },
   // Bezier fallbacks
   precalculate_bezier_path: (start_x: number, start_y: number, control_x: number, control_y: number, end_x: number, end_y: number, segments: number): Float32Array => {
-    console.log('Using JS fallback for precalculate_bezier_path()');
+    logFallback('precalculate_bezier_path');
     const points = new Float32Array((segments + 1) * 2);
     
     for (let i = 0; i <= segments; i++) {
@@ -334,7 +352,7 @@ export const jsFallbacks: WASMModule = {
     return points;
   },
   precalculate_bezier_paths_batch: (paths_data: Float32Array, segments: number): Float32Array => {
-    console.log('Using JS fallback for precalculate_bezier_paths_batch()');
+    logFallback('precalculate_bezier_paths_batch');
     const pathCount = paths_data.length / 6;
     const pointsPerPath = (segments + 1) * 2;
     const allPoints = new Float32Array(pathCount * pointsPerPath);
@@ -391,7 +409,7 @@ export const jsFallbacks: WASMModule = {
     ]);
   },
   precalculate_cubic_bezier_path: (p0x: number, p0y: number, p1x: number, p1y: number, p2x: number, p2y: number, p3x: number, p3y: number, segments: number): Float32Array => {
-    console.log('Using JS fallback for precalculate_cubic_bezier_path()');
+    logFallback('precalculate_cubic_bezier_path');
     const points = new Float32Array((segments + 1) * 2);
     
     for (let i = 0; i <= segments; i++) {
@@ -458,7 +476,7 @@ export const jsFallbacks: WASMModule = {
     return result;
   },
   batch_process_with_operation: (input: Float32Array, operation: string): Float32Array => {
-    console.log('Using JS fallback for batch_process_with_operation() - limited support');
+    logFallback('batch_process_with_operation', 'limited support');
     const result = new Float32Array(input.length);
     switch(operation) {
       case 'sin':
@@ -477,7 +495,7 @@ export const jsFallbacks: WASMModule = {
   MeteorSystem: null as any,
   Vec2: null as any,
   batch_interpolate_meteor_positions: (life_values: Float32Array, max_life_values: Float32Array, path_data: Float32Array, path_stride: number): Float32Array => {
-    console.log('Using JS fallback for batch_interpolate_meteor_positions()');
+    logFallback('batch_interpolate_meteor_positions');
     const meteorCount = life_values.length;
     const positions = new Float32Array(meteorCount * 2);
     const segments = 60; // Default segments
@@ -515,4 +533,27 @@ export const jsFallbacks: WASMModule = {
 export async function getOptimizedFunctions(): Promise<WASMModule> {
   const wasm = await loadWASM();
   return wasm || jsFallbacks;
+}
+
+// Check WASM status
+export function getWASMStatus(): { loaded: boolean; usingFallback: boolean } {
+  return {
+    loaded: wasmModule !== null,
+    usingFallback: isUsingFallback
+  };
+}
+
+// Log WASM status (respects debug config)
+export function logWASMStatus(): void {
+  const debugConfig = DebugConfigManager.getInstance();
+  if (debugConfig.isEnabled('enableConsoleLogs')) {
+    const status = getWASMStatus();
+    if (status.loaded) {
+      console.log('✅ WASM module loaded successfully');
+    } else if (status.usingFallback) {
+      console.log('⚠️ WASM module failed to load - using JavaScript fallback');
+    } else {
+      console.log('⏳ WASM module not yet loaded');
+    }
+  }
 }
