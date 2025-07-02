@@ -34,18 +34,13 @@ hmziq.rs/
 │   └── index.ts            # ✅ WASM loader with fallbacks
 ├── scripts/                # ✅ Build automation
 │   └── copy-wasm.js        # ✅ WASM file deployment
-├── app/test-meteor-wasm/   # ✅ Testing pages
-│   └── page.tsx            # ✅ Meteor WASM test page
-└── components/debug/       # ✅ Testing
-    ├── WASMTest.tsx        # ✅ Integration verification
-    ├── WASMBenchmark.tsx   # ✅ Performance benchmarking
-    └── MeteorWASMBenchmark.tsx # ✅ Meteor system testing
+└── components/three/       # ✅ Production components
+    └── StarField.tsx       # ✅ WASM-optimized StarField
 ```
 
 - [x] **Task 3: Integration Test**
   - [x] Create basic WASM module in `wasm/src/lib.rs`
   - [x] Implement test functions (add, greet)
-  - [x] Add test component `components/debug/WASMTest.tsx`
   - [x] Verify WASM loads and executes in browser
 
 **Test Implementation:**
@@ -302,9 +297,8 @@ impl SharedBuffer {
 
 ## Testing & Access Points
 
-**Available Test Pages:**
-- `/test-meteor-wasm` - Comprehensive meteor system benchmarking
-- `/test-nebula-spatial` - Nebula spatial indexing benchmarking
+**Production Features:**
+- WASM-optimized StarField in main landing page
 - Performance Monitor - Press `Ctrl+P` on any page to access console log controls and WASM status
 
 **Console Log Controls:**
@@ -462,7 +456,7 @@ overlaps.forEach((overlap) => {
 
 ### Micro-Benchmark Results (Component-Level)
 
-From `WASMBenchmark.tsx` component testing:
+From production WASM integration testing:
 
 | Operation | JS Time | WASM Time | Speedup |
 |-----------|---------|-----------|---------|

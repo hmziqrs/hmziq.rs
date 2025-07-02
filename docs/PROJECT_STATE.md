@@ -35,7 +35,7 @@
 - VISUAL_EFFECTS: optimized
 - PERFORMANCE_ADAPTIVE: enabled
 - LEGACY_CODE: /legacy/*
-- DEBUG_TOOLS: components/debug/VisualQualityTest.tsx
+- WASM_OPTIMIZED: true
 
 ## RECENT_OPTIMIZATIONS
 - gradient_caching: 98%_hit_rate
