@@ -551,6 +551,9 @@ export default function LightNebula2DOptimized() {
 
     // Start animation
     animate(performance.now())
+    
+    // Capture spatial indexing ref for cleanup
+    const spatialIndexing = spatialIndexingRef.current
 
     // Cleanup
     return () => {
@@ -568,7 +571,6 @@ export default function LightNebula2DOptimized() {
       gradientCaches.nebula.clear()
       
       // Dispose spatial indexing
-      const spatialIndexing = spatialIndexingRef.current
       if (spatialIndexing) {
         spatialIndexing.dispose()
       }
