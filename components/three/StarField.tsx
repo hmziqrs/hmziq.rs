@@ -4,6 +4,8 @@ import { useRef, useMemo, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { getOptimizedFunctions } from '@/lib/wasm'
+import { QualityManager, type QualityTier } from '@/lib/performance/quality-manager'
+import PerformanceMonitor from '@/components/performance/performance-monitor'
 
 // Performance monitoring
 let frameCount = 0
@@ -161,6 +163,8 @@ interface StarGroup {
 }
 
 function Stars() {
+  const qualityManager = QualityManager.getInstance()
+  const [qualityTier, setQualityTier] = useState<QualityTier>(qualityManager.getTier())
   const [screenDimensions, setScreenDimensions] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 1920,
     height: typeof window !== 'undefined' ? window.innerHeight : 1080,
@@ -188,6 +192,15 @@ function Stars() {
 
   // Frame counter for temporal optimization
   const frameCounterRef = useRef(0)
+  // Listen to quality tier changes from QualityManager
+  useEffect(() => {
+    const handleTierChange = () => {
+      setQualityTier(qualityManager.getTier())
+    }
+    
+    window.addEventListener('qualityTierChanged', handleTierChange)
+    return () => window.removeEventListener('qualityTierChanged', handleTierChange)
+  }, [])
 
   // Load WASM module
   useEffect(() => {
@@ -246,15 +259,26 @@ function Stars() {
   }, [])
 
   const starGroups = useMemo(() => {
-    // Calculate total star count
-    const baseStarDensity = 0.6
+    // Calculate total star count based on quality tier
+    const qualityMultipliers = {
+      performance: 0.5,
+      balanced: 1.0,
+      ultra: 1.5
+    }
+    const baseStarDensity = 0.6 * qualityMultipliers[qualityTier]
     const screenArea = screenDimensions.width * screenDimensions.height
     const totalCount = Math.floor((screenArea / 1000) * baseStarDensity)
 
-    // Distribute stars across LOD levels
-    const nearCount = Math.floor(totalCount * 0.15) // 15% near
-    const mediumCount = Math.floor(totalCount * 0.35) // 35% medium
-    const farCount = totalCount - nearCount - mediumCount // 50% far
+    // Distribute stars across LOD levels based on quality
+    const distributions = {
+      performance: { near: 0.1, medium: 0.3, far: 0.6 },
+      balanced: { near: 0.15, medium: 0.35, far: 0.5 },
+      ultra: { near: 0.2, medium: 0.4, far: 0.4 }
+    }
+    const dist = distributions[qualityTier]
+    const nearCount = Math.floor(totalCount * dist.near)
+    const mediumCount = Math.floor(totalCount * dist.medium)
+    const farCount = totalCount - nearCount - mediumCount
 
     // Helper to create star data for a group
     const createStarGroup = (
@@ -375,7 +399,7 @@ function Stars() {
     const far = createStarGroup(farCount, nearCount + mediumCount, 70, 150, 'simple')
 
     return { near, medium, far }
-  }, [screenDimensions, wasmModule])
+  }, [screenDimensions, wasmModule, qualityTier])
 
   // Update twinkle and sparkle values using WASM
   const updateStarEffects = (group: StarGroup, time: number, updateRate: number) => {
@@ -502,6 +526,10 @@ function Stars() {
     updateStarEffects(starGroups.near, time, 1) // Every frame for near stars
     updateStarEffects(starGroups.medium, time, 2) // Every 2 frames for medium
     // Far stars don't need updates (no twinkle/sparkle)
+    
+    // Update performance metrics in QualityManager
+    const frameTime = deltaTime * 1000 // Convert to milliseconds
+    qualityManager.updateMetrics(fps, frameTime)
   })
 
   // Render star group
@@ -527,17 +555,6 @@ function Stars() {
 }
 
 export default function OptimizedStarField() {
-  const [showStats, setShowStats] = useState(false)
-
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'p' && e.ctrlKey) {
-        setShowStats(prev => !prev)
-      }
-    }
-    window.addEventListener('keypress', handleKeyPress)
-    return () => window.removeEventListener('keypress', handleKeyPress)
-  }, [])
 
   if (typeof window === 'undefined') {
     return <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: 1 }} />
@@ -551,13 +568,7 @@ export default function OptimizedStarField() {
         <Stars />
       </Canvas>
       
-      {showStats && (
-        <div className="fixed top-4 right-4 bg-black/80 text-white p-4 rounded font-mono text-sm" style={{ zIndex: 100 }}>
-          <div>FPS: {fps.toFixed(1)}</div>
-          <div className="text-xs mt-1 text-blue-400">WASM Optimized</div>
-          <div className="text-xs mt-2 text-gray-400">Press Ctrl+P to toggle</div>
-        </div>
-      )}
+      <PerformanceMonitor enabled={true} position="top-right" />
     </div>
   )
 }
