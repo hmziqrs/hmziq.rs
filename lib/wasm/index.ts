@@ -20,6 +20,52 @@ export interface WASMModule {
   fast_cos_batch: (values: Float32Array) => Float32Array;
   seed_random: (i: number) => number;
   seed_random_batch: (start: number, count: number) => Float32Array;
+  // Bezier functions
+  precalculate_bezier_path: (start_x: number, start_y: number, control_x: number, control_y: number, end_x: number, end_y: number, segments: number) => Float32Array;
+  precalculate_bezier_paths_batch: (paths_data: Float32Array, segments: number) => Float32Array;
+  interpolate_bezier_point: (points: Float32Array, t: number) => Float32Array;
+  precalculate_cubic_bezier_path: (p0x: number, p0y: number, p1x: number, p1y: number, p2x: number, p2y: number, p3x: number, p3y: number, segments: number) => Float32Array;
+  calculate_bezier_length: (points: Float32Array) => number;
+  // Memory management
+  SharedBuffer: typeof SharedBuffer;
+  DirectMemory: typeof DirectMemory;
+  MemoryPool: typeof MemoryPool;
+  batch_process_sin: (input: Float32Array) => Float32Array;
+  batch_process_cos: (input: Float32Array) => Float32Array;
+  batch_process_with_operation: (input: Float32Array, operation: string) => Float32Array;
+}
+
+// Memory management classes interfaces
+export interface SharedBuffer {
+  new (size: number): SharedBuffer;
+  from_data(data: Float32Array): SharedBuffer;
+  size: number;
+  ptr: number;
+  ptr_mut(): number;
+  write(data: Float32Array, offset: number): void;
+  read(): Float32Array;
+  read_slice(start: number, length: number): Float32Array;
+  apply_sin(): void;
+  apply_cos(): void;
+  apply_operation(op: string): void;
+  free(): void;
+}
+
+export interface DirectMemory {
+  allocate_f32_array(size: number): number;
+  free_f32_array(ptr: number, size: number): void;
+  copy_from_js(ptr: number, data: Float32Array): void;
+  copy_to_js(ptr: number, size: number): Float32Array;
+}
+
+export interface MemoryPool {
+  new (buffer_size: number, pool_size: number): MemoryPool;
+  acquire(): number | undefined;
+  release(index: number): void;
+  write_to_buffer(index: number, data: Float32Array, offset: number): boolean;
+  read_from_buffer(index: number): Float32Array;
+  apply_operation_to_buffer(index: number, operation: string): boolean;
+  free(): void;
 }
 
 export async function loadWASM(): Promise<WASMModule | null> {
@@ -65,6 +111,19 @@ export async function loadWASM(): Promise<WASMModule | null> {
         fast_cos_batch: wasm.fast_cos_batch,
         seed_random: wasm.seed_random,
         seed_random_batch: wasm.seed_random_batch,
+        // Bezier functions
+        precalculate_bezier_path: wasm.precalculate_bezier_path,
+        precalculate_bezier_paths_batch: wasm.precalculate_bezier_paths_batch,
+        interpolate_bezier_point: wasm.interpolate_bezier_point,
+        precalculate_cubic_bezier_path: wasm.precalculate_cubic_bezier_path,
+        calculate_bezier_length: wasm.calculate_bezier_length,
+        // Memory management
+        SharedBuffer: wasm.SharedBuffer,
+        DirectMemory: wasm.DirectMemory,
+        MemoryPool: wasm.MemoryPool,
+        batch_process_sin: wasm.batch_process_sin,
+        batch_process_cos: wasm.batch_process_cos,
+        batch_process_with_operation: wasm.batch_process_with_operation,
       };
       
       console.log('WASM module loaded successfully with star field optimizations');
@@ -200,6 +259,136 @@ export const jsFallbacks: WASMModule = {
       result[i] = val - Math.floor(val);
     }
     return result;
+  },
+  // Bezier fallbacks
+  precalculate_bezier_path: (start_x: number, start_y: number, control_x: number, control_y: number, end_x: number, end_y: number, segments: number): Float32Array => {
+    console.log('Using JS fallback for precalculate_bezier_path()');
+    const points = new Float32Array((segments + 1) * 2);
+    
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      const oneMinusT = 1 - t;
+      
+      // Quadratic Bezier formula
+      const x = oneMinusT * oneMinusT * start_x + 
+                2 * oneMinusT * t * control_x + 
+                t * t * end_x;
+      
+      const y = oneMinusT * oneMinusT * start_y + 
+                2 * oneMinusT * t * control_y + 
+                t * t * end_y;
+      
+      points[i * 2] = x;
+      points[i * 2 + 1] = y;
+    }
+    
+    return points;
+  },
+  precalculate_bezier_paths_batch: (paths_data: Float32Array, segments: number): Float32Array => {
+    console.log('Using JS fallback for precalculate_bezier_paths_batch()');
+    const pathCount = paths_data.length / 6;
+    const pointsPerPath = (segments + 1) * 2;
+    const allPoints = new Float32Array(pathCount * pointsPerPath);
+    
+    for (let pathIdx = 0; pathIdx < pathCount; pathIdx++) {
+      const baseIdx = pathIdx * 6;
+      const start_x = paths_data[baseIdx];
+      const start_y = paths_data[baseIdx + 1];
+      const control_x = paths_data[baseIdx + 2];
+      const control_y = paths_data[baseIdx + 3];
+      const end_x = paths_data[baseIdx + 4];
+      const end_y = paths_data[baseIdx + 5];
+      
+      for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const oneMinusT = 1 - t;
+        
+        const x = oneMinusT * oneMinusT * start_x + 
+                  2 * oneMinusT * t * control_x + 
+                  t * t * end_x;
+        
+        const y = oneMinusT * oneMinusT * start_y + 
+                  2 * oneMinusT * t * control_y + 
+                  t * t * end_y;
+        
+        const outputIdx = pathIdx * pointsPerPath + i * 2;
+        allPoints[outputIdx] = x;
+        allPoints[outputIdx + 1] = y;
+      }
+    }
+    
+    return allPoints;
+  },
+  interpolate_bezier_point: (points: Float32Array, t: number): Float32Array => {
+    const pointCount = points.length / 2;
+    if (pointCount === 0) {
+      return new Float32Array([0, 0]);
+    }
+    
+    const index = Math.floor(t * (pointCount - 1));
+    const localT = (t * (pointCount - 1)) % 1;
+    
+    if (index >= pointCount - 1) {
+      const lastIdx = (pointCount - 1) * 2;
+      return new Float32Array([points[lastIdx], points[lastIdx + 1]]);
+    }
+    
+    const p1Idx = index * 2;
+    const p2Idx = (index + 1) * 2;
+    
+    return new Float32Array([
+      points[p1Idx] + (points[p2Idx] - points[p1Idx]) * localT,
+      points[p1Idx + 1] + (points[p2Idx + 1] - points[p1Idx + 1]) * localT
+    ]);
+  },
+  precalculate_cubic_bezier_path: (p0x: number, p0y: number, p1x: number, p1y: number, p2x: number, p2y: number, p3x: number, p3y: number, segments: number): Float32Array => {
+    console.log('Using JS fallback for precalculate_cubic_bezier_path()');
+    const points = new Float32Array((segments + 1) * 2);
+    
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      const oneMinusT = 1 - t;
+      const oneMinusTSq = oneMinusT * oneMinusT;
+      const oneMinusTCube = oneMinusTSq * oneMinusT;
+      const tSq = t * t;
+      const tCube = tSq * t;
+      
+      // Cubic Bezier formula
+      const x = oneMinusTCube * p0x + 
+                3 * oneMinusTSq * t * p1x + 
+                3 * oneMinusT * tSq * p2x + 
+                tCube * p3x;
+      
+      const y = oneMinusTCube * p0y + 
+                3 * oneMinusTSq * t * p1y + 
+                3 * oneMinusT * tSq * p2y + 
+                tCube * p3y;
+      
+      points[i * 2] = x;
+      points[i * 2 + 1] = y;
+    }
+    
+    return points;
+  },
+  calculate_bezier_length: (points: Float32Array): number => {
+    const pointCount = points.length / 2;
+    if (pointCount < 2) {
+      return 0;
+    }
+    
+    let length = 0;
+    
+    for (let i = 1; i < pointCount; i++) {
+      const prevIdx = (i - 1) * 2;
+      const currIdx = i * 2;
+      
+      const dx = points[currIdx] - points[prevIdx];
+      const dy = points[currIdx + 1] - points[prevIdx + 1];
+      
+      length += Math.sqrt(dx * dx + dy * dy);
+    }
+    
+    return length;
   },
 };
 

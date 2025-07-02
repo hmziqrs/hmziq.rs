@@ -3,10 +3,14 @@ use wasm_bindgen::prelude::*;
 // Module imports
 mod math;
 mod star_field;
+mod bezier;
+mod memory;
 
 // Re-export public functions
 pub use math::*;
 pub use star_field::*;
+pub use bezier::*;
+pub use memory::*;
 
 #[wasm_bindgen]
 extern "C" {

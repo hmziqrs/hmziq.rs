@@ -139,6 +139,88 @@ export function WASMBenchmark() {
           speedup: jsSeedTime / wasmSeedTime
         })
         
+        // Benchmark 5: Bezier path calculation
+        const bezierSegments = 60
+        
+        // JS implementation
+        const jsBezierStart = performance.now()
+        for (let i = 0; i < 1000; i++) {
+          const points = new Float32Array((bezierSegments + 1) * 2)
+          for (let j = 0; j <= bezierSegments; j++) {
+            const t = j / bezierSegments
+            const oneMinusT = 1 - t
+            const x = oneMinusT * oneMinusT * 100 + 2 * oneMinusT * t * 200 + t * t * 300
+            const y = oneMinusT * oneMinusT * 100 + 2 * oneMinusT * t * 150 + t * t * 400
+            points[j * 2] = x
+            points[j * 2 + 1] = y
+          }
+        }
+        const jsBezierTime = performance.now() - jsBezierStart
+        
+        // WASM implementation
+        const wasmBezierStart = performance.now()
+        for (let i = 0; i < 1000; i++) {
+          wasm.precalculate_bezier_path(100, 100, 200, 150, 300, 400, bezierSegments)
+        }
+        const wasmBezierTime = performance.now() - wasmBezierStart
+        
+        benchmarkResults.push({
+          name: 'Bezier path calculation (1k paths)',
+          jsTime: jsBezierTime,
+          wasmTime: wasmBezierTime,
+          speedup: jsBezierTime / wasmBezierTime
+        })
+        
+        // Benchmark 6: Batch Bezier paths
+        const pathCount = 100
+        const pathsData = new Float32Array(pathCount * 6)
+        for (let i = 0; i < pathCount; i++) {
+          const idx = i * 6
+          pathsData[idx] = Math.random() * 100
+          pathsData[idx + 1] = Math.random() * 100
+          pathsData[idx + 2] = Math.random() * 200
+          pathsData[idx + 3] = Math.random() * 200
+          pathsData[idx + 4] = Math.random() * 300
+          pathsData[idx + 5] = Math.random() * 300
+        }
+        
+        // JS batch implementation
+        const jsBatchBezierStart = performance.now()
+        for (let run = 0; run < 10; run++) {
+          const allPoints = new Float32Array(pathCount * (bezierSegments + 1) * 2)
+          for (let pathIdx = 0; pathIdx < pathCount; pathIdx++) {
+            const baseIdx = pathIdx * 6
+            for (let i = 0; i <= bezierSegments; i++) {
+              const t = i / bezierSegments
+              const oneMinusT = 1 - t
+              const x = oneMinusT * oneMinusT * pathsData[baseIdx] + 
+                        2 * oneMinusT * t * pathsData[baseIdx + 2] + 
+                        t * t * pathsData[baseIdx + 4]
+              const y = oneMinusT * oneMinusT * pathsData[baseIdx + 1] + 
+                        2 * oneMinusT * t * pathsData[baseIdx + 3] + 
+                        t * t * pathsData[baseIdx + 5]
+              const outputIdx = pathIdx * (bezierSegments + 1) * 2 + i * 2
+              allPoints[outputIdx] = x
+              allPoints[outputIdx + 1] = y
+            }
+          }
+        }
+        const jsBatchBezierTime = performance.now() - jsBatchBezierStart
+        
+        // WASM batch implementation
+        const wasmBatchBezierStart = performance.now()
+        for (let run = 0; run < 10; run++) {
+          wasm.precalculate_bezier_paths_batch(pathsData, bezierSegments)
+        }
+        const wasmBatchBezierTime = performance.now() - wasmBatchBezierStart
+        
+        benchmarkResults.push({
+          name: 'Batch Bezier paths (100 paths × 10)',
+          jsTime: jsBatchBezierTime,
+          wasmTime: wasmBatchBezierTime,
+          speedup: jsBatchBezierTime / wasmBatchBezierTime
+        })
+        
         setResults(benchmarkResults)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')

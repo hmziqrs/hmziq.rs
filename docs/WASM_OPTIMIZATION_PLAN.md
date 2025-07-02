@@ -141,30 +141,55 @@ pub fn fast_cos_batch(values: &[f32]) -> Vec<f32> {
 }
 ```
 
-- [ ] **Task 6: Bezier Path Pre-calculation**
-  - [ ] Port Bezier calculations from `MeteorShower.tsx:262-292`
-  - [ ] Implement `precalculate_bezier_path()` in `wasm/src/bezier.rs`
-  - [ ] Optimize with const generics and SIMD
-  - [ ] Integration with meteor animation system
+- [x] **Task 6: Bezier Path Pre-calculation**
+  - [x] Port Bezier calculations from `MeteorShower.tsx:262-292`
+  - [x] Implement `precalculate_bezier_path()` in `wasm/src/bezier.rs`
+  - [x] Add batch processing for multiple paths
+  - [x] Integration with TypeScript bindings and benchmarks
 
-**Target Implementation:**
+**Implemented Features:**
 ```rust
 // wasm/src/bezier.rs
+// 1. Quadratic Bezier path calculation (matching JS implementation)
 #[wasm_bindgen]
 pub fn precalculate_bezier_path(
-    p0x: f32, p0y: f32, p1x: f32, p1y: f32,
-    p2x: f32, p2y: f32, p3x: f32, p3y: f32,
-    steps: usize
+    start_x: f32, start_y: f32,
+    control_x: f32, control_y: f32,
+    end_x: f32, end_y: f32,
+    segments: usize,
 ) -> Vec<f32> {
-    // Port from MeteorShower.tsx:262-292
-    let mut path = Vec::with_capacity(steps * 2);
-    for i in 0..steps {
-        let t = i as f32 / (steps - 1) as f32;
-        let (x, y) = cubic_bezier(t, p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y);
-        path.extend([x, y]);
+    // Returns flattened array of x,y pairs for efficient transfer
+    let mut points = Vec::with_capacity((segments + 1) * 2);
+    for i in 0..=segments {
+        let t = i as f32 / segments as f32;
+        let one_minus_t = 1.0 - t;
+        let one_minus_t_sq = one_minus_t * one_minus_t;
+        let t_sq = t * t;
+        
+        let x = one_minus_t_sq * start_x + 
+                2.0 * one_minus_t * t * control_x + 
+                t_sq * end_x;
+        let y = one_minus_t_sq * start_y + 
+                2.0 * one_minus_t * t * control_y + 
+                t_sq * end_y;
+        
+        points.push(x);
+        points.push(y);
     }
-    path
+    points
 }
+
+// 2. Batch processing for multiple paths
+#[wasm_bindgen]
+pub fn precalculate_bezier_paths_batch(
+    paths_data: &[f32], // [start_x, start_y, control_x, control_y, end_x, end_y] per path
+    segments: usize,
+) -> Vec<f32>
+
+// 3. Additional utilities
+pub fn interpolate_bezier_point(points: &[f32], t: f32) -> Vec<f32>
+pub fn precalculate_cubic_bezier_path(...) -> Vec<f32>
+pub fn calculate_bezier_length(points: &[f32]) -> f32
 ```
 
 - [ ] **Task 11: Memory Management**
