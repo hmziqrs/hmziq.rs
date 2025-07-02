@@ -8,7 +8,7 @@ import Skills from '@/components/sections/Skills'
 import Contact from '@/components/sections/Contact'
 
 // Original JS StarField
-const StarFieldJS = dynamic(() => import('@/components/three/StarField'), {
+const StarFieldJS = dynamic(() => import('@/components/legacy/StarField'), {
   ssr: false,
   loading: () => (
     <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
@@ -16,7 +16,7 @@ const StarFieldJS = dynamic(() => import('@/components/three/StarField'), {
 })
 
 // WASM-optimized StarField
-const StarFieldWASM = dynamic(() => import('@/components/three/StarFieldWASM'), {
+const StarFieldWASM = dynamic(() => import('@/components/three/StarField'), {
   ssr: false,
   loading: () => (
     <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />

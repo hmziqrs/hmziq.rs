@@ -3,7 +3,6 @@
 import { useRef, useMemo, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { getOptimizedFunctions } from '@/lib/wasm'
 
 // Performance monitoring
 let frameCount = 0
@@ -17,14 +16,14 @@ const LOD_LEVELS = {
   FAR: { distance: Infinity, quality: 'simple' }
 }
 
-// Pre-calculated sin lookup table for performance (kept for non-WASM fallback)
+// Pre-calculated sin lookup table for performance
 const SIN_TABLE_SIZE = 1024
 const SIN_TABLE = new Float32Array(SIN_TABLE_SIZE)
 for (let i = 0; i < SIN_TABLE_SIZE; i++) {
   SIN_TABLE[i] = Math.sin((i / SIN_TABLE_SIZE) * Math.PI * 2)
 }
 
-// Fast sin approximation using lookup table (fallback for non-WASM)
+// Fast sin approximation using lookup table
 function fastSin(x: number): number {
   const normalized = ((x % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
   const index = Math.floor((normalized / (Math.PI * 2)) * SIN_TABLE_SIZE)
@@ -166,10 +165,6 @@ function Stars() {
     height: typeof window !== 'undefined' ? window.innerHeight : 1080,
   })
 
-  // WASM module state
-  const [wasmModule, setWasmModule] = useState<any>(null)
-  const wasmLoadingRef = useRef(false)
-
   // Mouse interaction state
   const speedMultiplierRef = useRef(1)
   const isMovingRef = useRef(false)
@@ -188,19 +183,6 @@ function Stars() {
 
   // Frame counter for temporal optimization
   const frameCounterRef = useRef(0)
-
-  // Load WASM module
-  useEffect(() => {
-    if (!wasmLoadingRef.current) {
-      wasmLoadingRef.current = true
-      getOptimizedFunctions().then(module => {
-        setWasmModule(module)
-        console.log('WASM module loaded for StarField')
-      }).catch(err => {
-        console.warn('Failed to load WASM module for StarField:', err)
-      })
-    }
-  }, [])
 
   useEffect(() => {
     const handleResize = () => {
@@ -256,6 +238,12 @@ function Stars() {
     const mediumCount = Math.floor(totalCount * 0.35) // 35% medium
     const farCount = totalCount - nearCount - mediumCount // 50% far
 
+    // Seed function for consistent values
+    const seed = (i: number) => {
+      let x = Math.sin(i * 12.9898 + 78.233) * 43758.5453
+      return x - Math.floor(x)
+    }
+
     // Helper to create star data for a group
     const createStarGroup = (
       count: number,
@@ -264,67 +252,52 @@ function Stars() {
       maxRadius: number,
       lodLevel: string
     ): StarGroup => {
-      let positions: Float32Array
-      let colors: Float32Array
-      let sizes: Float32Array
-      
-      // Use WASM if available, otherwise fall back to JS
-      if (wasmModule) {
-        positions = wasmModule.generate_star_positions(count, startIndex, minRadius, maxRadius)
-        colors = wasmModule.generate_star_colors(count, startIndex)
-        const sizeMultiplier = lodLevel === 'simple' ? 0.8 : 1.0
-        sizes = wasmModule.generate_star_sizes(count, startIndex, sizeMultiplier)
-      } else {
-        // Fallback to original JS implementation
-        positions = new Float32Array(count * 3)
-        colors = new Float32Array(count * 3)
-        sizes = new Float32Array(count)
-        
-        const seed = (i: number) => {
-          let x = Math.sin(i * 12.9898 + 78.233) * 43758.5453
-          return x - Math.floor(x)
+      const positions = new Float32Array(count * 3)
+      const colors = new Float32Array(count * 3)
+      const sizes = new Float32Array(count)
+      const twinkles = new Float32Array(count)
+      const sparkles = new Float32Array(count)
+
+      for (let i = 0; i < count; i++) {
+        const globalIndex = startIndex + i
+        const i3 = i * 3
+
+        // Position
+        const radius = minRadius + seed(globalIndex) * (maxRadius - minRadius)
+        const theta = seed(globalIndex + 1000) * Math.PI * 2
+        const phi = Math.acos(2 * seed(globalIndex + 2000) - 1)
+
+        positions[i3] = radius * Math.sin(phi) * Math.cos(theta)
+        positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta)
+        positions[i3 + 2] = radius * Math.cos(phi)
+
+        // Colors
+        const colorChoice = seed(globalIndex + 3000)
+        if (colorChoice < 0.5) {
+          colors[i3] = colors[i3 + 1] = colors[i3 + 2] = 1
+        } else if (colorChoice < 0.7) {
+          colors[i3] = 0.6
+          colors[i3 + 1] = 0.8
+          colors[i3 + 2] = 1
+        } else if (colorChoice < 0.85) {
+          colors[i3] = 1
+          colors[i3 + 1] = 0.8
+          colors[i3 + 2] = 0.4
+        } else {
+          colors[i3] = 0.8
+          colors[i3 + 1] = 0.6
+          colors[i3 + 2] = 1
         }
-        
-        for (let i = 0; i < count; i++) {
-          const globalIndex = startIndex + i
-          const i3 = i * 3
 
-          // Position
-          const radius = minRadius + seed(globalIndex) * (maxRadius - minRadius)
-          const theta = seed(globalIndex + 1000) * Math.PI * 2
-          const phi = Math.acos(2 * seed(globalIndex + 2000) - 1)
+        // Sizes - adjust based on LOD
+        const sizeRandom = seed(globalIndex + 4000)
+        const baseSize = sizeRandom < 0.7 ? 1 + seed(globalIndex + 5000) * 1.5 : 2.5 + seed(globalIndex + 6000) * 2
+        sizes[i] = lodLevel === 'simple' ? baseSize * 0.8 : baseSize
 
-          positions[i3] = radius * Math.sin(phi) * Math.cos(theta)
-          positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta)
-          positions[i3 + 2] = radius * Math.cos(phi)
-
-          // Colors
-          const colorChoice = seed(globalIndex + 3000)
-          if (colorChoice < 0.5) {
-            colors[i3] = colors[i3 + 1] = colors[i3 + 2] = 1
-          } else if (colorChoice < 0.7) {
-            colors[i3] = 0.6
-            colors[i3 + 1] = 0.8
-            colors[i3 + 2] = 1
-          } else if (colorChoice < 0.85) {
-            colors[i3] = 1
-            colors[i3 + 1] = 0.8
-            colors[i3 + 2] = 0.4
-          } else {
-            colors[i3] = 0.8
-            colors[i3 + 1] = 0.6
-            colors[i3 + 2] = 1
-          }
-
-          // Sizes
-          const sizeRandom = seed(globalIndex + 4000)
-          const baseSize = sizeRandom < 0.7 ? 1 + seed(globalIndex + 5000) * 1.5 : 2.5 + seed(globalIndex + 6000) * 2
-          sizes[i] = lodLevel === 'simple' ? baseSize * 0.8 : baseSize
-        }
+        // Initial twinkle and sparkle values
+        twinkles[i] = 1.0
+        sparkles[i] = 0.0
       }
-
-      const twinkles = new Float32Array(count).fill(1.0)
-      const sparkles = new Float32Array(count).fill(0.0)
 
       // Create appropriate material based on LOD
       let material: THREE.ShaderMaterial
@@ -375,51 +348,28 @@ function Stars() {
     const far = createStarGroup(farCount, nearCount + mediumCount, 70, 150, 'simple')
 
     return { near, medium, far }
-  }, [screenDimensions, wasmModule])
+  }, [screenDimensions])
 
-  // Update twinkle and sparkle values using WASM
+  // Update twinkle and sparkle values
   const updateStarEffects = (group: StarGroup, time: number, updateRate: number) => {
     if (frameCounterRef.current % updateRate !== 0) return
 
     const { positions, twinkles, sparkles, count, mesh } = group
 
-    if (wasmModule) {
-      // For now, use the positions from the group directly
-      // In a production system, we'd use SharedArrayBuffer or direct memory access
+    for (let i = 0; i < count; i++) {
+      const i3 = i * 3
+      const x = positions[i3]
+      const y = positions[i3 + 1]
+
+      // Use fast sin approximation
+      const twinkleBase = fastSin(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7
       
-      // Use fast_sin from WASM for calculations
-      for (let i = 0; i < count; i++) {
-        const i3 = i * 3
-        const x = positions[i3]
-        const y = positions[i3 + 1]
+      // Sparkle effect - simplified
+      const sparklePhase = fastSin(time * 15.0 + x * 20.0 + y * 30.0)
+      const sparkle = sparklePhase > 0.98 ? (sparklePhase - 0.98) / 0.02 : 0
 
-        // Use WASM fast_sin for better performance
-        const twinkleBase = wasmModule.fast_sin(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7
-        
-        // Sparkle effect using WASM
-        const sparklePhase = wasmModule.fast_sin(time * 15.0 + x * 20.0 + y * 30.0)
-        const sparkle = sparklePhase > 0.98 ? (sparklePhase - 0.98) / 0.02 : 0
-
-        twinkles[i] = twinkleBase + sparkle
-        sparkles[i] = sparkle
-      }
-    } else {
-      // Fallback to JS implementation
-      for (let i = 0; i < count; i++) {
-        const i3 = i * 3
-        const x = positions[i3]
-        const y = positions[i3 + 1]
-
-        // Use fast sin approximation
-        const twinkleBase = fastSin(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7
-        
-        // Sparkle effect - simplified
-        const sparklePhase = fastSin(time * 15.0 + x * 20.0 + y * 30.0)
-        const sparkle = sparklePhase > 0.98 ? (sparklePhase - 0.98) / 0.02 : 0
-
-        twinkles[i] = twinkleBase + sparkle
-        sparkles[i] = sparkle
-      }
+      twinkles[i] = twinkleBase + sparkle
+      sparkles[i] = sparkle
     }
 
     // Update attributes
@@ -473,20 +423,8 @@ function Stars() {
     // Update rotation
     const baseRotationSpeedX = 0.02
     const baseRotationSpeedY = 0.01
-    
-    if (wasmModule) {
-      const rotationDelta = wasmModule.calculate_rotation_delta(
-        baseRotationSpeedX,
-        baseRotationSpeedY,
-        speedMultiplierRef.current,
-        deltaTime
-      )
-      rotationXRef.current += rotationDelta[0]
-      rotationYRef.current += rotationDelta[1]
-    } else {
-      rotationXRef.current += baseRotationSpeedX * speedMultiplierRef.current * deltaTime
-      rotationYRef.current += baseRotationSpeedY * speedMultiplierRef.current * deltaTime
-    }
+    rotationXRef.current += baseRotationSpeedX * speedMultiplierRef.current * deltaTime
+    rotationYRef.current += baseRotationSpeedY * speedMultiplierRef.current * deltaTime
 
     // Apply rotation to all LOD groups
     const meshes = [nearMeshRef.current, mediumMeshRef.current, farMeshRef.current]
@@ -526,7 +464,7 @@ function Stars() {
   )
 }
 
-export default function OptimizedStarFieldWASM() {
+export default function OptimizedStarField() {
   const [showStats, setShowStats] = useState(false)
 
   useEffect(() => {
@@ -554,7 +492,6 @@ export default function OptimizedStarFieldWASM() {
       {showStats && (
         <div className="fixed top-4 right-4 bg-black/80 text-white p-4 rounded font-mono text-sm" style={{ zIndex: 100 }}>
           <div>FPS: {fps.toFixed(1)}</div>
-          <div className="text-xs mt-1 text-blue-400">WASM Optimized</div>
           <div className="text-xs mt-2 text-gray-400">Press Ctrl+P to toggle</div>
         </div>
       )}
