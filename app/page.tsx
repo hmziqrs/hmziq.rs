@@ -24,15 +24,6 @@ const LightNebula2D = dynamic(() => import('@/components/effects/LightNebula'), 
   ssr: false,
 })
 
-// WASM Test Component (temporary for testing)
-const WASMTest = dynamic(() => import('@/components/debug/WASMTest').then(mod => ({ default: mod.WASMTest })), {
-  ssr: false,
-})
-
-// WASM Benchmark Component (temporary for performance testing)
-// const WASMBenchmark = dynamic(() => import('@/components/debug/WASMBenchmark').then(mod => ({ default: mod.WASMBenchmark })), {
-//   ssr: false,
-// })
 
 export default function Home() {
   return (
@@ -54,11 +45,6 @@ export default function Home() {
         <Contact />
       </div>
 
-      {/* WASM Test (temporary) */}
-      {/* <WASMTest /> */}
-      
-      {/* WASM Benchmark (temporary) */}
-      {/* <WASMBenchmark /> */}
     </main>
   )
 }

@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import PerformanceMonitor from '@/components/performance/performance-monitor'
-import VisualQualityTest from '@/components/debug/VisualQualityTest'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -68,7 +67,6 @@ export default function RootLayout({
           {children}
         </div>
         <PerformanceMonitor enabled={true} position="top-right" />
-        <VisualQualityTest />
       </body>
     </html>
   )
