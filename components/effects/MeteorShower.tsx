@@ -672,59 +672,123 @@ export default function MeteorShower2DOptimized() {
 
     function drawHighQualityTaperedTrail(meteor: Meteor, ctx: CanvasRenderingContext2D) {
       const trailLength = meteor.trail.length
+      
+      if (trailLength < 2) return
+      
       // Ensure minimum width for small meteors to prevent artifacts
       const baseWidth = 2  // Minimum base width
       const maxWidth = Math.max(baseWidth, Math.min(meteor.size * 5, 4))
       const minWidth = 0.5  // Increased from 0.1 for better visibility
       
-      // Build the trail shape
+      // Build the trail shape using WASM optimization when available
       ctx.beginPath()
       
-      const trailPoints: { x: number, y: number, width: number }[] = []
-      
-      for (let i = 0; i < trailLength; i++) {
-        const progress = i / (trailLength - 1)  // 0 = oldest (tail), 1 = newest (head)
-        const width = maxWidth * Math.pow(progress, 2.5) + minWidth  // REVERSED: thin at tail, thick at head
-        trailPoints.push({
-          x: meteor.trail[i].x,
-          y: meteor.trail[i].y,
-          width: width
-        })
-      }
-      
-      // Draw top edge
-      for (let i = 0; i < trailPoints.length; i++) {
-        const point = trailPoints[i]
-        const angle = i < trailPoints.length - 1 
-          ? Math.atan2(trailPoints[i + 1].y - point.y, trailPoints[i + 1].x - point.x)
-          : Math.atan2(point.y - trailPoints[i - 1].y, point.x - trailPoints[i - 1].x)
-        
-        const perpAngle = angle + Math.PI / 2
-        const offsetX = Math.cos(perpAngle) * point.width / 2
-        const offsetY = Math.sin(perpAngle) * point.width / 2
-        
-        if (i === 0) {
-          ctx.moveTo(point.x + offsetX, point.y + offsetY)
-        } else {
-          ctx.lineTo(point.x + offsetX, point.y + offsetY)
+      // Try WASM optimization first
+      if (wasmModule && wasmModule.calculate_trail_geometry) {
+        try {
+          // Extract trail coordinates for WASM
+          const trailX = new Float32Array(trailLength)
+          const trailY = new Float32Array(trailLength)
+          
+          for (let i = 0; i < trailLength; i++) {
+            trailX[i] = meteor.trail[i].x
+            trailY[i] = meteor.trail[i].y
+          }
+          
+          // Calculate trail geometry in WASM (much faster)
+          const vertices = wasmModule.calculate_trail_geometry(
+            trailX,
+            trailY, 
+            maxWidth,
+            minWidth,
+            2.5  // taper exponent
+          )
+          
+          if (vertices && vertices.length >= 8) { // Need at least 4 vertices (8 values)
+            // Use WASM-calculated vertices to build path
+            const vertexCount = vertices.length / 4 // 4 values per point (top_x, top_y, bottom_x, bottom_y)
+            
+            // Draw top edge using pre-calculated vertices
+            for (let i = 0; i < vertexCount; i++) {
+              const topX = vertices[i * 4]
+              const topY = vertices[i * 4 + 1]
+              
+              if (i === 0) {
+                ctx.moveTo(topX, topY)
+              } else {
+                ctx.lineTo(topX, topY)
+              }
+            }
+            
+            // Draw bottom edge (reverse) using pre-calculated vertices
+            for (let i = vertexCount - 1; i >= 0; i--) {
+              const bottomX = vertices[i * 4 + 2]
+              const bottomY = vertices[i * 4 + 3]
+              ctx.lineTo(bottomX, bottomY)
+            }
+            
+            ctx.closePath()
+          } else {
+            // Fallback to JS if WASM returned insufficient data
+            drawTrailFallback()
+          }
+        } catch (error) {
+          console.warn('WASM trail geometry failed, using JS fallback:', error)
+          drawTrailFallback()
         }
+      } else {
+        // Fallback to original JS implementation
+        drawTrailFallback()
       }
       
-      // Draw bottom edge (reverse)
-      for (let i = trailPoints.length - 1; i >= 0; i--) {
-        const point = trailPoints[i]
-        const angle = i < trailPoints.length - 1 
-          ? Math.atan2(trailPoints[i + 1].y - point.y, trailPoints[i + 1].x - point.x)
-          : Math.atan2(point.y - trailPoints[i - 1].y, point.x - trailPoints[i - 1].x)
+      // Fallback function for trail geometry calculation
+      function drawTrailFallback() {
+        const trailPoints: { x: number, y: number, width: number }[] = []
         
-        const perpAngle = angle + Math.PI / 2
-        const offsetX = Math.cos(perpAngle) * point.width / 2
-        const offsetY = Math.sin(perpAngle) * point.width / 2
+        for (let i = 0; i < trailLength; i++) {
+          const progress = i / (trailLength - 1)  // 0 = oldest (tail), 1 = newest (head)
+          const width = maxWidth * Math.pow(progress, 2.5) + minWidth  // REVERSED: thin at tail, thick at head
+          trailPoints.push({
+            x: meteor.trail[i].x,
+            y: meteor.trail[i].y,
+            width: width
+          })
+        }
         
-        ctx.lineTo(point.x - offsetX, point.y - offsetY)
+        // Draw top edge
+        for (let i = 0; i < trailPoints.length; i++) {
+          const point = trailPoints[i]
+          const angle = i < trailPoints.length - 1 
+            ? Math.atan2(trailPoints[i + 1].y - point.y, trailPoints[i + 1].x - point.x)
+            : Math.atan2(point.y - trailPoints[i - 1].y, point.x - trailPoints[i - 1].x)
+          
+          const perpAngle = angle + Math.PI / 2
+          const offsetX = Math.cos(perpAngle) * point.width / 2
+          const offsetY = Math.sin(perpAngle) * point.width / 2
+          
+          if (i === 0) {
+            ctx.moveTo(point.x + offsetX, point.y + offsetY)
+          } else {
+            ctx.lineTo(point.x + offsetX, point.y + offsetY)
+          }
+        }
+        
+        // Draw bottom edge (reverse)
+        for (let i = trailPoints.length - 1; i >= 0; i--) {
+          const point = trailPoints[i]
+          const angle = i < trailPoints.length - 1 
+            ? Math.atan2(trailPoints[i + 1].y - point.y, trailPoints[i + 1].x - point.x)
+            : Math.atan2(point.y - trailPoints[i - 1].y, point.x - trailPoints[i - 1].x)
+          
+          const perpAngle = angle + Math.PI / 2
+          const offsetX = Math.cos(perpAngle) * point.width / 2
+          const offsetY = Math.sin(perpAngle) * point.width / 2
+          
+          ctx.lineTo(point.x - offsetX, point.y - offsetY)
+        }
+        
+        ctx.closePath()
       }
-      
-      ctx.closePath()
       
       // Enhanced gradient with color transitions - from head to tail
       const gradient = gradientCaches.meteors.getLinearGradient(

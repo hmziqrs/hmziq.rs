@@ -560,3 +560,141 @@ pub fn batch_interpolate_meteor_positions(
     
     positions
 }
+
+// Trail rendering optimization for Task 6
+#[wasm_bindgen]
+pub fn calculate_trail_geometry(
+    trail_x_values: &[f32],
+    trail_y_values: &[f32],
+    max_width: f32,
+    min_width: f32,
+    taper_exponent: f32, // 2.5 for current behavior
+) -> Vec<f32> {
+    let trail_length = trail_x_values.len();
+    if trail_length < 2 {
+        return Vec::new();
+    }
+    
+    // Pre-allocate for all vertices (top edge + bottom edge)
+    // Each point contributes 2 vertices (top and bottom), so 4 floats per point
+    let mut vertices = Vec::with_capacity(trail_length * 4);
+    
+    // Calculate trail points with optimized operations
+    let mut trail_points = Vec::with_capacity(trail_length);
+    
+    for i in 0..trail_length {
+        let progress = i as f32 / (trail_length - 1) as f32; // 0 = tail, 1 = head
+        
+        // Optimized width calculation using native pow
+        let width = max_width * progress.powf(taper_exponent) + min_width;
+        
+        trail_points.push((trail_x_values[i], trail_y_values[i], width));
+    }
+    
+    // Calculate angles and perpendicular offsets in one pass
+    for i in 0..trail_points.len() {
+        let (x, y, width) = trail_points[i];
+        
+        // Calculate angle between points
+        let angle = if i < trail_points.len() - 1 {
+            let (next_x, next_y, _) = trail_points[i + 1];
+            (next_y - y).atan2(next_x - x)
+        } else if i > 0 {
+            let (prev_x, prev_y, _) = trail_points[i - 1];
+            (y - prev_y).atan2(x - prev_x)
+        } else {
+            0.0
+        };
+        
+        let perp_angle = angle + std::f32::consts::PI / 2.0;
+        let half_width = width / 2.0;
+        
+        // Calculate perpendicular offsets using fast trigonometry
+        let cos_perp = perp_angle.cos();
+        let sin_perp = perp_angle.sin();
+        let offset_x = cos_perp * half_width;
+        let offset_y = sin_perp * half_width;
+        
+        // Store top vertex
+        vertices.push(x + offset_x);
+        vertices.push(y + offset_y);
+        
+        // Store bottom vertex (will be used in reverse order)
+        vertices.push(x - offset_x);
+        vertices.push(y - offset_y);
+    }
+    
+    vertices
+}
+
+// Batch trail geometry calculation for multiple meteors
+#[wasm_bindgen]
+pub fn batch_calculate_trail_geometries(
+    trails_data: &[f32], // Flattened: [trail1_len, x1, y1, x2, y2, ..., trail2_len, x1, y1, ...]
+    max_widths: &[f32],
+    min_widths: &[f32],
+    taper_exponent: f32,
+) -> Vec<f32> {
+    let mut all_vertices = Vec::new();
+    let mut data_index = 0;
+    let meteor_count = max_widths.len();
+    
+    for meteor_idx in 0..meteor_count {
+        if data_index >= trails_data.len() {
+            break;
+        }
+        
+        let trail_length = trails_data[data_index] as usize;
+        data_index += 1;
+        
+        if trail_length < 2 || data_index + trail_length * 2 > trails_data.len() {
+            // Skip invalid trail data
+            data_index += trail_length * 2;
+            continue;
+        }
+        
+        // Extract trail coordinates
+        let mut trail_x = Vec::with_capacity(trail_length);
+        let mut trail_y = Vec::with_capacity(trail_length);
+        
+        for _ in 0..trail_length {
+            trail_x.push(trails_data[data_index]);
+            trail_y.push(trails_data[data_index + 1]);
+            data_index += 2;
+        }
+        
+        // Calculate geometry for this trail
+        let vertices = calculate_trail_geometry(
+            &trail_x,
+            &trail_y,
+            max_widths[meteor_idx],
+            min_widths[meteor_idx],
+            taper_exponent,
+        );
+        
+        // Add vertex count as header, then vertices
+        all_vertices.push(vertices.len() as f32);
+        all_vertices.extend(vertices);
+    }
+    
+    all_vertices
+}
+
+// Optimized trail point width calculations only
+#[wasm_bindgen]
+pub fn calculate_trail_widths(
+    trail_length: usize,
+    max_width: f32,
+    min_width: f32,
+    taper_exponent: f32,
+) -> Vec<f32> {
+    let mut widths = Vec::with_capacity(trail_length);
+    
+    for i in 0..trail_length {
+        let progress = i as f32 / (trail_length - 1) as f32;
+        let width = max_width * progress.powf(taper_exponent) + min_width;
+        widths.push(width);
+    }
+    
+    widths
+}
