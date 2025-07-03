@@ -12,12 +12,12 @@
 - **Memoization** with `React.memo()` for expensive renders
 - **useCallback/useMemo** for stable references in dependencies
 - **Object pooling** for frequently created objects
-- **Spatial partitioning** for collision detection optimization
+- **WASM integration** for performance-critical calculations
 
 ## Three.js Integration Patterns
 ```typescript
 // Preferred pattern for Three.js components
-const MyThreeComponent = dynamic(() => import('./ThreeComponent'), {
+const StarField = dynamic(() => import('@/components/three/StarField'), {
   ssr: false,
   loading: () => <div className="loading-placeholder" />
 })
@@ -47,9 +47,3 @@ const MyThreeComponent = dynamic(() => import('./ThreeComponent'), {
 - **Context API** for theme/settings if needed
 - **Refs** for imperative Three.js operations
 - **Custom hooks** for complex state logic
-
-## Security Best Practices
-- No sensitive data in client-side code
-- Validate all user inputs
-- Use Content Security Policy headers
-- Sanitize any dynamic content

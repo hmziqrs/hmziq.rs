@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "bun run build:wasm && next build",
+    "build:wasm": "cd wasm && wasm-pack build --target web --out-dir pkg && node ../scripts/copy-wasm.js",
+    "build:wasm:dev": "cd wasm && wasm-pack build --target web --out-dir pkg --dev && node ../scripts/copy-wasm.js",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
@@ -42,6 +44,7 @@
   },
   "devDependencies": {
     "@axe-core/puppeteer": "^4.10.2",
+    "@playwright/test": "^1.53.2",
     "@tailwindcss/postcss": "^4.1.8",
     "@tailwindcss/vite": "^4.1.8",
     "@types/three": "^0.177.0",
@@ -53,6 +56,7 @@
     "eslint": "^9.28.0",
     "eslint-config-next": "^15.3.3",
     "lighthouse": "^12.6.1",
+    "playwright": "^1.53.2",
     "prettier": "^3.5.3",
     "puppeteer": "^24.10.0",
     "tailwindcss": "^4.0.0"

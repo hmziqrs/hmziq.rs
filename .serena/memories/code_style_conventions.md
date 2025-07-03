@@ -27,7 +27,7 @@
 - **Line endings**: LF
 
 ## File Naming Conventions
-- React components: PascalCase (e.g., `Hero.tsx`, `StarField3D.tsx`)
+- React components: PascalCase (e.g., `Hero.tsx`, `StarField.tsx`)
 - Utilities: camelCase (e.g., `utils.ts`, `performance-utils.ts`)
 - Directories: kebab-case or camelCase
 - Constants: UPPER_SNAKE_CASE

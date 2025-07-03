@@ -20,6 +20,10 @@
 - **@react-three/fiber** - React integration for Three.js
 - **@react-three/drei** - Three.js utilities and helpers
 
+## Performance Optimization
+- **WebAssembly (WASM)** - Rust-based particle systems
+- **Rust** - For high-performance calculations
+
 ## Development Tools
 - **ESLint** with TypeScript support and Next.js config
 - **Prettier** - Code formatting

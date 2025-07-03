@@ -10,19 +10,24 @@
 │   ├── three/             # Three.js components (StarField, etc.)
 │   ├── sections/          # Page sections (Hero, About, Skills, Contact)
 │   ├── effects/           # 2D canvas effects (Nebula, Meteor, etc.)
-│   ├── performance/       # Performance monitoring components
-│   └── debug/             # Debug and testing components
+│   └── performance/       # Performance monitoring components
 ├── lib/                   # Utility functions and configurations
 │   ├── utils.ts           # General helper functions
 │   ├── performance/       # Performance optimization utilities
-│   └── three-utils.ts     # Three.js specific utilities (if exists)
+│   └── wasm/              # WebAssembly integration
 ├── hooks/                 # Custom React hooks
 ├── public/                # Static assets
 ├── docs/                  # Project documentation
-│   ├── optimization-results/  # Performance optimization docs
-│   └── improvements/      # Feature improvement documentation
-├── legacy/                # Moved unused/old files
-└── .serena/               # Serena agent configuration
+│   ├── PERFORMANCE_TEST_RESULTS.md
+│   ├── PROJECT_STATE.md
+│   └── WASM_OPTIMIZATION_PLAN.md
+├── wasm/                  # Rust WebAssembly module
+│   ├── src/               # Rust source code
+│   ├── Cargo.toml         # Rust package configuration
+│   └── pkg/               # Generated WASM package
+├── scripts/               # Build and utility scripts
+│   └── copy-wasm.js       # WASM build script
+└── legacy/                # Moved unused/old files
 ```
 
 ## Key Files

@@ -5,7 +5,9 @@
 
 ### Core Development
 - `bun run dev` - Start development server
-- `bun run build` - Build for production
+- `bun run build` - Build for production (includes WASM build)
+- `bun run build:wasm` - Build WASM module only
+- `bun run build:wasm:dev` - Build WASM module in dev mode
 - `bun run start` - Start production server
 
 ### Code Quality & Linting

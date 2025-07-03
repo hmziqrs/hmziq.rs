@@ -30,6 +30,14 @@
 - Implement lazy loading for Three.js components
 - Use `dynamic` imports from Next.js for client-side only components
 
+## Performance Optimization
+- Lazy load Three.js components
+- Use object pooling for frequently created/destroyed objects
+- Implement Level of Detail (LOD) for complex 3D scenes
+- Use efficient algorithms for particle systems
+- Monitor and optimize frame rates continuously
+- Leverage WASM for intensive calculations
+
 ## Accessibility Requirements
 - Implement reduced motion preferences
 - Ensure keyboard navigation works
@@ -37,10 +45,3 @@
 - Use semantic HTML elements
 - Maintain proper color contrast ratios
 - Include proper ARIA labels where needed
-
-## Performance Optimization
-- Lazy load Three.js components
-- Use object pooling for frequently created/destroyed objects
-- Implement Level of Detail (LOD) for complex 3D scenes
-- Use efficient algorithms for particle systems
-- Monitor and optimize frame rates continuously

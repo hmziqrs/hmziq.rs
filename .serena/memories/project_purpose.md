@@ -7,6 +7,7 @@ This is a personal landing page designed as a creative and unique introduction p
 - Canvas-based parallax animations  
 - 3D components with animations using Three.js
 - Space-themed background with star simulation
+- WASM-optimized particle systems using Rust
 - Subtle, non-bloated design that doesn't distract from content
 
 **Important**: This is NOT a CV/Resume site. It's a subtle introduction page with focus on creative visual experience.

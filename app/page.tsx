@@ -7,6 +7,7 @@ import Skills from '@/components/sections/Skills'
 import Contact from '@/components/sections/Contact'
 
 // Dynamically import Three.js components to avoid SSR issues
+// Use WASM-optimized version if available
 const StarField3D = dynamic(() => import('@/components/three/StarField'), {
   ssr: false,
   loading: () => (
@@ -22,6 +23,7 @@ const MeteorShower2D = dynamic(() => import('@/components/effects/MeteorShower')
 const LightNebula2D = dynamic(() => import('@/components/effects/LightNebula'), {
   ssr: false,
 })
+
 
 export default function Home() {
   return (
@@ -42,6 +44,7 @@ export default function Home() {
         <Skills />
         <Contact />
       </div>
+
     </main>
   )
 }
