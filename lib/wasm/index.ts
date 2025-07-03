@@ -31,6 +31,8 @@ export interface WASMModule {
   calculate_star_effects_temporal_simd?: (positions: Float32Array, previous_twinkles: Float32Array, previous_sparkles: Float32Array, count: number, time: number, threshold: number) => Float32Array;
   // LOD distribution calculations
   calculate_lod_distribution: (total_count: number, quality_tier: number) => Uint32Array;
+  // Frame rate calculation
+  calculate_fps: (frame_count: number, current_time: number, last_time: number) => Float32Array;
   // Math utilities
   fast_sin: (x: number) => number;
   fast_cos: (x: number) => number;
@@ -722,6 +724,26 @@ export const jsFallbacks: WASMModule = {
     const far_count = total_count - near_count - medium_count;
     
     return new Uint32Array([near_count, medium_count, far_count]);
+  },
+  // Frame rate calculation
+  calculate_fps: (frame_count: number, current_time: number, last_time: number): Float32Array => {
+    logFallback('calculate_fps');
+    
+    // Check if we should calculate FPS (every 30 frames)
+    if (frame_count % 30 === 0) {
+      // Calculate FPS: 30 frames / time_elapsed (in seconds)
+      const time_elapsed = current_time - last_time;
+      const fps = time_elapsed > 0 ? 30000 / time_elapsed : 60.0;
+      
+      // Return [fps, 1.0 (should update), current_time split into two f32s]
+      const time_high = Math.floor(current_time / 1000);
+      const time_low = current_time - (time_high * 1000);
+      
+      return new Float32Array([fps, 1.0, time_high, time_low]);
+    } else {
+      // Don't update FPS
+      return new Float32Array([0.0, 0.0, 0.0, 0.0]);
+    }
   },
   // Math utilities
   fast_sin: (x: number): number => Math.sin(x),

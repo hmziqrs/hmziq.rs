@@ -1213,3 +1213,31 @@ pub fn calculate_lod_distribution(total_count: usize, quality_tier: u32) -> Vec<
     // Return [near_count, medium_count, far_count]
     vec![near_count, medium_count, far_count]
 }
+
+/// Calculate FPS based on frame count and timing
+/// Returns [fps, should_update, new_last_time_high, new_last_time_low]
+/// The last time is split into two f32 values to preserve precision
+#[wasm_bindgen]
+pub fn calculate_fps(frame_count: u32, current_time: f64, last_time: f64) -> Vec<f32> {
+    // Check if we should calculate FPS (every 30 frames)
+    if frame_count % 30 == 0 {
+        // Calculate FPS: 30 frames / time_elapsed (in seconds)
+        // current_time and last_time are in milliseconds
+        let time_elapsed = current_time - last_time;
+        let fps = if time_elapsed > 0.0 {
+            30000.0 / time_elapsed // 30 frames / time in milliseconds
+        } else {
+            60.0 // Default to 60 FPS if no time elapsed
+        };
+        
+        // Return [fps, 1.0 (should update), current_time split into two f32s]
+        // We split the f64 timestamp into two f32s to preserve precision
+        let time_high = (current_time / 1000.0).floor();
+        let time_low = current_time - (time_high * 1000.0);
+        
+        vec![fps as f32, 1.0, time_high as f32, time_low as f32]
+    } else {
+        // Don't update FPS
+        vec![0.0, 0.0, 0.0, 0.0]
+    }
+}

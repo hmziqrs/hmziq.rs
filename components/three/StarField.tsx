@@ -564,10 +564,22 @@ function Stars() {
     frameCounterRef.current++
 
     // Update FPS counter
-    if (frameCounterRef.current % 30 === 0) {
-      const currentTime = performance.now()
-      fps = 30000 / (currentTime - lastTime)
-      lastTime = currentTime
+    const currentTime = performance.now()
+    
+    if (wasmModule && wasmModule.calculate_fps) {
+      // Use WASM for FPS calculation
+      const fpsResult = wasmModule.calculate_fps(frameCounterRef.current, currentTime, lastTime)
+      if (fpsResult[1] > 0.5) { // Should update
+        fps = fpsResult[0]
+        // Reconstruct time from two f32 values
+        lastTime = fpsResult[2] * 1000 + fpsResult[3]
+      }
+    } else {
+      // Fallback to JS implementation
+      if (frameCounterRef.current % 30 === 0) {
+        fps = 30000 / (currentTime - lastTime)
+        lastTime = currentTime
+      }
     }
     
     // Get camera view projection matrix for frustum culling
@@ -581,14 +593,14 @@ function Stars() {
     lastFrameTimeRef.current = currentFrameTime
 
     // Calculate speed multiplier
-    const currentTime = Date.now()
+    const speedCalculationTime = Date.now()
     
     if (wasmModule && wasmModule.calculate_speed_multiplier) {
       // Use WASM for optimized speed calculations
       speedMultiplierRef.current = wasmModule.calculate_speed_multiplier(
         isMovingRef.current,
         clickBoostRef.current,
-        currentTime,
+        speedCalculationTime,
         speedMultiplierRef.current
       )
     } else {
@@ -599,7 +611,7 @@ function Stars() {
         speedMultiplier *= 4.5
       }
 
-      const timeSinceClick = currentTime - clickBoostRef.current
+      const timeSinceClick = speedCalculationTime - clickBoostRef.current
       if (timeSinceClick < 1200) {
         const clickDecay = 1 - timeSinceClick / 1200
         const clickBoost = 1 + 4.3 * clickDecay
