@@ -1022,3 +1022,190 @@ pub fn cull_stars_by_frustum_simd(
     
     visibility_mask
 }
+
+// Temporal coherence optimization - update only stars that have changed significantly
+#[wasm_bindgen]
+pub fn calculate_star_effects_with_temporal_coherence(
+    positions: &[f32],
+    previous_twinkles: &[f32],
+    previous_sparkles: &[f32],
+    count: usize,
+    time: f32,
+    threshold: f32,
+) -> Vec<f32> {
+    // Result format: [need_update_flag, twinkle, sparkle] triplets
+    let mut results = Vec::with_capacity(count * 3);
+    
+    for i in 0..count {
+        let i3 = i * 3;
+        let x = positions[i3];
+        let y = positions[i3 + 1];
+        
+        // Calculate new effects
+        let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+        let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
+        let sparkle = if sparkle_phase > 0.98 { (sparkle_phase - 0.98) / 0.02 } else { 0.0 };
+        let twinkle = twinkle_base + sparkle;
+        
+        // Check if update is needed
+        let twinkle_diff = (twinkle - previous_twinkles[i]).abs();
+        let sparkle_diff = (sparkle - previous_sparkles[i]).abs();
+        
+        let needs_update = twinkle_diff > threshold || sparkle_diff > threshold;
+        
+        results.push(if needs_update { 1.0 } else { 0.0 });
+        results.push(twinkle);
+        results.push(sparkle);
+    }
+    
+    results
+}
+
+// Get indices of stars that need updating based on temporal coherence
+#[wasm_bindgen]
+pub fn get_stars_needing_update(
+    positions: &[f32],
+    previous_twinkles: &[f32],
+    previous_sparkles: &[f32],
+    count: usize,
+    time: f32,
+    threshold: f32,
+) -> Vec<u32> {
+    let mut indices = Vec::new();
+    
+    for i in 0..count {
+        let i3 = i * 3;
+        let x = positions[i3];
+        let y = positions[i3 + 1];
+        
+        // Calculate new effects
+        let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+        let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
+        let sparkle = if sparkle_phase > 0.98 { (sparkle_phase - 0.98) / 0.02 } else { 0.0 };
+        let twinkle = twinkle_base + sparkle;
+        
+        // Check if update is needed
+        let twinkle_diff = (twinkle - previous_twinkles[i]).abs();
+        let sparkle_diff = (sparkle - previous_sparkles[i]).abs();
+        
+        if twinkle_diff > threshold || sparkle_diff > threshold {
+            indices.push(i as u32);
+        }
+    }
+    
+    indices
+}
+
+// SIMD-optimized temporal coherence check
+#[cfg(feature = "simd")]
+#[wasm_bindgen]
+pub fn calculate_star_effects_temporal_simd(
+    positions: &[f32],
+    previous_twinkles: &[f32],
+    previous_sparkles: &[f32],
+    count: usize,
+    time: f32,
+    threshold: f32,
+) -> Vec<f32> {
+    let mut results = Vec::with_capacity(count * 3);
+    
+    // Pre-compute common factors
+    let time_3 = time * 3.0;
+    let time_15 = time * 15.0;
+    let time_3_vec = f32x8::splat(time_3);
+    let time_15_vec = f32x8::splat(time_15);
+    let factor_10 = f32x8::splat(10.0);
+    let factor_20 = f32x8::splat(20.0);
+    let factor_30 = f32x8::splat(30.0);
+    let twinkle_scale = f32x8::splat(0.3);
+    let twinkle_offset = f32x8::splat(0.7);
+    let sparkle_threshold = f32x8::splat(0.98);
+    let sparkle_scale = f32x8::splat(50.0); // 1.0 / 0.02
+    let threshold_vec = f32x8::splat(threshold);
+    let zero = f32x8::splat(0.0);
+    let one = f32x8::splat(1.0);
+    
+    // Get sin table reference
+    let sin_table = get_sin_table();
+    
+    // Process in batches of 8
+    let chunks = count / 8;
+    
+    for chunk in 0..chunks {
+        let base = chunk * 8;
+        
+        // Load positions
+        let mut x_values = [0.0f32; 8];
+        let mut y_values = [0.0f32; 8];
+        
+        for i in 0..8 {
+            let i3 = (base + i) * 3;
+            x_values[i] = positions[i3];
+            y_values[i] = positions[i3 + 1];
+        }
+        
+        let x_vec = f32x8::from_slice_unaligned(&x_values);
+        let y_vec = f32x8::from_slice_unaligned(&y_values);
+        
+        // Calculate twinkle
+        let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
+        let twinkle_base_vec = simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
+        
+        // Calculate sparkle
+        let sparkle_arg = time_15_vec + x_vec * factor_20 + y_vec * factor_30;
+        let sparkle_phase_vec = simd_sin_lookup_batch(sparkle_arg, sin_table);
+        let sparkle_mask = sparkle_phase_vec.gt(sparkle_threshold);
+        let sparkle_vec = sparkle_mask.select(
+            (sparkle_phase_vec - sparkle_threshold) * sparkle_scale,
+            zero
+        );
+        
+        let twinkle_vec = twinkle_base_vec + sparkle_vec;
+        
+        // Load previous values
+        let prev_twinkles = f32x8::from_slice_unaligned(&previous_twinkles[base..base + 8]);
+        let prev_sparkles = f32x8::from_slice_unaligned(&previous_sparkles[base..base + 8]);
+        
+        // Calculate differences
+        let twinkle_diff = (twinkle_vec - prev_twinkles).abs();
+        let sparkle_diff = (sparkle_vec - prev_sparkles).abs();
+        
+        // Check if update needed
+        let needs_update_mask = twinkle_diff.gt(threshold_vec) | sparkle_diff.gt(threshold_vec);
+        let needs_update_vec = needs_update_mask.select(one, zero);
+        
+        // Store results
+        let needs_update_arr: [f32; 8] = needs_update_vec.into();
+        let twinkle_arr: [f32; 8] = twinkle_vec.into();
+        let sparkle_arr: [f32; 8] = sparkle_vec.into();
+        
+        for i in 0..8 {
+            results.push(needs_update_arr[i]);
+            results.push(twinkle_arr[i]);
+            results.push(sparkle_arr[i]);
+        }
+    }
+    
+    // Process remaining
+    for i in chunks * 8..count {
+        let i3 = i * 3;
+        let x = positions[i3];
+        let y = positions[i3 + 1];
+        
+        let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+        let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
+        let sparkle = if sparkle_phase > 0.98 { (sparkle_phase - 0.98) / 0.02 } else { 0.0 };
+        let twinkle = twinkle_base + sparkle;
+        
+        let twinkle_diff = (twinkle - previous_twinkles[i]).abs();
+        let sparkle_diff = (sparkle - previous_sparkles[i]).abs();
+        
+        let needs_update = twinkle_diff > threshold || sparkle_diff > threshold;
+        
+        results.push(if needs_update { 1.0 } else { 0.0 });
+        results.push(twinkle);
+        results.push(sparkle);
+    }
+    
+    results
+}

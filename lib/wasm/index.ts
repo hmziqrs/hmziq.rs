@@ -25,6 +25,10 @@ export interface WASMModule {
   cull_stars_by_frustum_simd?: (positions: Float32Array, count: number, camera_matrix: Float32Array, margin: number) => Uint8Array;
   // Enhanced SIMD batch processing for LOD groups
   calculate_star_effects_by_lod: (near_positions: Float32Array, near_count: number, medium_positions: Float32Array, medium_count: number, far_positions: Float32Array, far_count: number, time: number, quality_tier: number) => Float32Array;
+  // Temporal coherence optimization
+  calculate_star_effects_with_temporal_coherence: (positions: Float32Array, previous_twinkles: Float32Array, previous_sparkles: Float32Array, count: number, time: number, threshold: number) => Float32Array;
+  get_stars_needing_update: (positions: Float32Array, previous_twinkles: Float32Array, previous_sparkles: Float32Array, count: number, time: number, threshold: number) => Uint32Array;
+  calculate_star_effects_temporal_simd?: (positions: Float32Array, previous_twinkles: Float32Array, previous_sparkles: Float32Array, count: number, time: number, threshold: number) => Float32Array;
   // Math utilities
   fast_sin: (x: number) => number;
   fast_cos: (x: number) => number;
@@ -217,6 +221,10 @@ export async function loadWASM(): Promise<WASMModule | null> {
         cull_stars_by_frustum_simd: wasm.cull_stars_by_frustum_simd,
         // Enhanced SIMD batch processing for LOD groups
         calculate_star_effects_by_lod: wasm.calculate_star_effects_by_lod,
+        // Temporal coherence optimization
+        calculate_star_effects_with_temporal_coherence: wasm.calculate_star_effects_with_temporal_coherence,
+        get_stars_needing_update: wasm.get_stars_needing_update,
+        calculate_star_effects_temporal_simd: wasm.calculate_star_effects_temporal_simd,
         // Math utilities
         fast_sin: wasm.fast_sin,
         fast_cos: wasm.fast_cos,
@@ -608,6 +616,80 @@ export const jsFallbacks: WASMModule = {
     
     return effects;
   },
+  // Temporal coherence optimization fallbacks
+  calculate_star_effects_with_temporal_coherence: (
+    positions: Float32Array,
+    previous_twinkles: Float32Array,
+    previous_sparkles: Float32Array,
+    count: number,
+    time: number,
+    threshold: number
+  ): Float32Array => {
+    logFallback('calculate_star_effects_with_temporal_coherence');
+    
+    // Result format: [need_update_flag, twinkle, sparkle] triplets
+    const results = new Float32Array(count * 3);
+    
+    for (let i = 0; i < count; i++) {
+      const i3 = i * 3;
+      const x = positions[i3];
+      const y = positions[i3 + 1];
+      
+      // Calculate new effects
+      const twinkle_base = Math.sin(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+      const sparkle_phase = Math.sin(time * 15.0 + x * 20.0 + y * 30.0);
+      const sparkle = sparkle_phase > 0.98 ? (sparkle_phase - 0.98) / 0.02 : 0.0;
+      const twinkle = twinkle_base + sparkle;
+      
+      // Check if update is needed
+      const twinkle_diff = Math.abs(twinkle - previous_twinkles[i]);
+      const sparkle_diff = Math.abs(sparkle - previous_sparkles[i]);
+      
+      const needs_update = twinkle_diff > threshold || sparkle_diff > threshold;
+      
+      const idx = i * 3;
+      results[idx] = needs_update ? 1.0 : 0.0;
+      results[idx + 1] = twinkle;
+      results[idx + 2] = sparkle;
+    }
+    
+    return results;
+  },
+  get_stars_needing_update: (
+    positions: Float32Array,
+    previous_twinkles: Float32Array,
+    previous_sparkles: Float32Array,
+    count: number,
+    time: number,
+    threshold: number
+  ): Uint32Array => {
+    logFallback('get_stars_needing_update');
+    
+    const indices: number[] = [];
+    
+    for (let i = 0; i < count; i++) {
+      const i3 = i * 3;
+      const x = positions[i3];
+      const y = positions[i3 + 1];
+      
+      // Calculate new effects
+      const twinkle_base = Math.sin(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+      const sparkle_phase = Math.sin(time * 15.0 + x * 20.0 + y * 30.0);
+      const sparkle = sparkle_phase > 0.98 ? (sparkle_phase - 0.98) / 0.02 : 0.0;
+      const twinkle = twinkle_base + sparkle;
+      
+      // Check if update is needed
+      const twinkle_diff = Math.abs(twinkle - previous_twinkles[i]);
+      const sparkle_diff = Math.abs(sparkle - previous_sparkles[i]);
+      
+      if (twinkle_diff > threshold || sparkle_diff > threshold) {
+        indices.push(i);
+      }
+    }
+    
+    return new Uint32Array(indices);
+  },
+  calculate_star_effects_temporal_simd: undefined, // No SIMD fallback
   // Math utilities
   fast_sin: (x: number): number => Math.sin(x),
   fast_cos: (x: number): number => Math.cos(x),

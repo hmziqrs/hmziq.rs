@@ -420,8 +420,8 @@ function Stars() {
     return { near, medium, far }
   }, [screenDimensions, wasmModule, qualityTier])
 
-  // Update twinkle and sparkle values using WASM with frustum culling
-  const updateStarEffects = (group: StarGroup, time: number, updateRate: number, viewProjMatrix?: Float32Array) => {
+  // Update twinkle and sparkle values using WASM with frustum culling and temporal coherence
+  const updateStarEffects = (group: StarGroup, time: number, updateRate: number, viewProjMatrix?: Float32Array, useTemporalCoherence: boolean = true) => {
     if (frameCounterRef.current % updateRate !== 0) return
 
     const { positions, twinkles, sparkles, count, mesh } = group
@@ -433,7 +433,35 @@ function Stars() {
       visibleIndices = wasmModule.get_visible_star_indices(positions, count, viewProjMatrix, 5.0) // 5.0 margin for star size
     }
 
-    if (wasmModule && wasmModule.calculate_star_effects_arrays) {
+    // Apply temporal coherence optimization
+    const temporalThreshold = 0.05 // Only update if change is > 5%
+    
+    if (useTemporalCoherence && wasmModule && wasmModule.calculate_star_effects_with_temporal_coherence) {
+      // Use temporal coherence to update only stars that have changed significantly
+      const temporalResults = wasmModule.calculate_star_effects_with_temporal_coherence(
+        positions, twinkles, sparkles, count, time, temporalThreshold
+      )
+      
+      // Process results - format is [needs_update, twinkle, sparkle] triplets
+      let updateCount = 0
+      for (let i = 0; i < count; i++) {
+        const idx = i * 3
+        const needsUpdate = temporalResults[idx]
+        
+        if (needsUpdate > 0.5) {
+          twinkles[i] = temporalResults[idx + 1]
+          sparkles[i] = temporalResults[idx + 2]
+          updateCount++
+        }
+      }
+      
+      // Log temporal coherence savings in debug mode
+      if (frameCounterRef.current % 60 === 0 && updateCount < count) {
+        const savingsPercent = ((count - updateCount) / count * 100).toFixed(1)
+        // console.log(`Temporal coherence: Updated ${updateCount}/${count} stars (${savingsPercent}% saved)`)
+      }
+    } else if (wasmModule && wasmModule.calculate_star_effects_arrays) {
+      // Fallback to regular update method
       if (visibleIndices && visibleIndices.length < count * 0.8) {
         // If more than 20% of stars are culled, process only visible ones
         // Create temporary arrays for visible stars
