@@ -180,3 +180,102 @@ pub fn calculate_bezier_length(
     
     length
 }
+
+/// Pre-calculate quadratic Bezier path with arc-length parameterization
+/// This ensures uniform speed along the curve
+#[wasm_bindgen]
+pub fn precalculate_bezier_path_uniform(
+    start_x: f32,
+    start_y: f32,
+    control_x: f32,
+    control_y: f32,
+    end_x: f32,
+    end_y: f32,
+    segments: usize,
+) -> Vec<f32> {
+    // First, generate a high-resolution path to measure arc length
+    let high_res_segments = segments * 10; // 10x resolution for accurate measurement
+    let mut temp_points = Vec::with_capacity((high_res_segments + 1) * 2);
+    let mut arc_lengths = Vec::with_capacity(high_res_segments + 1);
+    
+    // Generate high-res points and calculate cumulative arc lengths
+    arc_lengths.push(0.0);
+    let mut total_length = 0.0;
+    
+    for i in 0..=high_res_segments {
+        let t = i as f32 / high_res_segments as f32;
+        let one_minus_t = 1.0 - t;
+        let one_minus_t_sq = one_minus_t * one_minus_t;
+        let t_sq = t * t;
+        
+        let x = one_minus_t_sq * start_x + 
+                2.0 * one_minus_t * t * control_x + 
+                t_sq * end_x;
+        
+        let y = one_minus_t_sq * start_y + 
+                2.0 * one_minus_t * t * control_y + 
+                t_sq * end_y;
+        
+        temp_points.push(x);
+        temp_points.push(y);
+        
+        if i > 0 {
+            let prev_idx = (i - 1) * 2;
+            let curr_idx = i * 2;
+            let dx = temp_points[curr_idx] - temp_points[prev_idx];
+            let dy = temp_points[curr_idx + 1] - temp_points[prev_idx + 1];
+            let segment_length = (dx * dx + dy * dy).sqrt();
+            total_length += segment_length;
+        }
+        
+        if i < high_res_segments {
+            arc_lengths.push(total_length);
+        }
+    }
+    
+    // Now generate the final points with uniform arc-length distribution
+    let mut points = Vec::with_capacity((segments + 1) * 2);
+    
+    for i in 0..=segments {
+        let target_length = (i as f32 / segments as f32) * total_length;
+        
+        // Find the high-res segment containing this arc length
+        let mut segment_idx = 0;
+        for j in 1..arc_lengths.len() {
+            if arc_lengths[j] >= target_length {
+                segment_idx = j - 1;
+                break;
+            }
+        }
+        
+        // Interpolate within the segment
+        let segment_start_length = arc_lengths[segment_idx];
+        let segment_end_length = if segment_idx + 1 < arc_lengths.len() {
+            arc_lengths[segment_idx + 1]
+        } else {
+            total_length
+        };
+        
+        let segment_t = if segment_end_length > segment_start_length {
+            (target_length - segment_start_length) / (segment_end_length - segment_start_length)
+        } else {
+            0.0
+        };
+        
+        let idx1 = segment_idx * 2;
+        let idx2 = idx1 + 2;
+        
+        if idx2 < temp_points.len() {
+            let x = temp_points[idx1] + (temp_points[idx2] - temp_points[idx1]) * segment_t;
+            let y = temp_points[idx1 + 1] + (temp_points[idx2 + 1] - temp_points[idx1 + 1]) * segment_t;
+            points.push(x);
+            points.push(y);
+        } else {
+            // Use end point
+            points.push(end_x);
+            points.push(end_y);
+        }
+    }
+    
+    points
+}
