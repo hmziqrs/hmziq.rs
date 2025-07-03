@@ -19,6 +19,10 @@ export interface WASMModule {
   calculate_sparkle_effects: (positions_ptr: number, count: number, time: number) => Float32Array;
   calculate_rotation_delta: (base_speed_x: number, base_speed_y: number, speed_multiplier: number, delta_time: number) => Float32Array;
   calculate_speed_multiplier: (is_moving: boolean, click_time: number, current_time: number, current_multiplier: number) => number;
+  // Camera frustum culling
+  cull_stars_by_frustum: (positions: Float32Array, count: number, camera_matrix: Float32Array, fov: number, aspect_ratio: number, near: number, far: number) => Uint8Array;
+  get_visible_star_indices: (positions: Float32Array, count: number, camera_matrix: Float32Array, margin: number) => Uint32Array;
+  cull_stars_by_frustum_simd?: (positions: Float32Array, count: number, camera_matrix: Float32Array, margin: number) => Uint8Array;
   // Math utilities
   fast_sin: (x: number) => number;
   fast_cos: (x: number) => number;
@@ -205,6 +209,10 @@ export async function loadWASM(): Promise<WASMModule | null> {
         calculate_sparkle_effects: wasm.calculate_sparkle_effects,
         calculate_rotation_delta: wasm.calculate_rotation_delta,
         calculate_speed_multiplier: wasm.calculate_speed_multiplier,
+        // Camera frustum culling
+        cull_stars_by_frustum: wasm.cull_stars_by_frustum,
+        get_visible_star_indices: wasm.get_visible_star_indices,
+        cull_stars_by_frustum_simd: wasm.cull_stars_by_frustum_simd,
         // Math utilities
         fast_sin: wasm.fast_sin,
         fast_cos: wasm.fast_cos,
@@ -409,6 +417,108 @@ export const jsFallbacks: WASMModule = {
     // Apply smoothing (lerp with factor 0.2)
     return current_multiplier + (speed_multiplier - current_multiplier) * 0.2;
   },
+  // Camera frustum culling fallbacks
+  cull_stars_by_frustum: (positions: Float32Array, count: number, camera_matrix: Float32Array, fov: number, aspect_ratio: number, near: number, far: number): Uint8Array => {
+    logFallback('cull_stars_by_frustum');
+    
+    if (camera_matrix.length !== 16) {
+      return new Uint8Array(count).fill(1);
+    }
+    
+    const visibility_mask = new Uint8Array(count);
+    
+    // Extract frustum planes from view projection matrix
+    const m = camera_matrix;
+    const planes = [
+      [m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]], // Left
+      [m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]], // Right
+      [m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]], // Bottom
+      [m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]], // Top
+      [m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]], // Near
+      [m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]], // Far
+    ];
+    
+    // Normalize planes
+    const normalized_planes = planes.map(plane => {
+      const length = Math.sqrt(plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]);
+      return length > 0 ? plane.map(v => v / length) : plane;
+    });
+    
+    // Check each star
+    for (let i = 0; i < count; i++) {
+      const i3 = i * 3;
+      const x = positions[i3];
+      const y = positions[i3 + 1];
+      const z = positions[i3 + 2];
+      
+      let inside = true;
+      
+      for (const plane of normalized_planes) {
+        const distance = plane[0] * x + plane[1] * y + plane[2] * z + plane[3];
+        
+        if (distance < -2.0) {
+          inside = false;
+          break;
+        }
+      }
+      
+      visibility_mask[i] = inside ? 1 : 0;
+    }
+    
+    return visibility_mask;
+  },
+  get_visible_star_indices: (positions: Float32Array, count: number, camera_matrix: Float32Array, margin: number): Uint32Array => {
+    logFallback('get_visible_star_indices');
+    
+    if (camera_matrix.length !== 16) {
+      return new Uint32Array(Array.from({length: count}, (_, i) => i));
+    }
+    
+    const visible_indices: number[] = [];
+    
+    // Extract frustum planes
+    const m = camera_matrix;
+    const planes = [
+      [m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]],
+      [m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]],
+      [m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]],
+      [m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]],
+      [m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]],
+      [m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]],
+    ];
+    
+    // Normalize planes
+    const normalized_planes = planes.map(plane => {
+      const length = Math.sqrt(plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]);
+      return length > 0 ? plane.map(v => v / length) : plane;
+    });
+    
+    // Check each star
+    for (let i = 0; i < count; i++) {
+      const i3 = i * 3;
+      const x = positions[i3];
+      const y = positions[i3 + 1];
+      const z = positions[i3 + 2];
+      
+      let inside = true;
+      
+      for (const plane of normalized_planes) {
+        const distance = plane[0] * x + plane[1] * y + plane[2] * z + plane[3];
+        
+        if (distance < -margin) {
+          inside = false;
+          break;
+        }
+      }
+      
+      if (inside) {
+        visible_indices.push(i);
+      }
+    }
+    
+    return new Uint32Array(visible_indices);
+  },
+  cull_stars_by_frustum_simd: undefined, // No SIMD fallback
   // Math utilities
   fast_sin: (x: number): number => Math.sin(x),
   fast_cos: (x: number): number => Math.cos(x),

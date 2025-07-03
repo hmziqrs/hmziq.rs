@@ -420,19 +420,52 @@ function Stars() {
     return { near, medium, far }
   }, [screenDimensions, wasmModule, qualityTier])
 
-  // Update twinkle and sparkle values using WASM
-  const updateStarEffects = (group: StarGroup, time: number, updateRate: number) => {
+  // Update twinkle and sparkle values using WASM with frustum culling
+  const updateStarEffects = (group: StarGroup, time: number, updateRate: number, viewProjMatrix?: Float32Array) => {
     if (frameCounterRef.current % updateRate !== 0) return
 
     const { positions, twinkles, sparkles, count, mesh } = group
 
+    // Apply frustum culling if view projection matrix is provided
+    let visibleIndices: Uint32Array | null = null
+    if (viewProjMatrix && wasmModule && wasmModule.get_visible_star_indices) {
+      // Get indices of stars visible in the frustum
+      visibleIndices = wasmModule.get_visible_star_indices(positions, count, viewProjMatrix, 5.0) // 5.0 margin for star size
+    }
+
     if (wasmModule && wasmModule.calculate_star_effects_arrays) {
-      // Use WASM optimized batch processing
-      const effects = wasmModule.calculate_star_effects_arrays(positions, count, time)
-      // Effects array contains [twinkle, sparkle] pairs
-      for (let i = 0; i < count; i++) {
-        twinkles[i] = effects[i * 2]
-        sparkles[i] = effects[i * 2 + 1]
+      if (visibleIndices && visibleIndices.length < count * 0.8) {
+        // If more than 20% of stars are culled, process only visible ones
+        // Create temporary arrays for visible stars
+        const visibleCount = visibleIndices.length
+        const visiblePositions = new Float32Array(visibleCount * 3)
+        
+        // Copy visible star positions
+        for (let i = 0; i < visibleCount; i++) {
+          const srcIdx = visibleIndices[i] * 3
+          const dstIdx = i * 3
+          visiblePositions[dstIdx] = positions[srcIdx]
+          visiblePositions[dstIdx + 1] = positions[srcIdx + 1]
+          visiblePositions[dstIdx + 2] = positions[srcIdx + 2]
+        }
+        
+        // Calculate effects only for visible stars
+        const effects = wasmModule.calculate_star_effects_arrays(visiblePositions, visibleCount, time)
+        
+        // Update only visible stars
+        for (let i = 0; i < visibleCount; i++) {
+          const starIdx = visibleIndices[i]
+          twinkles[starIdx] = effects[i * 2]
+          sparkles[starIdx] = effects[i * 2 + 1]
+        }
+      } else {
+        // Process all stars if culling doesn't save much
+        const effects = wasmModule.calculate_star_effects_arrays(positions, count, time)
+        // Effects array contains [twinkle, sparkle] pairs
+        for (let i = 0; i < count; i++) {
+          twinkles[i] = effects[i * 2]
+          sparkles[i] = effects[i * 2 + 1]
+        }
       }
     } else if (wasmModule && wasmModule.fast_sin) {
       // Use WASM functions with individual calculations
@@ -494,6 +527,11 @@ function Stars() {
       fps = 30000 / (currentTime - lastTime)
       lastTime = currentTime
     }
+    
+    // Get camera view projection matrix for frustum culling
+    const camera = state.camera as THREE.PerspectiveCamera
+    const viewProjectionMatrix = new THREE.Matrix4()
+    viewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
 
     // Calculate delta time
     const currentFrameTime = state.clock.elapsedTime
@@ -557,10 +595,11 @@ function Stars() {
       }
     })
 
-    // Update star effects at different rates based on LOD
+    // Update star effects at different rates based on LOD with frustum culling
     const time = state.clock.elapsedTime
-    updateStarEffects(starGroups.near, time, 1) // Every frame for near stars
-    updateStarEffects(starGroups.medium, time, 2) // Every 2 frames for medium
+    const vpMatrix = new Float32Array(viewProjectionMatrix.elements)
+    updateStarEffects(starGroups.near, time, 1, vpMatrix) // Every frame for near stars
+    updateStarEffects(starGroups.medium, time, 2, vpMatrix) // Every 2 frames for medium
     // Far stars don't need updates (no twinkle/sparkle)
     
     // Update performance metrics in QualityManager

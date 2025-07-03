@@ -498,3 +498,265 @@ pub fn calculate_speed_multiplier(
     // Apply smoothing (lerp with factor 0.2)
     current_multiplier + (speed_multiplier - current_multiplier) * 0.2
 }
+
+// Camera frustum culling to avoid processing stars outside viewport
+// Returns a bit mask indicating which stars are visible (1 = visible, 0 = culled)
+#[wasm_bindgen]
+pub fn cull_stars_by_frustum(
+    positions: &[f32],
+    count: usize,
+    camera_matrix: &[f32], // 16 elements - view projection matrix
+    fov: f32,
+    aspect_ratio: f32,
+    near: f32,
+    far: f32,
+) -> Vec<u8> {
+    // Validate inputs
+    if camera_matrix.len() != 16 {
+        // Return all visible if invalid matrix
+        return vec![1; count];
+    }
+    
+    let mut visibility_mask = Vec::with_capacity(count);
+    
+    // Extract view projection matrix components
+    let m = camera_matrix;
+    
+    // Calculate frustum planes from view projection matrix
+    // Left plane: m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]
+    // Right plane: m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]
+    // Bottom plane: m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]
+    // Top plane: m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]
+    // Near plane: m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]
+    // Far plane: m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]
+    
+    let planes = [
+        // Left
+        [m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]],
+        // Right
+        [m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]],
+        // Bottom
+        [m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]],
+        // Top
+        [m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]],
+        // Near
+        [m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]],
+        // Far
+        [m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]],
+    ];
+    
+    // Normalize frustum planes
+    let mut normalized_planes = [[0.0f32; 4]; 6];
+    for (i, plane) in planes.iter().enumerate() {
+        let length = (plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]).sqrt();
+        if length > 0.0 {
+            normalized_planes[i] = [
+                plane[0] / length,
+                plane[1] / length,
+                plane[2] / length,
+                plane[3] / length,
+            ];
+        }
+    }
+    
+    // Check each star against frustum planes
+    for i in 0..count {
+        let i3 = i * 3;
+        let x = positions[i3];
+        let y = positions[i3 + 1];
+        let z = positions[i3 + 2];
+        
+        let mut inside = true;
+        
+        // Test against each frustum plane
+        for plane in &normalized_planes {
+            let distance = plane[0] * x + plane[1] * y + plane[2] * z + plane[3];
+            
+            // If star is on the negative side of any plane, it's outside
+            // Add small margin for star size
+            if distance < -2.0 {
+                inside = false;
+                break;
+            }
+        }
+        
+        visibility_mask.push(if inside { 1 } else { 0 });
+    }
+    
+    visibility_mask
+}
+
+// Optimized version that returns indices of visible stars instead of a mask
+#[wasm_bindgen]
+pub fn get_visible_star_indices(
+    positions: &[f32],
+    count: usize,
+    camera_matrix: &[f32],
+    margin: f32, // Extra margin for star size
+) -> Vec<u32> {
+    if camera_matrix.len() != 16 {
+        // Return all indices if invalid matrix
+        return (0..count as u32).collect();
+    }
+    
+    let mut visible_indices = Vec::new();
+    
+    // Extract frustum planes
+    let m = camera_matrix;
+    let planes = [
+        [m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]],
+        [m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]],
+        [m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]],
+        [m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]],
+        [m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]],
+        [m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]],
+    ];
+    
+    // Normalize planes
+    let mut normalized_planes = [[0.0f32; 4]; 6];
+    for (i, plane) in planes.iter().enumerate() {
+        let length = (plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]).sqrt();
+        if length > 0.0 {
+            normalized_planes[i] = [
+                plane[0] / length,
+                plane[1] / length,
+                plane[2] / length,
+                plane[3] / length,
+            ];
+        }
+    }
+    
+    // Check each star
+    for i in 0..count {
+        let i3 = i * 3;
+        let x = positions[i3];
+        let y = positions[i3 + 1];
+        let z = positions[i3 + 2];
+        
+        let mut inside = true;
+        
+        for plane in &normalized_planes {
+            let distance = plane[0] * x + plane[1] * y + plane[2] * z + plane[3];
+            
+            if distance < -margin {
+                inside = false;
+                break;
+            }
+        }
+        
+        if inside {
+            visible_indices.push(i as u32);
+        }
+    }
+    
+    visible_indices
+}
+
+// SIMD-optimized frustum culling for better performance
+#[cfg(feature = "simd")]
+#[wasm_bindgen]
+pub fn cull_stars_by_frustum_simd(
+    positions: &[f32],
+    count: usize,
+    camera_matrix: &[f32],
+    margin: f32,
+) -> Vec<u8> {
+    if camera_matrix.len() != 16 {
+        return vec![1; count];
+    }
+    
+    let mut visibility_mask = vec![0u8; count];
+    
+    // Extract and normalize frustum planes
+    let m = camera_matrix;
+    let planes = [
+        [m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]],
+        [m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]],
+        [m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]],
+        [m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]],
+        [m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]],
+        [m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]],
+    ];
+    
+    let mut normalized_planes = [[0.0f32; 4]; 6];
+    for (i, plane) in planes.iter().enumerate() {
+        let length = (plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]).sqrt();
+        if length > 0.0 {
+            normalized_planes[i] = [
+                plane[0] / length,
+                plane[1] / length,
+                plane[2] / length,
+                plane[3] / length,
+            ];
+        }
+    }
+    
+    // Process in SIMD batches
+    let chunks = count / 4; // Process 4 stars at a time with f32x4
+    let neg_margin = f32x4::splat(-margin);
+    
+    for chunk in 0..chunks {
+        let base_idx = chunk * 4;
+        
+        // Load 4 star positions
+        let mut x_arr = [0.0f32; 4];
+        let mut y_arr = [0.0f32; 4];
+        let mut z_arr = [0.0f32; 4];
+        
+        for i in 0..4 {
+            let i3 = (base_idx + i) * 3;
+            x_arr[i] = positions[i3];
+            y_arr[i] = positions[i3 + 1];
+            z_arr[i] = positions[i3 + 2];
+        }
+        
+        let x_vec = f32x4::from_slice_unaligned(&x_arr);
+        let y_vec = f32x4::from_slice_unaligned(&y_arr);
+        let z_vec = f32x4::from_slice_unaligned(&z_arr);
+        
+        let mut inside_vec = f32x4::splat(1.0);
+        
+        // Test against each plane
+        for plane in &normalized_planes {
+            let plane_x = f32x4::splat(plane[0]);
+            let plane_y = f32x4::splat(plane[1]);
+            let plane_z = f32x4::splat(plane[2]);
+            let plane_w = f32x4::splat(plane[3]);
+            
+            let distance = plane_x * x_vec + plane_y * y_vec + plane_z * z_vec + plane_w;
+            let outside_mask = distance.lt(neg_margin);
+            
+            // Update inside status
+            inside_vec = inside_vec * outside_mask.select(f32x4::splat(0.0), f32x4::splat(1.0));
+        }
+        
+        // Store results
+        let inside_arr: [f32; 4] = inside_vec.into();
+        for i in 0..4 {
+            visibility_mask[base_idx + i] = if inside_arr[i] > 0.5 { 1 } else { 0 };
+        }
+    }
+    
+    // Process remaining stars
+    for i in chunks * 4..count {
+        let i3 = i * 3;
+        let x = positions[i3];
+        let y = positions[i3 + 1];
+        let z = positions[i3 + 2];
+        
+        let mut inside = true;
+        
+        for plane in &normalized_planes {
+            let distance = plane[0] * x + plane[1] * y + plane[2] * z + plane[3];
+            
+            if distance < -margin {
+                inside = false;
+                break;
+            }
+        }
+        
+        visibility_mask[i] = if inside { 1 } else { 0 };
+    }
+    
+    visibility_mask
+}
