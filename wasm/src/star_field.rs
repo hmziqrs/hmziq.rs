@@ -101,168 +101,103 @@ pub fn generate_star_sizes(count: usize, start_index: usize, size_multiplier: f3
     for i in 0..count {
         let global_index = (start_index + i) as i32;
         let size_random = seed_random(global_index + 4000);
-        
         let base_size = if size_random < 0.7 {
             1.0 + seed_random(global_index + 5000) * 1.5
         } else {
             2.5 + seed_random(global_index + 6000) * 2.0
         };
-        
         sizes.push(base_size * size_multiplier);
     }
     
     sizes
 }
 
-// Calculate twinkle and sparkle effects (matching lines 365-372)
+// Calculate star effects (twinkle and sparkle)
 #[wasm_bindgen]
-pub fn calculate_twinkle_effects(
-    positions_ptr: *const f32,
-    count: usize,
-    time: f32,
-) -> Vec<f32> {
-    let positions = unsafe {
-        std::slice::from_raw_parts(positions_ptr, count * 3)
-    };
-    
-    let mut twinkles = Vec::with_capacity(count);
-    
-    for i in 0..count {
-        let i3 = i * 3;
-        let x = positions[i3];
-        let y = positions[i3 + 1];
-        
-        // Use fast sin approximation from math module
-        let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
-        
-        twinkles.push(twinkle_base);
-    }
-    
-    twinkles
-}
-
-// Calculate sparkle effects separately for better performance
-#[wasm_bindgen]
-pub fn calculate_sparkle_effects(
-    positions_ptr: *const f32,
-    count: usize,
-    time: f32,
-) -> Vec<f32> {
-    let positions = unsafe {
-        std::slice::from_raw_parts(positions_ptr, count * 3)
-    };
-    
-    let mut sparkles = Vec::with_capacity(count);
-    
-    for i in 0..count {
-        let i3 = i * 3;
-        let x = positions[i3];
-        let y = positions[i3 + 1];
-        
-        // Sparkle effect - simplified
-        let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
-        let sparkle = if sparkle_phase > 0.98 {
-            (sparkle_phase - 0.98) / 0.02
-        } else {
-            0.0
-        };
-        
-        sparkles.push(sparkle);
-    }
-    
-    sparkles
-}
-
-// Combined twinkle and sparkle calculation for efficiency
-#[wasm_bindgen]
-pub fn calculate_star_effects(
-    positions_ptr: *const f32,
-    count: usize,
-    time: f32,
-) -> Vec<f32> {
-    let positions = unsafe {
-        std::slice::from_raw_parts(positions_ptr, count * 3)
-    };
-    
-    // Return interleaved twinkle and sparkle values
+pub fn calculate_star_effects(positions_ptr: *const f32, count: usize, time: f32) -> Vec<f32> {
     let mut effects = Vec::with_capacity(count * 2);
     
-    #[cfg(feature = "simd")]
-    {
-        calculate_star_effects_simd(&positions, count, time, &mut effects);
-    }
-    
-    #[cfg(not(feature = "simd"))]
-    {
-        calculate_star_effects_scalar(&positions, count, time, &mut effects);
+    unsafe {
+        let positions = std::slice::from_raw_parts(positions_ptr, count * 3);
+        
+        for i in 0..count {
+            let i3 = i * 3;
+            let x = positions[i3];
+            let y = positions[i3 + 1];
+            
+            // Twinkle effect (matching lines 437-438)
+            let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+            
+            // Sparkle effect (matching lines 440-443)
+            let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
+            let sparkle = if sparkle_phase > 0.98 {
+                (sparkle_phase - 0.98) / 0.02
+            } else {
+                0.0
+            };
+            
+            let twinkle = twinkle_base + sparkle;
+            
+            effects.push(twinkle);
+            effects.push(sparkle);
+        }
     }
     
     effects
 }
 
-// Scalar fallback implementation
-fn calculate_star_effects_scalar(
-    positions: &[f32],
+// Direct buffer update version - fills existing buffers to avoid allocations
+#[wasm_bindgen]
+pub fn calculate_star_effects_into_buffers(
+    positions_ptr: *const f32,
+    twinkles_ptr: *mut f32,
+    sparkles_ptr: *mut f32,
     count: usize,
     time: f32,
-    effects: &mut Vec<f32>,
 ) {
-    for i in 0..count {
-        let i3 = i * 3;
-        let x = positions[i3];
-        let y = positions[i3 + 1];
+    unsafe {
+        let positions = std::slice::from_raw_parts(positions_ptr, count * 3);
+        let twinkles = std::slice::from_raw_parts_mut(twinkles_ptr, count);
+        let sparkles = std::slice::from_raw_parts_mut(sparkles_ptr, count);
         
-        // Twinkle calculation
-        let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+        // Use SIMD if available and count is large enough
+        #[cfg(feature = "simd")]
+        if count >= SIMD_BATCH_SIZE * 2 {
+            calculate_effects_into_buffers_simd(positions, twinkles, sparkles, count, time);
+            return;
+        }
         
-        // Sparkle calculation
-        let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
-        let sparkle = if sparkle_phase > 0.98 {
-            (sparkle_phase - 0.98) / 0.02
-        } else {
-            0.0
-        };
-        
-        let twinkle = twinkle_base + sparkle;
-        
-        effects.push(twinkle);
-        effects.push(sparkle);
+        // Scalar fallback
+        calculate_effects_into_buffers_scalar(positions, twinkles, sparkles, count, time);
     }
 }
 
-// SIMD-optimized implementation
+// SIMD version for batch processing
 #[cfg(feature = "simd")]
-fn calculate_star_effects_simd(
+fn calculate_effects_into_buffers_simd(
     positions: &[f32],
+    twinkles: &mut [f32],
+    sparkles: &mut [f32],
     count: usize,
     time: f32,
-    effects: &mut Vec<f32>,
 ) {
-    use crate::math::init_sin_table;
-    let sin_table = init_sin_table();
+    // Initialize sin table if needed
+    init_sin_table();
+    let sin_table = crate::math::get_sin_table();
     
-    // Process in batches of 8 for AVX2 compatibility
+    // Pre-calculate time factors
+    let time_3 = time * 3.0;
+    let time_15 = time * 15.0;
+    
+    // Process in batches of 8
     let chunks = count / SIMD_BATCH_SIZE;
-    let remainder = count % SIMD_BATCH_SIZE;
     
-    // SIMD constants
-    let time_3 = f32x8::splat(time * 3.0);
-    let time_15 = f32x8::splat(time * 15.0);
-    let factor_10 = f32x8::splat(10.0);
-    let factor_20 = f32x8::splat(20.0);
-    let factor_30 = f32x8::splat(30.0);
-    let twinkle_scale = f32x8::splat(0.3);
-    let twinkle_offset = f32x8::splat(0.7);
-    let sparkle_threshold = f32x8::splat(0.98);
-    let sparkle_scale = f32x8::splat(50.0); // 1.0 / 0.02
-    
-    // Process SIMD chunks
     for chunk in 0..chunks {
         let base_idx = chunk * SIMD_BATCH_SIZE;
         
-        // Load x and y positions for 8 stars
-        let mut x_values = [0.0f32; 8];
-        let mut y_values = [0.0f32; 8];
+        // Load positions
+        let mut x_values = [0.0f32; SIMD_BATCH_SIZE];
+        let mut y_values = [0.0f32; SIMD_BATCH_SIZE];
         
         for i in 0..SIMD_BATCH_SIZE {
             let i3 = (base_idx + i) * 3;
@@ -273,83 +208,106 @@ fn calculate_star_effects_simd(
         let x_vec = f32x8::from_slice_unaligned(&x_values);
         let y_vec = f32x8::from_slice_unaligned(&y_values);
         
-        // Twinkle calculation using SIMD
-        let twinkle_arg = time_3 + x_vec * factor_10 + y_vec * factor_10;
-        let twinkle_base_vec = simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
+        // Twinkle calculation
+        let time_3_vec = f32x8::splat(time_3);
+        let factor_10 = f32x8::splat(10.0);
+        let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
+        let twinkle_sin = simd_sin_lookup_batch(twinkle_arg, sin_table);
+        let twinkle_scale = f32x8::splat(0.3);
+        let twinkle_offset = f32x8::splat(0.7);
+        let twinkle_base = twinkle_sin * twinkle_scale + twinkle_offset;
         
-        // Sparkle calculation using SIMD
-        let sparkle_arg = time_15 + x_vec * factor_20 + y_vec * factor_30;
-        let sparkle_phase_vec = simd_sin_lookup_batch(sparkle_arg, sin_table);
+        // Sparkle calculation
+        let time_15_vec = f32x8::splat(time_15);
+        let factor_20 = f32x8::splat(20.0);
+        let factor_30 = f32x8::splat(30.0);
+        let sparkle_arg = time_15_vec + x_vec * factor_20 + y_vec * factor_30;
+        let sparkle_phase = simd_sin_lookup_batch(sparkle_arg, sin_table);
         
-        // Conditional sparkle calculation
-        let sparkle_mask = sparkle_phase_vec.gt(sparkle_threshold);
-        let sparkle_vec = sparkle_mask.select(
-            (sparkle_phase_vec - sparkle_threshold) * sparkle_scale,
+        // Conditional sparkle effect
+        let sparkle_threshold = f32x8::splat(0.98);
+        let sparkle_scale = f32x8::splat(50.0); // 1.0 / 0.02
+        let sparkle_mask = sparkle_phase.gt(sparkle_threshold);
+        let sparkle_values = sparkle_mask.select(
+            (sparkle_phase - sparkle_threshold) * sparkle_scale,
             f32x8::splat(0.0)
         );
         
-        let twinkle_vec = twinkle_base_vec + sparkle_vec;
+        // Combine twinkle and sparkle
+        let final_twinkle = twinkle_base + sparkle_values;
         
-        // Extract and store results
-        let twinkle_arr: [f32; 8] = twinkle_vec.into();
-        let sparkle_arr: [f32; 8] = sparkle_vec.into();
+        // Store results
+        let twinkle_array: [f32; SIMD_BATCH_SIZE] = final_twinkle.into();
+        let sparkle_array: [f32; SIMD_BATCH_SIZE] = sparkle_values.into();
         
         for i in 0..SIMD_BATCH_SIZE {
-            effects.push(twinkle_arr[i]);
-            effects.push(sparkle_arr[i]);
+            twinkles[base_idx + i] = twinkle_array[i];
+            sparkles[base_idx + i] = sparkle_array[i];
         }
     }
     
-    // Process remaining stars with scalar code
-    for i in chunks * SIMD_BATCH_SIZE..count {
-        let i3 = i * 3;
-        let x = positions[i3];
-        let y = positions[i3 + 1];
-        
-        let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
-        let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
-        let sparkle = if sparkle_phase > 0.98 {
-            (sparkle_phase - 0.98) / 0.02
-        } else {
-            0.0
-        };
-        
-        effects.push(twinkle_base + sparkle);
-        effects.push(sparkle);
+    // Process remaining elements
+    let remaining_start = chunks * SIMD_BATCH_SIZE;
+    if remaining_start < count {
+        calculate_effects_into_buffers_scalar(
+            &positions[remaining_start * 3..],
+            &mut twinkles[remaining_start..],
+            &mut sparkles[remaining_start..],
+            count - remaining_start,
+            time
+        );
     }
 }
 
-// SIMD sin lookup helper
-#[cfg(feature = "simd")]
-fn simd_sin_lookup_batch(angles: f32x8, sin_table: &[f32]) -> f32x8 {
-    use std::f32::consts::PI;
-    const SIN_TABLE_SIZE: f32 = 1024.0;
+// Calculate only twinkle effects (simplified)
+#[wasm_bindgen]
+pub fn calculate_twinkle_effects(positions_ptr: *const f32, count: usize, time: f32) -> Vec<f32> {
+    let mut twinkles = Vec::with_capacity(count);
     
-    // Normalize angles to [0, 2π]
-    let two_pi = f32x8::splat(2.0 * PI);
-    let normalized = angles - (angles / two_pi).floor() * two_pi;
-    
-    // Convert to table indices
-    let indices = (normalized / two_pi * SIN_TABLE_SIZE).cast::<i32>();
-    
-    // Gather values from lookup table
-    let mut result = [0.0f32; 8];
-    let indices_arr: [i32; 8] = indices.into();
-    
-    for i in 0..8 {
-        let idx = (indices_arr[i] as usize).min(1023);
-        result[i] = sin_table[idx];
+    unsafe {
+        let positions = std::slice::from_raw_parts(positions_ptr, count * 3);
+        
+        for i in 0..count {
+            let i3 = i * 3;
+            let x = positions[i3];
+            let y = positions[i3 + 1];
+            
+            let twinkle = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+            twinkles.push(twinkle);
+        }
     }
     
-    f32x8::from_slice_unaligned(&result)
+    twinkles
 }
 
-// Helper function to convert degrees to radians
-fn deg_to_rad(degrees: f32) -> f32 {
-    degrees * PI / 180.0
+// Calculate only sparkle effects (for performance mode)
+#[wasm_bindgen]
+pub fn calculate_sparkle_effects(positions_ptr: *const f32, count: usize, time: f32) -> Vec<f32> {
+    let mut sparkles = Vec::with_capacity(count);
+    
+    unsafe {
+        let positions = std::slice::from_raw_parts(positions_ptr, count * 3);
+        
+        for i in 0..count {
+            let i3 = i * 3;
+            let x = positions[i3];
+            let y = positions[i3 + 1];
+            
+            let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
+            let sparkle = if sparkle_phase > 0.98 {
+                (sparkle_phase - 0.98) / 0.02
+            } else {
+                0.0
+            };
+            
+            sparkles.push(sparkle);
+        }
+    }
+    
+    sparkles
 }
 
-// Optimized rotation calculation for star field
+// Calculate rotation delta based on speed multiplier
 #[wasm_bindgen]
 pub fn calculate_rotation_delta(
     base_speed_x: f32,
@@ -363,31 +321,79 @@ pub fn calculate_rotation_delta(
     ]
 }
 
-// Calculate star effects and return both twinkle and sparkle arrays
-// This version works with JavaScript typed arrays
+// Calculate star effects for JavaScript typed arrays
 #[wasm_bindgen]
-pub fn calculate_star_effects_arrays(
-    positions: &[f32],
-    count: usize,
-    time: f32,
-) -> Vec<f32> {
-    // Return interleaved twinkle and sparkle values
+pub fn calculate_star_effects_arrays(positions: &[f32], count: usize, time: f32) -> Vec<f32> {
     let mut effects = Vec::with_capacity(count * 2);
     
-    #[cfg(feature = "simd")]
-    {
-        calculate_star_effects_simd(&positions, count, time, &mut effects);
-    }
-    
-    #[cfg(not(feature = "simd"))]
-    {
-        calculate_star_effects_scalar(&positions, count, time, &mut effects);
+    for i in 0..count {
+        let i3 = i * 3;
+        let x = positions[i3];
+        let y = positions[i3 + 1];
+        
+        // Twinkle effect
+        let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+        
+        // Sparkle effect
+        let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
+        let sparkle = if sparkle_phase > 0.98 {
+            (sparkle_phase - 0.98) / 0.02
+        } else {
+            0.0
+        };
+        
+        let twinkle = twinkle_base + sparkle;
+        
+        effects.push(twinkle);
+        effects.push(sparkle);
     }
     
     effects
 }
 
-// Scalar implementation for direct buffer updates
+// Helper function to convert degrees to radians
+#[inline]
+fn deg_to_rad(degrees: f32) -> f32 {
+    degrees * PI / 180.0
+}
+
+// Extract frustum planes from view-projection matrix
+fn extract_frustum_planes(vp_matrix: &[f32]) -> [[f32; 4]; 6] {
+    let m = vp_matrix;
+    
+    // Left plane
+    let left = [m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]];
+    
+    // Right plane
+    let right = [m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]];
+    
+    // Bottom plane
+    let bottom = [m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]];
+    
+    // Top plane
+    let top = [m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]];
+    
+    // Near plane
+    let near = [m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]];
+    
+    // Far plane
+    let far = [m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]];
+    
+    [left, right, bottom, top, near, far]
+}
+
+// Normalize a plane
+fn normalize_plane(plane: &mut [f32; 4]) {
+    let length = (plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]).sqrt();
+    if length > 0.0 {
+        plane[0] /= length;
+        plane[1] /= length;
+        plane[2] /= length;
+        plane[3] /= length;
+    }
+}
+
+// Scalar version for direct buffer updates
 fn calculate_effects_into_buffers_scalar(
     positions: &[f32],
     twinkles: &mut [f32],
@@ -400,10 +406,10 @@ fn calculate_effects_into_buffers_scalar(
         let x = positions[i3];
         let y = positions[i3 + 1];
         
-        // Twinkle calculation
+        // Twinkle effect
         let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
         
-        // Sparkle calculation
+        // Sparkle effect
         let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
         let sparkle = if sparkle_phase > 0.98 {
             (sparkle_phase - 0.98) / 0.02
@@ -416,23 +422,37 @@ fn calculate_effects_into_buffers_scalar(
     }
 }
 
-// SIMD implementation for direct buffer updates
+// Process star groups with different LOD (Level of Detail) strategies
 #[cfg(feature = "simd")]
-fn calculate_effects_into_buffers_simd(
+fn process_star_group_simd(
     positions: &[f32],
-    twinkles: &mut [f32],
-    sparkles: &mut [f32],
     count: usize,
     time: f32,
+    quality_mode: u32,
+    effects: &mut Vec<f32>,
 ) {
-    use crate::math::init_sin_table;
-    let sin_table = init_sin_table();
+    let sin_table = crate::math::get_sin_table();
     
-    let chunks = count / SIMD_BATCH_SIZE;
-    
-    // SIMD constants
-    let time_3 = f32x8::splat(time * 3.0);
-    let time_15 = f32x8::splat(time * 15.0);
+    match quality_mode {
+        0 => process_simple_effects_simd(positions, count, time, effects, sin_table),
+        1 => process_medium_effects_simd(positions, count, time, effects, sin_table),
+        _ => process_full_effects_simd(positions, count, time, effects, sin_table),
+    }
+}
+
+// Full quality effects with SIMD
+#[cfg(feature = "simd")]
+fn process_full_effects_simd(
+    positions: &[f32],
+    count: usize,
+    time: f32,
+    effects: &mut Vec<f32>,
+    sin_table: &[f32],
+) {
+    let time_3 = time * 3.0;
+    let time_15 = time * 15.0;
+    let time_3_vec = f32x8::splat(time_3);
+    let time_15_vec = f32x8::splat(time_15);
     let factor_10 = f32x8::splat(10.0);
     let factor_20 = f32x8::splat(20.0);
     let factor_30 = f32x8::splat(30.0);
@@ -440,17 +460,17 @@ fn calculate_effects_into_buffers_simd(
     let twinkle_offset = f32x8::splat(0.7);
     let sparkle_threshold = f32x8::splat(0.98);
     let sparkle_scale = f32x8::splat(50.0);
+    let zero = f32x8::splat(0.0);
     
-    // Process SIMD chunks
+    let chunks = count / 8;
+    
     for chunk in 0..chunks {
-        let base_idx = chunk * SIMD_BATCH_SIZE;
-        
-        // Load positions
+        let base = chunk * 8;
         let mut x_values = [0.0f32; 8];
         let mut y_values = [0.0f32; 8];
         
-        for i in 0..SIMD_BATCH_SIZE {
-            let i3 = (base_idx + i) * 3;
+        for i in 0..8 {
+            let i3 = (base + i) * 3;
             x_values[i] = positions[i3];
             y_values[i] = positions[i3 + 1];
         }
@@ -458,49 +478,102 @@ fn calculate_effects_into_buffers_simd(
         let x_vec = f32x8::from_slice_unaligned(&x_values);
         let y_vec = f32x8::from_slice_unaligned(&y_values);
         
-        // Calculate twinkle
-        let twinkle_arg = time_3 + x_vec * factor_10 + y_vec * factor_10;
+        // Twinkle calculation
+        let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
         let twinkle_base_vec = simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
         
-        // Calculate sparkle
-        let sparkle_arg = time_15 + x_vec * factor_20 + y_vec * factor_30;
+        // Sparkle calculation
+        let sparkle_arg = time_15_vec + x_vec * factor_20 + y_vec * factor_30;
         let sparkle_phase_vec = simd_sin_lookup_batch(sparkle_arg, sin_table);
-        
         let sparkle_mask = sparkle_phase_vec.gt(sparkle_threshold);
         let sparkle_vec = sparkle_mask.select(
             (sparkle_phase_vec - sparkle_threshold) * sparkle_scale,
-            f32x8::splat(0.0)
+            zero
         );
         
         let twinkle_vec = twinkle_base_vec + sparkle_vec;
         
-        // Store directly to buffers
-        twinkle_vec.write_to_slice_unaligned(&mut twinkles[base_idx..base_idx + SIMD_BATCH_SIZE]);
-        sparkle_vec.write_to_slice_unaligned(&mut sparkles[base_idx..base_idx + SIMD_BATCH_SIZE]);
+        let twinkle_arr: [f32; 8] = twinkle_vec.into();
+        let sparkle_arr: [f32; 8] = sparkle_vec.into();
+        
+        for i in 0..8 {
+            effects.push(twinkle_arr[i]);
+            effects.push(sparkle_arr[i]);
+        }
     }
     
     // Process remaining
-    for i in chunks * SIMD_BATCH_SIZE..count {
+    let remaining_start = chunks * 8;
+    for i in remaining_start..count {
         let i3 = i * 3;
         let x = positions[i3];
         let y = positions[i3 + 1];
         
         let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
         let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
-        let sparkle = if sparkle_phase > 0.98 {
-            (sparkle_phase - 0.98) / 0.02
-        } else {
-            0.0
-        };
+        let sparkle = if sparkle_phase > 0.98 { (sparkle_phase - 0.98) / 0.02 } else { 0.0 };
         
-        twinkles[i] = twinkle_base + sparkle;
-        sparkles[i] = sparkle;
+        effects.push(twinkle_base + sparkle);
+        effects.push(sparkle);
     }
 }
 
+// Medium quality effects (no sparkle)
+#[cfg(feature = "simd")]
+fn process_medium_effects_simd(
+    positions: &[f32],
+    count: usize,
+    time: f32,
+    effects: &mut Vec<f32>,
+    sin_table: &[f32],
+) {
+    let time_3 = time * 3.0;
+    let time_3_vec = f32x8::splat(time_3);
+    let factor_10 = f32x8::splat(10.0);
+    let twinkle_scale = f32x8::splat(0.3);
+    let twinkle_offset = f32x8::splat(0.7);
+    
+    let chunks = count / 8;
+    
+    for chunk in 0..chunks {
+        let base = chunk * 8;
+        let mut x_values = [0.0f32; 8];
+        let mut y_values = [0.0f32; 8];
+        
+        for i in 0..8 {
+            let i3 = (base + i) * 3;
+            x_values[i] = positions[i3];
+            y_values[i] = positions[i3 + 1];
+        }
+        
+        let x_vec = f32x8::from_slice_unaligned(&x_values);
+        let y_vec = f32x8::from_slice_unaligned(&y_values);
+        
+        let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
+        let twinkle_vec = simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
+        
+        let twinkle_arr: [f32; 8] = twinkle_vec.into();
+        
+        for i in 0..8 {
+            effects.push(twinkle_arr[i]);
+            effects.push(0.0); // No sparkle
+        }
+    }
+    
+    // Process remaining
+    let remaining_start = chunks * 8;
+    for i in remaining_start..count {
+        let i3 = i * 3;
+        let x = positions[i3];
+        let y = positions[i3 + 1];
+        
+        let twinkle = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+        effects.push(twinkle);
+        effects.push(0.0);
+    }
+}
 
-
-// Speed multiplier calculation matching StarField.tsx lines 504-520
+// Calculate speed multiplier with smooth transitions
 #[wasm_bindgen]
 pub fn calculate_speed_multiplier(
     is_moving: bool,
@@ -527,64 +600,37 @@ pub fn calculate_speed_multiplier(
     current_multiplier + (speed_multiplier - current_multiplier) * 0.2
 }
 
-// Camera frustum culling to avoid processing stars outside viewport
-// Returns a bit mask indicating which stars are visible (1 = visible, 0 = culled)
+// Helper function for cull_stars_by_frustum (SIMD version uses this)
+#[cfg(feature = "simd")]
+fn get_sin_table() -> &'static [f32] {
+    crate::math::get_sin_table()
+}
+
+// Camera frustum culling - returns visibility mask
 #[wasm_bindgen]
 pub fn cull_stars_by_frustum(
     positions: &[f32],
     count: usize,
-    camera_matrix: &[f32], // 16 elements - view projection matrix
+    camera_matrix: &[f32],
     fov: f32,
     aspect_ratio: f32,
     near: f32,
     far: f32,
 ) -> Vec<u8> {
-    // Validate inputs
     if camera_matrix.len() != 16 {
-        // Return all visible if invalid matrix
+        // Invalid matrix, return all visible
         return vec![1; count];
     }
     
-    let mut visibility_mask = Vec::with_capacity(count);
+    let mut visibility_mask = vec![0u8; count];
     
-    // Extract view projection matrix components
-    let m = camera_matrix;
+    // Extract frustum planes from view projection matrix
+    let planes = extract_frustum_planes(camera_matrix);
     
-    // Calculate frustum planes from view projection matrix
-    // Left plane: m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]
-    // Right plane: m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]
-    // Bottom plane: m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]
-    // Top plane: m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]
-    // Near plane: m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]
-    // Far plane: m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]
-    
-    let planes = [
-        // Left
-        [m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]],
-        // Right
-        [m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]],
-        // Bottom
-        [m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]],
-        // Top
-        [m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]],
-        // Near
-        [m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]],
-        // Far
-        [m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]],
-    ];
-    
-    // Normalize frustum planes
-    let mut normalized_planes = [[0.0f32; 4]; 6];
-    for (i, plane) in planes.iter().enumerate() {
-        let length = (plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]).sqrt();
-        if length > 0.0 {
-            normalized_planes[i] = [
-                plane[0] / length,
-                plane[1] / length,
-                plane[2] / length,
-                plane[3] / length,
-            ];
-        }
+    // Normalize planes
+    let mut normalized_planes = planes;
+    for plane in &mut normalized_planes {
+        normalize_plane(plane);
     }
     
     // Check each star against frustum planes
@@ -596,62 +642,43 @@ pub fn cull_stars_by_frustum(
         
         let mut inside = true;
         
-        // Test against each frustum plane
+        // Test against each plane
         for plane in &normalized_planes {
             let distance = plane[0] * x + plane[1] * y + plane[2] * z + plane[3];
             
-            // If star is on the negative side of any plane, it's outside
-            // Add small margin for star size
+            // Star is outside if behind any plane (with small margin for star size)
             if distance < -2.0 {
                 inside = false;
                 break;
             }
         }
         
-        visibility_mask.push(if inside { 1 } else { 0 });
+        visibility_mask[i] = if inside { 1 } else { 0 };
     }
     
     visibility_mask
 }
 
-// Optimized version that returns indices of visible stars instead of a mask
+// Get indices of visible stars (more efficient than returning mask)
 #[wasm_bindgen]
 pub fn get_visible_star_indices(
     positions: &[f32],
     count: usize,
     camera_matrix: &[f32],
-    margin: f32, // Extra margin for star size
+    margin: f32,
 ) -> Vec<u32> {
     if camera_matrix.len() != 16 {
-        // Return all indices if invalid matrix
+        // Invalid matrix, return all indices
         return (0..count as u32).collect();
     }
     
     let mut visible_indices = Vec::new();
     
-    // Extract frustum planes
-    let m = camera_matrix;
-    let planes = [
-        [m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]],
-        [m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]],
-        [m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]],
-        [m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]],
-        [m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]],
-        [m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]],
-    ];
-    
-    // Normalize planes
-    let mut normalized_planes = [[0.0f32; 4]; 6];
-    for (i, plane) in planes.iter().enumerate() {
-        let length = (plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]).sqrt();
-        if length > 0.0 {
-            normalized_planes[i] = [
-                plane[0] / length,
-                plane[1] / length,
-                plane[2] / length,
-                plane[3] / length,
-            ];
-        }
+    // Extract and normalize frustum planes
+    let planes = extract_frustum_planes(camera_matrix);
+    let mut normalized_planes = planes;
+    for plane in &mut normalized_planes {
+        normalize_plane(plane);
     }
     
     // Check each star
@@ -681,7 +708,6 @@ pub fn get_visible_star_indices(
 }
 
 // Enhanced SIMD batch processing for LOD groups
-// Processes entire LOD groups at once for better performance
 #[wasm_bindgen]
 pub fn calculate_star_effects_by_lod(
     near_positions: &[f32],
@@ -691,213 +717,173 @@ pub fn calculate_star_effects_by_lod(
     far_positions: &[f32],
     far_count: usize,
     time: f32,
-    quality_tier: u32, // 0 = performance, 1 = balanced, 2 = ultra
+    quality_tier: u32,
 ) -> Vec<f32> {
-    // Pre-allocate result buffer
+    // Initialize SIMD if available
+    #[cfg(feature = "simd")]
+    init_sin_table();
+    
     let total_count = near_count + medium_count + far_count;
     let mut effects = Vec::with_capacity(total_count * 2);
     
-    // Process each LOD group with appropriate detail level
+    // Process based on quality tier
     match quality_tier {
         0 => {
-            // Performance mode: simplified calculations
-            process_lod_group_simple(&near_positions, near_count, time, &mut effects);
-            process_lod_group_simple(&medium_positions, medium_count, time, &mut effects);
-            // Far stars get no effects in performance mode
-            for _ in 0..far_count {
-                effects.push(1.0); // twinkle
-                effects.push(0.0); // sparkle
-            }
-        },
+            // Performance tier: Simple effects for all
+            process_star_group(near_positions, near_count, time, 2, &mut effects);
+            process_star_group(medium_positions, medium_count, time, 2, &mut effects);
+            process_star_group(far_positions, far_count, time, 3, &mut effects);
+        }
         1 => {
-            // Balanced mode: full effects for near, simple for medium, none for far
-            process_lod_group_full(&near_positions, near_count, time, &mut effects);
-            process_lod_group_simple(&medium_positions, medium_count, time, &mut effects);
-            for _ in 0..far_count {
-                effects.push(1.0);
-                effects.push(0.0);
-            }
-        },
+            // Balanced tier: Full for near, simple for medium/far
+            process_star_group(near_positions, near_count, time, 0, &mut effects);
+            process_star_group(medium_positions, medium_count, time, 2, &mut effects);
+            process_star_group(far_positions, far_count, time, 3, &mut effects);
+        }
         _ => {
-            // Ultra mode: full effects for near and medium, simple for far
-            process_lod_group_full(&near_positions, near_count, time, &mut effects);
-            process_lod_group_full(&medium_positions, medium_count, time, &mut effects);
-            process_lod_group_simple(&far_positions, far_count, time, &mut effects);
+            // Ultra tier: Full for near/medium, simple for far
+            process_star_group(near_positions, near_count, time, 0, &mut effects);
+            process_star_group(medium_positions, medium_count, time, 0, &mut effects);
+            process_star_group(far_positions, far_count, time, 2, &mut effects);
         }
     }
     
     effects
 }
 
-// Process LOD group with full effects
-fn process_lod_group_full(positions: &[f32], count: usize, time: f32, effects: &mut Vec<f32>) {
+// Process a single star group with specified quality mode
+fn process_star_group(
+    positions: &[f32],
+    count: usize,
+    time: f32,
+    quality_mode: u32,
+    effects: &mut Vec<f32>,
+) {
+    // Use SIMD version if available
     #[cfg(feature = "simd")]
     {
-        process_lod_group_full_simd(positions, count, time, effects);
+        process_star_group_simd(positions, count, time, quality_mode, effects);
+        return;
     }
-    #[cfg(not(feature = "simd"))]
-    {
-        calculate_star_effects_scalar(positions, count, time, effects);
-    }
-}
-
-// Process LOD group with simplified effects
-fn process_lod_group_simple(positions: &[f32], count: usize, time: f32, effects: &mut Vec<f32>) {
-    #[cfg(feature = "simd")]
-    {
-        process_lod_group_simple_simd(positions, count, time, effects);
-    }
-    #[cfg(not(feature = "simd"))]
-    {
-        // Simplified scalar version
-        for i in 0..count {
-            let i3 = i * 3;
-            let x = positions[i3];
-            let y = positions[i3 + 1];
-            
-            // Simple twinkle only, no sparkle
-            let twinkle = fast_sin_lookup(time * 2.0 + x * 5.0 + y * 5.0) * 0.2 + 0.8;
-            effects.push(twinkle);
-            effects.push(0.0);
+    
+    // Scalar fallback
+    match quality_mode {
+        0 => {
+            // Full quality: twinkle + sparkle
+            for i in 0..count {
+                let i3 = i * 3;
+                let x = positions[i3];
+                let y = positions[i3 + 1];
+                
+                let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+                let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
+                let sparkle = if sparkle_phase > 0.98 { (sparkle_phase - 0.98) / 0.02 } else { 0.0 };
+                
+                effects.push(twinkle_base + sparkle);
+                effects.push(sparkle);
+            }
+        }
+        1 => {
+            // Medium quality: twinkle only
+            for i in 0..count {
+                let i3 = i * 3;
+                let x = positions[i3];
+                let y = positions[i3 + 1];
+                
+                let twinkle = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+                effects.push(twinkle);
+                effects.push(0.0);
+            }
+        }
+        2 => {
+            // Simple quality: basic twinkle
+            for i in 0..count {
+                let i3 = i * 3;
+                let x = positions[i3];
+                let y = positions[i3 + 1];
+                
+                let twinkle = fast_sin_lookup(time * 2.0 + x * 5.0 + y * 5.0) * 0.2 + 0.8;
+                effects.push(twinkle);
+                effects.push(0.0);
+            }
+        }
+        _ => {
+            // No effects
+            for _ in 0..count {
+                effects.push(1.0);
+                effects.push(0.0);
+            }
         }
     }
 }
 
-// SIMD implementation for full effects
+// Simple quality effects with SIMD (basic twinkle only)
 #[cfg(feature = "simd")]
-fn process_lod_group_full_simd(positions: &[f32], count: usize, time: f32, effects: &mut Vec<f32>) {
-    use crate::math::init_sin_table;
-    let sin_table = init_sin_table();
+fn process_simple_effects_simd(
+    positions: &[f32],
+    count: usize,
+    time: f32,
+    effects: &mut Vec<f32>,
+    sin_table: &[f32],
+) {
+    // Process 16 stars at once (2x f32x8)
+    const CHUNK_SIZE: usize = 16;
     
-    // Process in aligned chunks for better cache usage
-    let chunks = count / 16; // Process 16 stars at once (2x f32x8)
-    
-    let time_3 = f32x8::splat(time * 3.0);
-    let time_15 = f32x8::splat(time * 15.0);
-    let factor_10 = f32x8::splat(10.0);
-    let factor_20 = f32x8::splat(20.0);
-    let factor_30 = f32x8::splat(30.0);
-    let twinkle_scale = f32x8::splat(0.3);
-    let twinkle_offset = f32x8::splat(0.7);
-    let sparkle_threshold = f32x8::splat(0.98);
-    let sparkle_scale = f32x8::splat(50.0);
-    
-    for chunk in 0..chunks {
-        // Process two SIMD vectors at once
-        for sub_chunk in 0..2 {
-            let base_idx = chunk * 16 + sub_chunk * 8;
-            
-            let mut x_values = [0.0f32; 8];
-            let mut y_values = [0.0f32; 8];
-            
-            // Prefetch next chunk data
-            #[cfg(target_arch = "x86_64")]
-            {
-                use std::arch::x86_64::_mm_prefetch;
-                if chunk < chunks - 1 {
-                    unsafe {
-                        _mm_prefetch(positions.as_ptr().add((base_idx + 16) * 3) as *const i8, 1);
-                    }
-                }
-            }
-            
-            for i in 0..8 {
-                let i3 = (base_idx + i) * 3;
-                x_values[i] = positions[i3];
-                y_values[i] = positions[i3 + 1];
-            }
-            
-            let x_vec = f32x8::from_slice_unaligned(&x_values);
-            let y_vec = f32x8::from_slice_unaligned(&y_values);
-            
-            // Calculate twinkle
-            let twinkle_arg = time_3 + x_vec * factor_10 + y_vec * factor_10;
-            let twinkle_base_vec = simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
-            
-            // Calculate sparkle
-            let sparkle_arg = time_15 + x_vec * factor_20 + y_vec * factor_30;
-            let sparkle_phase_vec = simd_sin_lookup_batch(sparkle_arg, sin_table);
-            
-            let sparkle_mask = sparkle_phase_vec.gt(sparkle_threshold);
-            let sparkle_vec = sparkle_mask.select(
-                (sparkle_phase_vec - sparkle_threshold) * sparkle_scale,
-                f32x8::splat(0.0)
-            );
-            
-            let twinkle_vec = twinkle_base_vec + sparkle_vec;
-            
-            // Interleave twinkle and sparkle values for output
-            let twinkle_arr: [f32; 8] = twinkle_vec.into();
-            let sparkle_arr: [f32; 8] = sparkle_vec.into();
-            
-            for i in 0..8 {
-                effects.push(twinkle_arr[i]);
-                effects.push(sparkle_arr[i]);
-            }
-        }
-    }
-    
-    // Process remaining stars
-    let remaining_start = chunks * 16;
-    for i in remaining_start..count {
-        let i3 = i * 3;
-        let x = positions[i3];
-        let y = positions[i3 + 1];
-        
-        let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
-        let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
-        let sparkle = if sparkle_phase > 0.98 {
-            (sparkle_phase - 0.98) / 0.02
-        } else {
-            0.0
-        };
-        
-        effects.push(twinkle_base + sparkle);
-        effects.push(sparkle);
-    }
-}
-
-// SIMD implementation for simplified effects
-#[cfg(feature = "simd")]
-fn process_lod_group_simple_simd(positions: &[f32], count: usize, time: f32, effects: &mut Vec<f32>) {
-    use crate::math::init_sin_table;
-    let sin_table = init_sin_table();
-    
-    let chunks = count / 16;
-    
-    let time_2 = f32x8::splat(time * 2.0);
+    let time_2 = time * 2.0;
+    let time_2_vec = f32x8::splat(time_2);
     let factor_5 = f32x8::splat(5.0);
     let twinkle_scale = f32x8::splat(0.2);
     let twinkle_offset = f32x8::splat(0.8);
-    let zero = f32x8::splat(0.0);
     
+    let chunks = count / CHUNK_SIZE;
+    
+    // Prefetch next chunk while processing current
     for chunk in 0..chunks {
-        for sub_chunk in 0..2 {
-            let base_idx = chunk * 16 + sub_chunk * 8;
-            
-            let mut x_values = [0.0f32; 8];
-            let mut y_values = [0.0f32; 8];
-            
-            for i in 0..8 {
-                let i3 = (base_idx + i) * 3;
-                x_values[i] = positions[i3];
-                y_values[i] = positions[i3 + 1];
-            }
-            
-            let x_vec = f32x8::from_slice_unaligned(&x_values);
-            let y_vec = f32x8::from_slice_unaligned(&y_values);
-            
-            // Simple twinkle calculation
-            let twinkle_arg = time_2 + x_vec * factor_5 + y_vec * factor_5;
-            let twinkle_vec = simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
-            
-            let twinkle_arr: [f32; 8] = twinkle_vec.into();
-            
-            // No sparkle for simple mode
-            for i in 0..8 {
-                effects.push(twinkle_arr[i]);
-                effects.push(0.0);
-            }
+        let base = chunk * CHUNK_SIZE;
+        
+        // Process first 8
+        let mut x_values = [0.0f32; 8];
+        let mut y_values = [0.0f32; 8];
+        
+        for i in 0..8 {
+            let i3 = (base + i) * 3;
+            x_values[i] = positions[i3];
+            y_values[i] = positions[i3 + 1];
+        }
+        
+        let x_vec = f32x8::from_slice_unaligned(&x_values);
+        let y_vec = f32x8::from_slice_unaligned(&y_values);
+        
+        let twinkle_arg = time_2_vec + x_vec * factor_5 + y_vec * factor_5;
+        let twinkle_vec = simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
+        
+        let twinkle_arr: [f32; 8] = twinkle_vec.into();
+        
+        for i in 0..8 {
+            effects.push(twinkle_arr[i]);
+            effects.push(0.0);
+        }
+        
+        // Process second 8
+        for i in 0..8 {
+            let i3 = (base + 8 + i) * 3;
+            x_values[i] = positions[i3];
+            y_values[i] = positions[i3 + 1];
+        }
+        
+        let x_vec = f32x8::from_slice_unaligned(&x_values);
+        let y_vec = f32x8::from_slice_unaligned(&y_values);
+        
+        // Simple twinkle calculation
+        let twinkle_arg = time_2_vec + x_vec * factor_5 + y_vec * factor_5;
+        let twinkle_vec = simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
+        
+        let twinkle_arr: [f32; 8] = twinkle_vec.into();
+        
+        // No sparkle for simple mode
+        for i in 0..8 {
+            effects.push(twinkle_arr[i]);
+            effects.push(0.0);
         }
     }
     
@@ -1208,4 +1194,22 @@ pub fn calculate_star_effects_temporal_simd(
     }
     
     results
+}
+
+// LOD (Level of Detail) distribution calculations
+#[wasm_bindgen]
+pub fn calculate_lod_distribution(total_count: usize, quality_tier: u32) -> Vec<u32> {
+    // Distribution ratios for each quality tier
+    let (near_ratio, medium_ratio) = match quality_tier {
+        0 => (0.1, 0.3),   // Performance: 10% near, 30% medium, 60% far
+        1 => (0.15, 0.35), // Balanced: 15% near, 35% medium, 50% far
+        _ => (0.2, 0.4),   // Ultra: 20% near, 40% medium, 40% far
+    };
+    
+    let near_count = (total_count as f32 * near_ratio).floor() as u32;
+    let medium_count = (total_count as f32 * medium_ratio).floor() as u32;
+    let far_count = total_count as u32 - near_count - medium_count;
+    
+    // Return [near_count, medium_count, far_count]
+    vec![near_count, medium_count, far_count]
 }

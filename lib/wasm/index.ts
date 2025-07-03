@@ -29,6 +29,8 @@ export interface WASMModule {
   calculate_star_effects_with_temporal_coherence: (positions: Float32Array, previous_twinkles: Float32Array, previous_sparkles: Float32Array, count: number, time: number, threshold: number) => Float32Array;
   get_stars_needing_update: (positions: Float32Array, previous_twinkles: Float32Array, previous_sparkles: Float32Array, count: number, time: number, threshold: number) => Uint32Array;
   calculate_star_effects_temporal_simd?: (positions: Float32Array, previous_twinkles: Float32Array, previous_sparkles: Float32Array, count: number, time: number, threshold: number) => Float32Array;
+  // LOD distribution calculations
+  calculate_lod_distribution: (total_count: number, quality_tier: number) => Uint32Array;
   // Math utilities
   fast_sin: (x: number) => number;
   fast_cos: (x: number) => number;
@@ -225,6 +227,8 @@ export async function loadWASM(): Promise<WASMModule | null> {
         calculate_star_effects_with_temporal_coherence: wasm.calculate_star_effects_with_temporal_coherence,
         get_stars_needing_update: wasm.get_stars_needing_update,
         calculate_star_effects_temporal_simd: wasm.calculate_star_effects_temporal_simd,
+        // LOD distribution calculations
+        calculate_lod_distribution: wasm.calculate_lod_distribution,
         // Math utilities
         fast_sin: wasm.fast_sin,
         fast_cos: wasm.fast_cos,
@@ -690,6 +694,35 @@ export const jsFallbacks: WASMModule = {
     return new Uint32Array(indices);
   },
   calculate_star_effects_temporal_simd: undefined, // No SIMD fallback
+  // LOD distribution calculations
+  calculate_lod_distribution: (total_count: number, quality_tier: number): Uint32Array => {
+    logFallback('calculate_lod_distribution');
+    
+    // Distribution ratios for each quality tier
+    let near_ratio: number;
+    let medium_ratio: number;
+    
+    switch (quality_tier) {
+      case 0: // Performance
+        near_ratio = 0.1;
+        medium_ratio = 0.3;
+        break;
+      case 1: // Balanced
+        near_ratio = 0.15;
+        medium_ratio = 0.35;
+        break;
+      default: // Ultra
+        near_ratio = 0.2;
+        medium_ratio = 0.4;
+        break;
+    }
+    
+    const near_count = Math.floor(total_count * near_ratio);
+    const medium_count = Math.floor(total_count * medium_ratio);
+    const far_count = total_count - near_count - medium_count;
+    
+    return new Uint32Array([near_count, medium_count, far_count]);
+  },
   // Math utilities
   fast_sin: (x: number): number => Math.sin(x),
   fast_cos: (x: number): number => Math.cos(x),

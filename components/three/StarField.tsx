@@ -284,15 +284,29 @@ function Stars() {
     const totalCount = Math.floor((screenArea / 1000) * baseStarDensity)
 
     // Distribute stars across LOD levels based on quality
-    const distributions = {
-      performance: { near: 0.1, medium: 0.3, far: 0.6 },
-      balanced: { near: 0.15, medium: 0.35, far: 0.5 },
-      ultra: { near: 0.2, medium: 0.4, far: 0.4 }
+    let nearCount: number
+    let mediumCount: number 
+    let farCount: number
+    
+    if (wasmModule && wasmModule.calculate_lod_distribution) {
+      // Use WASM for optimized LOD calculations
+      const qualityTierMap = { performance: 0, balanced: 1, ultra: 2 }
+      const distribution = wasmModule.calculate_lod_distribution(totalCount, qualityTierMap[qualityTier])
+      nearCount = distribution[0]
+      mediumCount = distribution[1]
+      farCount = distribution[2]
+    } else {
+      // Fallback to JavaScript implementation
+      const distributions = {
+        performance: { near: 0.1, medium: 0.3, far: 0.6 },
+        balanced: { near: 0.15, medium: 0.35, far: 0.5 },
+        ultra: { near: 0.2, medium: 0.4, far: 0.4 }
+      }
+      const dist = distributions[qualityTier]
+      nearCount = Math.floor(totalCount * dist.near)
+      mediumCount = Math.floor(totalCount * dist.medium)
+      farCount = totalCount - nearCount - mediumCount
     }
-    const dist = distributions[qualityTier]
-    const nearCount = Math.floor(totalCount * dist.near)
-    const mediumCount = Math.floor(totalCount * dist.medium)
-    const farCount = totalCount - nearCount - mediumCount
 
     // Helper to create star data for a group
     const createStarGroup = (
