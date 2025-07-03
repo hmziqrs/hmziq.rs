@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { QualityManager } from '@/lib/performance/quality-manager'
 import { gradientCaches, generateGradientKey } from '@/lib/performance/gradient-cache'
@@ -13,6 +13,7 @@ import {
   isInViewport,
   type BezierPoint
 } from '@/lib/performance/performance-utils'
+import { getOptimizedFunctions } from '@/lib/wasm'
 
 interface Trail {
   x: number
@@ -50,6 +51,7 @@ interface Meteor {
   controlX: number
   controlY: number
   pathPoints: BezierPoint[]
+  pathPointsFlat?: Float32Array  // Pre-flattened path for WASM
   pathIndex: number
   color: { r: number; g: number; b: number }
   glowColor: { r: number; g: number; b: number }
@@ -69,19 +71,67 @@ const BEZIER_SEGMENTS = 60
 export default function MeteorShower2DOptimized() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const meteorsRef = useRef<Meteor[]>([])
-  const animationIdRef = useRef<number>()
+  const animationIdRef = useRef<number | undefined>(undefined)
   const prefersReducedMotion = useReducedMotion()
   const frameTimer = useRef(new FrameTimer())
   
+  // WASM module state
+  const [wasmModule, setWasmModule] = useState<any>(null)
+  const [wasmLoading, setWasmLoading] = useState(true)
+  const [wasmError, setWasmError] = useState<string | null>(null)
+  const meteorSystemRef = useRef<any>(null)
+  
   // Performance management
-  const qualityManager = useRef<QualityManager>()
-  const particlePool = useRef<ObjectPool<Particle>>()
+  const qualityManager = useRef<QualityManager | undefined>(undefined)
+  const particlePool = useRef<ObjectPool<Particle> | undefined>(undefined)
 
   // Mouse interaction state
   const speedMultiplierRef = useRef(1)
   const isMovingRef = useRef(false)
   const clickBoostRef = useRef(0)
-  const mouseMoveTimeoutRef = useRef<NodeJS.Timeout>()
+  const mouseMoveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+
+  // Load WASM module
+  useEffect(() => {
+    let mounted = true
+    
+    const loadWasm = async () => {
+      try {
+        console.log('MeteorShower: Loading WASM module...')
+        const module = await getOptimizedFunctions()
+        
+        if (!mounted) return
+        
+        if (module) {
+          console.log('MeteorShower: WASM module loaded successfully')
+          setWasmModule(module)
+          setWasmError(null)
+        } else {
+          throw new Error('WASM module returned null')
+        }
+      } catch (error) {
+        if (!mounted) return
+        
+        console.warn('MeteorShower: Failed to load WASM module, using JS fallback:', error)
+        setWasmError(error instanceof Error ? error.message : 'Unknown error')
+      } finally {
+        if (mounted) {
+          setWasmLoading(false)
+        }
+      }
+    }
+    
+    loadWasm()
+    
+    return () => {
+      mounted = false
+      // Clean up MeteorSystem if it exists
+      if (meteorSystemRef.current) {
+        meteorSystemRef.current.free?.()
+        meteorSystemRef.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (prefersReducedMotion) return
@@ -99,6 +149,17 @@ export default function MeteorShower2DOptimized() {
     }
 
     console.log('Canvas initialized:', canvas.width, 'x', canvas.height)
+    
+    // Initialize WASM MeteorSystem if available
+    if (wasmModule && wasmModule.MeteorSystem && !meteorSystemRef.current) {
+      try {
+        meteorSystemRef.current = new wasmModule.MeteorSystem(window.innerWidth, window.innerHeight)
+        console.log('MeteorShower: WASM MeteorSystem initialized')
+      } catch (error) {
+        console.warn('MeteorShower: Failed to initialize MeteorSystem:', error)
+        meteorSystemRef.current = null
+      }
+    }
 
     // Initialize performance management
     qualityManager.current = QualityManager.getInstance()
@@ -134,6 +195,11 @@ export default function MeteorShower2DOptimized() {
     const resizeCanvas = () => {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
+      
+      // Update MeteorSystem canvas size if available
+      if (meteorSystemRef.current) {
+        meteorSystemRef.current.update_canvas_size?.(canvas.width, canvas.height)
+      }
       
       // Recalculate meteor count based on quality settings
       const meteorCount = qualityManager.current!.getAdaptiveCount(
@@ -297,6 +363,8 @@ export default function MeteorShower2DOptimized() {
 
     // Spawn meteor with pre-calculated path
     function spawnMeteor(meteor: Meteor) {
+      if (!canvas) return // Safety check
+      
       const centerX = canvas.width / 2
       const bottomY = canvas.height + 20 // Extend beyond screen edge
       const spawnType = Math.random()
@@ -330,15 +398,51 @@ export default function MeteorShower2DOptimized() {
       meteor.controlY = meteor.startY + (meteor.endY - meteor.startY) * 0.6
 
       // Pre-calculate entire path
-      meteor.pathPoints = calculateBezierPath(
-        meteor.startX,
-        meteor.startY,
-        meteor.controlX,
-        meteor.controlY,
-        meteor.endX,
-        meteor.endY,
-        BEZIER_SEGMENTS
-      )
+      if (wasmModule && wasmModule.precalculate_bezier_path) {
+        // Use WASM for faster Bezier calculation
+        try {
+          const pathArray = wasmModule.precalculate_bezier_path(
+            meteor.startX,
+            meteor.startY,
+            meteor.controlX,
+            meteor.controlY,
+            meteor.endX,
+            meteor.endY,
+            BEZIER_SEGMENTS
+          )
+          // Store flattened array for WASM interpolation
+          meteor.pathPointsFlat = pathArray
+          // Also convert to BezierPoint array for compatibility
+          meteor.pathPoints = []
+          for (let i = 0; i < pathArray.length; i += 2) {
+            meteor.pathPoints.push({ x: pathArray[i], y: pathArray[i + 1] })
+          }
+        } catch (error) {
+          console.warn('WASM Bezier calculation failed, falling back to JS:', error)
+          meteor.pathPoints = calculateBezierPath(
+            meteor.startX,
+            meteor.startY,
+            meteor.controlX,
+            meteor.controlY,
+            meteor.endX,
+            meteor.endY,
+            BEZIER_SEGMENTS
+          )
+          meteor.pathPointsFlat = undefined
+        }
+      } else {
+        // JS fallback
+        meteor.pathPoints = calculateBezierPath(
+          meteor.startX,
+          meteor.startY,
+          meteor.controlX,
+          meteor.controlY,
+          meteor.endX,
+          meteor.endY,
+          BEZIER_SEGMENTS
+        )
+        meteor.pathPointsFlat = undefined
+      }
 
       meteor.size = 0.3 + Math.random() * 0.7
       
@@ -633,6 +737,68 @@ export default function MeteorShower2DOptimized() {
         }
       }
 
+      // Prepare for batch particle physics if WASM is available
+      let allParticles: Particle[] = []
+      let particleOwners: number[] = [] // Track which meteor owns each particle
+      let batchProcessed = false
+      
+      if (wasmModule && wasmModule.batch_update_positions && wasmModule.batch_apply_drag) {
+        // Collect all particles for batch processing
+        meteorsRef.current.forEach((meteor, meteorIndex) => {
+          if (meteor.active && meteor.particles.length > 0) {
+            meteor.particles.forEach((particle) => {
+              allParticles.push(particle)
+              particleOwners.push(meteorIndex)
+            })
+          }
+        })
+        
+        // Perform batch physics updates if we have particles
+        if (allParticles.length > 0) {
+          try {
+            // Extract particle data into arrays
+            const positionsX = new Float32Array(allParticles.map(p => p.x))
+            const positionsY = new Float32Array(allParticles.map(p => p.y))
+            const velocitiesX = new Float32Array(allParticles.map(p => p.vx))
+            const velocitiesY = new Float32Array(allParticles.map(p => p.vy))
+            
+            // Batch update positions
+            wasmModule.batch_update_positions(
+              positionsX,
+              positionsY,
+              velocitiesX,
+              velocitiesY,
+              speedMultiplierRef.current
+            )
+            
+            // Batch apply drag
+            wasmModule.batch_apply_drag(
+              velocitiesX,
+              velocitiesY,
+              0.01  // 1 - 0.99 = 0.01 drag coefficient
+            )
+            
+            // Apply results back to particles
+            allParticles.forEach((particle, i) => {
+              particle.x = positionsX[i]
+              particle.y = positionsY[i]
+              particle.vx = velocitiesX[i]
+              particle.vy = velocitiesY[i]
+              particle.life += speedMultiplierRef.current
+              
+              // Still need to apply random drift (not batched yet)
+              particle.vx += (Math.random() - 0.5) * 0.02 * speedMultiplierRef.current
+              particle.vy += (Math.random() - 0.5) * 0.02 * speedMultiplierRef.current
+            })
+            
+            batchProcessed = true
+          } catch (error) {
+            console.warn('Batch particle physics failed, falling back to JS:', error)
+            batchProcessed = false
+          }
+        }
+      }
+
       // Update and draw meteors
       ctx.save()
       ctx.globalCompositeOperation = 'screen'
@@ -654,9 +820,24 @@ export default function MeteorShower2DOptimized() {
         meteor.life += lifeIncrement
         const t = Math.min(meteor.life / meteor.maxLife, 1)
         
-        const newPos = interpolateBezierPoint(meteor.pathPoints, t)
-        meteor.x = newPos.x
-        meteor.y = newPos.y
+        // Use WASM interpolation if available
+        if (wasmModule && wasmModule.interpolate_bezier_point && meteor.pathPointsFlat) {
+          try {
+            const wasmPos = wasmModule.interpolate_bezier_point(meteor.pathPointsFlat, t)
+            meteor.x = wasmPos[0]
+            meteor.y = wasmPos[1]
+          } catch (error) {
+            // Fallback to JS interpolation
+            const newPos = interpolateBezierPoint(meteor.pathPoints, t)
+            meteor.x = newPos.x
+            meteor.y = newPos.y
+          }
+        } else {
+          // JS fallback
+          const newPos = interpolateBezierPoint(meteor.pathPoints, t)
+          meteor.x = newPos.x
+          meteor.y = newPos.y
+        }
 
         // Update trail
         meteor.trail.push({ x: meteor.x, y: meteor.y, opacity: 1 })
@@ -733,17 +914,21 @@ export default function MeteorShower2DOptimized() {
 
         // Update particles - they slowly drift and fade as debris
         meteor.particles = meteor.particles.filter((particle) => {
-          particle.x += particle.vx * lifeIncrement
-          particle.y += particle.vy * lifeIncrement
-          particle.life += lifeIncrement
-          
-          // Slow down particles over time (air resistance) - reduced for longer travel
-          particle.vx *= 0.99  // Less air resistance (was 0.98)
-          particle.vy *= 0.99
-          
-          // Very slight drift, no gravity for more ethereal effect
-          particle.vx += (Math.random() - 0.5) * 0.02 * lifeIncrement
-          particle.vy += (Math.random() - 0.5) * 0.02 * lifeIncrement
+          // If batch processing was not done, do individual updates
+          if (!batchProcessed) {
+            particle.x += particle.vx * lifeIncrement
+            particle.y += particle.vy * lifeIncrement
+            particle.life += lifeIncrement
+            
+            // Slow down particles over time (air resistance) - reduced for longer travel
+            particle.vx *= 0.99  // Less air resistance (was 0.98)
+            particle.vy *= 0.99
+            
+            // Very slight drift, no gravity for more ethereal effect
+            particle.vx += (Math.random() - 0.5) * 0.02 * lifeIncrement
+            particle.vy += (Math.random() - 0.5) * 0.02 * lifeIncrement
+          }
+          // Note: If batch processed, physics were already updated above
           
           // Longer lifespan for debris effect (50 frames for better visibility)
           if (particle.life >= 50) {
@@ -927,8 +1112,13 @@ export default function MeteorShower2DOptimized() {
       }
       gradientCaches.meteors.clear()
       particlePool.current?.clear()
+      // Clean up MeteorSystem if it exists
+      if (meteorSystemRef.current) {
+        meteorSystemRef.current.free?.()
+        meteorSystemRef.current = null
+      }
     }
-  }, [prefersReducedMotion])
+  }, [prefersReducedMotion, wasmModule])
 
   if (prefersReducedMotion) {
     return null
