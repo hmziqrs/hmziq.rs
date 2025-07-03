@@ -120,7 +120,7 @@ pub fn seed_random(i: i32) -> f32 {
 pub fn seed_random_batch(start: i32, count: usize) -> Vec<f32> {
     (start..start + count as i32)
         .map(|i| {
-            let x = ((i as f32 * 12.9898 + 78.233).sin() * 43758.5453);
+            let x = (i as f32 * 12.9898 + 78.233).sin() * 43758.5453;
             x - x.floor()
         })
         .collect()

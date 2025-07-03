@@ -43,6 +43,15 @@ export interface WASMModule {
   batch_interpolate_meteor_positions: (life_values: Float32Array, max_life_values: Float32Array, path_data: Float32Array, path_stride: number) => Float32Array;
   // Spatial indexing system
   SpatialGrid: any; // Constructor type
+  // Particle pool and utilities
+  ParticlePool: any; // Constructor type
+  PhysicsUtils: any; // Static methods type
+  Force: any; // Constructor type
+  FastRandom: any; // Constructor type
+  BatchTransfer: any; // Static methods type
+  TypedBatchTransfer: any; // Static methods type
+  ViewTransfer: any; // Constructor type
+  NebulaSystem: any; // Constructor type
 }
 
 // Memory management classes interfaces
@@ -130,6 +139,31 @@ export interface SpatialGrid {
   free?(): void;
 }
 
+export interface ParticlePool {
+  new (): ParticlePool;
+  allocate_block(count: number, system_id: number): number[] | undefined;
+  allocate(system_id: number): number | undefined;
+  free_block(indices: number[]): void;
+  free(index: number): void;
+  free_system(system_id: number): void;
+  get_free_count(): number;
+  get_allocated_count(): number;
+  get_total_capacity(): number;
+  is_allocated_to(index: number, system_id: number): boolean;
+}
+
+export interface NebulaSystem {
+  new (canvas_width: number, canvas_height: number): NebulaSystem;
+  update_canvas_size(width: number, height: number): void;
+  init_particles(pool: ParticlePool, count: number): boolean;
+  update(delta_time: number, pool: ParticlePool): void;
+  get_render_data(): Float32Array;
+  get_color_data(): Float32Array;
+  find_overlaps(overlap_threshold: number): Float32Array;
+  release(pool: ParticlePool): void;
+  get_active_count(): number;
+}
+
 export async function loadWASM(): Promise<WASMModule | null> {
   // Return cached module if already loaded
   if (wasmModule) {
@@ -193,11 +227,20 @@ export async function loadWASM(): Promise<WASMModule | null> {
         batch_interpolate_meteor_positions: wasm.batch_interpolate_meteor_positions,
         // Spatial indexing system
         SpatialGrid: wasm.SpatialGrid,
+        // Particle pool and utilities
+        ParticlePool: wasm.ParticlePool,
+        PhysicsUtils: wasm.PhysicsUtils,
+        Force: wasm.Force,
+        FastRandom: wasm.FastRandom,
+        BatchTransfer: wasm.BatchTransfer,
+        TypedBatchTransfer: wasm.TypedBatchTransfer,
+        ViewTransfer: wasm.ViewTransfer,
+        NebulaSystem: wasm.NebulaSystem,
       };
       
       const debugConfig = DebugConfigManager.getInstance();
       if (debugConfig.isEnabled('enableConsoleLogs')) {
-        console.log('WASM module loaded successfully with star field and meteor optimizations');
+        console.log('WASM module loaded successfully with star field, meteor optimizations, and unified particle manager');
       }
     } catch (error) {
       isUsingFallback = true;
@@ -551,6 +594,15 @@ export const jsFallbacks: WASMModule = {
   },
   // Spatial indexing system fallback (not implemented)
   SpatialGrid: null as any,
+  // Particle pool and utilities fallbacks (not implemented)
+  ParticlePool: null as any,
+  PhysicsUtils: null as any,
+  Force: null as any,
+  FastRandom: null as any,
+  BatchTransfer: null as any,
+  TypedBatchTransfer: null as any,
+  ViewTransfer: null as any,
+  NebulaSystem: null as any,
 };
 
 // Unified API that automatically uses WASM or JS fallback

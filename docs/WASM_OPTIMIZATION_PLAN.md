@@ -276,11 +276,13 @@ impl SharedBuffer {
   - [x] Create efficient neighbor queries
   - [x] Cache-friendly data layout optimization
 
-- [ ] **Task 9: Particle System Manager**
-  - [ ] Create unified particle pool in `wasm/src/particles.rs`
-  - [ ] Implement batch particle updates
-  - [ ] Memory-efficient representations
-  - [ ] Cross-component particle management
+- [x] **Task 9: Particle System Manager**
+  - [x] Created shared memory pool in `wasm/src/particle_pool.rs`
+  - [x] Implemented common physics utilities in `wasm/src/physics_utils.rs`
+  - [x] Created batch transfer utilities in `wasm/src/batch_transfer.rs`
+  - [x] Implemented NebulaSystem as specialized system in `wasm/src/nebula_system.rs`
+  - [x] Kept MeteorSystem as specialized implementation
+  - [x] Optimized WASM→JS data transfer with packed arrays
 
 ### 📊 Phase 4: Testing & Optimization (Pending)
 - [ ] **Task 12: Performance Benchmarking**
@@ -296,7 +298,8 @@ impl SharedBuffer {
 **Debug Controls:** ✅ Complete (Task 15)
 **Spatial Indexing:** ✅ Complete (Task 8)
 **Star Twinkle Effects:** ✅ Complete (Task 5)
-**Ready for:** Math utilities SIMD (Task 10), Particle system manager (Task 9)
+**Particle System Manager:** ✅ Complete (Task 9)
+**Ready for:** Math utilities SIMD (Task 10), Memory management (Task 11), Benchmarking (Task 12)
 
 ## Testing & Access Points
 
@@ -348,6 +351,19 @@ for (let i = 0; i < count; i++) {
 - SharedArrayBuffer for zero-copy operations
 - WASM-allocated memory with explicit copy operations
 - Batch processing to minimize boundary crossings
+
+### Task 9 Implementation Details
+**Approach:** Instead of a generic unified particle manager, we implemented:
+1. **Shared Memory Pool** (`particle_pool.rs`): Central allocation system for all particle systems
+2. **Common Physics Utilities** (`physics_utils.rs`): Reusable physics calculations, forces, and batch operations
+3. **Batch Transfer Utilities** (`batch_transfer.rs`): Optimized data packing for WASM→JS transfer
+4. **Specialized Systems**: Each effect (MeteorSystem, NebulaSystem) maintains its unique behavior while sharing infrastructure
+
+**Key Benefits:**
+- No over-abstraction - each system keeps its specialized behavior
+- Shared memory allocation reduces fragmentation
+- Batch transfers minimize JS-WASM boundary overhead
+- Physics utilities provide consistent, optimized calculations
 
 ### Star Density Optimization
 **Change:** Reduced base star density from 0.6 to 0.36 (40% reduction)
