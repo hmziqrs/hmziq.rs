@@ -23,6 +23,8 @@ export interface WASMModule {
   cull_stars_by_frustum: (positions: Float32Array, count: number, camera_matrix: Float32Array, fov: number, aspect_ratio: number, near: number, far: number) => Uint8Array;
   get_visible_star_indices: (positions: Float32Array, count: number, camera_matrix: Float32Array, margin: number) => Uint32Array;
   cull_stars_by_frustum_simd?: (positions: Float32Array, count: number, camera_matrix: Float32Array, margin: number) => Uint8Array;
+  // Enhanced SIMD batch processing for LOD groups
+  calculate_star_effects_by_lod: (near_positions: Float32Array, near_count: number, medium_positions: Float32Array, medium_count: number, far_positions: Float32Array, far_count: number, time: number, quality_tier: number) => Float32Array;
   // Math utilities
   fast_sin: (x: number) => number;
   fast_cos: (x: number) => number;
@@ -213,6 +215,8 @@ export async function loadWASM(): Promise<WASMModule | null> {
         cull_stars_by_frustum: wasm.cull_stars_by_frustum,
         get_visible_star_indices: wasm.get_visible_star_indices,
         cull_stars_by_frustum_simd: wasm.cull_stars_by_frustum_simd,
+        // Enhanced SIMD batch processing for LOD groups
+        calculate_star_effects_by_lod: wasm.calculate_star_effects_by_lod,
         // Math utilities
         fast_sin: wasm.fast_sin,
         fast_cos: wasm.fast_cos,
@@ -519,6 +523,91 @@ export const jsFallbacks: WASMModule = {
     return new Uint32Array(visible_indices);
   },
   cull_stars_by_frustum_simd: undefined, // No SIMD fallback
+  // Enhanced SIMD batch processing for LOD groups
+  calculate_star_effects_by_lod: (
+    near_positions: Float32Array,
+    near_count: number,
+    medium_positions: Float32Array,
+    medium_count: number,
+    far_positions: Float32Array,
+    far_count: number,
+    time: number,
+    quality_tier: number
+  ): Float32Array => {
+    logFallback('calculate_star_effects_by_lod');
+    
+    const total_count = near_count + medium_count + far_count;
+    const effects = new Float32Array(total_count * 2);
+    let offset = 0;
+    
+    // Helper function for full effects
+    const processFullEffects = (positions: Float32Array, count: number, startOffset: number) => {
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        const x = positions[i3];
+        const y = positions[i3 + 1];
+        
+        const twinkle_base = Math.sin(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+        const sparkle_phase = Math.sin(time * 15.0 + x * 20.0 + y * 30.0);
+        const sparkle = sparkle_phase > 0.98 ? (sparkle_phase - 0.98) / 0.02 : 0.0;
+        
+        const idx = (startOffset + i) * 2;
+        effects[idx] = twinkle_base + sparkle;
+        effects[idx + 1] = sparkle;
+      }
+    };
+    
+    // Helper function for simple effects
+    const processSimpleEffects = (positions: Float32Array, count: number, startOffset: number) => {
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        const x = positions[i3];
+        const y = positions[i3 + 1];
+        
+        const twinkle = Math.sin(time * 2.0 + x * 5.0 + y * 5.0) * 0.2 + 0.8;
+        
+        const idx = (startOffset + i) * 2;
+        effects[idx] = twinkle;
+        effects[idx + 1] = 0.0;
+      }
+    };
+    
+    // Helper function for no effects
+    const processNoEffects = (count: number, startOffset: number) => {
+      for (let i = 0; i < count; i++) {
+        const idx = (startOffset + i) * 2;
+        effects[idx] = 1.0;
+        effects[idx + 1] = 0.0;
+      }
+    };
+    
+    // Process based on quality tier
+    switch (quality_tier) {
+      case 0: // Performance
+        processSimpleEffects(near_positions, near_count, offset);
+        offset += near_count;
+        processSimpleEffects(medium_positions, medium_count, offset);
+        offset += medium_count;
+        processNoEffects(far_count, offset);
+        break;
+      case 1: // Balanced
+        processFullEffects(near_positions, near_count, offset);
+        offset += near_count;
+        processSimpleEffects(medium_positions, medium_count, offset);
+        offset += medium_count;
+        processNoEffects(far_count, offset);
+        break;
+      default: // Ultra
+        processFullEffects(near_positions, near_count, offset);
+        offset += near_count;
+        processFullEffects(medium_positions, medium_count, offset);
+        offset += medium_count;
+        processSimpleEffects(far_positions, far_count, offset);
+        break;
+    }
+    
+    return effects;
+  },
   // Math utilities
   fast_sin: (x: number): number => Math.sin(x),
   fast_cos: (x: number): number => Math.cos(x),

@@ -598,9 +598,67 @@ function Stars() {
     // Update star effects at different rates based on LOD with frustum culling
     const time = state.clock.elapsedTime
     const vpMatrix = new Float32Array(viewProjectionMatrix.elements)
-    updateStarEffects(starGroups.near, time, 1, vpMatrix) // Every frame for near stars
-    updateStarEffects(starGroups.medium, time, 2, vpMatrix) // Every 2 frames for medium
-    // Far stars don't need updates (no twinkle/sparkle)
+    
+    // Use enhanced SIMD batch processing if available
+    if (wasmModule && wasmModule.calculate_star_effects_by_lod) {
+      // Process all LOD groups at once with quality-aware optimizations
+      const qualityTierMap = { performance: 0, balanced: 1, ultra: 2 }
+      const effects = wasmModule.calculate_star_effects_by_lod(
+        starGroups.near.positions,
+        starGroups.near.count,
+        starGroups.medium.positions,
+        starGroups.medium.count,
+        starGroups.far.positions,
+        starGroups.far.count,
+        time,
+        qualityTierMap[qualityTier]
+      )
+      
+      // Apply effects to each LOD group
+      let offset = 0
+      
+      // Near stars
+      for (let i = 0; i < starGroups.near.count; i++) {
+        starGroups.near.twinkles[i] = effects[offset * 2]
+        starGroups.near.sparkles[i] = effects[offset * 2 + 1]
+        offset++
+      }
+      
+      // Medium stars  
+      for (let i = 0; i < starGroups.medium.count; i++) {
+        starGroups.medium.twinkles[i] = effects[offset * 2]
+        starGroups.medium.sparkles[i] = effects[offset * 2 + 1]
+        offset++
+      }
+      
+      // Far stars (if any effects were calculated)
+      for (let i = 0; i < starGroups.far.count; i++) {
+        starGroups.far.twinkles[i] = effects[offset * 2]
+        starGroups.far.sparkles[i] = effects[offset * 2 + 1]
+        offset++
+      }
+      
+      // Update GPU attributes
+      const updateMeshAttributes = (mesh: React.RefObject<THREE.Points>) => {
+        if (mesh.current && mesh.current.geometry) {
+          const geometry = mesh.current.geometry
+          const twinkleAttr = geometry.getAttribute('twinkle') as THREE.BufferAttribute
+          const sparkleAttr = geometry.getAttribute('sparkle') as THREE.BufferAttribute
+          
+          if (twinkleAttr) twinkleAttr.needsUpdate = true
+          if (sparkleAttr) sparkleAttr.needsUpdate = true
+        }
+      }
+      
+      updateMeshAttributes(nearMeshRef)
+      updateMeshAttributes(mediumMeshRef)
+      updateMeshAttributes(farMeshRef)
+    } else {
+      // Fallback to individual updates
+      updateStarEffects(starGroups.near, time, 1, vpMatrix) // Every frame for near stars
+      updateStarEffects(starGroups.medium, time, 2, vpMatrix) // Every 2 frames for medium
+      // Far stars don't need updates (no twinkle/sparkle)
+    }
     
     // Update performance metrics in QualityManager
     const frameTime = deltaTime * 1000 // Convert to milliseconds
