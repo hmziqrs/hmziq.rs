@@ -14,9 +14,11 @@ export interface WASMModule {
   generate_star_sizes: (count: number, start_index: number, size_multiplier: number) => Float32Array;
   calculate_star_effects: (positions_ptr: number, count: number, time: number) => Float32Array;
   calculate_star_effects_into_buffers: (positions_ptr: number, twinkles_ptr: number, sparkles_ptr: number, count: number, time: number) => void;
+  calculate_star_effects_arrays: (positions: Float32Array, count: number, time: number) => Float32Array;
   calculate_twinkle_effects: (positions_ptr: number, count: number, time: number) => Float32Array;
   calculate_sparkle_effects: (positions_ptr: number, count: number, time: number) => Float32Array;
   calculate_rotation_delta: (base_speed_x: number, base_speed_y: number, speed_multiplier: number, delta_time: number) => Float32Array;
+  calculate_speed_multiplier: (is_moving: boolean, click_time: number, current_time: number, current_multiplier: number) => number;
   // Math utilities
   fast_sin: (x: number) => number;
   fast_cos: (x: number) => number;
@@ -198,9 +200,11 @@ export async function loadWASM(): Promise<WASMModule | null> {
         generate_star_sizes: wasm.generate_star_sizes,
         calculate_star_effects: wasm.calculate_star_effects,
         calculate_star_effects_into_buffers: wasm.calculate_star_effects_into_buffers,
+        calculate_star_effects_arrays: wasm.calculate_star_effects_arrays,
         calculate_twinkle_effects: wasm.calculate_twinkle_effects,
         calculate_sparkle_effects: wasm.calculate_sparkle_effects,
         calculate_rotation_delta: wasm.calculate_rotation_delta,
+        calculate_speed_multiplier: wasm.calculate_speed_multiplier,
         // Math utilities
         fast_sin: wasm.fast_sin,
         fast_cos: wasm.fast_cos,
@@ -349,6 +353,28 @@ export const jsFallbacks: WASMModule = {
     // This is a void function, so we don't need to return anything
     // In the actual component, we'll fall back to the manual calculation
   },
+  calculate_star_effects_arrays: (positions: Float32Array, count: number, time: number): Float32Array => {
+    logFallback('calculate_star_effects_arrays');
+    const effects = new Float32Array(count * 2);
+    
+    for (let i = 0; i < count; i++) {
+      const i3 = i * 3;
+      const x = positions[i3];
+      const y = positions[i3 + 1];
+      
+      // Twinkle calculation
+      const twinkleBase = Math.sin(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+      
+      // Sparkle calculation
+      const sparklePhase = Math.sin(time * 15.0 + x * 20.0 + y * 30.0);
+      const sparkle = sparklePhase > 0.98 ? (sparklePhase - 0.98) / 0.02 : 0;
+      
+      effects[i * 2] = twinkleBase + sparkle;
+      effects[i * 2 + 1] = sparkle;
+    }
+    
+    return effects;
+  },
   calculate_twinkle_effects: (): Float32Array => {
     logFallback('calculate_twinkle_effects', 'not implemented');
     return new Float32Array(0);
@@ -362,6 +388,26 @@ export const jsFallbacks: WASMModule = {
       base_speed_x * speed_multiplier * delta_time,
       base_speed_y * speed_multiplier * delta_time
     ]);
+  },
+  calculate_speed_multiplier: (is_moving: boolean, click_time: number, current_time: number, current_multiplier: number): number => {
+    logFallback('calculate_speed_multiplier');
+    let speed_multiplier = 1.0;
+    
+    // Apply movement boost
+    if (is_moving) {
+      speed_multiplier *= 4.5;
+    }
+    
+    // Apply click boost with decay
+    const time_since_click = current_time - click_time;
+    if (time_since_click < 1200) {
+      const click_decay = 1 - time_since_click / 1200;
+      const click_boost = 1 + 4.3 * click_decay;
+      speed_multiplier *= click_boost;
+    }
+    
+    // Apply smoothing (lerp with factor 0.2)
+    return current_multiplier + (speed_multiplier - current_multiplier) * 0.2;
   },
   // Math utilities
   fast_sin: (x: number): number => Math.sin(x),

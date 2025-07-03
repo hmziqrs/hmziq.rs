@@ -57,7 +57,7 @@ const farCount = totalCount - nearCount - mediumCount
 **Potential Gain**: 5-10% faster initialization
 **Implementation**: Create `calculate_lod_distribution(totalCount, qualityTier)` in WASM
 
-### 5. Speed Multiplier Calculations (Lines 496-511) ❌
+### 5. Speed Multiplier Calculations (Lines 496-511) ✅
 Complex speed multiplier logic with easing could be computed more efficiently:
 ```typescript
 if (isMovingRef.current) {
@@ -72,9 +72,10 @@ if (timeSinceClick < 1200) {
 speedMultiplierRef.current += (targetSpeed - speedMultiplierRef.current) * 0.2
 ```
 **Potential Gain**: 10-15% reduction in per-frame overhead
-**Implementation**: Create `calculate_speed_multiplier(isMoving, clickTime, currentTime, currentMultiplier)` in WASM
+**Implementation**: ✅ IMPLEMENTED - `calculate_speed_multiplier(isMoving, clickTime, currentTime, currentMultiplier)` in WASM
+**Location**: `wasm/src/star_field.rs:486-509`
 
-### 6. Direct Buffer Updates (Lines 464-478) ❌
+### 6. Direct Buffer Updates (Lines 464-478) ✅
 Currently updates attributes in a loop. WASM has `calculate_star_effects_into_buffers` but it's not being used:
 ```typescript
 // Current approach creates unnecessary intermediate arrays
@@ -82,7 +83,9 @@ twinkles[i] = twinkleBase + sparkle
 sparkles[i] = sparkle
 ```
 **Potential Gain**: 20-30% faster effect updates, reduced GC pressure
-**Implementation**: Use existing `calculate_star_effects_into_buffers` function
+**Implementation**: ✅ IMPLEMENTED - Created new `calculate_star_effects_arrays` function that works with JavaScript typed arrays
+**Location**: `wasm/src/star_field.rs:341-360`, `components/three/StarField.tsx:429-436`
+**Note**: Original `calculate_star_effects_into_buffers` couldn't be used due to pointer/typed array incompatibility
 
 ### 7. Frame Rate Calculation (Lines 484-488) ❌
 FPS calculation could be optimized:
@@ -113,9 +116,9 @@ Current SIMD implementation could batch entire LOD groups:
 
 ## Implementation Priority
 
-1. **Direct Buffer Updates** (High Impact, Easy) - Use existing function
-2. **Speed Multiplier Calculations** (Medium Impact, Easy)
-3. **Camera Frustum Culling** (High Impact, Medium Complexity)
+1. ~~**Direct Buffer Updates** (High Impact, Easy) - Use existing function~~ ✅ COMPLETED (via new `calculate_star_effects_arrays`)
+2. ~~**Speed Multiplier Calculations** (Medium Impact, Easy)~~ ✅ COMPLETED
+3. **Camera Frustum Culling** (High Impact, Medium Complexity) - Next priority
 4. **SIMD Batch Enhancement** (High Impact, Complex)
 5. **Temporal Coherence** (Medium Impact, Medium Complexity)
 6. **LOD Distribution** (Low Impact, Easy)

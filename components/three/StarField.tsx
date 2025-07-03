@@ -426,8 +426,16 @@ function Stars() {
 
     const { positions, twinkles, sparkles, count, mesh } = group
 
-    if (wasmModule && wasmModule.fast_sin) {
-      // Use WASM functions with proper array passing
+    if (wasmModule && wasmModule.calculate_star_effects_arrays) {
+      // Use WASM optimized batch processing
+      const effects = wasmModule.calculate_star_effects_arrays(positions, count, time)
+      // Effects array contains [twinkle, sparkle] pairs
+      for (let i = 0; i < count; i++) {
+        twinkles[i] = effects[i * 2]
+        sparkles[i] = effects[i * 2 + 1]
+      }
+    } else if (wasmModule && wasmModule.fast_sin) {
+      // Use WASM functions with individual calculations
       for (let i = 0; i < count; i++) {
         const i3 = i * 3
         const x = positions[i3]
@@ -494,21 +502,33 @@ function Stars() {
 
     // Calculate speed multiplier
     const currentTime = Date.now()
-    let speedMultiplier = 1
+    
+    if (wasmModule && wasmModule.calculate_speed_multiplier) {
+      // Use WASM for optimized speed calculations
+      speedMultiplierRef.current = wasmModule.calculate_speed_multiplier(
+        isMovingRef.current,
+        clickBoostRef.current,
+        currentTime,
+        speedMultiplierRef.current
+      )
+    } else {
+      // Fallback to JS implementation
+      let speedMultiplier = 1
 
-    if (isMovingRef.current) {
-      speedMultiplier *= 4.5
+      if (isMovingRef.current) {
+        speedMultiplier *= 4.5
+      }
+
+      const timeSinceClick = currentTime - clickBoostRef.current
+      if (timeSinceClick < 1200) {
+        const clickDecay = 1 - timeSinceClick / 1200
+        const clickBoost = 1 + 4.3 * clickDecay
+        speedMultiplier *= clickBoost
+      }
+
+      const targetSpeed = speedMultiplier
+      speedMultiplierRef.current += (targetSpeed - speedMultiplierRef.current) * 0.2
     }
-
-    const timeSinceClick = currentTime - clickBoostRef.current
-    if (timeSinceClick < 1200) {
-      const clickDecay = 1 - timeSinceClick / 1200
-      const clickBoost = 1 + 4.3 * clickDecay
-      speedMultiplier *= clickBoost
-    }
-
-    const targetSpeed = speedMultiplier
-    speedMultiplierRef.current += (targetSpeed - speedMultiplierRef.current) * 0.2
 
     // Update rotation
     const baseRotationSpeedX = 0.02

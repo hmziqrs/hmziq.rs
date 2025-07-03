@@ -335,37 +335,28 @@ pub fn calculate_rotation_delta(
     ]
 }
 
-// Batch process star twinkle effects directly into provided buffers
-// This avoids allocations and memory copies for better performance
+// Calculate star effects and return both twinkle and sparkle arrays
+// This version works with JavaScript typed arrays
 #[wasm_bindgen]
-pub fn calculate_star_effects_into_buffers(
-    positions_ptr: *const f32,
-    twinkles_ptr: *mut f32,
-    sparkles_ptr: *mut f32,
+pub fn calculate_star_effects_arrays(
+    positions: &[f32],
     count: usize,
     time: f32,
-) {
-    let positions = unsafe {
-        std::slice::from_raw_parts(positions_ptr, count * 3)
-    };
-    
-    let twinkles = unsafe {
-        std::slice::from_raw_parts_mut(twinkles_ptr, count)
-    };
-    
-    let sparkles = unsafe {
-        std::slice::from_raw_parts_mut(sparkles_ptr, count)
-    };
+) -> Vec<f32> {
+    // Return interleaved twinkle and sparkle values
+    let mut effects = Vec::with_capacity(count * 2);
     
     #[cfg(feature = "simd")]
     {
-        calculate_effects_into_buffers_simd(positions, twinkles, sparkles, count, time);
+        calculate_star_effects_simd(&positions, count, time, &mut effects);
     }
     
     #[cfg(not(feature = "simd"))]
     {
-        calculate_effects_into_buffers_scalar(positions, twinkles, sparkles, count, time);
+        calculate_star_effects_scalar(&positions, count, time, &mut effects);
     }
+    
+    effects
 }
 
 // Scalar implementation for direct buffer updates
@@ -479,3 +470,31 @@ fn calculate_effects_into_buffers_simd(
     }
 }
 
+
+
+// Speed multiplier calculation matching StarField.tsx lines 504-520
+#[wasm_bindgen]
+pub fn calculate_speed_multiplier(
+    is_moving: bool,
+    click_time: f64,
+    current_time: f64,
+    current_multiplier: f32,
+) -> f32 {
+    let mut speed_multiplier = 1.0;
+    
+    // Apply movement boost
+    if is_moving {
+        speed_multiplier *= 4.5;
+    }
+    
+    // Apply click boost with decay
+    let time_since_click = current_time - click_time;
+    if time_since_click < 1200.0 {
+        let click_decay = 1.0 - (time_since_click / 1200.0) as f32;
+        let click_boost = 1.0 + 4.3 * click_decay;
+        speed_multiplier *= click_boost;
+    }
+    
+    // Apply smoothing (lerp with factor 0.2)
+    current_multiplier + (speed_multiplier - current_multiplier) * 0.2
+}
