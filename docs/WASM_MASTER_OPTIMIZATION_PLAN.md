@@ -8,7 +8,7 @@ This master plan coordinates WASM optimization across all visual components in t
 
 | Component | WASM Status | Priority | Plan Document |
 |-----------|-------------|----------|---------------|
-| StarField | ✅ Full | Complete | [WASM_STARFIELD_OPTIMIZATION.md](./WASM_STARFIELD_OPTIMIZATION.md) |
+| StarField | ⚠️ Partial | MEDIUM | [WASM_STARFIELD_OPTIMIZATION.md](./WASM_STARFIELD_OPTIMIZATION.md) |
 | MeteorShower | ❌ None | HIGH | [WASM_METEOR_OPTIMIZATION.md](./WASM_METEOR_OPTIMIZATION.md) |
 | LightNebula | ⚠️ Partial | MEDIUM | [WASM_NEBULA_OPTIMIZATION.md](./WASM_NEBULA_OPTIMIZATION.md) |
 
@@ -32,10 +32,20 @@ This master plan coordinates WASM optimization across all visual components in t
 
 **Expected Gain**: 30-40% performance improvement
 
-### Phase 3: Advanced Optimizations
+### Phase 3: StarField Advanced Optimizations
+**File**: `components/three/StarField.tsx`
+**Tasks**:
+1. Direct buffer updates (Lines 424-478) - [Details](./WASM_STARFIELD_OPTIMIZATION.md#6-direct-buffer-updates-lines-464-478-)
+2. Speed multiplier calculations (Lines 496-511) - [Details](./WASM_STARFIELD_OPTIMIZATION.md#5-speed-multiplier-calculations-lines-496-511-)
+3. Camera frustum culling - [Details](./WASM_STARFIELD_OPTIMIZATION.md#8-camera-frustum-culling-)
+
+**Expected Gain**: 30-50% performance improvement for high star counts
+
+### Phase 4: System-wide Advanced Optimizations
 1. MeteorSystem full state management
 2. Batch transfer optimizations
 3. Multi-threaded particle updates (future)
+4. Shared memory pools across components
 
 ## Key WASM Implementations to Integrate
 
