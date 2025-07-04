@@ -11,6 +11,9 @@ mod physics_utils;
 mod batch_transfer;
 mod nebula_system;
 mod spatial;
+mod render_pipeline;
+mod render_buffer;
+mod particle_system;
 
 // Re-export public functions
 pub use math::*;
@@ -23,6 +26,7 @@ pub use physics_utils::*;
 pub use batch_transfer::*;
 pub use nebula_system::*;
 pub use spatial::*;
+pub use render_pipeline::RenderPipeline;
 
 #[wasm_bindgen]
 extern "C" {

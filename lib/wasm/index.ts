@@ -68,6 +68,7 @@ export interface WASMModule {
   TypedBatchTransfer: any; // Static methods type
   ViewTransfer: any; // Constructor type
   NebulaSystem: any; // Constructor type
+  RenderPipeline: any; // Constructor type
 }
 
 // Memory management classes interfaces
@@ -266,6 +267,7 @@ export async function loadWASM(): Promise<WASMModule | null> {
         TypedBatchTransfer: wasm.TypedBatchTransfer,
         ViewTransfer: wasm.ViewTransfer,
         NebulaSystem: wasm.NebulaSystem,
+        RenderPipeline: wasm.RenderPipeline,
       };
       
       const debugConfig = DebugConfigManager.getInstance();
@@ -985,6 +987,7 @@ export const jsFallbacks: WASMModule = {
   TypedBatchTransfer: null as any,
   ViewTransfer: null as any,
   NebulaSystem: null as any,
+  RenderPipeline: null as any,
 };
 
 // Unified API that automatically uses WASM or JS fallback
