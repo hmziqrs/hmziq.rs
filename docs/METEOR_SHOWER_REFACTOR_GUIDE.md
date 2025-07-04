@@ -15,6 +15,21 @@ This guide provides step-by-step instructions for implementing the MeteorShower 
 - **Adaptive performance**: Automatic quality adjustment
 - **Complete testing**: Unit tests, benchmarks, visual regression
 
+## Context Reading Instructions
+
+**IMPORTANT**: When working with this refactor, read specific sections from the architecture file using line ranges to avoid token limits.
+
+### Essential Context References
+**Reference**: `docs/METEOR_SHOWER_REFACTOR_ARCHITECTURE.md`
+
+| Section | Description | Line Range |
+|---------|-------------|------------|
+| Objective | High-performance meteor shower goals | Line 5 |
+| Architecture Overview | System diagram and structure | Lines 7-24 |
+| Core Design Principles | 8 key design principles | Lines 25-34 |
+
+**Usage**: Read these sections first to understand the project context before implementing any phase.
+
 ## Implementation Order
 
 ### Architecture File Index
@@ -33,6 +48,8 @@ This guide provides step-by-step instructions for implementing the MeteorShower 
 | Phase 9 | Testing | Lines 2457-2773 |
 
 ### 1. Core Interfaces (Phase 1) - Architecture Lines: 37-288
+**Prerequisites**: Read Essential Context (Lines 5, 7-24, 25-34) before starting Phase 1
+
 ```bash
 # Create these files first:
 lib/rendering/interfaces.ts
