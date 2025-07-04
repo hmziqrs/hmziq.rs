@@ -87,6 +87,7 @@ export interface PipelineOptions {
 
 // Dirty flags for differential updates
 export enum DirtyFlags {
+  NONE = 0,
   METEORS = 0b00000001,
   PARTICLES = 0b00000010,
   STARS = 0b00000100,
