@@ -1,3 +1,9 @@
+# ⚠️ DEPRECATED - See WASM_UNIFIED_RENDERING_PLAN.md
+
+This plan has been superseded by the unified rendering architecture approach that embeds particles directly into the MeteorSystem, eliminating the need for separate particle pools and multiple WASM boundary crossings.
+
+---
+
 # WASM MeteorShower Optimization Plan
 
 ## Component: `components/effects/MeteorShower.tsx`
@@ -59,15 +65,18 @@ The MeteorShower component has substantial WASM integration:
 - Return optimized vertex data for direct rendering
 - Reduce JS-side geometry calculations
 
-### Task 7: Implement Particle Pool in WASM
-**Current**: Lines 117-131 (JS ObjectPool)
-**Replace with**: WASM ParticlePool
-```typescript
-const particlePool = new wasmModule.ParticlePool()
-// Use pool.allocate() and pool.release()
-```
-**WASM Implementation**: `wasm/src/particle_pool.rs`
-**Benefits**: Better memory locality, faster allocation
+### Task 7: Implement Particle Pool in WASM ✅ PARTIALLY COMPLETED
+**Status**: WASM ParticlePool implemented but particles not rendering
+**Implementation**: 
+- Created WASM ParticlePool in `wasm/src/particle_pool.rs`
+- Integrated with MeteorSystem for particle allocation
+- Updated MeteorShower.tsx to use WASM pool when available
+**Current Issue**: 
+- WASM ParticlePool initializes correctly (capacity 2000)
+- Particles are spawned via WASM but not visible
+- Debug shows particle data is being returned but with 0 active particles
+- Need to investigate spawn_particle implementation in MeteorSystem
+**Next Steps**: Debug why particles aren't being properly allocated/activated in WASM
 
 ### Task 8: Batch Transfer Rendering Data
 **Current**: Lines 769-801 (particle rendering)
