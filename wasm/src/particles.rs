@@ -474,9 +474,11 @@ impl MeteorSystem {
     // Get particle data for rendering
     pub fn get_particle_data(&self) -> Float32Array {
         let mut data = Vec::with_capacity(MAX_TOTAL_PARTICLES * 5);
+        let mut active_count = 0;
         
         for particle in &self.particles {
             if particle.active {
+                active_count += 1;
                 data.push(particle.x);
                 data.push(particle.y);
                 data.push(particle.size);
@@ -486,6 +488,7 @@ impl MeteorSystem {
                 data.extend(&[0.0, 0.0, 0.0, 0.0, 0.0]);
             }
         }
+        
         
         Float32Array::from(&data[..])
     }

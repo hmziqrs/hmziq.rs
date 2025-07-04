@@ -60,7 +60,8 @@ interface Meteor {
   glowIntensity: number
   active: boolean
   type: 'cool' | 'warm' | 'bright'
-  particles: Particle[]
+  particles: Particle[] // JS ObjectPool: array of particle objects
+  particleIndices?: number[] // WASM ParticlePool: array of particle indices
   isVisible: boolean
 }
 
@@ -85,7 +86,9 @@ export default function MeteorShower2DOptimized() {
   
   // Performance management
   const qualityManager = useRef<QualityManager | undefined>(undefined)
-  const particlePool = useRef<ObjectPool<Particle> | undefined>(undefined)
+  const particlePool = useRef<any | undefined>(undefined) // WASM ParticlePool
+  const particleData = useRef<Particle[]>([]) // JavaScript particle data aligned with WASM indices
+  const meteorSystemId = 1 // System ID for meteor particles
 
   // Mouse interaction state
   const speedMultiplierRef = useRef(1)
@@ -99,13 +102,11 @@ export default function MeteorShower2DOptimized() {
     
     const loadWasm = async () => {
       try {
-        console.log('MeteorShower: Loading WASM module...')
         const module = await getOptimizedFunctions()
         
         if (!mounted) return
         
         if (module) {
-          console.log('MeteorShower: WASM module loaded successfully')
           setWasmModule(module)
           setWasmError(null)
         } else {
@@ -136,7 +137,7 @@ export default function MeteorShower2DOptimized() {
   }, [])
 
   useEffect(() => {
-    if (prefersReducedMotion) return
+    if (prefersReducedMotion || wasmLoading) return
 
     const canvas = canvasRef.current
     if (!canvas) return
@@ -150,9 +151,9 @@ export default function MeteorShower2DOptimized() {
       return
     }
 
-    console.log('Canvas initialized:', canvas.width, 'x', canvas.height)
     
-    // Initialize WASM MeteorSystem
+    // Initialize WASM MeteorSystem before starting animation
+    let animationStarted = false
     const initMeteorSystem = async () => {
       if (!meteorSystemRef.current) {
         meteorSystemRef.current = new WASMMeteorSystem(window.innerWidth, window.innerHeight)
@@ -162,38 +163,61 @@ export default function MeteorShower2DOptimized() {
           meteorSystemRef.current = null
         }
       }
+      
+      // Start animation only after MeteorSystem is initialized
+      if (!animationStarted) {
+        animationStarted = true
+        animate(performance.now())
+      }
     }
-    initMeteorSystem()
 
     // Initialize performance management
     qualityManager.current = QualityManager.getInstance()
     const settings = qualityManager.current.getSettings()
-    console.log('Quality settings:', settings)
     
     // Initialize gradient cache
     gradientCaches.meteors.setContext(ctx)
     
-    // Initialize particle pool - use reduced sizing for better performance
-    // Calculate pool size based on maximum meteors and reduced particle limits
-    const maxParticlesPerMeteor = 7 // Maximum from ultra quality tier
-    const maxMeteors = settings.meteorCount
-    const poolInitialSize = maxMeteors * maxParticlesPerMeteor
-    const poolMaxSize = poolInitialSize * 1.5 // Allow some growth but not excessive
-    
-    particlePool.current = new ObjectPool<Particle>(
-      () => ({
-        x: 0, y: 0, vx: 0, vy: 0, life: 0, size: 0, opacity: 1,
-        color: { r: 255, g: 255, b: 255 },
-        active: false
-      }),
-      (particle) => {
-        particle.active = false
-        particle.life = 0
-        particle.opacity = 1
-      },
-      poolInitialSize,
-      poolMaxSize
-    )
+    // Initialize WASM ParticlePool for better memory locality
+    try {
+      if (wasmModule && wasmModule.ParticlePool) {
+        particlePool.current = new wasmModule.ParticlePool()
+        
+        // Initialize JavaScript particle data array to match WASM pool capacity
+        const capacity = particlePool.current.get_total_capacity()
+        particleData.current = Array(capacity).fill(null).map(() => ({
+          x: 0, y: 0, vx: 0, vy: 0, life: 0, size: 0, opacity: 1,
+          color: { r: 255, g: 255, b: 255 },
+          active: false
+        }))
+      } else {
+        throw new Error('WASM ParticlePool not available')
+      }
+    } catch (error) {
+      console.warn('MeteorShower: Failed to initialize WASM ParticlePool, using JS fallback:', error)
+      
+      // Fallback to JavaScript ObjectPool
+      const maxParticlesPerMeteor = 7
+      const maxMeteors = settings.meteorCount
+      const poolInitialSize = maxMeteors * maxParticlesPerMeteor
+      const poolMaxSize = poolInitialSize * 1.5
+      
+      particlePool.current = new ObjectPool<Particle>(
+        () => ({
+          x: 0, y: 0, vx: 0, vy: 0, life: 0, size: 0, opacity: 1,
+          color: { r: 255, g: 255, b: 255 },
+          active: false
+        }),
+        (particle) => {
+          particle.active = false
+          particle.life = 0
+          particle.opacity = 1
+        },
+        poolInitialSize,
+        poolMaxSize
+      )
+      particleData.current = [] // Not used in JS fallback mode
+    }
 
     // Set canvas size
     const resizeCanvas = () => {
@@ -213,6 +237,7 @@ export default function MeteorShower2DOptimized() {
       )
       
       // Initialize or adjust meteor pool while preserving active meteors
+      
       if (meteorsRef.current.length !== meteorCount) {
         const currentMeteors = meteorsRef.current
         const activeMeteors = currentMeteors.filter(m => m.active)
@@ -286,7 +311,6 @@ export default function MeteorShower2DOptimized() {
     
     const debugConfig = DebugConfigManager.getInstance()
     if (debugConfig.isEnabled('enableMeteorLogs') || debugConfig.isEnabled('enableConsoleLogs')) {
-      console.log(`MeteorShower2DOptimized: Initialized with ${meteorsRef.current.length} meteors, spawning ${initialMeteorCount} in ${clusterCount} clusters over 3 seconds`)
     }
 
     // Mouse interaction handlers
@@ -360,7 +384,8 @@ export default function MeteorShower2DOptimized() {
         glowIntensity: 1,
         active: false,
         type: 'cool',
-        particles: [],
+        particles: [], // JS ObjectPool: array of particle objects
+        particleIndices: [], // WASM ParticlePool: array of particle indices
         isVisible: true
       }
     }
@@ -370,7 +395,9 @@ export default function MeteorShower2DOptimized() {
       if (!canvas) return // Safety check
       
       const meteorIndex = typeof meteor === 'number' ? meteor : meteorsRef.current.indexOf(meteor)
-      if (meteorIndex === -1 && typeof meteor !== 'number') return
+      if (meteorIndex === -1 && typeof meteor !== 'number') {
+        return
+      }
       
       const centerX = canvas.width / 2
       const bottomY = canvas.height + 20 // Extend beyond screen edge
@@ -470,43 +497,48 @@ export default function MeteorShower2DOptimized() {
           glowIntensity
         })
         
+        
         if (success) {
           // Update JS meteor object for compatibility
-          if (typeof meteor !== 'number') {
+          const meteorObj = typeof meteor === 'number' ? meteorsRef.current[meteor] : meteor
+          if (meteorObj) {
             // IMPORTANT: Reset all position properties for recycled meteors
-            meteor.startX = startX
-            meteor.startY = startY
-            meteor.endX = endX
-            meteor.endY = endY
-            meteor.x = startX
-            meteor.y = startY
-            meteor.controlX = controlX
-            meteor.controlY = controlY
-            meteor.vx = Math.cos(Math.atan2(dy, dx)) * speed
-            meteor.vy = Math.sin(Math.atan2(dy, dx)) * speed
-            meteor.life = 0
-            meteor.speed = speed
-            meteor.maxLife = maxLife
-            meteor.angle = Math.atan2(dy, dx) * 180 / Math.PI
-            meteor.pathIndex = 0
-            meteor.active = true
-            meteor.isVisible = true
-            meteor.type = type
-            meteor.size = finalSize
-            meteor.color = color
-            meteor.glowColor = glowColor
-            meteor.glowIntensity = glowIntensity
-            meteor.trail = []
-            meteor.particles = []
-            meteor.pathPoints = []
-            meteor.pathPointsFlat = undefined
+            meteorObj.startX = startX
+            meteorObj.startY = startY
+            meteorObj.endX = endX
+            meteorObj.endY = endY
+            meteorObj.x = startX
+            meteorObj.y = startY
+            meteorObj.controlX = controlX
+            meteorObj.controlY = controlY
+            meteorObj.vx = Math.cos(Math.atan2(dy, dx)) * speed
+            meteorObj.vy = Math.sin(Math.atan2(dy, dx)) * speed
+            meteorObj.life = 0
+            meteorObj.speed = speed
+            meteorObj.maxLife = maxLife
+            meteorObj.angle = Math.atan2(dy, dx) * 180 / Math.PI
+            meteorObj.pathIndex = 0
+            meteorObj.active = true
+            meteorObj.isVisible = true
+            meteorObj.type = type
+            meteorObj.size = finalSize
+            meteorObj.color = color
+            meteorObj.glowColor = glowColor
+            meteorObj.glowIntensity = glowIntensity
+            meteorObj.trail = []
+            meteorObj.particles = []
+            meteorObj.particleIndices = []
+            meteorObj.pathPoints = []
+            meteorObj.pathPointsFlat = undefined
           }
           return
         }
       }
       
       // Fallback to JS implementation
-      if (typeof meteor === 'number') return // Can't fallback with just index
+      if (typeof meteor === 'number') {
+        return // Can't fallback with just index
+      }
       
       meteor.startX = startX
       meteor.startY = startY
@@ -974,6 +1006,11 @@ export default function MeteorShower2DOptimized() {
       
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       
+      // Debug log on first frame
+      if (frameCount === 0) {
+        // First frame initialization
+      }
+      
       // Calculate speed multiplier with limits to prevent meteors from disappearing
       let targetMultiplier = 1
       const timeSinceClick = currentTime - clickBoostRef.current
@@ -994,6 +1031,10 @@ export default function MeteorShower2DOptimized() {
       
       // Check if WASM MeteorSystem is available
       const useWASM = meteorSystemRef.current && meteorSystemRef.current.isReady()
+      
+      // Log once which path we're using
+      if (frameCount === 0) {
+      }
       
       if (useWASM) {
         // WASM path: Update meteors using MeteorSystem
@@ -1023,7 +1064,6 @@ export default function MeteorShower2DOptimized() {
           const debugConfig = DebugConfigManager.getInstance()
           if (debugConfig.isEnabled('enableMeteorLogs') || debugConfig.isEnabled('enableConsoleLogs')) {
             const activeParticleCount = meteorSystemRef.current!.getActiveParticleCount()
-            console.log('WASM Active meteors:', activeMeteorCount, 'Active particles:', activeParticleCount)
           }
         }
       } else {
@@ -1034,7 +1074,6 @@ export default function MeteorShower2DOptimized() {
           if (debugConfig.isEnabled('enableMeteorLogs') || debugConfig.isEnabled('enableConsoleLogs')) {
             const activeMeteors = meteorsRef.current.filter(m => m.active).length
             const totalParticles = meteorsRef.current.reduce((sum, m) => sum + m.particles.length, 0)
-            console.log('JS Active meteors:', activeMeteors, '/', meteorsRef.current.length, 'Total particles:', totalParticles)
           }
         }
         
@@ -1053,13 +1092,26 @@ export default function MeteorShower2DOptimized() {
       let batchProcessed = false
       
       if (wasmModule && wasmModule.batch_update_positions && wasmModule.batch_apply_drag) {
-        // Collect all particles for batch processing
+        // Collect all particles for batch processing (works with both WASM and JS approaches)
         meteorsRef.current.forEach((meteor, meteorIndex) => {
-          if (meteor.active && meteor.particles.length > 0) {
-            meteor.particles.forEach((particle) => {
-              allParticles.push(particle)
-              particleOwners.push(meteorIndex)
-            })
+          if (meteor.active) {
+            // Check WASM ParticlePool approach first
+            if (meteor.particleIndices && meteor.particleIndices.length > 0) {
+              meteor.particleIndices.forEach((particleIndex) => {
+                const particle = particleData.current[particleIndex]
+                if (particle.active) {
+                  allParticles.push(particle)
+                  particleOwners.push(meteorIndex)
+                }
+              })
+            }
+            // Fallback to JavaScript ObjectPool approach
+            else if (meteor.particles.length > 0) {
+              meteor.particles.forEach((particle) => {
+                allParticles.push(particle)
+                particleOwners.push(meteorIndex)
+              })
+            }
           }
         })
         
@@ -1117,8 +1169,13 @@ export default function MeteorShower2DOptimized() {
         // WASM rendering path
         const positions = meteorSystemRef.current!.getMeteorPositions()
         const properties = meteorSystemRef.current!.getMeteorProperties()
-        const particleData = meteorSystemRef.current!.getParticleData()
+        const wasmParticleData = meteorSystemRef.current!.getParticleData()
         const particleColors = meteorSystemRef.current!.getParticleColors()
+        
+        // Debug log WASM data on first few frames
+        if (frameCount < 5) {
+          // WASM data available
+        }
         
         // Update meteor trails and render
         positions.forEach((pos, index) => {
@@ -1131,7 +1188,8 @@ export default function MeteorShower2DOptimized() {
           // Clear trail and particles when meteor becomes inactive
           if (!pos.active) {
             meteor.trail = []
-            meteor.particles = []
+            meteor.particles = [] // Clear for JS ObjectPool
+            meteor.particleIndices = [] // Clear for WASM ParticlePool
             meteor.life = 0
             return
           }
@@ -1179,10 +1237,29 @@ export default function MeteorShower2DOptimized() {
         })
         
         // Render particles from WASM data
-        particleData.forEach((particle, index) => {
-          if (!particle.active) return
+        // Parse WASM particle data (x, y, size, opacity, active per particle)
+        const PARTICLE_STRIDE = 5
+        const particleCount = Math.floor(wasmParticleData.length / PARTICLE_STRIDE)
+        
+        for (let i = 0; i < particleCount; i++) {
+          const baseIndex = i * PARTICLE_STRIDE
+          const active = wasmParticleData[baseIndex + 4] > 0.5
           
-          const color = particleColors[index]
+          if (!active) continue
+          
+          const particle = {
+            x: wasmParticleData[baseIndex],
+            y: wasmParticleData[baseIndex + 1],
+            size: wasmParticleData[baseIndex + 2],
+            opacity: wasmParticleData[baseIndex + 3]
+          }
+          
+          const colorIndex = i * 3
+          const color = {
+            r: particleColors[colorIndex] || 255,
+            g: particleColors[colorIndex + 1] || 255,
+            b: particleColors[colorIndex + 2] || 255
+          }
           
           // Create radiant shine gradient
           const shineSize = particle.size * 8
@@ -1209,7 +1286,7 @@ export default function MeteorShower2DOptimized() {
             shineSize * 2
           )
           ctx.restore()
-        })
+        }
       } else {
         // JS fallback rendering path
         meteorsRef.current.forEach((meteor) => {
@@ -1263,82 +1340,180 @@ export default function MeteorShower2DOptimized() {
             // Spawn particles from current position (head) that get left behind
             const baseSpawnRate = meteor.type === 'bright' ? 0.3 : 0.2
             const spawnRate = baseSpawnRate * Math.max(1, speedMultiplierRef.current * 0.5)
-            if (Math.random() < spawnRate && meteor.particles.length < dynamicParticleLimit) {
-              const particle = particlePool.current!.acquire()
-              
-              // Natural debris effect - particles spread with reduced distance
-              particle.x = meteor.x + (Math.random() - 0.5) * meteor.size * 2
-              particle.y = meteor.y + (Math.random() - 0.5) * meteor.size * 2
-              
-              // Base backward motion (opposite to meteor direction)
-              particle.vx = -meteor.vx * (0.1 + Math.random() * 0.15)
-              particle.vy = -meteor.vy * (0.1 + Math.random() * 0.15)
-              
-              // Add lateral spread for natural debris effect
-              const lateralSpeed = 0.4 + Math.random() * 0.4
-              const lateralAngle = Math.random() * Math.PI * 2
-              
-              particle.vx += Math.cos(lateralAngle) * lateralSpeed
-              particle.vy += Math.sin(lateralAngle) * lateralSpeed
-              
-              // Ensure particles don't move too fast forward
-              const particleAngleRad = meteor.angle * Math.PI / 180
-              const meteorDirX = Math.cos(particleAngleRad)
-              const meteorDirY = Math.sin(particleAngleRad)
-              const forwardSpeed = particle.vx * meteorDirX + particle.vy * meteorDirY
-              
-              if (forwardSpeed > Math.sqrt(meteor.vx * meteor.vx + meteor.vy * meteor.vy) * 0.5) {
-                // Reduce forward component
-                particle.vx -= meteorDirX * forwardSpeed * 0.7
-                particle.vy -= meteorDirY * forwardSpeed * 0.7
+            // Check current particle count (works with both WASM and JS approaches)
+            const currentParticleCount = meteor.particleIndices ? meteor.particleIndices.length : meteor.particles.length
+            
+            if (Math.random() < spawnRate && currentParticleCount < dynamicParticleLimit) {
+              // Try WASM ParticlePool first, fallback to JS ObjectPool
+              if (particlePool.current && typeof particlePool.current.allocate === 'function') {
+                // WASM ParticlePool path
+                const particleIndex = particlePool.current.allocate(meteorSystemId)
+                if (particleIndex !== undefined) {
+                  // Initialize particle indices array if needed
+                  if (!meteor.particleIndices) {
+                    meteor.particleIndices = []
+                  }
+                  
+                  // Get particle object from data array using index
+                  const particle = particleData.current[particleIndex]
+                  
+                  // Configure particle (same logic as before)
+                  particle.x = meteor.x + (Math.random() - 0.5) * meteor.size * 2
+                  particle.y = meteor.y + (Math.random() - 0.5) * meteor.size * 2
+                  
+                  particle.vx = -meteor.vx * (0.1 + Math.random() * 0.15)
+                  particle.vy = -meteor.vy * (0.1 + Math.random() * 0.15)
+                  
+                  const lateralSpeed = 0.4 + Math.random() * 0.4
+                  const lateralAngle = Math.random() * Math.PI * 2
+                  
+                  particle.vx += Math.cos(lateralAngle) * lateralSpeed
+                  particle.vy += Math.sin(lateralAngle) * lateralSpeed
+                  
+                  const particleAngleRad = meteor.angle * Math.PI / 180
+                  const meteorDirX = Math.cos(particleAngleRad)
+                  const meteorDirY = Math.sin(particleAngleRad)
+                  const forwardSpeed = particle.vx * meteorDirX + particle.vy * meteorDirY
+                  
+                  if (forwardSpeed > Math.sqrt(meteor.vx * meteor.vx + meteor.vy * meteor.vy) * 0.5) {
+                    particle.vx -= meteorDirX * forwardSpeed * 0.7
+                    particle.vy -= meteorDirY * forwardSpeed * 0.7
+                  }
+                  
+                  particle.life = 0
+                  
+                  const baseParticleSize = 0.21
+                  const meteorSizeRatio = (meteor.size - 0.3) / 0.7
+                  const sizeVariation = 0.25 * meteorSizeRatio
+                  const dynamicSize = baseParticleSize * (1 + sizeVariation)
+                  particle.size = dynamicSize * (0.9 + Math.random() * 0.2)
+                  
+                  const baseOpacity = 0.64
+                  const opacityVariation = 0.25 * meteorSizeRatio
+                  particle.opacity = baseOpacity * (1 + opacityVariation)
+                  
+                  particle.color = { ...meteor.glowColor }
+                  particle.active = true
+                  
+                  // Store particle index instead of object
+                  meteor.particleIndices.push(particleIndex)
+                }
+              } else {
+                // JavaScript ObjectPool fallback
+                const particle = particlePool.current!.acquire()
+                
+                particle.x = meteor.x + (Math.random() - 0.5) * meteor.size * 2
+                particle.y = meteor.y + (Math.random() - 0.5) * meteor.size * 2
+                
+                particle.vx = -meteor.vx * (0.1 + Math.random() * 0.15)
+                particle.vy = -meteor.vy * (0.1 + Math.random() * 0.15)
+                
+                const lateralSpeed = 0.4 + Math.random() * 0.4
+                const lateralAngle = Math.random() * Math.PI * 2
+                
+                particle.vx += Math.cos(lateralAngle) * lateralSpeed
+                particle.vy += Math.sin(lateralAngle) * lateralSpeed
+                
+                const particleAngleRad = meteor.angle * Math.PI / 180
+                const meteorDirX = Math.cos(particleAngleRad)
+                const meteorDirY = Math.sin(particleAngleRad)
+                const forwardSpeed = particle.vx * meteorDirX + particle.vy * meteorDirY
+                
+                if (forwardSpeed > Math.sqrt(meteor.vx * meteor.vx + meteor.vy * meteor.vy) * 0.5) {
+                  particle.vx -= meteorDirX * forwardSpeed * 0.7
+                  particle.vy -= meteorDirY * forwardSpeed * 0.7
+                }
+                
+                particle.life = 0
+                
+                const baseParticleSize = 0.21
+                const meteorSizeRatio = (meteor.size - 0.3) / 0.7
+                const sizeVariation = 0.25 * meteorSizeRatio
+                const dynamicSize = baseParticleSize * (1 + sizeVariation)
+                particle.size = dynamicSize * (0.9 + Math.random() * 0.2)
+                
+                const baseOpacity = 0.64
+                const opacityVariation = 0.25 * meteorSizeRatio
+                particle.opacity = baseOpacity * (1 + opacityVariation)
+                
+                particle.color = { ...meteor.glowColor }
+                particle.active = true
+                meteor.particles.push(particle)
               }
-              
-              particle.life = 0
-              
-              // Dynamic particle sizing
-              const baseParticleSize = 0.21
-              const meteorSizeRatio = (meteor.size - 0.3) / 0.7
-              const sizeVariation = 0.25 * meteorSizeRatio
-              const dynamicSize = baseParticleSize * (1 + sizeVariation)
-              particle.size = dynamicSize * (0.9 + Math.random() * 0.2)
-              
-              // Dynamic opacity
-              const baseOpacity = 0.64
-              const opacityVariation = 0.25 * meteorSizeRatio
-              particle.opacity = baseOpacity * (1 + opacityVariation)
-              
-              particle.color = { ...meteor.glowColor }
-              particle.active = true
-              meteor.particles.push(particle)
             }
           }
 
-          // Update particles
-          meteor.particles = meteor.particles.filter((particle) => {
-            if (!batchProcessed) {
-              particle.x += particle.vx * lifeIncrement
-              particle.y += particle.vy * lifeIncrement
-              particle.life += lifeIncrement
+          // Update particles (works with both WASM and JS approaches)
+          if (meteor.particleIndices && particlePool.current && typeof particlePool.current.free === 'function') {
+            // WASM ParticlePool path - filter by index
+            meteor.particleIndices = meteor.particleIndices.filter((particleIndex) => {
+              const particle = particleData.current[particleIndex]
               
-              particle.vx *= 0.99
-              particle.vy *= 0.99
+              if (!batchProcessed) {
+                particle.x += particle.vx * lifeIncrement
+                particle.y += particle.vy * lifeIncrement
+                particle.life += lifeIncrement
+                
+                particle.vx *= 0.99
+                particle.vy *= 0.99
+                
+                particle.vx += (Math.random() - 0.5) * 0.02 * lifeIncrement
+                particle.vy += (Math.random() - 0.5) * 0.02 * lifeIncrement
+              }
               
-              particle.vx += (Math.random() - 0.5) * 0.02 * lifeIncrement
-              particle.vy += (Math.random() - 0.5) * 0.02 * lifeIncrement
-            }
-            
-            if (particle.life >= 50) {
-              particlePool.current!.release(particle)
-              return false
-            }
-            return true
-          })
+              if (particle.life >= 50) {
+                particle.active = false
+                particlePool.current!.free(particleIndex)
+                return false
+              }
+              return true
+            })
+          } else {
+            // JavaScript ObjectPool fallback
+            meteor.particles = meteor.particles.filter((particle) => {
+              if (!batchProcessed) {
+                particle.x += particle.vx * lifeIncrement
+                particle.y += particle.vy * lifeIncrement
+                particle.life += lifeIncrement
+                
+                particle.vx *= 0.99
+                particle.vy *= 0.99
+                
+                particle.vx += (Math.random() - 0.5) * 0.02 * lifeIncrement
+                particle.vy += (Math.random() - 0.5) * 0.02 * lifeIncrement
+              }
+              
+              if (particle.life >= 50) {
+                particlePool.current!.release(particle)
+                return false
+              }
+              return true
+            })
+          }
 
           // Check if meteor is done
           if (t >= 1 || meteor.life >= meteor.maxLife) {
             meteor.active = false
-            meteor.particles.forEach(p => particlePool.current!.release(p))
-            meteor.particles = []
+            
+            // Release all particles (works with both WASM and JS approaches)
+            if (meteor.particleIndices && particlePool.current && typeof particlePool.current.free_block === 'function') {
+              // WASM ParticlePool path - bulk release by indices
+              if (meteor.particleIndices.length > 0) {
+                // Mark particles as inactive
+                meteor.particleIndices.forEach(index => {
+                  particleData.current[index].active = false
+                })
+                // Free the block of particles
+                const indices = new Uint32Array(meteor.particleIndices)
+                particlePool.current.free_block(indices)
+                meteor.particleIndices = []
+              }
+            } else {
+              // JavaScript ObjectPool fallback
+              meteor.particles.forEach(p => particlePool.current!.release(p))
+              meteor.particles = []
+              meteor.particleIndices = [] // Clear for consistency
+            }
             return
           }
 
@@ -1348,34 +1523,71 @@ export default function MeteorShower2DOptimized() {
           // Draw trail
           drawTaperedTrail(meteor, ctx)
 
-          // Draw particles with radiant shine effect
-          meteor.particles.forEach((particle) => {
-            const lifetimeFade = Math.pow(1 - particle.life / 50, 0.3)
-            const finalOpacity = particle.opacity * lifetimeFade
-            
-            const shineSize = particle.size * 8
-            const gradient = ctx.createRadialGradient(
-              particle.x, particle.y, 0,
-              particle.x, particle.y, shineSize
-            )
-            
-            gradient.addColorStop(0, `rgba(255, 255, 255, ${finalOpacity})`)
-            gradient.addColorStop(0.2, `rgba(255, 255, 255, ${finalOpacity * 0.8})`)
-            gradient.addColorStop(0.4, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${finalOpacity * 0.6})`)
-            gradient.addColorStop(0.7, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${finalOpacity * 0.3})`)
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
-            
-            ctx.save()
-            ctx.globalCompositeOperation = 'screen'
-            ctx.fillStyle = gradient
-            ctx.fillRect(
-              particle.x - shineSize,
-              particle.y - shineSize,
-              shineSize * 2,
-              shineSize * 2
-            )
-            ctx.restore()
-          })
+          // Draw particles with radiant shine effect (works with both WASM and JS approaches)
+          if (meteor.particleIndices && meteor.particleIndices.length > 0) {
+            // WASM ParticlePool path - render by indices
+            meteor.particleIndices.forEach((particleIndex) => {
+              const particle = particleData.current[particleIndex]
+              if (!particle.active) {
+                return
+              }
+              
+              const lifetimeFade = Math.pow(1 - particle.life / 50, 0.3)
+              const finalOpacity = particle.opacity * lifetimeFade
+              
+              const shineSize = particle.size * 8
+              const gradient = ctx.createRadialGradient(
+                particle.x, particle.y, 0,
+                particle.x, particle.y, shineSize
+              )
+              
+              gradient.addColorStop(0, `rgba(255, 255, 255, ${finalOpacity})`)
+              gradient.addColorStop(0.2, `rgba(255, 255, 255, ${finalOpacity * 0.8})`)
+              gradient.addColorStop(0.4, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${finalOpacity * 0.6})`)
+              gradient.addColorStop(0.7, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${finalOpacity * 0.3})`)
+              gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
+              
+              ctx.save()
+              ctx.globalCompositeOperation = 'screen'
+              ctx.fillStyle = gradient
+              ctx.fillRect(
+                particle.x - shineSize,
+                particle.y - shineSize,
+                shineSize * 2,
+                shineSize * 2
+              )
+              ctx.restore()
+            })
+          } else if (meteor.particles.length > 0) {
+            // JavaScript ObjectPool fallback - render by objects
+            meteor.particles.forEach((particle) => {
+              const lifetimeFade = Math.pow(1 - particle.life / 50, 0.3)
+              const finalOpacity = particle.opacity * lifetimeFade
+              
+              const shineSize = particle.size * 8
+              const gradient = ctx.createRadialGradient(
+                particle.x, particle.y, 0,
+                particle.x, particle.y, shineSize
+              )
+              
+              gradient.addColorStop(0, `rgba(255, 255, 255, ${finalOpacity})`)
+              gradient.addColorStop(0.2, `rgba(255, 255, 255, ${finalOpacity * 0.8})`)
+              gradient.addColorStop(0.4, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${finalOpacity * 0.6})`)
+              gradient.addColorStop(0.7, `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${finalOpacity * 0.3})`)
+              gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
+              
+              ctx.save()
+              ctx.globalCompositeOperation = 'screen'
+              ctx.fillStyle = gradient
+              ctx.fillRect(
+                particle.x - shineSize,
+                particle.y - shineSize,
+                shineSize * 2,
+                shineSize * 2
+              )
+              ctx.restore()
+            })
+          }
 
           // Draw meteor head
           drawMeteorHead(meteor.x, meteor.y, meteor.size, meteor.glowIntensity, meteor, ctx)
@@ -1434,14 +1646,13 @@ export default function MeteorShower2DOptimized() {
         
         const debugConfig = DebugConfigManager.getInstance()
         if (debugConfig.isEnabled('enableMeteorLogs') || debugConfig.isEnabled('enableConsoleLogs')) {
-          console.log('Quality changed: meteor count adjusted from', meteorsRef.current.length, 'to', newCount)
         }
       }
     }
     window.addEventListener('qualityTierChanged', handleQualityChange)
 
-    // Start animation
-    animate(performance.now())
+    // Start initialization (animation will start after WASM init)
+    initMeteorSystem()
 
     // Cleanup
     return () => {
@@ -1465,7 +1676,7 @@ export default function MeteorShower2DOptimized() {
         meteorSystemRef.current = null
       }
     }
-  }, [prefersReducedMotion, wasmModule])
+  }, [prefersReducedMotion, wasmModule, wasmLoading])
 
   if (prefersReducedMotion) {
     return null
