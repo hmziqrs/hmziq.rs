@@ -1,5 +1,7 @@
 # MeteorShower Refactor Implementation Guide
 
+**Component Path:** `@/components/effects/MeteorShower.tsx`
+
 ## Overview
 
 This guide provides step-by-step instructions for implementing the MeteorShower component refactor with dual-mode (WASM/JavaScript) architecture and comprehensive performance optimizations.
