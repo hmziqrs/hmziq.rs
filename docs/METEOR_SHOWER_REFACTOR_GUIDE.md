@@ -17,7 +17,22 @@ This guide provides step-by-step instructions for implementing the MeteorShower 
 
 ## Implementation Order
 
-### 1. Core Interfaces (Phase 1)
+### Architecture File Index
+**Reference**: `docs/METEOR_SHOWER_REFACTOR_ARCHITECTURE.md`
+
+| Phase | Description | Line Range |
+|-------|-------------|------------|
+| Phase 1 | Core Interfaces | Lines 37-288 |
+| Phase 2 | JavaScript Fallback | Lines 289-1022 |
+| Phase 3 | WASM Infrastructure | Lines 1023-1512 |
+| Phase 4 | Refactor WASM Systems | Lines 1513-1830 |
+| Phase 5 | TypeScript Integration | Lines 1831-2198 |
+| Phase 6 | Update MeteorShower | Lines 2199-2234 |
+| Phase 7 | Performance Optimization | Lines 2235-2309 |
+| Phase 8 | Debug Tools | Lines 2310-2456 |
+| Phase 9 | Testing | Lines 2457-2773 |
+
+### 1. Core Interfaces (Phase 1) - Architecture Lines: 37-288
 ```bash
 # Create these files first:
 lib/rendering/interfaces.ts
@@ -25,7 +40,7 @@ lib/rendering/pipeline-factory.ts
 lib/rendering/data-format.ts
 ```
 
-### 2. JavaScript Fallback (Phase 2)
+### 2. JavaScript Fallback (Phase 2) - Architecture Lines: 289-1022
 ```bash
 # Implement JS version for fallback:
 lib/rendering/js-fallback/js-meteor-system.ts
@@ -33,7 +48,7 @@ lib/rendering/js-fallback/js-particle-system.ts
 lib/rendering/js-fallback/js-render-pipeline.ts
 ```
 
-### 3. WASM Infrastructure (Phase 3-4)
+### 3. WASM Infrastructure (Phase 3-4) - Architecture Lines: 1023-1830
 ```bash
 # Add to Rust codebase:
 wasm/src/render_pipeline.rs
@@ -43,7 +58,7 @@ wasm/src/particle_system.rs
 # Update lib.rs to export RenderPipeline
 ```
 
-### 4. TypeScript Integration (Phase 5)
+### 4. TypeScript Integration (Phase 5) - Architecture Lines: 1831-2198
 ```bash
 # Create integration layer:
 lib/rendering/wasm-render-pipeline.ts
@@ -51,10 +66,10 @@ lib/rendering/typed-array-manager.ts
 lib/rendering/unified-renderer.ts
 ```
 
-### 5. Update Components (Phase 6)
+### 5. Update Components (Phase 6) - Architecture Lines: 2199-2234
 Replace multiple WASM calls in MeteorShower.tsx with single pipeline call.
 
-### 6. Add Debug Tools (Phase 7-8)
+### 6. Add Debug Tools (Phase 7-8) - Architecture Lines: 2235-2456
 ```bash
 # Optional but recommended:
 lib/rendering/performance-monitor.ts
