@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 #[derive(Clone, Copy)]
 pub struct Particle {
@@ -45,32 +45,32 @@ pub struct SpawnPoint {
 
 pub struct ParticleSystem {
     particles: Vec<Particle>,
-    free_indices: Vec<usize>,
+    free_indices: VecDeque<usize>,
     meteor_associations: HashMap<usize, Vec<usize>>,
-    max_particles: usize,
     active_count: usize,
-    has_new_spawns_flag: bool,
+    has_new_spawns: bool,
     last_spawn_time: f32,
+    max_particles: usize,
 }
 
 impl ParticleSystem {
     pub fn new(max_particles: usize) -> Self {
         let mut particles = Vec::with_capacity(max_particles);
-        let mut free_indices = Vec::with_capacity(max_particles);
+        let mut free_indices = VecDeque::with_capacity(max_particles);
         
         for i in 0..max_particles {
             particles.push(Particle::default());
-            free_indices.push(max_particles - 1 - i); // Push in reverse order
+            free_indices.push_back(i);
         }
         
         Self {
             particles,
             free_indices,
             meteor_associations: HashMap::new(),
-            max_particles,
             active_count: 0,
-            has_new_spawns_flag: false,
+            has_new_spawns: false,
             last_spawn_time: 0.0,
+            max_particles,
         }
     }
     
@@ -83,64 +83,63 @@ impl ParticleSystem {
         vy: f32,
         meteor_type: &str
     ) -> bool {
-        if self.free_indices.is_empty() {
-            return false;
+        if let Some(index) = self.free_indices.pop_front() {
+            let particle = &mut self.particles[index];
+            
+            // Initialize particle
+            particle.active = true;
+            particle.x = x + (rand() - 0.5) * 4.0;
+            particle.y = y + (rand() - 0.5) * 4.0;
+            particle.vx = -vx * (0.1 + rand() * 0.15);
+            particle.vy = -vy * (0.1 + rand() * 0.15);
+            
+            // Add lateral velocity for natural spread
+            let lateral_speed = 0.4 + rand() * 0.4;
+            let lateral_angle = rand() * std::f32::consts::PI * 2.0;
+            particle.vx += lateral_angle.cos() * lateral_speed;
+            particle.vy += lateral_angle.sin() * lateral_speed;
+            
+            particle.life = 0.0;
+            particle.size = 0.21 * (0.9 + rand() * 0.2);
+            particle.opacity = 0.64;
+            
+            // Set color based on meteor type
+            match meteor_type {
+                "cool" => {
+                    particle.color_r = 100;
+                    particle.color_g = 180;
+                    particle.color_b = 255;
+                }
+                "warm" => {
+                    particle.color_r = 255;
+                    particle.color_g = 200;
+                    particle.color_b = 100;
+                }
+                _ => { // bright
+                    particle.color_r = 255;
+                    particle.color_g = 255;
+                    particle.color_b = 255;
+                }
+            }
+            
+            // Track association
+            self.meteor_associations
+                .entry(meteor_id)
+                .or_insert_with(Vec::new)
+                .push(index);
+            
+            self.active_count += 1;
+            self.has_new_spawns = true;
+            self.last_spawn_time = web_sys::window().unwrap().performance().unwrap().now() as f32;
+            
+            true
+        } else {
+            false
         }
-        
-        let index = self.free_indices.pop().unwrap();
-        let particle = &mut self.particles[index];
-        
-        // Initialize particle
-        particle.active = true;
-        particle.x = x + (rand() - 0.5) * 4.0;
-        particle.y = y + (rand() - 0.5) * 4.0;
-        particle.vx = -vx * (0.1 + rand() * 0.15);
-        particle.vy = -vy * (0.1 + rand() * 0.15);
-        
-        // Add lateral velocity for natural spread
-        let lateral_speed = 0.4 + rand() * 0.4;
-        let lateral_angle = rand() * std::f32::consts::PI * 2.0;
-        particle.vx += lateral_angle.cos() * lateral_speed;
-        particle.vy += lateral_angle.sin() * lateral_speed;
-        
-        particle.life = 0.0;
-        particle.size = 0.21 * (0.9 + rand() * 0.2);
-        particle.opacity = 0.64;
-        
-        // Set color based on meteor type
-        match meteor_type {
-            "cool" => {
-                particle.color_r = 100;
-                particle.color_g = 180;
-                particle.color_b = 255;
-            }
-            "warm" => {
-                particle.color_r = 255;
-                particle.color_g = 200;
-                particle.color_b = 100;
-            }
-            _ => { // bright
-                particle.color_r = 255;
-                particle.color_g = 255;
-                particle.color_b = 255;
-            }
-        }
-        
-        // Track association
-        self.meteor_associations
-            .entry(meteor_id)
-            .or_insert_with(Vec::new)
-            .push(index);
-        
-        self.active_count += 1;
-        self.has_new_spawns_flag = true;
-        self.last_spawn_time = web_sys::window().unwrap().performance().unwrap().now() as f32;
-        
-        true
     }
     
     pub fn update_all(&mut self, dt: f32) {
-        self.has_new_spawns_flag = false;
+        self.has_new_spawns = false;
         
         for i in 0..self.particles.len() {
             let particle = &mut self.particles[i];
@@ -179,7 +178,7 @@ impl ParticleSystem {
         }
         
         particle.active = false;
-        self.free_indices.push(index);
+        self.free_indices.push_back(index);
         self.active_count -= 1;
         
         // Remove from associations
@@ -224,7 +223,7 @@ impl ParticleSystem {
     }
     
     pub fn has_new_spawns(&self) -> bool {
-        self.has_new_spawns_flag || 
+        self.has_new_spawns || 
         (web_sys::window().unwrap().performance().unwrap().now() as f32 - self.last_spawn_time < 50.0)
     }
     
@@ -237,11 +236,7 @@ impl ParticleSystem {
     }
 }
 
-// Simple pseudo-random number generator for deterministic results
+// Simple random number generator for demo (replace with proper RNG)
 fn rand() -> f32 {
-    static mut SEED: u32 = 0x12345678;
-    unsafe {
-        SEED = SEED.wrapping_mul(1664525).wrapping_add(1013904223);
-        (SEED >> 16) as f32 / 65536.0
-    }
+    js_sys::Math::random() as f32
 }

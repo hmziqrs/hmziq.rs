@@ -1,10 +1,18 @@
 use wasm_bindgen::prelude::*;
-use js_sys::{Float32Array, Uint8Array};
+use js_sys::Float32Array;
 
-// Maximum meteors and particles to pre-allocate
+pub struct SpawnPoint {
+    pub meteor_id: usize,
+    pub x: f32,
+    pub y: f32,
+    pub vx: f32,
+    pub vy: f32,
+    pub meteor_type: String,
+    pub should_spawn: bool,
+}
+
+// Maximum meteors to pre-allocate
 const MAX_METEORS: usize = 20;
-const MAX_PARTICLES_PER_METEOR: usize = 10;
-const MAX_TOTAL_PARTICLES: usize = MAX_METEORS * MAX_PARTICLES_PER_METEOR;
 const BEZIER_SEGMENTS: usize = 60;
 
 #[wasm_bindgen]
@@ -22,38 +30,6 @@ impl Vec2 {
     }
 }
 
-#[derive(Clone, Copy)]
-struct Particle {
-    x: f32,
-    y: f32,
-    vx: f32,
-    vy: f32,
-    life: f32,
-    size: f32,
-    opacity: f32,
-    color_r: u8,
-    color_g: u8,
-    color_b: u8,
-    active: bool,
-}
-
-impl Default for Particle {
-    fn default() -> Self {
-        Particle {
-            x: 0.0,
-            y: 0.0,
-            vx: 0.0,
-            vy: 0.0,
-            life: 0.0,
-            size: 0.0,
-            opacity: 1.0,
-            color_r: 255,
-            color_g: 255,
-            color_b: 255,
-            active: false,
-        }
-    }
-}
 
 #[derive(Clone)]
 struct Meteor {
@@ -94,10 +70,6 @@ struct Meteor {
     active: bool,
     visible: bool,
     meteor_type: u8, // 0: cool, 1: warm, 2: bright
-    
-    // Particle indices (start, count)
-    particle_start: usize,
-    particle_count: usize,
 }
 
 impl Default for Meteor {
@@ -129,8 +101,6 @@ impl Default for Meteor {
             active: false,
             visible: true,
             meteor_type: 0,
-            particle_start: 0,
-            particle_count: 0,
         }
     }
 }
@@ -138,10 +108,9 @@ impl Default for Meteor {
 #[wasm_bindgen]
 pub struct MeteorSystem {
     meteors: Vec<Meteor>,
-    particles: Vec<Particle>,
-    particle_pool_cursor: usize,
     canvas_width: f32,
     canvas_height: f32,
+    last_significant_change: f32,
 }
 
 #[wasm_bindgen]
@@ -153,17 +122,11 @@ impl MeteorSystem {
             meteors.push(Meteor::default());
         }
         
-        let mut particles = Vec::with_capacity(MAX_TOTAL_PARTICLES);
-        for _ in 0..MAX_TOTAL_PARTICLES {
-            particles.push(Particle::default());
-        }
-        
         MeteorSystem {
             meteors,
-            particles,
-            particle_pool_cursor: 0,
             canvas_width,
             canvas_height,
+            last_significant_change: 0.0,
         }
     }
     
@@ -221,8 +184,6 @@ impl MeteorSystem {
         meteor.glow_intensity = glow_intensity;
         meteor.active = true;
         meteor.visible = true;
-        meteor.particle_start = 0;
-        meteor.particle_count = 0;
         
         // Calculate angle from path
         let dx = end_x - start_x;
@@ -305,134 +266,24 @@ impl MeteorSystem {
             
             // Store update data
             let is_done = t >= 1.0 || meteor.life >= meteor.max_life;
-            meteor_updates.push(Some((meteor.x, meteor.y, is_done, meteor.particle_start, meteor.particle_count)));
+            meteor_updates.push(Some((meteor.x, meteor.y, is_done)));
         }
         
         // Apply updates after mutable borrow is done
         for (i, update) in meteor_updates.iter().enumerate() {
-            if let Some((x, y, is_done, particle_start, particle_count)) = update {
+            if let Some((x, y, is_done)) = update {
                 // Check visibility
                 self.meteors[i].visible = self.is_in_viewport(*x, *y, 50.0);
                 
                 // Handle done meteors
                 if *is_done {
                     self.meteors[i].active = false;
-                    // Release particles
-                    for j in 0..*particle_count {
-                        let particle_idx = (particle_start + j) % MAX_TOTAL_PARTICLES;
-                        self.particles[particle_idx].active = false;
-                    }
-                    self.meteors[i].particle_count = 0;
+                    self.last_significant_change = web_sys::window().unwrap().performance().unwrap().now() as f32;
                 }
             }
         }
         
         active_count
-    }
-    
-    // Update particles
-    pub fn update_particles(&mut self, speed_multiplier: f32) {
-        let life_increment = speed_multiplier.min(2.0);
-        
-        for particle in &mut self.particles {
-            if !particle.active {
-                continue;
-            }
-            
-            // Update position
-            particle.x += particle.vx * life_increment;
-            particle.y += particle.vy * life_increment;
-            particle.life += life_increment;
-            
-            // Air resistance
-            particle.vx *= 0.99;
-            particle.vy *= 0.99;
-            
-            // Slight drift
-            particle.vx += (js_sys::Math::random() as f32 - 0.5) * 0.02 * life_increment;
-            particle.vy += (js_sys::Math::random() as f32 - 0.5) * 0.02 * life_increment;
-            
-            // Check lifetime
-            if particle.life >= 50.0 {
-                particle.active = false;
-            }
-        }
-    }
-    
-    // Spawn particle for a meteor
-    pub fn spawn_particle(
-        &mut self,
-        meteor_index: usize,
-        spawn_rate: f32,
-        max_particles: usize,
-    ) -> bool {
-        if meteor_index >= MAX_METEORS {
-            return false;
-        }
-        
-        let meteor = &self.meteors[meteor_index];
-        if !meteor.active || meteor.particle_count >= max_particles {
-            return false;
-        }
-        
-        // Check spawn rate
-        if js_sys::Math::random() as f32 >= spawn_rate {
-            return false;
-        }
-        
-        // Find free particle slot
-        let mut particle_idx = self.particle_pool_cursor;
-        let mut found = false;
-        
-        for _ in 0..MAX_TOTAL_PARTICLES {
-            if !self.particles[particle_idx].active {
-                found = true;
-                break;
-            }
-            particle_idx = (particle_idx + 1) % MAX_TOTAL_PARTICLES;
-        }
-        
-        if !found {
-            return false;
-        }
-        
-        // Initialize particle
-        let particle = &mut self.particles[particle_idx];
-        let meteor = &self.meteors[meteor_index];
-        
-        // Position with random offset
-        particle.x = meteor.x + (js_sys::Math::random() as f32 - 0.5) * meteor.size * 2.0;
-        particle.y = meteor.y + (js_sys::Math::random() as f32 - 0.5) * meteor.size * 2.0;
-        
-        // Backward motion
-        particle.vx = -meteor.vx * (0.1 + js_sys::Math::random() as f32 * 0.15);
-        particle.vy = -meteor.vy * (0.1 + js_sys::Math::random() as f32 * 0.15);
-        
-        // Lateral spread
-        let lateral_speed = 0.4 + js_sys::Math::random() as f32 * 0.4;
-        let lateral_angle = js_sys::Math::random() as f32 * std::f32::consts::PI * 2.0;
-        
-        particle.vx += lateral_angle.cos() * lateral_speed;
-        particle.vy += lateral_angle.sin() * lateral_speed;
-        
-        particle.life = 0.0;
-        particle.size = 0.21 * (0.9 + js_sys::Math::random() as f32 * 0.2);
-        particle.opacity = 0.64;
-        particle.color_r = meteor.glow_r;
-        particle.color_g = meteor.glow_g;
-        particle.color_b = meteor.glow_b;
-        particle.active = true;
-        
-        // Update cursor
-        self.particle_pool_cursor = (particle_idx + 1) % MAX_TOTAL_PARTICLES;
-        
-        // Track particle with meteor
-        if meteor.particle_count == 0 {
-            self.meteors[meteor_index].particle_start = particle_idx;
-        }
-        self.meteors[meteor_index].particle_count += 1;
-        
-        true
     }
     
     // Get meteor positions for rendering
@@ -471,41 +322,6 @@ impl MeteorSystem {
         Float32Array::from(&props[..])
     }
     
-    // Get particle data for rendering
-    pub fn get_particle_data(&self) -> Float32Array {
-        let mut data = Vec::with_capacity(MAX_TOTAL_PARTICLES * 5);
-        let mut active_count = 0;
-        
-        for particle in &self.particles {
-            if particle.active {
-                active_count += 1;
-                data.push(particle.x);
-                data.push(particle.y);
-                data.push(particle.size);
-                data.push(particle.opacity * (1.0 - particle.life / 50.0).powf(0.3));
-                data.push(1.0); // Active flag
-            } else {
-                data.extend(&[0.0, 0.0, 0.0, 0.0, 0.0]);
-            }
-        }
-        
-        
-        Float32Array::from(&data[..])
-    }
-    
-    // Get particle colors
-    pub fn get_particle_colors(&self) -> Uint8Array {
-        let mut colors = Vec::with_capacity(MAX_TOTAL_PARTICLES * 3);
-        
-        for particle in &self.particles {
-            colors.push(particle.color_r);
-            colors.push(particle.color_g);
-            colors.push(particle.color_b);
-        }
-        
-        Uint8Array::from(&colors[..])
-    }
-    
     // Helper: Check if position is in viewport
     fn is_in_viewport(&self, x: f32, y: f32, margin: f32) -> bool {
         x >= -margin && 
@@ -518,10 +334,69 @@ impl MeteorSystem {
     pub fn get_active_meteor_count(&self) -> usize {
         self.meteors.iter().filter(|m| m.active).count()
     }
+}
+
+// Lifecycle hooks for particle system integration
+impl MeteorSystem {
+    pub fn get_spawn_points(&self) -> Vec<SpawnPoint> {
+        let mut points = Vec::new();
+        
+        for (i, meteor) in self.meteors.iter().enumerate() {
+            if meteor.active && meteor.visible {
+                let should_spawn = match meteor.meteor_type {
+                    2 => js_sys::Math::random() < 0.3, // bright meteors spawn more
+                    _ => js_sys::Math::random() < 0.2,
+                };
+                
+                points.push(SpawnPoint {
+                    meteor_id: i,
+                    x: meteor.x,
+                    y: meteor.y,
+                    vx: meteor.vx,
+                    vy: meteor.vy,
+                    meteor_type: match meteor.meteor_type {
+                        0 => "cool".to_string(),
+                        1 => "warm".to_string(),
+                        _ => "bright".to_string(),
+                    },
+                    should_spawn,
+                });
+            }
+        }
+        
+        points
+    }
     
-    // Get active particle count
-    pub fn get_active_particle_count(&self) -> usize {
-        self.particles.iter().filter(|p| p.active).count()
+    pub fn get_dying_meteors(&self) -> Vec<usize> {
+        self.meteors.iter()
+            .enumerate()
+            .filter(|(_, m)| m.active && m.life / m.max_life > 0.9)
+            .map(|(i, _)| i)
+            .collect()
+    }
+    
+    pub fn has_significant_changes(&self) -> bool {
+        // Check if any meteors moved significantly
+        let current_time = web_sys::window().unwrap().performance().unwrap().now() as f32;
+        current_time - self.last_significant_change < 100.0 // 100ms threshold
+    }
+    
+    pub fn get_packed_render_data(&self) -> Vec<f32> {
+        let mut data = Vec::with_capacity(self.meteors.len() * 8);
+        
+        for meteor in &self.meteors {
+            // Pack as [x, y, size, angle, glow_intensity, life_ratio, type, active]
+            data.push(meteor.x);
+            data.push(meteor.y);
+            data.push(meteor.size);
+            data.push(meteor.angle);
+            data.push(meteor.glow_intensity);
+            data.push(meteor.life / meteor.max_life);
+            data.push(meteor.meteor_type as f32);
+            data.push(if meteor.active { 1.0 } else { 0.0 });
+        }
+        
+        data
     }
 }
 
