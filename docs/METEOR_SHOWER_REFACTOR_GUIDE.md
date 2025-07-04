@@ -1,8 +1,8 @@
-# V5 Unified Rendering Implementation Guide
+# MeteorShower Refactor Implementation Guide
 
 ## Overview
 
-The V5 Ultra Complete Unified Rendering Plan provides a production-ready dual-mode (WASM/JavaScript) render pipeline with all optimizations from previous versions merged into a single, comprehensive implementation.
+This guide provides step-by-step instructions for implementing the MeteorShower component refactor with dual-mode (WASM/JavaScript) architecture and comprehensive performance optimizations.
 
 ## Key Features
 
