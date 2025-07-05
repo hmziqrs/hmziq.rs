@@ -146,7 +146,6 @@ export class GradientCache {
 
 // Global gradient cache instances for each component
 export const gradientCaches = {
-  meteors: new GradientCache(50),
   stars: new GradientCache(30),
   nebula: new GradientCache(20)
 }

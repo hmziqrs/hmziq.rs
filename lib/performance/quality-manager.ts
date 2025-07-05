@@ -20,12 +20,6 @@ export interface QualitySettings {
   starGlowLayers: number
   starLODEnabled: boolean
   
-  // Meteor shower settings
-  meteorCount: number
-  meteorTrailQuality: 'simple' | 'smooth' | 'tapered'
-  meteorParticleLimit: number
-  meteorGradientCaching: boolean
-  
   // Nebula settings
   nebulaCloudCount: number
   nebulaComplexity: 'simple' | 'medium' | 'complex'
@@ -99,10 +93,6 @@ export class QualityManager {
           starSparkleFrequency: 0.1,
           starGlowLayers: 1,
           starLODEnabled: true,
-          meteorCount: 8,
-          meteorTrailQuality: 'simple',
-          meteorParticleLimit: 4,
-          meteorGradientCaching: true,
           nebulaCloudCount: 4,
           nebulaComplexity: 'simple',
           nebulaUpdateFrequency: 30,
@@ -116,10 +106,6 @@ export class QualityManager {
           starSparkleFrequency: 0.3,
           starGlowLayers: 2,
           starLODEnabled: true,
-          meteorCount: 15,
-          meteorTrailQuality: 'smooth',
-          meteorParticleLimit: 6,
-          meteorGradientCaching: true,
           nebulaCloudCount: 5,
           nebulaComplexity: 'medium',
           nebulaUpdateFrequency: 60,
@@ -133,10 +119,6 @@ export class QualityManager {
           starSparkleFrequency: 0.5,
           starGlowLayers: 3,
           starLODEnabled: false,
-          meteorCount: 25,
-          meteorTrailQuality: 'tapered',
-          meteorParticleLimit: 8,
-          meteorGradientCaching: true,
           nebulaCloudCount: 6,
           nebulaComplexity: 'complex',
           nebulaUpdateFrequency: 60,

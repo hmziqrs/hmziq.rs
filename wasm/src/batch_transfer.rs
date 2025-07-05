@@ -66,35 +66,6 @@ impl BatchTransfer {
         Uint32Array::from(&packed[..])
     }
     
-    // Optimized transfer for meteor-specific data
-    pub fn pack_meteor_data(
-        positions_x: &[f32],
-        positions_y: &[f32],
-        sizes: &[f32],
-        angles: &[f32],
-        glow_intensities: &[f32],
-        life_ratios: &[f32],
-        active_flags: &[u8],
-    ) -> Float32Array {
-        let mut packed = Vec::new();
-        
-        for i in 0..positions_x.len() {
-            if i < active_flags.len() && active_flags[i] == 0 {
-                // Use sentinel values for inactive meteors
-                packed.extend_from_slice(&[-1.0, -1.0, 0.0, 0.0, 0.0, 0.0]);
-                continue;
-            }
-            
-            packed.push(positions_x.get(i).copied().unwrap_or(0.0));
-            packed.push(positions_y.get(i).copied().unwrap_or(0.0));
-            packed.push(sizes.get(i).copied().unwrap_or(1.0));
-            packed.push(angles.get(i).copied().unwrap_or(0.0));
-            packed.push(glow_intensities.get(i).copied().unwrap_or(1.0));
-            packed.push(life_ratios.get(i).copied().unwrap_or(0.0));
-        }
-        
-        Float32Array::from(&packed[..])
-    }
     
     // Efficient particle subset extraction
     pub fn extract_active_particles(
@@ -147,33 +118,6 @@ pub struct TypedBatchTransfer;
 
 #[wasm_bindgen]
 impl TypedBatchTransfer {
-    // Meteor particles: optimized for trail rendering
-    pub fn pack_meteor_particles(
-        x: &[f32],
-        y: &[f32],
-        sizes: &[f32],
-        opacities: &[f32],
-        trail_lengths: &[u8],
-        colors: &[u32],
-        count: usize,
-    ) -> Float32Array {
-        let mut packed = Vec::with_capacity(count * 7);
-        
-        for i in 0..count {
-            packed.push(x.get(i).copied().unwrap_or(0.0));
-            packed.push(y.get(i).copied().unwrap_or(0.0));
-            packed.push(sizes.get(i).copied().unwrap_or(1.0));
-            packed.push(opacities.get(i).copied().unwrap_or(1.0));
-            packed.push(trail_lengths.get(i).copied().unwrap_or(0) as f32);
-            
-            // Unpack color for easier use in JS
-            let color = colors.get(i).copied().unwrap_or(0xFFFFFFFF);
-            packed.push(((color & 0xFF) as f32) / 255.0);       // R
-            packed.push((((color >> 8) & 0xFF) as f32) / 255.0); // G
-        }
-        
-        Float32Array::from(&packed[..])
-    }
     
     // Nebula particles: optimized for overlapping/blending
     pub fn pack_nebula_particles(
