@@ -16,7 +16,7 @@ export class JSParticleSystem {
   private meteorAssociations: Map<number, number[]> = new Map()
   private maxParticles = 500
   private activeCount = 0
-  private hasNewSpawns = false
+  private hasNewSpawnsFlag = false
   private lastSpawnTime = 0
   
   constructor(maxParticles = 500) {
@@ -59,8 +59,8 @@ export class JSParticleSystem {
     particle.vy += Math.sin(lateralAngle) * lateralSpeed
     
     particle.life = 0
-    particle.size = 0.5 + Math.random() * 0.5  // Size between 0.5 and 1.0
-    particle.opacity = 0.8
+    particle.size = 0.21 * (0.9 + Math.random() * 0.2)
+    particle.opacity = 0.64
     
     // Set color based on meteor type
     if (type === 'cool') {
@@ -78,13 +78,13 @@ export class JSParticleSystem {
     this.meteorAssociations.get(meteorId)!.push(index)
     
     this.activeCount++
-    this.hasNewSpawns = true
+    this.hasNewSpawnsFlag = true
     this.lastSpawnTime = performance.now()
     return true
   }
   
   update(dt: number): void {
-    this.hasNewSpawns = false
+    this.hasNewSpawnsFlag = false
     
     for (let i = 0; i < this.particles.length; i++) {
       const particle = this.particles[i]
@@ -105,11 +105,7 @@ export class JSParticleSystem {
       
       // Fade out over lifetime
       const fadeRatio = Math.pow(1 - particle.life / 50, 0.3)
-      particle.opacity = 0.8 * fadeRatio
-      
-      // Shrink size slightly over lifetime (but not below 0.1)
-      const lifeFactor = Math.max(0.2, 1 - particle.life / 100)
-      particle.size = Math.max(0.1, particle.size * lifeFactor)
+      particle.opacity = 0.64 * fadeRatio
       
       // Check lifetime
       if (particle.life >= 50 || particle.opacity <= 0.01) {
@@ -172,7 +168,7 @@ export class JSParticleSystem {
   }
   
   hasNewSpawns(): boolean {
-    return this.hasNewSpawns || (performance.now() - this.lastSpawnTime < 50)
+    return this.hasNewSpawnsFlag || (performance.now() - this.lastSpawnTime < 50)
   }
   
   getFreeCount(): number {

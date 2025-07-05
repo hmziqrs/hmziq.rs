@@ -63,19 +63,27 @@ export class UnifiedRenderer {
       const bounds = new DOMRect(x - 50, y - 50, 100, 100)
       this.previousMeteorBounds.push(bounds)
       
+      // Skip meteors with invalid size
+      if (size <= 0 || !isFinite(size)) continue
+      
+      // Clamp size to reasonable range
+      const clampedSize = Math.max(0.5, Math.min(size, 10))
+      
       // Render meteor glow
-      const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, size * 3)
+      const glowRadius = clampedSize * 3
+      const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, glowRadius)
       const color = this.getMeteorColor(type)
-      gradient.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, ${glowIntensity})`)
+      const clampedGlow = Math.max(0, Math.min(1, glowIntensity))
+      gradient.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, ${clampedGlow})`)
       gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
       
       this.ctx.fillStyle = gradient
-      this.ctx.fillRect(x - size * 3, y - size * 3, size * 6, size * 6)
+      this.ctx.fillRect(x - glowRadius, y - glowRadius, glowRadius * 2, glowRadius * 2)
       
       // Render meteor core
       this.ctx.fillStyle = '#ffffff'
       this.ctx.beginPath()
-      this.ctx.arc(x, y, size, 0, Math.PI * 2)
+      this.ctx.arc(x, y, clampedSize, 0, Math.PI * 2)
       this.ctx.fill()
     }
     
@@ -106,16 +114,20 @@ export class UnifiedRenderer {
       const size = properties[i * 2]
       const opacity = properties[i * 2 + 1]
       
-      if (opacity <= 0) continue
+      // Skip particles with invalid size or opacity
+      if (opacity <= 0 || size <= 0) continue
+      
+      // Ensure size is reasonable
+      const clampedSize = Math.max(0.1, Math.min(size, 10))
       
       // Track bounds for differential clearing
-      const bounds = new DOMRect(x - size, y - size, size * 2, size * 2)
+      const bounds = new DOMRect(x - clampedSize, y - clampedSize, clampedSize * 2, clampedSize * 2)
       this.previousParticleBounds.push(bounds)
       
       // Render particle
-      this.ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`
+      this.ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, Math.min(1, opacity))})`
       this.ctx.beginPath()
-      this.ctx.arc(x, y, size, 0, Math.PI * 2)
+      this.ctx.arc(x, y, clampedSize, 0, Math.PI * 2)
       this.ctx.fill()
     }
   }

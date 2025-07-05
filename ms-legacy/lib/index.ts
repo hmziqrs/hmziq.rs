@@ -69,10 +69,6 @@ export interface WASMModule {
   ViewTransfer: any; // Constructor type
   NebulaSystem: any; // Constructor type
   RenderPipeline: any; // Constructor type
-  // Memory exports
-  __wbindgen_export_0?: WebAssembly.Memory;
-  __wbg_memory?: WebAssembly.Memory;
-  memory?: WebAssembly.Memory;
 }
 
 // Memory management classes interfaces
@@ -206,11 +202,8 @@ export async function loadWASM(): Promise<WASMModule | null> {
         /* webpackIgnore: true */ '/wasm/pkg/hmziq_wasm.js'
       );
       
-      // Initialize WASM module - this returns the wasm exports
-      const wasmExports = await wasm.default(wasmPath);
-      
-      // Get memory from the wasm exports
-      let wasmMemory = wasmExports?.memory || null;
+      // Initialize WASM module
+      await wasm.default(wasmPath);
       
       // Store module functions
       wasmModule = {
@@ -275,10 +268,6 @@ export async function loadWASM(): Promise<WASMModule | null> {
         ViewTransfer: wasm.ViewTransfer,
         NebulaSystem: wasm.NebulaSystem,
         RenderPipeline: wasm.RenderPipeline,
-        // Export WASM memory for direct access
-        __wbindgen_export_0: wasmExports?.__wbindgen_export_0,
-        __wbg_memory: wasmExports?.__wbg_memory,
-        memory: wasmMemory,
       };
       
       const debugConfig = DebugConfigManager.getInstance();

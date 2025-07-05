@@ -1,32 +1,29 @@
 use wasm_bindgen::prelude::*;
 
 // Module imports
-mod math;
-mod star_field;
-mod bezier;
-mod memory;
-mod particles;
-mod particle_pool;
-mod physics_utils;
 mod batch_transfer;
+mod bezier;
+mod math;
+mod memory;
 mod nebula_system;
-mod spatial;
-mod render_pipeline;
-mod render_buffer;
 mod particle_system;
+mod particles;
+mod physics_utils;
+mod render_buffer;
+mod render_pipeline;
+mod spatial;
+mod star_field;
 
 // Re-export public functions
-pub use math::*;
-pub use star_field::*;
-pub use bezier::*;
-pub use memory::*;
-pub use particles::*;
-pub use particle_pool::*;
-pub use physics_utils::*;
 pub use batch_transfer::*;
+pub use bezier::*;
+pub use math::*;
+pub use memory::*;
 pub use nebula_system::*;
-pub use spatial::*;
+pub use physics_utils::*;
 pub use render_pipeline::RenderPipeline;
+pub use spatial::*;
+pub use star_field::*;
 
 #[wasm_bindgen]
 extern "C" {

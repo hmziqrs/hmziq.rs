@@ -1,7 +1,6 @@
 use wasm_bindgen::prelude::*;
 use crate::particles::MeteorSystem;
 use crate::particle_system::ParticleSystem;
-use crate::render_buffer::{AdaptiveRenderBuffer, PerformanceMetrics, MemoryStats, RingBuffer};
 
 bitflags::bitflags! {
     pub struct DirtyFlags: u8 {
@@ -17,6 +16,54 @@ pub struct HighWaterMarks {
     pub particle_count: usize,
     pub memory_usage: usize,
     pub frame_time: f32,
+}
+
+pub struct PerformanceMetrics {
+    pub update_times: RingBuffer<f32, 60>,
+    pub pack_times: RingBuffer<f32, 60>,
+    pub memory_usage: MemoryStats,
+    pub cache_hits: u32,
+    pub cache_misses: u32,
+}
+
+pub struct RingBuffer<T, const N: usize> {
+    data: [T; N],
+    head: usize,
+    count: usize,
+}
+
+impl<T: Copy + Default, const N: usize> RingBuffer<T, N> {
+    pub fn new() -> Self {
+        Self {
+            data: [T::default(); N],
+            head: 0,
+            count: 0,
+        }
+    }
+    
+    pub fn push(&mut self, value: T) {
+        self.data[self.head] = value;
+        self.head = (self.head + 1) % N;
+        if self.count < N {
+            self.count += 1;
+        }
+    }
+    
+    pub fn average(&self) -> f32 
+    where T: Into<f32> + Copy {
+        if self.count == 0 {
+            return 0.0;
+        }
+        let sum: f32 = self.data[..self.count].iter().map(|&x| x.into()).sum();
+        sum / self.count as f32
+    }
+}
+
+pub struct MemoryStats {
+    pub meteor_buffer_size: usize,
+    pub particle_buffer_size: usize,
+    pub total_allocated: usize,
+    pub high_water_mark: usize,
 }
 
 #[wasm_bindgen]
@@ -82,8 +129,8 @@ impl RenderPipeline {
         
         // Update meteors
         if should_update_meteors {
-            let active_meteors = self.meteor_system.update_meteors(dt, speed_multiplier);
-            if active_meteors > 0 || self.meteor_system.has_significant_changes() {
+            let active_meteors = self.meteor_system.update_meteors(speed_multiplier, 0); // quality_tier = 0
+            if active_meteors > 0 || self.has_meteor_significant_changes() {
                 self.dirty_flags |= DirtyFlags::METEORS;
             }
             
@@ -93,8 +140,8 @@ impl RenderPipeline {
             }
         }
         
-        // Get spawn points and spawn particles
-        let spawn_points = self.meteor_system.get_spawn_points();
+        // Generate spawn points from active meteors
+        let spawn_points = self.get_meteor_spawn_points();
         let mut particles_spawned = false;
         
         for spawn_point in spawn_points {
@@ -105,7 +152,7 @@ impl RenderPipeline {
                     spawn_point.y,
                     spawn_point.vx,
                     spawn_point.vy,
-                    spawn_point.meteor_type
+                    &spawn_point.meteor_type
                 ) {
                     particles_spawned = true;
                 }
@@ -127,7 +174,7 @@ impl RenderPipeline {
         }
         
         // Clean up particles for dying meteors
-        let dying_meteors = self.meteor_system.get_dying_meteors();
+        let dying_meteors = self.get_dying_meteors();
         for meteor_id in dying_meteors {
             self.particle_system.free_meteor_particles(meteor_id);
         }
@@ -151,9 +198,15 @@ impl RenderPipeline {
         self.dirty_flags.bits() as u32
     }
     
+    fn has_meteor_significant_changes(&self) -> bool {
+        // Check if significant change happened recently
+        let current_time = web_sys::window().unwrap().performance().unwrap().now() as f32;
+        current_time - self.last_significant_change < 100.0
+    }
+    
     fn should_update_meteors(&self) -> bool {
         // Skip update if no active meteors moved significantly
-        self.meteor_system.has_significant_changes() || self.frame_counter % 3 == 0
+        self.has_meteor_significant_changes() || self.frame_counter % 3 == 0
     }
     
     fn should_update_particles(&self) -> bool {
@@ -164,9 +217,9 @@ impl RenderPipeline {
     fn pack_render_data(&mut self) {
         // Pack header
         self.render_buffer.pack_header(
-            self.meteor_system.get_active_count(),
+            self.meteor_system.get_active_meteor_count(),
             self.particle_system.get_active_count(),
-            self.dirty_flags.bits(),
+            self.dirty_flags.bits() as u32,
             self.frame_counter,
             &self.metrics,
         );
@@ -184,12 +237,6 @@ impl RenderPipeline {
         }
     }
     
-    pub fn update_canvas_size(&mut self, width: f32, height: f32) {
-        self.meteor_system.update_canvas_size(width, height);
-        // Mark as dirty to force re-render
-        self.dirty_flags |= DirtyFlags::ALL;
-    }
-    
     pub fn spawn_meteor(
         &mut self,
         start_x: f32, start_y: f32,
@@ -201,19 +248,35 @@ impl RenderPipeline {
         glow_r: f32, glow_g: f32, glow_b: f32,
         glow_intensity: f32
     ) -> bool {
-        let success = self.meteor_system.init_meteor(
-            start_x, start_y, control_x, control_y, end_x, end_y,
-            size, speed, max_life, meteor_type,
-            color_r, color_g, color_b,
-            glow_r, glow_g, glow_b,
-            glow_intensity
-        );
-        
-        if success {
-            self.dirty_flags |= DirtyFlags::METEORS;
+        // Find an inactive meteor slot
+        let active_count = self.meteor_system.get_active_meteor_count();
+        if active_count >= 20 { // MAX_METEORS
+            return false;
         }
         
-        success
+        // Find first inactive meteor
+        for i in 0..20 {
+            // Try to init at this index
+            self.meteor_system.init_meteor(
+                i,
+                start_x, start_y, control_x, control_y, end_x, end_y,
+                size, speed, max_life, meteor_type,
+                (color_r * 255.0) as u8,
+                (color_g * 255.0) as u8,
+                (color_b * 255.0) as u8,
+                (glow_r * 255.0) as u8,
+                (glow_g * 255.0) as u8,
+                (glow_b * 255.0) as u8,
+                glow_intensity
+            );
+            
+            // If it worked, we're done
+            self.dirty_flags |= DirtyFlags::METEORS;
+            self.last_significant_change = web_sys::window().unwrap().performance().unwrap().now() as f32;
+            return true;
+        }
+        
+        false
     }
     
     pub fn mark_dirty(&mut self, system: u8) {
@@ -224,7 +287,7 @@ impl RenderPipeline {
         let metrics = js_sys::Object::new();
         
         js_sys::Reflect::set(&metrics, &"frame_time".into(), &self.metrics.update_times.average().into()).unwrap();
-        js_sys::Reflect::set(&metrics, &"active_meteors".into(), &self.meteor_system.get_active_count().into()).unwrap();
+        js_sys::Reflect::set(&metrics, &"active_meteors".into(), &self.meteor_system.get_active_meteor_count().into()).unwrap();
         js_sys::Reflect::set(&metrics, &"active_particles".into(), &self.particle_system.get_active_count().into()).unwrap();
         js_sys::Reflect::set(&metrics, &"memory_usage".into(), &self.metrics.memory_usage.total_allocated.into()).unwrap();
         js_sys::Reflect::set(&metrics, &"high_water_mark".into(), &self.metrics.memory_usage.high_water_mark.into()).unwrap();
@@ -244,6 +307,57 @@ impl RenderPipeline {
         }
     }
     
+    fn get_meteor_spawn_points(&self) -> Vec<crate::particle_system::SpawnPoint> {
+        let mut spawn_points = Vec::new();
+        let positions = self.meteor_system.get_meteor_positions();
+        let properties = self.meteor_system.get_meteor_properties();
+        let active_count = self.meteor_system.get_active_meteor_count();
+        
+        // For each active meteor, potentially create spawn points
+        for i in 0..active_count {
+            let x = positions.get_index((i * 2) as u32) as f32;
+            let y = positions.get_index((i * 2 + 1) as u32) as f32;
+            let life_progress = properties.get_index((i * 5 + 2) as u32) as f32;
+            let meteor_type_idx = properties.get_index((i * 5 + 4) as u32) as f32;
+            
+            // Only spawn particles for meteors that are in their active phase
+            if life_progress > 0.1 && life_progress < 0.9 {
+                let meteor_type = match meteor_type_idx as u8 {
+                    0 => "cool",
+                    1 => "warm",
+                    _ => "bright",
+                }.to_string();
+                
+                spawn_points.push(crate::particle_system::SpawnPoint {
+                    meteor_id: i,
+                    x,
+                    y,
+                    vx: 0.0, // We'll estimate velocity from meteor angle
+                    vy: 0.0,
+                    meteor_type,
+                    should_spawn: rand() < 0.2, // 20% chance
+                });
+            }
+        }
+        
+        spawn_points
+    }
+    
+    fn get_dying_meteors(&self) -> Vec<usize> {
+        let mut dying = Vec::new();
+        let properties = self.meteor_system.get_meteor_properties();
+        let active_count = self.meteor_system.get_active_meteor_count();
+        
+        for i in 0..active_count {
+            let life_progress = properties.get_index((i * 5 + 2) as u32) as f32;
+            if life_progress > 0.9 {
+                dying.push(i);
+            }
+        }
+        
+        dying
+    }
+    
     // Direct memory pointer methods for zero-copy access
     pub fn get_header_ptr(&self) -> *const u32 {
         self.render_buffer.get_header_ptr()
@@ -261,5 +375,17 @@ impl RenderPipeline {
         // Clean up resources
         self.dirty_flags = DirtyFlags::empty();
         self.frame_counter = 0;
+    }
+}
+
+// Import AdaptiveRenderBuffer from render_buffer module
+use crate::render_buffer::AdaptiveRenderBuffer;
+
+// Simple pseudo-random number generator for deterministic results
+fn rand() -> f32 {
+    static mut SEED: u32 = 0x12345678;
+    unsafe {
+        SEED = SEED.wrapping_mul(1664525).wrapping_add(1013904223);
+        (SEED >> 16) as f32 / 65536.0
     }
 }

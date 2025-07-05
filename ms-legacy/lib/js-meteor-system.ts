@@ -78,14 +78,6 @@ export class JSMeteorSystem {
     meteor.color = { r: config.colorR, g: config.colorG, b: config.colorB }
     meteor.glowColor = { r: config.glowR, g: config.glowG, b: config.glowB }
     
-    // Initialize position
-    meteor.x = config.startX
-    meteor.y = config.startY
-    meteor.angle = 0
-    meteor.vx = 0
-    meteor.vy = 0
-    meteor.trail = []
-    
     // Pre-calculate path with arc-length parameterization
     meteor.pathPoints = this.calculateBezierPath(
       config.startX, config.startY,

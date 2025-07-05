@@ -26,8 +26,29 @@ export class WASMRenderPipeline implements IRenderPipeline {
     const meteorPtr = this.pipeline.get_meteor_data_ptr()
     const particlePtr = this.pipeline.get_particle_data_ptr()
     
-    // Access WASM memory through the __wbindgen_export_0 or memory property
-    const wasmMemory = (this.wasmModule as any).__wbindgen_export_0 || (this.wasmModule as any).memory
+    // Access WASM memory - wasm-bindgen exports it under different names
+    let wasmMemory = null
+    
+    // Try different possible memory export locations
+    if (typeof this.wasmModule.memory !== 'undefined') {
+      wasmMemory = this.wasmModule.memory
+    } else if (typeof this.wasmModule.__wbindgen_export_0 !== 'undefined') {
+      wasmMemory = this.wasmModule.__wbindgen_export_0
+    } else if (typeof this.wasmModule.__wbg_memory !== 'undefined') {
+      wasmMemory = this.wasmModule.__wbg_memory
+    } else {
+      // Last resort: look for any property that looks like WebAssembly.Memory
+      for (const key in this.wasmModule) {
+        if (this.wasmModule[key] instanceof WebAssembly.Memory) {
+          wasmMemory = this.wasmModule[key]
+          break
+        }
+      }
+    }
+    
+    if (!wasmMemory) {
+      throw new Error('Failed to find WASM memory export')
+    }
     
     this.arrayManager.allocateViews(wasmMemory, {
       headerPtr,
@@ -61,25 +82,63 @@ export class WASMRenderPipeline implements IRenderPipeline {
     // Only return changed data
     if (dirtyFlags & DirtyFlags.METEORS) {
       const meteorView = this.arrayManager.getView<Float32Array>('meteors')
-      const stride = RENDER_DATA_FORMAT.METEOR_STRIDE
+      const stride = RENDER_DATA_FORMAT.METEOR_STRIDE // 8
+      
+      // Create separate arrays for positions and properties
+      const positions = new Float32Array(meteorCount * 2)
+      const properties = new Float32Array(meteorCount * 6)
+      
+      // Extract data from packed format
+      for (let i = 0; i < meteorCount; i++) {
+        const srcOffset = i * stride
+        // Positions: x, y
+        positions[i * 2] = meteorView[srcOffset]
+        positions[i * 2 + 1] = meteorView[srcOffset + 1]
+        // Properties: size, angle, glowIntensity, lifeRatio, type, active
+        properties[i * 6] = meteorView[srcOffset + 2]
+        properties[i * 6 + 1] = meteorView[srcOffset + 3]
+        properties[i * 6 + 2] = meteorView[srcOffset + 4]
+        properties[i * 6 + 3] = meteorView[srcOffset + 5]
+        properties[i * 6 + 4] = meteorView[srcOffset + 6]
+        properties[i * 6 + 5] = meteorView[srcOffset + 7]
+      }
       
       result.meteors = {
         count: meteorCount,
-        positions: new Float32Array(meteorView.buffer, meteorView.byteOffset, meteorCount * 2),
-        properties: new Float32Array(meteorView.buffer, meteorView.byteOffset + meteorCount * 2 * 4, meteorCount * 6),
+        positions,
+        properties,
         trails: [] // TODO: Get trail data from WASM
       }
     }
     
     if (dirtyFlags & DirtyFlags.PARTICLES) {
       const particleView = this.arrayManager.getView<Float32Array>('particles')
-      const stride = RENDER_DATA_FORMAT.PARTICLE_STRIDE
+      const stride = RENDER_DATA_FORMAT.PARTICLE_STRIDE // 6
+      
+      // Create separate arrays for positions, velocities, and properties
+      const positions = new Float32Array(particleCount * 2)
+      const velocities = new Float32Array(particleCount * 2)
+      const properties = new Float32Array(particleCount * 2)
+      
+      // Extract data from packed format [x, y, vx, vy, size, opacity]
+      for (let i = 0; i < particleCount; i++) {
+        const srcOffset = i * stride
+        // Positions: x, y
+        positions[i * 2] = particleView[srcOffset]
+        positions[i * 2 + 1] = particleView[srcOffset + 1]
+        // Velocities: vx, vy
+        velocities[i * 2] = particleView[srcOffset + 2]
+        velocities[i * 2 + 1] = particleView[srcOffset + 3]
+        // Properties: size, opacity
+        properties[i * 2] = particleView[srcOffset + 4]
+        properties[i * 2 + 1] = particleView[srcOffset + 5]
+      }
       
       result.particles = {
         count: particleCount,
-        positions: new Float32Array(particleView.buffer, particleView.byteOffset, particleCount * 2),
-        velocities: new Float32Array(particleView.buffer, particleView.byteOffset + particleCount * 2 * 4, particleCount * 2),
-        properties: new Float32Array(particleView.buffer, particleView.byteOffset + particleCount * 4 * 4, particleCount * 2)
+        positions,
+        velocities,
+        properties
       }
     }
     
@@ -122,9 +181,9 @@ export class WASMRenderPipeline implements IRenderPipeline {
   }
   
   updateCanvasSize(width: number, height: number): void {
-    // WASM doesn't currently support canvas resize
-    // Would need to recreate the pipeline
-    console.warn('Canvas resize not implemented for WASM pipeline')
+    if (this.pipeline && this.pipeline.update_canvas_size) {
+      this.pipeline.update_canvas_size(width, height)
+    }
   }
   
   destroy(): void {

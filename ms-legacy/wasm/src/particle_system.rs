@@ -17,7 +17,7 @@ pub struct Particle {
 
 impl Default for Particle {
     fn default() -> Self {
-        Self {
+        Particle {
             active: false,
             x: 0.0,
             y: 0.0,
@@ -31,6 +31,16 @@ impl Default for Particle {
             color_b: 255,
         }
     }
+}
+
+pub struct SpawnPoint {
+    pub meteor_id: usize,
+    pub x: f32,
+    pub y: f32,
+    pub vx: f32,
+    pub vy: f32,
+    pub meteor_type: String,
+    pub should_spawn: bool,
 }
 
 pub struct ParticleSystem {
@@ -65,13 +75,13 @@ impl ParticleSystem {
     }
     
     pub fn spawn_for_meteor(
-        &mut self, 
-        meteor_id: usize, 
-        x: f32, 
+        &mut self,
+        meteor_id: usize,
+        x: f32,
         y: f32,
         vx: f32,
         vy: f32,
-        meteor_type: u8
+        meteor_type: &str
     ) -> bool {
         if let Some(index) = self.free_indices.pop_front() {
             let particle = &mut self.particles[index];
@@ -95,16 +105,16 @@ impl ParticleSystem {
             
             // Set color based on meteor type
             match meteor_type {
-                0 => { // cool
+                "cool" => {
                     particle.color_r = 100;
                     particle.color_g = 180;
                     particle.color_b = 255;
-                },
-                1 => { // warm
+                }
+                "warm" => {
                     particle.color_r = 255;
                     particle.color_g = 200;
                     particle.color_b = 100;
-                },
+                }
                 _ => { // bright
                     particle.color_r = 255;
                     particle.color_g = 255;
@@ -133,7 +143,9 @@ impl ParticleSystem {
         
         for i in 0..self.particles.len() {
             let particle = &mut self.particles[i];
-            if !particle.active { continue; }
+            if !particle.active {
+                continue;
+            }
             
             // Update physics
             particle.x += particle.vx * dt;
@@ -161,7 +173,9 @@ impl ParticleSystem {
     
     fn free_particle(&mut self, index: usize) {
         let particle = &mut self.particles[index];
-        if !particle.active { return; }
+        if !particle.active {
+            return;
+        }
         
         particle.active = false;
         self.free_indices.push_back(index);
@@ -169,7 +183,7 @@ impl ParticleSystem {
         
         // Remove from associations
         for (_, indices) in self.meteor_associations.iter_mut() {
-            if let Some(pos) = indices.iter().position(|&i| i == index) {
+            if let Some(pos) = indices.iter().position(|&idx| idx == index) {
                 indices.swap_remove(pos);
                 break;
             }
@@ -188,15 +202,17 @@ impl ParticleSystem {
         let mut data = Vec::with_capacity(self.active_count * 6);
         
         for particle in &self.particles {
-            if particle.active {
-                // Pack as [x, y, vx, vy, size, opacity]
-                data.push(particle.x);
-                data.push(particle.y);
-                data.push(particle.vx);
-                data.push(particle.vy);
-                data.push(particle.size);
-                data.push(particle.opacity);
+            if !particle.active {
+                continue;
             }
+            
+            // Pack as [x, y, vx, vy, size, opacity]
+            data.push(particle.x);
+            data.push(particle.y);
+            data.push(particle.vx);
+            data.push(particle.vy);
+            data.push(particle.size);
+            data.push(particle.opacity);
         }
         
         data
@@ -207,8 +223,8 @@ impl ParticleSystem {
     }
     
     pub fn has_new_spawns(&self) -> bool {
-        let current_time = web_sys::window().unwrap().performance().unwrap().now() as f32;
-        self.has_new_spawns || (current_time - self.last_spawn_time < 50.0)
+        self.has_new_spawns || 
+        (web_sys::window().unwrap().performance().unwrap().now() as f32 - self.last_spawn_time < 50.0)
     }
     
     pub fn get_free_count(&self) -> usize {

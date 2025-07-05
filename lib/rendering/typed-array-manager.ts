@@ -36,7 +36,7 @@ export class TypedArrayManager {
       
       const currentByteLength = this.memory.buffer.byteLength
       if (currentByteLength !== lastByteLength) {
-        console.warn('WASM memory grew, updating views')
+        // Memory growth is normal for WASM - silently update views
         this.updateViews()
         lastByteLength = currentByteLength
       }

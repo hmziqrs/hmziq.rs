@@ -36,18 +36,18 @@ export class JSRenderPipeline implements IRenderPipeline {
     
     // Create views into the buffer
     const headerOffset = 0
-    const meteorOffset = 16 * 4 // Header is u32, convert to f32 offset  
+    const meteorOffset = 16 // Header takes 16 Float32 slots
     const particleOffset = meteorOffset + (maxMeteors * 8)
     
     this.meteorDataView = new Float32Array(
       this.renderBuffer.buffer,
-      meteorOffset * 4,
+      meteorOffset * 4, // Convert to byte offset
       maxMeteors * 8
     )
     
     this.particleDataView = new Float32Array(
       this.renderBuffer.buffer,
-      particleOffset * 4,
+      particleOffset * 4, // Convert to byte offset
       maxParticles * 6
     )
   }
@@ -118,6 +118,12 @@ export class JSRenderPipeline implements IRenderPipeline {
     }
     
     this.lastUpdateTime = currentTime
+    
+    // Debug logging
+    if (this.frameCounter % 60 === 0) {
+      console.log(`JS Pipeline - Meteors: ${this.meteorSystem.getActiveCount()}, Particles: ${this.particleSystem.getActiveCount()}, DirtyFlags: ${this.dirtyFlags}`)
+    }
+    
     return this.dirtyFlags
   }
   
@@ -170,10 +176,30 @@ export class JSRenderPipeline implements IRenderPipeline {
     if (this.dirtyFlags & DirtyFlags.METEORS) {
       const meteorCount = this.headerData[0]
       const stride = 8 // Each meteor has 8 values
+      
+      // Create separate arrays for positions and properties
+      const positions = new Float32Array(meteorCount * 2)
+      const properties = new Float32Array(meteorCount * 6)
+      
+      // Extract data from packed format
+      for (let i = 0; i < meteorCount; i++) {
+        const srcOffset = i * stride
+        // Positions: x, y
+        positions[i * 2] = this.meteorDataView[srcOffset]
+        positions[i * 2 + 1] = this.meteorDataView[srcOffset + 1]
+        // Properties: size, angle, glowIntensity, lifeRatio, type, active
+        properties[i * 6] = this.meteorDataView[srcOffset + 2]
+        properties[i * 6 + 1] = this.meteorDataView[srcOffset + 3]
+        properties[i * 6 + 2] = this.meteorDataView[srcOffset + 4]
+        properties[i * 6 + 3] = this.meteorDataView[srcOffset + 5]
+        properties[i * 6 + 4] = this.meteorDataView[srcOffset + 6]
+        properties[i * 6 + 5] = this.meteorDataView[srcOffset + 7]
+      }
+      
       result.meteors = {
         count: meteorCount,
-        positions: new Float32Array(this.meteorDataView.buffer, this.meteorDataView.byteOffset, meteorCount * 2),
-        properties: new Float32Array(this.meteorDataView.buffer, this.meteorDataView.byteOffset + meteorCount * 2 * 4, meteorCount * 6),
+        positions,
+        properties,
         trails: this.meteorSystem.getTrails()
       }
     }
@@ -181,11 +207,31 @@ export class JSRenderPipeline implements IRenderPipeline {
     if (this.dirtyFlags & DirtyFlags.PARTICLES) {
       const particleCount = this.headerData[1]
       const stride = 6 // Each particle has 6 values
+      
+      // Create separate arrays for positions, velocities, and properties
+      const positions = new Float32Array(particleCount * 2)
+      const velocities = new Float32Array(particleCount * 2)
+      const properties = new Float32Array(particleCount * 2)
+      
+      // Extract data from packed format [x, y, vx, vy, size, opacity]
+      for (let i = 0; i < particleCount; i++) {
+        const srcOffset = i * stride
+        // Positions: x, y
+        positions[i * 2] = this.particleDataView[srcOffset]
+        positions[i * 2 + 1] = this.particleDataView[srcOffset + 1]
+        // Velocities: vx, vy
+        velocities[i * 2] = this.particleDataView[srcOffset + 2]
+        velocities[i * 2 + 1] = this.particleDataView[srcOffset + 3]
+        // Properties: size, opacity
+        properties[i * 2] = this.particleDataView[srcOffset + 4]
+        properties[i * 2 + 1] = this.particleDataView[srcOffset + 5]
+      }
+      
       result.particles = {
         count: particleCount,
-        positions: new Float32Array(this.particleDataView.buffer, this.particleDataView.byteOffset, particleCount * 2),
-        velocities: new Float32Array(this.particleDataView.buffer, this.particleDataView.byteOffset + particleCount * 2 * 4, particleCount * 2),
-        properties: new Float32Array(this.particleDataView.buffer, this.particleDataView.byteOffset + particleCount * 4 * 4, particleCount * 2)
+        positions,
+        velocities,
+        properties
       }
     }
     
@@ -199,8 +245,10 @@ export class JSRenderPipeline implements IRenderPipeline {
     const index = this.meteorSystem.spawnMeteor(config)
     if (index !== -1) {
       this.dirtyFlags |= DirtyFlags.METEORS
+      console.log(`Spawned meteor at index ${index}, config:`, config)
       return true
     }
+    console.warn('Failed to spawn meteor - no free slots')
     return false
   }
   
