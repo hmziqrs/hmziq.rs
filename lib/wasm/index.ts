@@ -53,10 +53,6 @@ export interface WASMModule {
   batch_process_sin: (input: Float32Array) => Float32Array;
   batch_process_cos: (input: Float32Array) => Float32Array;
   batch_process_with_operation: (input: Float32Array, operation: string) => Float32Array;
-  // Meteor particle system
-  MeteorSystem: any; // Constructor type
-  Vec2: any; // Constructor type
-  batch_interpolate_meteor_positions: (life_values: Float32Array, max_life_values: Float32Array, path_data: Float32Array, path_stride: number) => Float32Array;
   // Spatial indexing system
   SpatialGrid: any; // Constructor type
   // Particle pool and utilities
@@ -68,7 +64,6 @@ export interface WASMModule {
   TypedBatchTransfer: any; // Static methods type
   ViewTransfer: any; // Constructor type
   NebulaSystem: any; // Constructor type
-  RenderPipeline: any; // Constructor type
   // Memory exports
   __wbindgen_export_0?: WebAssembly.Memory;
   __wbg_memory?: WebAssembly.Memory;
@@ -114,40 +109,6 @@ export interface Vec2 {
   y: number;
 }
 
-export interface MeteorSystem {
-  new (canvas_width: number, canvas_height: number): MeteorSystem;
-  update_canvas_size(width: number, height: number): void;
-  init_meteor(
-    index: number,
-    start_x: number,
-    start_y: number,
-    control_x: number,
-    control_y: number,
-    end_x: number,
-    end_y: number,
-    size: number,
-    speed: number,
-    max_life: number,
-    meteor_type: number,
-    color_r: number,
-    color_g: number,
-    color_b: number,
-    glow_r: number,
-    glow_g: number,
-    glow_b: number,
-    glow_intensity: number,
-  ): void;
-  update_meteors(speed_multiplier: number, quality_tier: number): number;
-  update_particles(speed_multiplier: number): void;
-  spawn_particle(meteor_index: number, spawn_rate: number, max_particles: number): boolean;
-  get_meteor_positions(): Float32Array;
-  get_meteor_properties(): Float32Array;
-  get_particle_data(): Float32Array;
-  get_particle_colors(): Uint8Array;
-  get_active_meteor_count(): number;
-  get_active_particle_count(): number;
-  free(): void;
-}
 
 export interface SpatialGrid {
   new (cell_size: number, canvas_width: number, canvas_height: number): SpatialGrid;
@@ -259,10 +220,6 @@ export async function loadWASM(): Promise<WASMModule | null> {
         batch_process_sin: wasm.batch_process_sin,
         batch_process_cos: wasm.batch_process_cos,
         batch_process_with_operation: wasm.batch_process_with_operation,
-        // Meteor particle system
-        MeteorSystem: wasm.MeteorSystem,
-        Vec2: wasm.Vec2,
-        batch_interpolate_meteor_positions: wasm.batch_interpolate_meteor_positions,
         // Spatial indexing system
         SpatialGrid: wasm.SpatialGrid,
         // Particle pool and utilities
@@ -274,7 +231,6 @@ export async function loadWASM(): Promise<WASMModule | null> {
         TypedBatchTransfer: wasm.TypedBatchTransfer,
         ViewTransfer: wasm.ViewTransfer,
         NebulaSystem: wasm.NebulaSystem,
-        RenderPipeline: wasm.RenderPipeline,
         // Export WASM memory for direct access
         __wbindgen_export_0: wasmExports?.__wbindgen_export_0,
         __wbg_memory: wasmExports?.__wbg_memory,
@@ -283,7 +239,7 @@ export async function loadWASM(): Promise<WASMModule | null> {
       
       const debugConfig = DebugConfigManager.getInstance();
       if (debugConfig.isEnabled('enableConsoleLogs')) {
-        console.log('WASM module loaded successfully with star field, meteor optimizations, and unified particle manager');
+        console.log('WASM module loaded successfully with star field and spatial indexing optimizations');
       }
     } catch (error) {
       isUsingFallback = true;
@@ -951,42 +907,6 @@ export const jsFallbacks: WASMModule = {
     }
     return result;
   },
-  // Meteor particle system fallbacks (not implemented)
-  MeteorSystem: null as any,
-  Vec2: null as any,
-  batch_interpolate_meteor_positions: (life_values: Float32Array, max_life_values: Float32Array, path_data: Float32Array, path_stride: number): Float32Array => {
-    logFallback('batch_interpolate_meteor_positions');
-    const meteorCount = life_values.length;
-    const positions = new Float32Array(meteorCount * 2);
-    const segments = 60; // Default segments
-    
-    for (let i = 0; i < meteorCount; i++) {
-      const t = Math.min(life_values[i] / max_life_values[i], 1.0);
-      const pathOffset = i * path_stride;
-      
-      const segmentFloat = t * segments;
-      const segment = Math.floor(segmentFloat);
-      const segmentT = segmentFloat - segment;
-      
-      if (segment < segments) {
-        const idx = pathOffset + segment * 2;
-        const nextIdx = idx + 2;
-        
-        const x = path_data[idx] + (path_data[nextIdx] - path_data[idx]) * segmentT;
-        const y = path_data[idx + 1] + (path_data[nextIdx + 1] - path_data[idx + 1]) * segmentT;
-        
-        positions[i * 2] = x;
-        positions[i * 2 + 1] = y;
-      } else {
-        // Use end position
-        const endIdx = pathOffset + segments * 2;
-        positions[i * 2] = path_data[endIdx];
-        positions[i * 2 + 1] = path_data[endIdx + 1];
-      }
-    }
-    
-    return positions;
-  },
   // Spatial indexing system fallback (not implemented)
   SpatialGrid: null as any,
   // Particle pool and utilities fallbacks (not implemented)
@@ -998,7 +918,6 @@ export const jsFallbacks: WASMModule = {
   TypedBatchTransfer: null as any,
   ViewTransfer: null as any,
   NebulaSystem: null as any,
-  RenderPipeline: null as any,
 };
 
 // Unified API that automatically uses WASM or JS fallback

@@ -191,19 +191,6 @@ export default function PerformanceMonitor({
                   className="ml-2"
                 />
               </label>
-              <label className="flex items-center justify-between cursor-pointer hover:text-white">
-                <span>Meteor Logs</span>
-                <input
-                  type="checkbox"
-                  checked={debugConfig.enableMeteorLogs}
-                  onChange={(e) => {
-                    DebugConfigManager.getInstance().setConfig({ 
-                      enableMeteorLogs: e.target.checked 
-                    })
-                  }}
-                  className="ml-2"
-                />
-              </label>
             </div>
           </div>
         </div>

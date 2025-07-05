@@ -6,11 +6,7 @@ mod bezier;
 mod math;
 mod memory;
 mod nebula_system;
-mod particle_system;
-mod particles;
 mod physics_utils;
-mod render_buffer;
-mod render_pipeline;
 mod spatial;
 mod star_field;
 
@@ -21,7 +17,6 @@ pub use math::*;
 pub use memory::*;
 pub use nebula_system::*;
 pub use physics_utils::*;
-pub use render_pipeline::RenderPipeline;
 pub use spatial::*;
 pub use star_field::*;
 
@@ -50,7 +45,6 @@ pub fn greet(name: &str) -> String {
 pub fn main() {
     console_log!("WASM module loaded successfully!");
     console_log!("Star field optimization ready!");
-    console_log!("Meteor particle system ready!");
-    console_log!("Unified particle manager ready!");
     console_log!("Spatial indexing ready!");
+    console_log!("Nebula system ready!");
 }
