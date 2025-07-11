@@ -167,16 +167,9 @@ pub fn calculate_star_effects_into_buffers(
         // Use SIMD if available and count is large enough
         #[cfg(feature = "simd")]
         if count >= SIMD_BATCH_SIZE * 2 {
-            crate::console_log!("Using SIMD path for {} stars", count);
             calculate_effects_into_buffers_simd(positions, twinkles, sparkles, count, time);
             return;
         }
-        
-        // Scalar fallback
-        #[cfg(feature = "simd")]
-        crate::console_log!("Using scalar fallback for {} stars (below SIMD threshold)", count);
-        #[cfg(not(feature = "simd"))]
-        crate::console_log!("Using scalar path for {} stars (SIMD disabled)", count);
         
         calculate_effects_into_buffers_scalar(positions, twinkles, sparkles, count, time);
     }

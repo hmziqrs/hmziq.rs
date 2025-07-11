@@ -8,15 +8,12 @@
     "build": "bun run build:wasm && next build --turbopack",
     "build:wasm": "cd wasm && wasm-pack build --target web --out-dir pkg --features simd && node ../scripts/copy-wasm.js",
     "build:wasm:dev": "cd wasm && wasm-pack build --target web --out-dir pkg --dev --features simd && node ../scripts/copy-wasm.js",
-    "build:wasm:no-simd": "cd wasm && wasm-pack build --target web --out-dir pkg && node ../scripts/copy-wasm.js",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "test:simd": "node scripts/test-simd.js",
-    "inspect:wasm": "node scripts/inspect-wasm.js wasm/pkg/hmziq_wasm_bg.wasm"
+    "format:check": "prettier --check ."
   },
   "repository": {
     "type": "git",
