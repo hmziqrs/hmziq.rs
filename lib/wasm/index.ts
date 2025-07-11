@@ -41,8 +41,7 @@ export interface WASMModule {
     camera_matrix: Float32Array,
     margin: number
   ) => Uint8Array
-  // Animation and performance functions
-  calculate_fps: (frame_count: number, current_time: number, last_time: number) => Float32Array
+  // Animation functions
   calculate_speed_multiplier: (
     is_moving: boolean,
     click_time: number,
@@ -98,8 +97,7 @@ export async function loadWASM(): Promise<WASMModule> {
         // Camera frustum culling
         get_visible_star_indices: wasm.get_visible_star_indices,
         cull_stars_by_frustum_simd: wasm.cull_stars_by_frustum_simd,
-        // Animation and performance functions
-        calculate_fps: wasm.calculate_fps,
+        // Animation functions
         calculate_speed_multiplier: wasm.calculate_speed_multiplier,
         calculate_rotation_delta: wasm.calculate_rotation_delta,
         // Math utilities

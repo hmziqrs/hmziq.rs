@@ -5,9 +5,6 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { getOptimizedFunctions, type WASMModule } from '@/lib/wasm'
 
-// Performance monitoring
-let lastTime = performance.now()
-
 // Ultra quality shaders
 const VERTEX_SHADER = `
   attribute float size;
@@ -96,9 +93,6 @@ function Stars() {
 
   // Ref for star mesh
   const starMeshRef = useRef<THREE.Points>(null)
-
-  // Frame counter for temporal optimization
-  const frameCounterRef = useRef(0)
 
   // Load WASM module - mandatory
   useEffect(() => {
@@ -243,12 +237,10 @@ function Stars() {
   const updateStarEffects = (
     group: StarGroup,
     time: number,
-    updateRate: number,
     viewProjMatrix?: Float32Array,
     useTemporalCoherence: boolean = true
   ) => {
     if (!wasmModule) return // Wait for WASM
-    if (frameCounterRef.current % updateRate !== 0) return
 
     const { positions, twinkles, sparkles, count, mesh } = group
 
@@ -332,15 +324,6 @@ function Stars() {
   useFrame((state) => {
     if (!wasmModule) return // Wait for WASM to load
 
-    frameCounterRef.current++
-
-    // FPS calculation using WASM SIMD only
-    const currentTime = performance.now()
-    const fpsResult = wasmModule.calculate_fps(frameCounterRef.current, currentTime, lastTime)
-    if (fpsResult[1] > 0.5) {
-      lastTime = fpsResult[2] * 1000 + fpsResult[3]
-    }
-
     // Get camera view projection matrix for frustum culling
     const camera = state.camera as THREE.PerspectiveCamera
     const viewProjectionMatrix = new THREE.Matrix4()
@@ -383,7 +366,7 @@ function Stars() {
     // Update star effects using WASM SIMD
     const time = state.clock.elapsedTime
     const vpMatrix = new Float32Array(viewProjectionMatrix.elements)
-    updateStarEffects(starGroup, time, 1, vpMatrix)
+    updateStarEffects(starGroup, time, vpMatrix)
   })
 
   return (
