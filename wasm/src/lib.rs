@@ -1,21 +1,11 @@
 use wasm_bindgen::prelude::*;
 
-// Module imports
-mod batch_transfer;
-mod bezier;
+// Module imports - active modules only
 mod math;
-mod memory;
-mod physics_utils;
-mod spatial;
 mod star_field;
 
 // Re-export public functions
-pub use batch_transfer::*;
-pub use bezier::*;
 pub use math::*;
-pub use memory::*;
-pub use physics_utils::*;
-pub use spatial::*;
 pub use star_field::*;
 
 #[wasm_bindgen]

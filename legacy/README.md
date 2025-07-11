@@ -41,6 +41,15 @@ This folder contains files that are no longer actively used in the current codeb
 
 ### Rust/WASM Source
 - `wasm/src/nebula_system.rs` - Rust implementation for nebula particle system
+- `wasm/src/bezier.rs` - Bezier path calculation functions (used only in meteor system)
+- `wasm/src/physics_utils.rs` - Physics simulation utilities (used only in meteor system)
+- `wasm/src/spatial.rs` - Spatial indexing and grid systems (used only in nebula system)
+- `wasm/src/memory.rs` - Memory management and buffer operations (not used anywhere)
+- `wasm/src/batch_transfer.rs` - Batch data transfer utilities (not used anywhere)
+- `wasm/src/lib.rs` - Legacy module configuration
+
+### WASM Interfaces
+- `lib/wasm/unused-wasm-interfaces.ts` - Complete TypeScript interfaces for all legacy WASM functions
 
 ## Types
 - `index.ts` - Global type definitions (types now defined inline where needed)
@@ -53,5 +62,21 @@ These files were moved to legacy because:
 3. They are utility functions only used by other legacy components
 4. They represent older architectural decisions that have been superseded
 5. They are debug/development tools not needed in production (performance monitor)
+6. They are WASM functions and Rust modules only used by legacy components or not used at all
+
+### WASM Cleanup Details
+The active codebase now only includes essential WASM functions:
+- Star generation (positions, colors, sizes)
+- Star effects (twinkle/sparkle calculations with temporal coherence)
+- Frustum culling (visibility optimization)
+- Basic math utilities (fast trigonometric functions)
+
+Moved to legacy:
+- All Bezier functions (meteor system only)
+- All physics utilities (meteor system only) 
+- All spatial indexing (nebula system only)
+- All memory management (unused)
+- All batch transfer utilities (unused)
+- LOD and quality tier functions (removed from simplified StarField)
 
 All files are functional and can be restored if needed.
