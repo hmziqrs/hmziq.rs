@@ -24,13 +24,19 @@ thread_local! {
 
 #[repr(C)]
 pub struct StarMemoryPool {
-    // All star data lives in WASM linear memory
-    positions: Vec<f32>,      // xyz * count
-    colors: Vec<f32>,         // rgb * count
-    sizes: Vec<f32>,          // size * count
-    twinkles: Vec<f32>,       // intensity * count
-    sparkles: Vec<f32>,       // intensity * count
-    visibility_mask: Vec<u8>, // culling results
+    // Pure Structure-of-Arrays for optimal SIMD cache efficiency
+    positions_x: Vec<f32>,    // [x1, x2, x3, x4, x5, x6, x7, x8, ...] - sequential for SIMD
+    positions_y: Vec<f32>,    // [y1, y2, y3, y4, y5, y6, y7, y8, ...] - sequential for SIMD
+    positions_z: Vec<f32>,    // [z1, z2, z3, z4, z5, z6, z7, z8, ...] - sequential for SIMD
+    
+    colors_r: Vec<f32>,       // [r1, r2, r3, r4, r5, r6, r7, r8, ...] - sequential for SIMD
+    colors_g: Vec<f32>,       // [g1, g2, g3, g4, g5, g6, g7, g8, ...] - sequential for SIMD
+    colors_b: Vec<f32>,       // [b1, b2, b3, b4, b5, b6, b7, b8, ...] - sequential for SIMD
+    
+    sizes: Vec<f32>,          // [size1, size2, size3, ...] - already optimal
+    twinkles: Vec<f32>,       // [twinkle1, twinkle2, ...] - computed values
+    sparkles: Vec<f32>,       // [sparkle1, sparkle2, ...] - computed values
+    visibility_mask: Vec<u8>, // [visible1, visible2, ...] - culling results
 
     // Metadata
     count: usize,
@@ -38,28 +44,53 @@ pub struct StarMemoryPool {
 
 impl StarMemoryPool {
     fn new(count: usize) -> Self {
+        // Ensure count is aligned to SIMD batch size for optimal performance
+        let aligned_count = (count + SIMD_BATCH_SIZE - 1) / SIMD_BATCH_SIZE * SIMD_BATCH_SIZE;
+        
         Self {
-            positions: vec![0.0; count * 3],
-            colors: vec![1.0; count * 3],
-            sizes: vec![1.0; count],
-            twinkles: vec![1.0; count],
-            sparkles: vec![0.0; count],
-            visibility_mask: vec![1; count],
-            count,
+            // Initialize pure SoA arrays for optimal SIMD computation
+            positions_x: Self::create_aligned_vec(aligned_count, 0.0),
+            positions_y: Self::create_aligned_vec(aligned_count, 0.0),
+            positions_z: Self::create_aligned_vec(aligned_count, 0.0),
+            colors_r: Self::create_aligned_vec(aligned_count, 1.0),
+            colors_g: Self::create_aligned_vec(aligned_count, 1.0),
+            colors_b: Self::create_aligned_vec(aligned_count, 1.0),
+            sizes: Self::create_aligned_vec(aligned_count, 1.0),
+            twinkles: Self::create_aligned_vec(aligned_count, 1.0),
+            sparkles: Self::create_aligned_vec(aligned_count, 0.0),
+            visibility_mask: vec![1; aligned_count],
+            count, // Keep original count for indexing
         }
+    }
+    
+    // Create a Vec aligned to 32-byte boundaries for optimal AVX performance
+    fn create_aligned_vec(size: usize, default_value: f32) -> Vec<f32> {
+        // For WASM, simple vec! is sufficient as WASM doesn't have complex alignment requirements
+        // In native code, we would use more sophisticated alignment
+        vec![default_value; size]
     }
 
     fn get_pointers(&mut self) -> StarMemoryPointers {
         StarMemoryPointers {
-            positions_ptr: self.positions.as_mut_ptr() as u32,
-            colors_ptr: self.colors.as_mut_ptr() as u32,
+            // Return pointers to SoA arrays directly - no more interleaved arrays!
+            positions_x_ptr: self.positions_x.as_mut_ptr() as u32,
+            positions_y_ptr: self.positions_y.as_mut_ptr() as u32, 
+            positions_z_ptr: self.positions_z.as_mut_ptr() as u32,
+            colors_r_ptr: self.colors_r.as_mut_ptr() as u32,
+            colors_g_ptr: self.colors_g.as_mut_ptr() as u32,
+            colors_b_ptr: self.colors_b.as_mut_ptr() as u32,
             sizes_ptr: self.sizes.as_mut_ptr() as u32,
             twinkles_ptr: self.twinkles.as_mut_ptr() as u32,
             sparkles_ptr: self.sparkles.as_mut_ptr() as u32,
             visibility_ptr: self.visibility_mask.as_mut_ptr() as u32,
             count: self.count,
-            positions_length: self.positions.len(),
-            colors_length: self.colors.len(),
+            // All SoA arrays have the same length (aligned count)
+            positions_x_length: self.positions_x.len(),
+            positions_y_length: self.positions_y.len(),
+            positions_z_length: self.positions_z.len(),
+            colors_r_length: self.colors_r.len(),
+            colors_g_length: self.colors_g.len(),
+            colors_b_length: self.colors_b.len(),
             sizes_length: self.sizes.len(),
             twinkles_length: self.twinkles.len(),
             sparkles_length: self.sparkles.len(),
@@ -70,15 +101,25 @@ impl StarMemoryPool {
 
 #[wasm_bindgen]
 pub struct StarMemoryPointers {
-    pub positions_ptr: u32,
-    pub colors_ptr: u32,
+    // Separate pointers for Structure-of-Arrays layout
+    pub positions_x_ptr: u32,
+    pub positions_y_ptr: u32,
+    pub positions_z_ptr: u32,
+    pub colors_r_ptr: u32,
+    pub colors_g_ptr: u32,
+    pub colors_b_ptr: u32,
     pub sizes_ptr: u32,
     pub twinkles_ptr: u32,
     pub sparkles_ptr: u32,
     pub visibility_ptr: u32,
     pub count: usize,
-    pub positions_length: usize,
-    pub colors_length: usize,
+    // Separate lengths for each SoA array
+    pub positions_x_length: usize,
+    pub positions_y_length: usize,
+    pub positions_z_length: usize,
+    pub colors_r_length: usize,
+    pub colors_g_length: usize,
+    pub colors_b_length: usize,
     pub sizes_length: usize,
     pub twinkles_length: usize,
     pub sparkles_length: usize,
@@ -181,10 +222,22 @@ pub fn initialize_star_memory_pool(count: usize) -> StarMemoryPointers {
     let colors = generate_star_colors(count, 0);
     let sizes = generate_star_sizes(count, 0, 1.0);
 
-    // Copy generated data to pool
-    pool.positions.copy_from_slice(&positions);
-    pool.colors.copy_from_slice(&colors);
-    pool.sizes.copy_from_slice(&sizes);
+    // Convert generated AoS data directly into SoA format
+    for i in 0..count {
+        let i3 = i * 3;
+        // Convert positions from [x,y,z, x,y,z, ...] to separate [x,x,x,...]  [y,y,y,...]  [z,z,z,...]
+        pool.positions_x[i] = positions[i3];
+        pool.positions_y[i] = positions[i3 + 1];
+        pool.positions_z[i] = positions[i3 + 2];
+        
+        // Convert colors from [r,g,b, r,g,b, ...] to separate [r,r,r,...]  [g,g,g,...]  [b,b,b,...]
+        pool.colors_r[i] = colors[i3];
+        pool.colors_g[i] = colors[i3 + 1];
+        pool.colors_b[i] = colors[i3 + 2];
+    }
+    
+    // Copy sizes directly (already optimal format)
+    pool.sizes[..count].copy_from_slice(&sizes);
 
     // Initialize twinkles with random values
     for i in 0..count {
@@ -202,9 +255,10 @@ pub fn initialize_star_memory_pool(count: usize) -> StarMemoryPointers {
     pointers
 }
 
-// SIMD version for batch processing
+// SIMD version for batch processing with Structure-of-Arrays
 fn calculate_effects_into_buffers_simd(
-    positions: &[f32],
+    positions_x: &[f32],
+    positions_y: &[f32],
     twinkles: &mut [f32],
     sparkles: &mut [f32],
     count: usize,
@@ -220,18 +274,12 @@ fn calculate_effects_into_buffers_simd(
     for chunk in 0..chunks {
         let base_idx = chunk * SIMD_BATCH_SIZE;
 
-        // Load positions
-        let mut x_values = [0.0f32; SIMD_BATCH_SIZE];
-        let mut y_values = [0.0f32; SIMD_BATCH_SIZE];
+        // Load positions using efficient sequential access (SoA advantage!)
+        let x_slice = &positions_x[base_idx..base_idx + SIMD_BATCH_SIZE];
+        let y_slice = &positions_y[base_idx..base_idx + SIMD_BATCH_SIZE];
 
-        for i in 0..SIMD_BATCH_SIZE {
-            let i3 = (base_idx + i) * 3;
-            x_values[i] = positions[i3];
-            y_values[i] = positions[i3 + 1];
-        }
-
-        let x_vec = f32x8::from_array(x_values);
-        let y_vec = f32x8::from_array(y_values);
+        let x_vec = f32x8::from_slice(x_slice);
+        let y_vec = f32x8::from_slice(y_slice);
 
         // Twinkle calculation
         let time_3_vec = f32x8::splat(time_3);
@@ -274,9 +322,9 @@ fn calculate_effects_into_buffers_simd(
     // Process remaining elements scalar-style (small count, direct processing)
     let remaining_start = chunks * SIMD_BATCH_SIZE;
     for i in remaining_start..count {
-        let i3 = i * 3;
-        let x = positions[i3];
-        let y = positions[i3 + 1];
+        // Direct access to SoA arrays - no stride calculation needed!
+        let x = positions_x[i];
+        let y = positions_y[i];
 
         let twinkle_base =
             crate::math::fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
@@ -1136,7 +1184,8 @@ pub fn update_frame_simd(
 
             // 2. SIMD effects calculations (direct memory writes) - now safe!
             calculate_effects_into_buffers_simd(
-                &pool.positions,
+                &pool.positions_x,
+                &pool.positions_y,
                 &mut pool.twinkles,
                 &mut pool.sparkles,
                 count,

@@ -5,22 +5,34 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { getOptimizedFunctions, type WASMModule, StarFieldSharedMemory } from '@/lib/wasm'
 
-// Ultra quality shaders
+// SoA optimized shaders
 const VERTEX_SHADER = `
+  // Structure-of-Arrays attributes for optimal SIMD performance
+  attribute float positionX;
+  attribute float positionY;
+  attribute float positionZ;
+  attribute float colorR;
+  attribute float colorG;
+  attribute float colorB;
   attribute float size;
-  attribute vec3 customColor;
   attribute float twinkle;
   attribute float sparkle;
+
   varying vec3 vColor;
   varying float vSize;
   varying float vTwinkle;
   varying float vSparkle;
 
   void main() {
+    // Reconstruct position and color from SoA components
+    vec3 position = vec3(positionX, positionY, positionZ);
+    vec3 customColor = vec3(colorR, colorG, colorB);
+
     vColor = customColor;
     vSize = size;
     vTwinkle = twinkle;
     vSparkle = sparkle;
+
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     gl_PointSize = size * (300.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
@@ -151,10 +163,11 @@ function Stars() {
   }, [])
 
   const starGroup = useMemo(() => {
-    // Calculate total star count for ultra tier
+    // Calculate total star count for ultra tier - always in batches of 8 for SIMD
     const ultraStarDensity = 0.36 * 1.125 // Ultra tier multiplier
     const screenArea = screenDimensions.width * screenDimensions.height
-    const totalCount = Math.floor((screenArea / 1000) * ultraStarDensity)
+    const rawCount = Math.floor((screenArea / 1000) * ultraStarDensity)
+    const totalCount = Math.ceil(rawCount / 8) * 8 // Round up to nearest multiple of 8
 
     // Create material (doesn't depend on WASM)
     const material = new THREE.ShaderMaterial({
@@ -186,12 +199,22 @@ function Stars() {
         const geometry = starMeshRef.current.geometry
         const sharedMem = sharedMemoryRef.current
 
-        // Direct references to WASM memory - zero copy!
-        geometry.setAttribute('position', new THREE.BufferAttribute(sharedMem.positions, 3))
-        geometry.setAttribute('customColor', new THREE.BufferAttribute(sharedMem.colors, 3))
-        geometry.setAttribute('size', new THREE.BufferAttribute(sharedMem.sizes, 1))
-        geometry.setAttribute('twinkle', new THREE.BufferAttribute(sharedMem.twinkles, 1))
-        geometry.setAttribute('sparkle', new THREE.BufferAttribute(sharedMem.sparkles, 1))
+        // Manually compute bounding box for SoA layout - CRITICAL for rendering!
+        const minX = Math.min(...sharedMem.positions_x.slice(0, count))
+        const maxX = Math.max(...sharedMem.positions_x.slice(0, count))
+        const minY = Math.min(...sharedMem.positions_y.slice(0, count))
+        const maxY = Math.max(...sharedMem.positions_y.slice(0, count))
+        const minZ = Math.min(...sharedMem.positions_z.slice(0, count))
+        const maxZ = Math.max(...sharedMem.positions_z.slice(0, count))
+
+        geometry.boundingBox = new THREE.Box3(
+          new THREE.Vector3(minX, minY, minZ),
+          new THREE.Vector3(maxX, maxY, maxZ)
+        )
+
+        // CRITICAL: Tell Three.js how many vertices to render
+        // Required when using custom attributes without standard 'position' attribute
+        geometry.setDrawRange(0, count)
       }
     }
   }, [wasmModule, starGroup])

@@ -3,17 +3,27 @@
 let wasmModule: WASMModule | null = null
 let loadPromise: Promise<WASMModule> | null = null
 
-// Shared memory pointer structure
+// Structure-of-Arrays memory pointer structure
 export interface StarMemoryPointers {
-  positions_ptr: number
-  colors_ptr: number
+  // Separate pointers for SoA layout
+  positions_x_ptr: number
+  positions_y_ptr: number
+  positions_z_ptr: number
+  colors_r_ptr: number
+  colors_g_ptr: number
+  colors_b_ptr: number
   sizes_ptr: number
   twinkles_ptr: number
   sparkles_ptr: number
   visibility_ptr: number
   count: number
-  positions_length: number
-  colors_length: number
+  // Separate lengths for each SoA array
+  positions_x_length: number
+  positions_y_length: number
+  positions_z_length: number
+  colors_r_length: number
+  colors_g_length: number
+  colors_b_length: number
   sizes_length: number
   twinkles_length: number
   sparkles_length: number
@@ -115,7 +125,7 @@ export async function loadWASM(): Promise<WASMModule> {
     try {
       const wasmPath = '/wasm/pkg/hmziq_wasm_bg.wasm'
       const wasmModulePath = '/wasm/pkg/hmziq_wasm.js'
-      
+
       const wasmImport = await import(/* webpackIgnore: true */ /* @ts-ignore */ wasmModulePath)
       await wasmImport.default(wasmPath)
 
@@ -170,66 +180,92 @@ export function isWASMLoaded(): boolean {
 export class StarFieldSharedMemory {
   private wasmMemory: WebAssembly.Memory
   private pointers: StarMemoryPointers
-  
-  // Direct views into WASM linear memory
-  public positions: Float32Array
-  public colors: Float32Array
+
+  // Structure-of-Arrays for positions and colors (optimal for SIMD)
+  public positions_x: Float32Array
+  public positions_y: Float32Array
+  public positions_z: Float32Array
+  public colors_r: Float32Array
+  public colors_g: Float32Array
+  public colors_b: Float32Array
+
+  // Other attributes (already optimal)
   public sizes: Float32Array
   public twinkles: Float32Array
   public sparkles: Float32Array
   public visibilityMask: Uint8Array
-  
+
   constructor(wasmModule: WASMModule, starCount: number) {
     this.wasmMemory = wasmModule.memory
     this.pointers = wasmModule.initialize_star_memory_pool(starCount)
-    
-    // Create direct views into WASM memory (zero-copy!)
-    this.positions = new Float32Array(
-      this.wasmMemory.buffer, 
-      this.pointers.positions_ptr, 
-      this.pointers.positions_length
-    )
-    
-    this.colors = new Float32Array(
+
+    // Create direct views into WASM memory for SoA layout (zero-copy!)
+    this.positions_x = new Float32Array(
       this.wasmMemory.buffer,
-      this.pointers.colors_ptr,
-      this.pointers.colors_length
+      this.pointers.positions_x_ptr,
+      this.pointers.positions_x_length
     )
-    
+    this.positions_y = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.positions_y_ptr,
+      this.pointers.positions_y_length
+    )
+    this.positions_z = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.positions_z_ptr,
+      this.pointers.positions_z_length
+    )
+
+    this.colors_r = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.colors_r_ptr,
+      this.pointers.colors_r_length
+    )
+    this.colors_g = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.colors_g_ptr,
+      this.pointers.colors_g_length
+    )
+    this.colors_b = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.colors_b_ptr,
+      this.pointers.colors_b_length
+    )
+
     this.sizes = new Float32Array(
       this.wasmMemory.buffer,
       this.pointers.sizes_ptr,
       this.pointers.sizes_length
     )
-    
+
     this.twinkles = new Float32Array(
       this.wasmMemory.buffer,
       this.pointers.twinkles_ptr,
       this.pointers.twinkles_length
     )
-    
+
     this.sparkles = new Float32Array(
       this.wasmMemory.buffer,
       this.pointers.sparkles_ptr,
       this.pointers.sparkles_length
     )
-    
+
     this.visibilityMask = new Uint8Array(
       this.wasmMemory.buffer,
       this.pointers.visibility_ptr,
       this.pointers.visibility_length
     )
   }
-  
+
   get count(): number {
     return this.pointers.count
   }
-  
+
   // Zero-copy frame update
   updateFrame(
     wasmModule: WASMModule,
-    time: number, 
-    deltaTime: number, 
+    time: number,
+    deltaTime: number,
     cameraMatrix: Float32Array | null,
     isMoving: boolean,
     clickTime: number,
@@ -238,17 +274,17 @@ export class StarFieldSharedMemory {
     // For now, pass 0 for camera matrix pointer
     // TODO: Implement proper camera matrix handling in WASM
     const cameraPtr = 0
-    
+
     // All computation happens in WASM, modifies shared memory directly
     const result = wasmModule.update_frame_simd(
-      time, 
-      deltaTime, 
+      time,
+      deltaTime,
       cameraPtr,
       isMoving,
       clickTime,
       currentSpeedMultiplier
     )
-    
+
     // JavaScript arrays are automatically updated (shared memory!)
     return result
   }
