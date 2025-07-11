@@ -5,14 +5,14 @@ This document tracks the implementation progress of star field optimizations. Ea
 
 **Rules:**
 - No tests/benchmarks/comparisons
-- Wait for approval between phases  
+- Wait for approval between phases
 - No summaries/completion files
 - Preserve visual quality
 
 ---
 
 ## Phase 1: Zero-Copy Shared Memory Architecture
-**Status:** 🟢 COMPLETED  
+**Status:** 🟢 COMPLETED
 **Goal:** Eliminate memory copies between WASM and JS
 
 ### Tasks:
@@ -32,7 +32,7 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 1.1: Safe Global State with thread_local!
-**Status:** 🟢 COMPLETED  
+**Status:** 🟢 COMPLETED
 **Goal:** Replace static mut with safe thread_local pattern
 
 ### Tasks:
@@ -51,7 +51,7 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 1.2: Safe Pointer Access
-**Status:** 🟢 COMPLETED  
+**Status:** 🟢 COMPLETED
 **Goal:** Remove unsafe from main execution path
 
 ### Tasks:
@@ -69,7 +69,7 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 1.3: Simplified External API
-**Status:** 🟢 COMPLETED  
+**Status:** 🟢 COMPLETED
 **Goal:** Move deprecated functions to legacy directory
 
 ### Tasks:
@@ -89,7 +89,7 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 1.4: Remove Unsafe Code from math.rs
-**Status:** 🟢 COMPLETED  
+**Status:** 🟢 COMPLETED
 **Goal:** Eliminate all unsafe blocks from math module
 
 ### Tasks:
@@ -111,12 +111,12 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 2: Structure-of-Arrays Memory Layout
-**Status:** 🟢 COMPLETED  
+**Status:** 🟢 COMPLETED
 **Goal:** Optimize for SIMD cache efficiency
 
 ### Tasks:
 - [x] Restructure star data from Array-of-Structures to Structure-of-Arrays
-- [x] Separate x/y/z coordinates into contiguous arrays  
+- [x] Separate x/y/z coordinates into contiguous arrays
 - [x] Align memory to 32-byte boundaries for AVX
 - [x] Update all SIMD functions to use new layout
 
@@ -132,7 +132,7 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 2.1: Single SoA Layout with Shader Reconstruction
-**Status:** 🟢 COMPLETED  
+**Status:** 🟢 COMPLETED
 **Goal:** Eliminate dual-layout complexity while maintaining SIMD benefits
 
 ### Tasks:
@@ -162,8 +162,8 @@ This document tracks the implementation progress of star field optimizations. Ea
 
 ---
 
-## Phase 3: Core SIMD Optimizations  
-**Status:** 🔴 NOT_STARTED  
+## Phase 3: Core SIMD Optimizations
+**Status:** 🔴 NOT_STARTED
 **Goal:** Vectorize all per-frame calculations
 
 ### Tasks:
@@ -175,19 +175,19 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 4: Star Generation SIMD
-**Status:** 🔴 NOT_STARTED  
+**Status:** 🔴 NOT_STARTED
 **Goal:** Optimize initial star creation
 
 ### Tasks:
 - [ ] Vectorize position generation (8 stars at once)
 - [ ] SIMD color generation with mask operations
-- [ ] Batch size calculations  
+- [ ] Batch size calculations
 - [ ] SIMD random number generation
 
 ---
 
 ## Phase 5: Bitpacked Visibility Culling
-**Status:** 🔴 NOT_STARTED  
+**Status:** 🔴 NOT_STARTED
 **Goal:** Reduce memory usage 8x for visibility
 
 ### Tasks:
@@ -199,7 +199,7 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 6: Advanced SIMD Operations
-**Status:** 🔴 NOT_STARTED  
+**Status:** 🔴 NOT_STARTED
 **Goal:** Maximize SIMD throughput
 
 ### Tasks:
@@ -211,7 +211,7 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 7: Hierarchical Spatial Acceleration
-**Status:** 🔴 NOT_STARTED  
+**Status:** 🔴 NOT_STARTED
 **Goal:** Logarithmic culling complexity
 
 ### Tasks:
@@ -223,7 +223,7 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 8: WebGPU Compute Integration (Optional)
-**Status:** 🔴 NOT_STARTED  
+**Status:** 🔴 NOT_STARTED
 **Goal:** Offload to GPU compute
 
 ### Tasks:
@@ -236,7 +236,7 @@ This document tracks the implementation progress of star field optimizations. Ea
 
 ## Status Legend
 - 🔴 NOT_STARTED
-- 🟡 IN_PROGRESS  
+- 🟡 IN_PROGRESS
 - 🟢 COMPLETED
 - 🟣 TESTED
 - ⚫ SKIPPED
