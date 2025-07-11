@@ -5,8 +5,10 @@ This folder contains files that are no longer actively used in the current codeb
 ## Components
 
 ### Effects
+- `LightNebula.tsx` - Optimized light nebula implementation (moved to legacy)
 - `LightNebula2D.tsx` - Original light nebula implementation (replaced by LightNebula2DOptimized.tsx)
 - `MeteorShower2D.tsx` - Original meteor shower implementation (replaced by MeteorShower2DOptimized.tsx)
+- `Nebula2D.tsx` - Basic 2D nebula implementation
 
 ### Three.js Components
 - `OptimizedStarFieldWithCulling.tsx` - Star field with frustum culling (not currently used)
@@ -24,6 +26,12 @@ This folder contains files that are no longer actively used in the current codeb
 
 ## Libraries
 - `three-utils.ts` - Three.js utility functions (used by legacy StarField components)
+
+### WASM Utilities
+- `lib/wasm/nebula-spatial.ts` - Spatial indexing for nebula overlap detection
+
+### Rust/WASM Source
+- `wasm/src/nebula_system.rs` - Rust implementation for nebula particle system
 
 ## Types
 - `index.ts` - Global type definitions (types now defined inline where needed)

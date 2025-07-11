@@ -5,7 +5,6 @@ mod batch_transfer;
 mod bezier;
 mod math;
 mod memory;
-mod nebula_system;
 mod physics_utils;
 mod spatial;
 mod star_field;
@@ -15,7 +14,6 @@ pub use batch_transfer::*;
 pub use bezier::*;
 pub use math::*;
 pub use memory::*;
-pub use nebula_system::*;
 pub use physics_utils::*;
 pub use spatial::*;
 pub use star_field::*;
@@ -46,5 +44,4 @@ pub fn main() {
     console_log!("WASM module loaded successfully!");
     console_log!("Star field optimization ready!");
     console_log!("Spatial indexing ready!");
-    console_log!("Nebula system ready!");
 }
