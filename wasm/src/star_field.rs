@@ -10,7 +10,11 @@ use crate::math::init_sin_table;
 
 // SIMD imports when feature is enabled
 #[cfg(feature = "simd")]
-use packed_simd::{f32x4, f32x8};
+use std::simd::{f32x4, f32x8};
+#[cfg(feature = "simd")]
+use std::simd::num::SimdFloat;
+#[cfg(feature = "simd")]
+use std::simd::cmp::SimdPartialOrd;
 
 // SIMD batch size constants
 #[cfg(feature = "simd")]
@@ -29,7 +33,7 @@ fn simd_sin_lookup_batch(values: f32x8, sin_table: &[f32]) -> f32x8 {
     let indices = normalized * scale;
     
     // Extract individual values and perform lookups
-    let indices_arr: [f32; 8] = indices.into();
+    let indices_arr: [f32; 8] = indices.to_array();
     let mut results = [0.0f32; 8];
     
     for (i, &idx) in indices_arr.iter().enumerate() {
@@ -37,7 +41,7 @@ fn simd_sin_lookup_batch(values: f32x8, sin_table: &[f32]) -> f32x8 {
         results[i] = sin_table[index];
     }
     
-    f32x8::from_slice_unaligned(&results)
+    f32x8::from_array(results)
 }
 
 // Star generation function matching StarField.tsx lines 248-300
@@ -163,11 +167,17 @@ pub fn calculate_star_effects_into_buffers(
         // Use SIMD if available and count is large enough
         #[cfg(feature = "simd")]
         if count >= SIMD_BATCH_SIZE * 2 {
+            crate::console_log!("Using SIMD path for {} stars", count);
             calculate_effects_into_buffers_simd(positions, twinkles, sparkles, count, time);
             return;
         }
         
         // Scalar fallback
+        #[cfg(feature = "simd")]
+        crate::console_log!("Using scalar fallback for {} stars (below SIMD threshold)", count);
+        #[cfg(not(feature = "simd"))]
+        crate::console_log!("Using scalar path for {} stars (SIMD disabled)", count);
+        
         calculate_effects_into_buffers_scalar(positions, twinkles, sparkles, count, time);
     }
 }
@@ -205,8 +215,8 @@ fn calculate_effects_into_buffers_simd(
             y_values[i] = positions[i3 + 1];
         }
         
-        let x_vec = f32x8::from_slice_unaligned(&x_values);
-        let y_vec = f32x8::from_slice_unaligned(&y_values);
+        let x_vec = f32x8::from_array(x_values);
+        let y_vec = f32x8::from_array(y_values);
         
         // Twinkle calculation
         let time_3_vec = f32x8::splat(time_3);
@@ -227,7 +237,7 @@ fn calculate_effects_into_buffers_simd(
         // Conditional sparkle effect
         let sparkle_threshold = f32x8::splat(0.98);
         let sparkle_scale = f32x8::splat(50.0); // 1.0 / 0.02
-        let sparkle_mask = sparkle_phase.gt(sparkle_threshold);
+        let sparkle_mask = sparkle_phase.simd_gt(sparkle_threshold);
         let sparkle_values = sparkle_mask.select(
             (sparkle_phase - sparkle_threshold) * sparkle_scale,
             f32x8::splat(0.0)
@@ -237,8 +247,8 @@ fn calculate_effects_into_buffers_simd(
         let final_twinkle = twinkle_base + sparkle_values;
         
         // Store results
-        let twinkle_array: [f32; SIMD_BATCH_SIZE] = final_twinkle.into();
-        let sparkle_array: [f32; SIMD_BATCH_SIZE] = sparkle_values.into();
+        let twinkle_array: [f32; SIMD_BATCH_SIZE] = final_twinkle.to_array();
+        let sparkle_array: [f32; SIMD_BATCH_SIZE] = sparkle_values.to_array();
         
         for i in 0..SIMD_BATCH_SIZE {
             twinkles[base_idx + i] = twinkle_array[i];
@@ -475,8 +485,8 @@ fn process_full_effects_simd(
             y_values[i] = positions[i3 + 1];
         }
         
-        let x_vec = f32x8::from_slice_unaligned(&x_values);
-        let y_vec = f32x8::from_slice_unaligned(&y_values);
+        let x_vec = f32x8::from_array(x_values);
+        let y_vec = f32x8::from_array(y_values);
         
         // Twinkle calculation
         let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
@@ -485,7 +495,7 @@ fn process_full_effects_simd(
         // Sparkle calculation
         let sparkle_arg = time_15_vec + x_vec * factor_20 + y_vec * factor_30;
         let sparkle_phase_vec = simd_sin_lookup_batch(sparkle_arg, sin_table);
-        let sparkle_mask = sparkle_phase_vec.gt(sparkle_threshold);
+        let sparkle_mask = sparkle_phase_vec.simd_gt(sparkle_threshold);
         let sparkle_vec = sparkle_mask.select(
             (sparkle_phase_vec - sparkle_threshold) * sparkle_scale,
             zero
@@ -493,8 +503,8 @@ fn process_full_effects_simd(
         
         let twinkle_vec = twinkle_base_vec + sparkle_vec;
         
-        let twinkle_arr: [f32; 8] = twinkle_vec.into();
-        let sparkle_arr: [f32; 8] = sparkle_vec.into();
+        let twinkle_arr: [f32; 8] = twinkle_vec.to_array();
+        let sparkle_arr: [f32; 8] = sparkle_vec.to_array();
         
         for i in 0..8 {
             effects.push(twinkle_arr[i]);
@@ -546,13 +556,13 @@ fn process_medium_effects_simd(
             y_values[i] = positions[i3 + 1];
         }
         
-        let x_vec = f32x8::from_slice_unaligned(&x_values);
-        let y_vec = f32x8::from_slice_unaligned(&y_values);
+        let x_vec = f32x8::from_array(x_values);
+        let y_vec = f32x8::from_array(y_values);
         
         let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
         let twinkle_vec = simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
         
-        let twinkle_arr: [f32; 8] = twinkle_vec.into();
+        let twinkle_arr: [f32; 8] = twinkle_vec.to_array();
         
         for i in 0..8 {
             effects.push(twinkle_arr[i]);
@@ -851,13 +861,13 @@ fn process_simple_effects_simd(
             y_values[i] = positions[i3 + 1];
         }
         
-        let x_vec = f32x8::from_slice_unaligned(&x_values);
-        let y_vec = f32x8::from_slice_unaligned(&y_values);
+        let x_vec = f32x8::from_array(x_values);
+        let y_vec = f32x8::from_array(y_values);
         
         let twinkle_arg = time_2_vec + x_vec * factor_5 + y_vec * factor_5;
         let twinkle_vec = simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
         
-        let twinkle_arr: [f32; 8] = twinkle_vec.into();
+        let twinkle_arr: [f32; 8] = twinkle_vec.to_array();
         
         for i in 0..8 {
             effects.push(twinkle_arr[i]);
@@ -871,14 +881,14 @@ fn process_simple_effects_simd(
             y_values[i] = positions[i3 + 1];
         }
         
-        let x_vec = f32x8::from_slice_unaligned(&x_values);
-        let y_vec = f32x8::from_slice_unaligned(&y_values);
+        let x_vec = f32x8::from_array(x_values);
+        let y_vec = f32x8::from_array(y_values);
         
         // Simple twinkle calculation
         let twinkle_arg = time_2_vec + x_vec * factor_5 + y_vec * factor_5;
         let twinkle_vec = simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
         
-        let twinkle_arr: [f32; 8] = twinkle_vec.into();
+        let twinkle_arr: [f32; 8] = twinkle_vec.to_array();
         
         // No sparkle for simple mode
         for i in 0..8 {
@@ -958,9 +968,9 @@ pub fn cull_stars_by_frustum_simd(
             z_arr[i] = positions[i3 + 2];
         }
         
-        let x_vec = f32x4::from_slice_unaligned(&x_arr);
-        let y_vec = f32x4::from_slice_unaligned(&y_arr);
-        let z_vec = f32x4::from_slice_unaligned(&z_arr);
+        let x_vec = f32x4::from_array(x_arr);
+        let y_vec = f32x4::from_array(y_arr);
+        let z_vec = f32x4::from_array(z_arr);
         
         let mut inside_vec = f32x4::splat(1.0);
         
@@ -972,14 +982,14 @@ pub fn cull_stars_by_frustum_simd(
             let plane_w = f32x4::splat(plane[3]);
             
             let distance = plane_x * x_vec + plane_y * y_vec + plane_z * z_vec + plane_w;
-            let outside_mask = distance.lt(neg_margin);
+            let outside_mask = distance.simd_lt(neg_margin);
             
             // Update inside status
             inside_vec = inside_vec * outside_mask.select(f32x4::splat(0.0), f32x4::splat(1.0));
         }
         
         // Store results
-        let inside_arr: [f32; 4] = inside_vec.into();
+        let inside_arr: [f32; 4] = inside_vec.to_array();
         for i in 0..4 {
             visibility_mask[base_idx + i] = if inside_arr[i] > 0.5 { 1 } else { 0 };
         }
@@ -1130,8 +1140,8 @@ pub fn calculate_star_effects_temporal_simd(
             y_values[i] = positions[i3 + 1];
         }
         
-        let x_vec = f32x8::from_slice_unaligned(&x_values);
-        let y_vec = f32x8::from_slice_unaligned(&y_values);
+        let x_vec = f32x8::from_array(x_values);
+        let y_vec = f32x8::from_array(y_values);
         
         // Calculate twinkle
         let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
@@ -1140,7 +1150,7 @@ pub fn calculate_star_effects_temporal_simd(
         // Calculate sparkle
         let sparkle_arg = time_15_vec + x_vec * factor_20 + y_vec * factor_30;
         let sparkle_phase_vec = simd_sin_lookup_batch(sparkle_arg, sin_table);
-        let sparkle_mask = sparkle_phase_vec.gt(sparkle_threshold);
+        let sparkle_mask = sparkle_phase_vec.simd_gt(sparkle_threshold);
         let sparkle_vec = sparkle_mask.select(
             (sparkle_phase_vec - sparkle_threshold) * sparkle_scale,
             zero
@@ -1149,21 +1159,25 @@ pub fn calculate_star_effects_temporal_simd(
         let twinkle_vec = twinkle_base_vec + sparkle_vec;
         
         // Load previous values
-        let prev_twinkles = f32x8::from_slice_unaligned(&previous_twinkles[base..base + 8]);
-        let prev_sparkles = f32x8::from_slice_unaligned(&previous_sparkles[base..base + 8]);
+        let mut prev_twinkle_arr = [0.0f32; 8];
+        let mut prev_sparkle_arr = [0.0f32; 8];
+        prev_twinkle_arr.copy_from_slice(&previous_twinkles[base..base + 8]);
+        prev_sparkle_arr.copy_from_slice(&previous_sparkles[base..base + 8]);
+        let prev_twinkles = f32x8::from_array(prev_twinkle_arr);
+        let prev_sparkles = f32x8::from_array(prev_sparkle_arr);
         
         // Calculate differences
         let twinkle_diff = (twinkle_vec - prev_twinkles).abs();
         let sparkle_diff = (sparkle_vec - prev_sparkles).abs();
         
         // Check if update needed
-        let needs_update_mask = twinkle_diff.gt(threshold_vec) | sparkle_diff.gt(threshold_vec);
+        let needs_update_mask = twinkle_diff.simd_gt(threshold_vec) | sparkle_diff.simd_gt(threshold_vec);
         let needs_update_vec = needs_update_mask.select(one, zero);
         
         // Store results
-        let needs_update_arr: [f32; 8] = needs_update_vec.into();
-        let twinkle_arr: [f32; 8] = twinkle_vec.into();
-        let sparkle_arr: [f32; 8] = sparkle_vec.into();
+        let needs_update_arr: [f32; 8] = needs_update_vec.to_array();
+        let twinkle_arr: [f32; 8] = twinkle_vec.to_array();
+        let sparkle_arr: [f32; 8] = sparkle_vec.to_array();
         
         for i in 0..8 {
             results.push(needs_update_arr[i]);
