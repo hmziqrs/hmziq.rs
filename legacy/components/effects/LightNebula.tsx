@@ -2,12 +2,12 @@
 
 import { useEffect, useRef } from 'react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { QualityManager } from '@/lib/performance/quality-manager'
-import { gradientCaches, generateGradientKey } from '@/lib/performance/gradient-cache'
+import { QualityManager } from '@/legacy/lib/performance/quality-manager'
+import { gradientCaches, generateGradientKey } from '@/legacy/lib/performance/gradient-cache'
 import { 
   FrameTimer,
   isInViewport
-} from '@/lib/performance/performance-utils'
+} from '@/legacy/lib/performance/performance-utils'
 import { getNebulaSpatialIndexing } from '@/lib/wasm/nebula-spatial'
 
 interface Cloud {

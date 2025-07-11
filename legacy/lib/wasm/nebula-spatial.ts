@@ -1,5 +1,5 @@
 import { getOptimizedFunctions, type SpatialGrid } from '@/lib/wasm'
-import { DebugConfigManager } from '@/lib/performance/debug-config'
+import { DebugConfigManager } from '@/legacy/lib/performance/debug-config'
 
 interface NebulaOverlap {
   id1: number

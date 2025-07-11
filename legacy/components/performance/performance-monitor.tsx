@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { QualityManager, type QualityTier, type PerformanceMetrics } from '@/lib/performance/quality-manager'
-import { DebugConfigManager, type DebugConfig } from '@/lib/performance/debug-config'
+import { QualityManager, type QualityTier, type PerformanceMetrics } from '@/legacy/lib/performance/quality-manager'
+import { DebugConfigManager, type DebugConfig } from '@/legacy/lib/performance/debug-config'
 import { getWASMStatus } from '@/lib/wasm'
 
 interface PerformanceMonitorProps {
@@ -186,19 +186,6 @@ export default function PerformanceMonitor({
                   onChange={(e) => {
                     DebugConfigManager.getInstance().setConfig({ 
                       enableConsoleLogs: e.target.checked 
-                    })
-                  }}
-                  className="ml-2"
-                />
-              </label>
-              <label className="flex items-center justify-between cursor-pointer hover:text-white">
-                <span>Meteor Logs</span>
-                <input
-                  type="checkbox"
-                  checked={debugConfig.enableMeteorLogs}
-                  onChange={(e) => {
-                    DebugConfigManager.getInstance().setConfig({ 
-                      enableMeteorLogs: e.target.checked 
                     })
                   }}
                   className="ml-2"

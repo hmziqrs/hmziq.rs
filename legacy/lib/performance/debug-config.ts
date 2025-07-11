@@ -1,7 +1,6 @@
 // Global debug configuration for performance-sensitive components
 interface DebugConfig {
   enableConsoleLogs: boolean
-  enableMeteorLogs: boolean
   enableStarFieldLogs: boolean
   enableNebulaLogs: boolean
 }
@@ -10,7 +9,6 @@ class DebugConfigManager {
   private static instance: DebugConfigManager
   private config: DebugConfig = {
     enableConsoleLogs: false,
-    enableMeteorLogs: false,
     enableStarFieldLogs: false,
     enableNebulaLogs: false,
   }
@@ -63,10 +61,6 @@ class DebugConfigManager {
   // Convenience methods
   toggleConsoleLogs(): void {
     this.setConfig({ enableConsoleLogs: !this.config.enableConsoleLogs })
-  }
-  
-  toggleMeteorLogs(): void {
-    this.setConfig({ enableMeteorLogs: !this.config.enableMeteorLogs })
   }
 }
 

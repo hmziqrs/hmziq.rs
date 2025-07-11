@@ -15,14 +15,6 @@ const StarField3D = dynamic(() => import('@/components/three/StarField'), {
   ),
 })
 
-// Dynamically import 2D effects
-const MeteorShower2D = dynamic(() => import('@/components/effects/MeteorShower'), {
-  ssr: false,
-})
-
-const LightNebula2D = dynamic(() => import('@/components/effects/LightNebula'), {
-  ssr: false,
-})
 
 
 export default function Home() {
@@ -31,11 +23,6 @@ export default function Home() {
       {/* 2D Background star field */}
       <StarField3D />
 
-      {/* 2D Nebula clouds - lightweight version */}
-      <LightNebula2D />
-
-      {/* 2D Meteor shower overlay */}
-      <MeteorShower2D />
 
       {/* Content sections */}
       <div className="relative" style={{ zIndex: 10 }}>

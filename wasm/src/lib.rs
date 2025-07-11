@@ -1,28 +1,12 @@
 use wasm_bindgen::prelude::*;
 
-// Module imports
+// Module imports - active modules only
 mod math;
 mod star_field;
-mod bezier;
-mod memory;
-mod particles;
-mod particle_pool;
-mod physics_utils;
-mod batch_transfer;
-mod nebula_system;
-mod spatial;
 
 // Re-export public functions
 pub use math::*;
 pub use star_field::*;
-pub use bezier::*;
-pub use memory::*;
-pub use particles::*;
-pub use particle_pool::*;
-pub use physics_utils::*;
-pub use batch_transfer::*;
-pub use nebula_system::*;
-pub use spatial::*;
 
 #[wasm_bindgen]
 extern "C" {
@@ -49,7 +33,5 @@ pub fn greet(name: &str) -> String {
 pub fn main() {
     console_log!("WASM module loaded successfully!");
     console_log!("Star field optimization ready!");
-    console_log!("Meteor particle system ready!");
-    console_log!("Unified particle manager ready!");
     console_log!("Spatial indexing ready!");
 }

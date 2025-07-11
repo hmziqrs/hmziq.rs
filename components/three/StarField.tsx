@@ -4,20 +4,12 @@ import { useRef, useMemo, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { getOptimizedFunctions } from '@/lib/wasm'
-import { QualityManager, type QualityTier } from '@/lib/performance/quality-manager'
-import PerformanceMonitor from '@/components/performance/performance-monitor'
 
 // Performance monitoring
 let frameCount = 0
 let lastTime = performance.now()
 let fps = 60
 
-// LOD (Level of Detail) configuration
-const LOD_LEVELS = {
-  NEAR: { distance: 30, quality: 'full' },
-  MEDIUM: { distance: 70, quality: 'medium' },
-  FAR: { distance: Infinity, quality: 'simple' }
-}
 
 // Pre-calculated sin lookup table for performance (kept for non-WASM fallback)
 const SIN_TABLE_SIZE = 1024
@@ -33,72 +25,8 @@ function fastSin(x: number): number {
   return SIN_TABLE[index]
 }
 
-// Simplified shaders for different LOD levels
-const SIMPLE_VERTEX_SHADER = `
-  attribute float size;
-  attribute vec3 customColor;
-  varying vec3 vColor;
-  
-  void main() {
-    vColor = customColor;
-    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = size * (300.0 / -mvPosition.z);
-    gl_Position = projectionMatrix * mvPosition;
-  }
-`
-
-const SIMPLE_FRAGMENT_SHADER = `
-  varying vec3 vColor;
-  
-  void main() {
-    vec2 center = gl_PointCoord - 0.5;
-    float dist = length(center);
-    
-    // Simple circular fade
-    float alpha = 1.0 - smoothstep(0.3, 0.5, dist);
-    
-    gl_FragColor = vec4(vColor, alpha);
-  }
-`
-
-const MEDIUM_VERTEX_SHADER = `
-  attribute float size;
-  attribute vec3 customColor;
-  attribute float twinkle; // Pre-calculated in CPU
-  varying vec3 vColor;
-  varying float vTwinkle;
-  varying float vSize;
-  
-  void main() {
-    vColor = customColor;
-    vTwinkle = twinkle;
-    vSize = size;
-    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = size * (300.0 / -mvPosition.z);
-    gl_Position = projectionMatrix * mvPosition;
-  }
-`
-
-const MEDIUM_FRAGMENT_SHADER = `
-  varying vec3 vColor;
-  varying float vTwinkle;
-  varying float vSize;
-  
-  void main() {
-    vec2 center = gl_PointCoord - 0.5;
-    float dist = length(center);
-    
-    // Soft circular shape with simple glow
-    float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
-    float glow = exp(-dist * 3.0) * 0.5 * (vSize / 10.0);
-    
-    vec3 finalColor = vColor + glow;
-    gl_FragColor = vec4(finalColor * vTwinkle, alpha);
-  }
-`
-
-// Full quality shader (optimized version of original)
-const FULL_VERTEX_SHADER = `
+// Ultra quality shaders
+const VERTEX_SHADER = `
   attribute float size;
   attribute vec3 customColor;
   attribute float twinkle;
@@ -119,7 +47,7 @@ const FULL_VERTEX_SHADER = `
   }
 `
 
-const FULL_FRAGMENT_SHADER = `
+const FRAGMENT_SHADER = `
   varying vec3 vColor;
   varying float vSize;
   varying float vTwinkle;
@@ -163,8 +91,6 @@ interface StarGroup {
 }
 
 function Stars() {
-  const qualityManager = QualityManager.getInstance()
-  const [qualityTier, setQualityTier] = useState<QualityTier>(qualityManager.getTier())
   const [screenDimensions, setScreenDimensions] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 1920,
     height: typeof window !== 'undefined' ? window.innerHeight : 1080,
@@ -185,22 +111,11 @@ function Stars() {
   const rotationYRef = useRef(0)
   const lastFrameTimeRef = useRef(0)
 
-  // Refs for each LOD group
-  const nearMeshRef = useRef<THREE.Points>(null)
-  const mediumMeshRef = useRef<THREE.Points>(null)
-  const farMeshRef = useRef<THREE.Points>(null)
+  // Ref for star mesh
+  const starMeshRef = useRef<THREE.Points>(null)
 
   // Frame counter for temporal optimization
   const frameCounterRef = useRef(0)
-  // Listen to quality tier changes from QualityManager
-  useEffect(() => {
-    const handleTierChange = () => {
-      setQualityTier(qualityManager.getTier())
-    }
-    
-    window.addEventListener('qualityTierChanged', handleTierChange)
-    return () => window.removeEventListener('qualityTierChanged', handleTierChange)
-  }, [])
 
   // Load WASM module
   useEffect(() => {
@@ -208,23 +123,8 @@ function Stars() {
       wasmLoadingRef.current = true
       getOptimizedFunctions().then(module => {
         setWasmModule(module)
-        // Force console logs for debugging
-        const forceLog = (...args: any[]) => {
-          const originalWarn = console.warn
-          console.warn = () => {} // Temporarily disable suppression
-          console.log(...args)
-          console.warn = originalWarn
-        }
-        
-        forceLog('WASM module loaded for StarField', module)
-        // Test WASM fast_sin function
-        if (module && module.fast_sin) {
-          forceLog('Testing WASM fast_sin:', module.fast_sin(Math.PI / 2))
-          forceLog('Testing WASM fast_sin(0):', module.fast_sin(0))
-          forceLog('Testing WASM fast_sin(Math.PI):', module.fast_sin(Math.PI))
-        }
       }).catch(err => {
-        console.warn('Failed to load WASM module for StarField:', err)
+        // Silent fallback
       })
     }
   }, [])
@@ -272,60 +172,23 @@ function Stars() {
     }
   }, [])
 
-  const starGroups = useMemo(() => {
-    // Calculate total star count based on quality tier
-    const qualityMultipliers = {
-      performance: 0.5,
-      balanced: 0.75,
-      ultra: 1.125
-    }
-    const baseStarDensity = 0.36 * qualityMultipliers[qualityTier]
+  const starGroup = useMemo(() => {
+    // Calculate total star count for ultra tier
+    const ultraStarDensity = 0.36 * 1.125 // Ultra tier multiplier
     const screenArea = screenDimensions.width * screenDimensions.height
-    const totalCount = Math.floor((screenArea / 1000) * baseStarDensity)
+    const totalCount = Math.floor((screenArea / 1000) * ultraStarDensity)
 
-    // Distribute stars across LOD levels based on quality
-    let nearCount: number
-    let mediumCount: number 
-    let farCount: number
-    
-    if (wasmModule && wasmModule.calculate_lod_distribution) {
-      // Use WASM for optimized LOD calculations
-      const qualityTierMap = { performance: 0, balanced: 1, ultra: 2 }
-      const distribution = wasmModule.calculate_lod_distribution(totalCount, qualityTierMap[qualityTier])
-      nearCount = distribution[0]
-      mediumCount = distribution[1]
-      farCount = distribution[2]
-    } else {
-      // Fallback to JavaScript implementation
-      const distributions = {
-        performance: { near: 0.1, medium: 0.3, far: 0.6 },
-        balanced: { near: 0.15, medium: 0.35, far: 0.5 },
-        ultra: { near: 0.2, medium: 0.4, far: 0.4 }
-      }
-      const dist = distributions[qualityTier]
-      nearCount = Math.floor(totalCount * dist.near)
-      mediumCount = Math.floor(totalCount * dist.medium)
-      farCount = totalCount - nearCount - mediumCount
-    }
-
-    // Helper to create star data for a group
-    const createStarGroup = (
-      count: number,
-      startIndex: number,
-      minRadius: number,
-      maxRadius: number,
-      lodLevel: string
-    ): StarGroup => {
+    // Create ultra quality star data
+    const createStarGroup = (count: number): StarGroup => {
       let positions: Float32Array
       let colors: Float32Array
       let sizes: Float32Array
       
       // Use WASM if available, otherwise fall back to JS
       if (wasmModule) {
-        positions = wasmModule.generate_star_positions(count, startIndex, minRadius, maxRadius)
-        colors = wasmModule.generate_star_colors(count, startIndex)
-        const sizeMultiplier = lodLevel === 'simple' ? 0.8 : 1.0
-        sizes = wasmModule.generate_star_sizes(count, startIndex, sizeMultiplier)
+        positions = wasmModule.generate_star_positions(count, 0, 20, 150)
+        colors = wasmModule.generate_star_colors(count, 0)
+        sizes = wasmModule.generate_star_sizes(count, 0, 1.0)
       } else {
         // Fallback to original JS implementation
         positions = new Float32Array(count * 3)
@@ -338,20 +201,19 @@ function Stars() {
         }
         
         for (let i = 0; i < count; i++) {
-          const globalIndex = startIndex + i
           const i3 = i * 3
 
-          // Position
-          const radius = minRadius + seed(globalIndex) * (maxRadius - minRadius)
-          const theta = seed(globalIndex + 1000) * Math.PI * 2
-          const phi = Math.acos(2 * seed(globalIndex + 2000) - 1)
+          // Position - distributed across full radius range
+          const radius = 20 + seed(i) * 130 // 20 to 150 radius
+          const theta = seed(i + 1000) * Math.PI * 2
+          const phi = Math.acos(2 * seed(i + 2000) - 1)
 
           positions[i3] = radius * Math.sin(phi) * Math.cos(theta)
           positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta)
           positions[i3 + 2] = radius * Math.cos(phi)
 
           // Colors
-          const colorChoice = seed(globalIndex + 3000)
+          const colorChoice = seed(i + 3000)
           if (colorChoice < 0.5) {
             colors[i3] = colors[i3 + 1] = colors[i3 + 2] = 1
           } else if (colorChoice < 0.7) {
@@ -368,10 +230,10 @@ function Stars() {
             colors[i3 + 2] = 1
           }
 
-          // Sizes
-          const sizeRandom = seed(globalIndex + 4000)
-          const baseSize = sizeRandom < 0.7 ? 1 + seed(globalIndex + 5000) * 1.5 : 2.5 + seed(globalIndex + 6000) * 2
-          sizes[i] = lodLevel === 'simple' ? baseSize * 0.8 : baseSize
+          // Sizes - full quality
+          const sizeRandom = seed(i + 4000)
+          const baseSize = sizeRandom < 0.7 ? 1 + seed(i + 5000) * 1.5 : 2.5 + seed(i + 6000) * 2
+          sizes[i] = baseSize
         }
       }
 
@@ -383,36 +245,15 @@ function Stars() {
         sparkles[i] = 0.0
       }
 
-      // Create appropriate material based on LOD
-      let material: THREE.ShaderMaterial
-      if (lodLevel === 'simple') {
-        material = new THREE.ShaderMaterial({
-          uniforms: {},
-          vertexShader: SIMPLE_VERTEX_SHADER,
-          fragmentShader: SIMPLE_FRAGMENT_SHADER,
-          transparent: true,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-        })
-      } else if (lodLevel === 'medium') {
-        material = new THREE.ShaderMaterial({
-          uniforms: {},
-          vertexShader: MEDIUM_VERTEX_SHADER,
-          fragmentShader: MEDIUM_FRAGMENT_SHADER,
-          transparent: true,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-        })
-      } else {
-        material = new THREE.ShaderMaterial({
-          uniforms: {},
-          vertexShader: FULL_VERTEX_SHADER,
-          fragmentShader: FULL_FRAGMENT_SHADER,
-          transparent: true,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-        })
-      }
+      // Create ultra quality material
+      const material = new THREE.ShaderMaterial({
+        uniforms: {},
+        vertexShader: VERTEX_SHADER,
+        fragmentShader: FRAGMENT_SHADER,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      })
 
       return {
         positions,
@@ -422,17 +263,13 @@ function Stars() {
         sparkles,
         count,
         material,
-        mesh: lodLevel === 'full' ? nearMeshRef : lodLevel === 'medium' ? mediumMeshRef : farMeshRef
+        mesh: starMeshRef
       }
     }
 
-    // Create LOD groups
-    const near = createStarGroup(nearCount, 0, 20, 30, 'full')
-    const medium = createStarGroup(mediumCount, nearCount, 30, 70, 'medium')
-    const far = createStarGroup(farCount, nearCount + mediumCount, 70, 150, 'simple')
-
-    return { near, medium, far }
-  }, [screenDimensions, wasmModule, qualityTier])
+    // Create single ultra quality star group
+    return createStarGroup(totalCount)
+  }, [screenDimensions, wasmModule])
 
   // Update twinkle and sparkle values using WASM with frustum culling and temporal coherence
   const updateStarEffects = (group: StarGroup, time: number, updateRate: number, viewProjMatrix?: Float32Array, useTemporalCoherence: boolean = true) => {
@@ -469,11 +306,6 @@ function Stars() {
         }
       }
       
-      // Log temporal coherence savings in debug mode
-      if (frameCounterRef.current % 60 === 0 && updateCount < count) {
-        const savingsPercent = ((count - updateCount) / count * 100).toFixed(1)
-        // console.log(`Temporal coherence: Updated ${updateCount}/${count} stars (${savingsPercent}% saved)`)
-      }
     } else if (wasmModule && wasmModule.calculate_star_effects_arrays) {
       // Fallback to regular update method
       if (visibleIndices && visibleIndices.length < count * 0.8) {
@@ -640,104 +472,30 @@ function Stars() {
       rotationYRef.current += baseRotationSpeedY * speedMultiplierRef.current * deltaTime
     }
 
-    // Apply rotation to all LOD groups
-    const meshes = [nearMeshRef.current, mediumMeshRef.current, farMeshRef.current]
-    meshes.forEach(mesh => {
-      if (mesh) {
-        mesh.rotation.x = rotationXRef.current
-        mesh.rotation.y = rotationYRef.current
-      }
-    })
+    // Apply rotation to star mesh
+    if (starMeshRef.current) {
+      starMeshRef.current.rotation.x = rotationXRef.current
+      starMeshRef.current.rotation.y = rotationYRef.current
+    }
 
-    // Update star effects at different rates based on LOD with frustum culling
+    // Update star effects
     const time = state.clock.elapsedTime
     const vpMatrix = new Float32Array(viewProjectionMatrix.elements)
     
-    // Use enhanced SIMD batch processing if available
-    if (wasmModule && wasmModule.calculate_star_effects_by_lod) {
-      // Process all LOD groups at once with quality-aware optimizations
-      const qualityTierMap = { performance: 0, balanced: 1, ultra: 2 }
-      const effects = wasmModule.calculate_star_effects_by_lod(
-        starGroups.near.positions,
-        starGroups.near.count,
-        starGroups.medium.positions,
-        starGroups.medium.count,
-        starGroups.far.positions,
-        starGroups.far.count,
-        time,
-        qualityTierMap[qualityTier]
-      )
-      
-      // Apply effects to each LOD group
-      let offset = 0
-      
-      // Near stars
-      for (let i = 0; i < starGroups.near.count; i++) {
-        starGroups.near.twinkles[i] = effects[offset * 2]
-        starGroups.near.sparkles[i] = effects[offset * 2 + 1]
-        offset++
-      }
-      
-      // Medium stars  
-      for (let i = 0; i < starGroups.medium.count; i++) {
-        starGroups.medium.twinkles[i] = effects[offset * 2]
-        starGroups.medium.sparkles[i] = effects[offset * 2 + 1]
-        offset++
-      }
-      
-      // Far stars (if any effects were calculated)
-      for (let i = 0; i < starGroups.far.count; i++) {
-        starGroups.far.twinkles[i] = effects[offset * 2]
-        starGroups.far.sparkles[i] = effects[offset * 2 + 1]
-        offset++
-      }
-      
-      // Update GPU attributes
-      const updateMeshAttributes = (mesh: React.RefObject<THREE.Points>) => {
-        if (mesh.current && mesh.current.geometry) {
-          const geometry = mesh.current.geometry
-          const twinkleAttr = geometry.getAttribute('twinkle') as THREE.BufferAttribute
-          const sparkleAttr = geometry.getAttribute('sparkle') as THREE.BufferAttribute
-          
-          if (twinkleAttr) twinkleAttr.needsUpdate = true
-          if (sparkleAttr) sparkleAttr.needsUpdate = true
-        }
-      }
-      
-      updateMeshAttributes(nearMeshRef)
-      updateMeshAttributes(mediumMeshRef)
-      updateMeshAttributes(farMeshRef)
-    } else {
-      // Fallback to individual updates
-      updateStarEffects(starGroups.near, time, 1, vpMatrix) // Every frame for near stars
-      updateStarEffects(starGroups.medium, time, 2, vpMatrix) // Every 2 frames for medium
-      // Far stars don't need updates (no twinkle/sparkle)
-    }
-    
-    // Update performance metrics in QualityManager
-    const frameTime = deltaTime * 1000 // Convert to milliseconds
-    qualityManager.updateMetrics(fps, frameTime)
+    // Update star effects every frame for ultra quality
+    updateStarEffects(starGroup, time, 1, vpMatrix)
   })
 
-  // Render star group
-  const renderStarGroup = (group: StarGroup, key: string) => (
-    <points key={key} ref={group.mesh} material={group.material}>
+  return (
+    <points ref={starGroup.mesh} material={starGroup.material}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[group.positions, 3]} />
-        <bufferAttribute attach="attributes-customColor" args={[group.colors, 3]} />
-        <bufferAttribute attach="attributes-size" args={[group.sizes, 1]} />
-        {group.twinkles && <bufferAttribute attach="attributes-twinkle" args={[group.twinkles, 1]} />}
-        {group.sparkles && <bufferAttribute attach="attributes-sparkle" args={[group.sparkles, 1]} />}
+        <bufferAttribute attach="attributes-position" args={[starGroup.positions, 3]} />
+        <bufferAttribute attach="attributes-customColor" args={[starGroup.colors, 3]} />
+        <bufferAttribute attach="attributes-size" args={[starGroup.sizes, 1]} />
+        <bufferAttribute attach="attributes-twinkle" args={[starGroup.twinkles, 1]} />
+        <bufferAttribute attach="attributes-sparkle" args={[starGroup.sparkles, 1]} />
       </bufferGeometry>
     </points>
-  )
-
-  return (
-    <>
-      {renderStarGroup(starGroups.far, 'far')}
-      {renderStarGroup(starGroups.medium, 'medium')}
-      {renderStarGroup(starGroups.near, 'near')}
-    </>
   )
 }
 
@@ -754,8 +512,6 @@ export default function OptimizedStarField() {
         <pointLight position={[10, 10, 10]} intensity={0.5} />
         <Stars />
       </Canvas>
-      
-      <PerformanceMonitor enabled={true} position="top-right" />
     </div>
   )
 }

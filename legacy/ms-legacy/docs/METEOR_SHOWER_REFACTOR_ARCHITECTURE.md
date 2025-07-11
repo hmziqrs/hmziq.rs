@@ -1,5 +1,7 @@
 # MeteorShower Component Refactor Architecture
 
+**Component Path:** `@/components/effects/MeteorShower.tsx`
+
 ## Objective: High-performance meteor shower with dual-mode WASM/JavaScript implementation and comprehensive optimizations
 
 ## Architecture Overview

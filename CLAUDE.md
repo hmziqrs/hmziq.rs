@@ -22,6 +22,7 @@ Bun, Next.js 15+ (App Router), shadcn/ui, Tailwind CSS v4, Three.js + React Thre
 - Colors: Black bg (#000000), white text (#FFFFFF), gray accents, blue/purple star glow only
 - Content: hero, skills, contacts sections. Ensure accessibility without JS.
 - WASM: `bun run build:wasm` for Rust compilation, use for particle calculations
+- Never read, analyze, or ever touch the `legacy/` directory unless explicitly specified
 
 ## Common Patterns
 

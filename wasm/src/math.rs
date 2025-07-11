@@ -22,6 +22,11 @@ pub fn init_sin_table() -> &'static Vec<f32> {
     }
 }
 
+// Get reference to the sin table
+pub fn get_sin_table() -> &'static Vec<f32> {
+    init_sin_table()
+}
+
 // Fast sin approximation using lookup table (matching StarField.tsx lines 27-31)
 #[inline]
 pub fn fast_sin_lookup(x: f32) -> f32 {
