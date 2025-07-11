@@ -82,7 +82,10 @@ export async function loadWASM(): Promise<WASMModule | null> {
     try {
       // Dynamic import to avoid build-time errors
       const wasmPath = '/wasm/pkg/hmziq_wasm_bg.wasm'
-      const wasm = await import(/* webpackIgnore: true */ '/wasm/pkg/hmziq_wasm.js')
+      
+      // Use dynamic import with string interpolation to avoid TypeScript resolution
+      const wasmModulePath = '/wasm/pkg/hmziq_wasm.js'
+      const wasm = await import(/* webpackIgnore: true */ /* @ts-ignore */ wasmModulePath)
 
       // Initialize WASM module
       await wasm.default(wasmPath)
