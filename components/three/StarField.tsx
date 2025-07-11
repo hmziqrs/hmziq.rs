@@ -3,13 +3,10 @@
 import { useRef, useMemo, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { getOptimizedFunctions } from '@/lib/wasm'
+import { getOptimizedFunctions, type WASMModule } from '@/lib/wasm'
 
 // Performance monitoring
-let frameCount = 0
 let lastTime = performance.now()
-let fps = 60
-
 
 // Pre-calculated sin lookup table for performance (kept for non-WASM fallback)
 const SIN_TABLE_SIZE = 1024
@@ -97,14 +94,14 @@ function Stars() {
   })
 
   // WASM module state
-  const [wasmModule, setWasmModule] = useState<any>(null)
+  const [wasmModule, setWasmModule] = useState<WASMModule | null>(null)
   const wasmLoadingRef = useRef(false)
 
   // Mouse interaction state
   const speedMultiplierRef = useRef(1)
   const isMovingRef = useRef(false)
   const clickBoostRef = useRef(0)
-  const mouseMoveTimeoutRef = useRef<NodeJS.Timeout>()
+  const mouseMoveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Rotation tracking
   const rotationXRef = useRef(0)
@@ -121,11 +118,13 @@ function Stars() {
   useEffect(() => {
     if (!wasmLoadingRef.current) {
       wasmLoadingRef.current = true
-      getOptimizedFunctions().then(module => {
-        setWasmModule(module)
-      }).catch(err => {
-        // Silent fallback
-      })
+      getOptimizedFunctions()
+        .then((module) => {
+          setWasmModule(module as WASMModule)
+        })
+        .catch(() => {
+          // Silent fallback
+        })
     }
   }, [])
 
@@ -183,7 +182,7 @@ function Stars() {
       let positions: Float32Array
       let colors: Float32Array
       let sizes: Float32Array
-      
+
       // Use WASM if available, otherwise fall back to JS
       if (wasmModule) {
         positions = wasmModule.generate_star_positions(count, 0, 20, 150)
@@ -194,12 +193,12 @@ function Stars() {
         positions = new Float32Array(count * 3)
         colors = new Float32Array(count * 3)
         sizes = new Float32Array(count)
-        
+
         const seed = (i: number) => {
-          let x = Math.sin(i * 12.9898 + 78.233) * 43758.5453
+          const x = Math.sin(i * 12.9898 + 78.233) * 43758.5453
           return x - Math.floor(x)
         }
-        
+
         for (let i = 0; i < count; i++) {
           const i3 = i * 3
 
@@ -263,7 +262,7 @@ function Stars() {
         sparkles,
         count,
         material,
-        mesh: starMeshRef
+        mesh: starMeshRef as React.RefObject<THREE.Points>,
       }
     }
 
@@ -272,7 +271,13 @@ function Stars() {
   }, [screenDimensions, wasmModule])
 
   // Update twinkle and sparkle values using WASM with frustum culling and temporal coherence
-  const updateStarEffects = (group: StarGroup, time: number, updateRate: number, viewProjMatrix?: Float32Array, useTemporalCoherence: boolean = true) => {
+  const updateStarEffects = (
+    group: StarGroup,
+    time: number,
+    updateRate: number,
+    viewProjMatrix?: Float32Array,
+    useTemporalCoherence: boolean = true
+  ) => {
     if (frameCounterRef.current % updateRate !== 0) return
 
     const { positions, twinkles, sparkles, count, mesh } = group
@@ -286,26 +291,32 @@ function Stars() {
 
     // Apply temporal coherence optimization
     const temporalThreshold = 0.05 // Only update if change is > 5%
-    
-    if (useTemporalCoherence && wasmModule && wasmModule.calculate_star_effects_with_temporal_coherence) {
+
+    if (
+      useTemporalCoherence &&
+      wasmModule &&
+      wasmModule.calculate_star_effects_with_temporal_coherence
+    ) {
       // Use temporal coherence to update only stars that have changed significantly
       const temporalResults = wasmModule.calculate_star_effects_with_temporal_coherence(
-        positions, twinkles, sparkles, count, time, temporalThreshold
+        positions,
+        twinkles,
+        sparkles,
+        count,
+        time,
+        temporalThreshold
       )
-      
+
       // Process results - format is [needs_update, twinkle, sparkle] triplets
-      let updateCount = 0
       for (let i = 0; i < count; i++) {
         const idx = i * 3
         const needsUpdate = temporalResults[idx]
-        
+
         if (needsUpdate > 0.5) {
           twinkles[i] = temporalResults[idx + 1]
           sparkles[i] = temporalResults[idx + 2]
-          updateCount++
         }
       }
-      
     } else if (wasmModule && wasmModule.calculate_star_effects_arrays) {
       // Fallback to regular update method
       if (visibleIndices && visibleIndices.length < count * 0.8) {
@@ -313,7 +324,7 @@ function Stars() {
         // Create temporary arrays for visible stars
         const visibleCount = visibleIndices.length
         const visiblePositions = new Float32Array(visibleCount * 3)
-        
+
         // Copy visible star positions
         for (let i = 0; i < visibleCount; i++) {
           const srcIdx = visibleIndices[i] * 3
@@ -322,10 +333,14 @@ function Stars() {
           visiblePositions[dstIdx + 1] = positions[srcIdx + 1]
           visiblePositions[dstIdx + 2] = positions[srcIdx + 2]
         }
-        
+
         // Calculate effects only for visible stars
-        const effects = wasmModule.calculate_star_effects_arrays(visiblePositions, visibleCount, time)
-        
+        const effects = wasmModule.calculate_star_effects_arrays(
+          visiblePositions,
+          visibleCount,
+          time
+        )
+
         // Update only visible stars
         for (let i = 0; i < visibleCount; i++) {
           const starIdx = visibleIndices[i]
@@ -350,7 +365,7 @@ function Stars() {
 
         // Use WASM fast_sin for better performance
         const twinkleBase = wasmModule.fast_sin(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7
-        
+
         // Sparkle effect using WASM
         const sparklePhase = wasmModule.fast_sin(time * 15.0 + x * 20.0 + y * 30.0)
         const sparkle = sparklePhase > 0.98 ? (sparklePhase - 0.98) / 0.02 : 0
@@ -367,7 +382,7 @@ function Stars() {
 
         // Use fast sin approximation
         const twinkleBase = fastSin(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7
-        
+
         // Sparkle effect - simplified
         const sparklePhase = fastSin(time * 15.0 + x * 20.0 + y * 30.0)
         const sparkle = sparklePhase > 0.98 ? (sparklePhase - 0.98) / 0.02 : 0
@@ -382,7 +397,7 @@ function Stars() {
       const geometry = mesh.current.geometry
       const twinkleAttr = geometry.getAttribute('twinkle') as THREE.BufferAttribute
       const sparkleAttr = geometry.getAttribute('sparkle') as THREE.BufferAttribute
-      
+
       if (twinkleAttr) {
         twinkleAttr.needsUpdate = true
       }
@@ -397,23 +412,22 @@ function Stars() {
 
     // Update FPS counter
     const currentTime = performance.now()
-    
+
     if (wasmModule && wasmModule.calculate_fps) {
       // Use WASM for FPS calculation
       const fpsResult = wasmModule.calculate_fps(frameCounterRef.current, currentTime, lastTime)
-      if (fpsResult[1] > 0.5) { // Should update
-        fps = fpsResult[0]
+      if (fpsResult[1] > 0.5) {
+        // Should update
         // Reconstruct time from two f32 values
         lastTime = fpsResult[2] * 1000 + fpsResult[3]
       }
     } else {
       // Fallback to JS implementation
       if (frameCounterRef.current % 30 === 0) {
-        fps = 30000 / (currentTime - lastTime)
         lastTime = currentTime
       }
     }
-    
+
     // Get camera view projection matrix for frustum culling
     const camera = state.camera as THREE.PerspectiveCamera
     const viewProjectionMatrix = new THREE.Matrix4()
@@ -421,12 +435,13 @@ function Stars() {
 
     // Calculate delta time
     const currentFrameTime = state.clock.elapsedTime
-    const deltaTime = lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
+    const deltaTime =
+      lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
     lastFrameTimeRef.current = currentFrameTime
 
     // Calculate speed multiplier
     const speedCalculationTime = Date.now()
-    
+
     if (wasmModule && wasmModule.calculate_speed_multiplier) {
       // Use WASM for optimized speed calculations
       speedMultiplierRef.current = wasmModule.calculate_speed_multiplier(
@@ -457,7 +472,7 @@ function Stars() {
     // Update rotation
     const baseRotationSpeedX = 0.02
     const baseRotationSpeedY = 0.01
-    
+
     if (wasmModule) {
       const rotationDelta = wasmModule.calculate_rotation_delta(
         baseRotationSpeedX,
@@ -481,7 +496,7 @@ function Stars() {
     // Update star effects
     const time = state.clock.elapsedTime
     const vpMatrix = new Float32Array(viewProjectionMatrix.elements)
-    
+
     // Update star effects every frame for ultra quality
     updateStarEffects(starGroup, time, 1, vpMatrix)
   })
@@ -500,7 +515,6 @@ function Stars() {
 }
 
 export default function OptimizedStarField() {
-
   if (typeof window === 'undefined') {
     return <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: 1 }} />
   }

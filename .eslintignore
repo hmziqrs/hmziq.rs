@@ -1,0 +1,14 @@
+# Ignore legacy directory containing orphan code
+legacy/
+
+# Standard Next.js ignores
+.next/
+out/
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# WASM build outputs
+wasm/pkg/
