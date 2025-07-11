@@ -16,6 +16,10 @@ export interface WASMModule {
   // Camera frustum culling
   get_visible_star_indices: (positions: Float32Array, count: number, camera_matrix: Float32Array, margin: number) => Uint32Array;
   cull_stars_by_frustum_simd?: (positions: Float32Array, count: number, camera_matrix: Float32Array, margin: number) => Uint8Array;
+  // Animation and performance functions
+  calculate_fps: (frame_count: number, current_time: number, last_time: number) => Float32Array;
+  calculate_speed_multiplier: (is_moving: boolean, click_time: number, current_time: number, current_multiplier: number) => number;
+  calculate_rotation_delta: (base_speed_x: number, base_speed_y: number, speed_multiplier: number, delta_time: number) => Float32Array;
   // Math utilities - essential functions only
   fast_sin: (x: number) => number;
   fast_cos: (x: number) => number;
@@ -62,6 +66,10 @@ export async function loadWASM(): Promise<WASMModule | null> {
         // Camera frustum culling
         get_visible_star_indices: wasm.get_visible_star_indices,
         cull_stars_by_frustum_simd: wasm.cull_stars_by_frustum_simd,
+        // Animation and performance functions
+        calculate_fps: wasm.calculate_fps,
+        calculate_speed_multiplier: wasm.calculate_speed_multiplier,
+        calculate_rotation_delta: wasm.calculate_rotation_delta,
         // Math utilities
         fast_sin: wasm.fast_sin,
         fast_cos: wasm.fast_cos,
@@ -287,6 +295,49 @@ export const jsFallbacks: WASMModule = {
       result[i] = val - Math.floor(val);
     }
     return result;
+  },
+  // Animation and performance function fallbacks
+  calculate_fps: (frame_count: number, current_time: number, last_time: number): Float32Array => {
+    // Check if we should calculate FPS (every 30 frames)
+    if (frame_count % 30 === 0) {
+      // Calculate FPS: 30 frames / time_elapsed (in seconds)
+      const time_elapsed = current_time - last_time;
+      const fps = time_elapsed > 0 ? 30000 / time_elapsed : 60.0;
+      
+      // Return [fps, 1.0 (should update), current_time split into two f32s]
+      const time_high = Math.floor(current_time / 1000);
+      const time_low = current_time - (time_high * 1000);
+      
+      return new Float32Array([fps, 1.0, time_high, time_low]);
+    } else {
+      // Don't update FPS
+      return new Float32Array([0.0, 0.0, 0.0, 0.0]);
+    }
+  },
+  calculate_speed_multiplier: (is_moving: boolean, click_time: number, current_time: number, current_multiplier: number): number => {
+    let speed_multiplier = 1.0;
+    
+    // Apply movement boost
+    if (is_moving) {
+      speed_multiplier *= 4.5;
+    }
+    
+    // Apply click boost with decay
+    const time_since_click = current_time - click_time;
+    if (time_since_click < 1200) {
+      const click_decay = 1 - time_since_click / 1200;
+      const click_boost = 1 + 4.3 * click_decay;
+      speed_multiplier *= click_boost;
+    }
+    
+    // Apply smoothing (lerp with factor 0.2)
+    return current_multiplier + (speed_multiplier - current_multiplier) * 0.2;
+  },
+  calculate_rotation_delta: (base_speed_x: number, base_speed_y: number, speed_multiplier: number, delta_time: number): Float32Array => {
+    return new Float32Array([
+      base_speed_x * speed_multiplier * delta_time,
+      base_speed_y * speed_multiplier * delta_time
+    ]);
   },
 };
 
