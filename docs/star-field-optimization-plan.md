@@ -31,6 +31,37 @@ This document tracks the implementation progress of star field optimizations. Ea
 
 ---
 
+## Phase 1.1: Safe Global State with thread_local!
+**Status:** 🟢 COMPLETED  
+**Goal:** Replace static mut with safe thread_local pattern
+
+### Tasks:
+- [x] Replace `static mut STAR_MEMORY_POOL` with `thread_local!` + `RefCell`
+- [x] Update `initialize_star_memory_pool` to use thread_local storage
+- [x] Update `update_frame_simd` to use safe borrow from thread_local
+- [x] Add Debug trait to StarMemoryPool
+- [x] Test that star field works correctly
+
+### Implementation Details:
+- Used `thread_local!` with `RefCell<Option<StarMemoryPool>>`
+- Safe for WASM's single-threaded environment
+- No performance impact, cleaner than OnceCell for this use case
+- Remaining unsafe blocks only for raw pointer operations
+
+---
+
+## Phase 1.2: Safe Pointer Access (In Progress)
+**Status:** 🟡 IN_PROGRESS  
+**Goal:** Remove unsafe from raw pointer operations
+
+### Tasks:
+- [ ] Change functions using raw pointers to safe accessors
+- [ ] Update `calculate_star_effects_into_buffers` to avoid unsafe
+- [ ] Handle camera matrix without raw pointer dereferencing
+- [ ] Remove remaining unsafe blocks
+
+---
+
 ## Phase 2: Structure-of-Arrays Memory Layout
 **Status:** 🔴 NOT_STARTED  
 **Goal:** Optimize for SIMD cache efficiency
