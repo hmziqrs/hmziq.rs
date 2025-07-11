@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { QualityManager, type QualityTier, type PerformanceMetrics } from '@/legacy/lib/performance/quality-manager'
-import { DebugConfigManager, type DebugConfig } from '@/lib/performance/debug-config'
+import { DebugConfigManager, type DebugConfig } from '@/legacy/lib/performance/debug-config'
 import { getWASMStatus } from '@/lib/wasm'
 
 interface PerformanceMonitorProps {

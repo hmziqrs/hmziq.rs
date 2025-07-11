@@ -5,7 +5,7 @@ import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { RenderPipelineFactory } from '@/lib/rendering/pipeline-factory'
 import { UnifiedRenderer } from '@/lib/rendering/unified-renderer'
 import { IRenderPipeline, MeteorConfig, DirtyFlags } from '@/lib/rendering/interfaces'
-import { DebugConfigManager } from '@/lib/performance/debug-config'
+import { DebugConfigManager } from '@/legacy/lib/performance/debug-config'
 
 interface MeteorShowerProps {
   className?: string

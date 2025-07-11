@@ -1,5 +1,5 @@
 // WASM module loader with graceful fallback
-import { DebugConfigManager } from '@/lib/performance/debug-config'
+import { DebugConfigManager } from '@/legacy/lib/performance/debug-config'
 
 let wasmModule: any = null;
 let loadPromise: Promise<void> | null = null;

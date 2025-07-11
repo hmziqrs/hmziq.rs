@@ -123,23 +123,8 @@ function Stars() {
       wasmLoadingRef.current = true
       getOptimizedFunctions().then(module => {
         setWasmModule(module)
-        // Force console logs for debugging
-        const forceLog = (...args: any[]) => {
-          const originalWarn = console.warn
-          console.warn = () => {} // Temporarily disable suppression
-          console.log(...args)
-          console.warn = originalWarn
-        }
-        
-        forceLog('WASM module loaded for StarField', module)
-        // Test WASM fast_sin function
-        if (module && module.fast_sin) {
-          forceLog('Testing WASM fast_sin:', module.fast_sin(Math.PI / 2))
-          forceLog('Testing WASM fast_sin(0):', module.fast_sin(0))
-          forceLog('Testing WASM fast_sin(Math.PI):', module.fast_sin(Math.PI))
-        }
       }).catch(err => {
-        console.warn('Failed to load WASM module for StarField:', err)
+        // Silent fallback
       })
     }
   }, [])
@@ -321,11 +306,6 @@ function Stars() {
         }
       }
       
-      // Log temporal coherence savings in debug mode
-      if (frameCounterRef.current % 60 === 0 && updateCount < count) {
-        const savingsPercent = ((count - updateCount) / count * 100).toFixed(1)
-        // console.log(`Temporal coherence: Updated ${updateCount}/${count} stars (${savingsPercent}% saved)`)
-      }
     } else if (wasmModule && wasmModule.calculate_star_effects_arrays) {
       // Fallback to regular update method
       if (visibleIndices && visibleIndices.length < count * 0.8) {

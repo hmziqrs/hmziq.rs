@@ -1,5 +1,4 @@
 // WASM module loader with graceful fallback
-import { DebugConfigManager } from '@/lib/performance/debug-config'
 
 let wasmModule: any = null;
 let loadPromise: Promise<void> | null = null;
@@ -237,16 +236,8 @@ export async function loadWASM(): Promise<WASMModule | null> {
         memory: wasmMemory,
       };
       
-      const debugConfig = DebugConfigManager.getInstance();
-      if (debugConfig.isEnabled('enableConsoleLogs')) {
-        console.log('WASM module loaded successfully with star field and spatial indexing optimizations');
-      }
     } catch (error) {
       isUsingFallback = true;
-      const debugConfig = DebugConfigManager.getInstance();
-      if (debugConfig.isEnabled('enableConsoleLogs')) {
-        console.warn('Failed to load WASM module, falling back to JS:', error);
-      }
       wasmModule = null;
     }
   })();
@@ -255,27 +246,17 @@ export async function loadWASM(): Promise<WASMModule | null> {
   return wasmModule;
 }
 
-// Helper to log fallback usage
-function logFallback(functionName: string, message?: string) {
-  const debugConfig = DebugConfigManager.getInstance();
-  if (debugConfig.isEnabled('enableConsoleLogs')) {
-    console.log(`Using JS fallback for ${functionName}()${message ? `: ${message}` : ''}`);
-  }
-}
 
 // JavaScript fallback implementations
 export const jsFallbacks: WASMModule = {
   add: (a: number, b: number): number => {
-    logFallback('add');
-    return a + b;
+        return a + b;
   },
   greet: (name: string): string => {
-    logFallback('greet');
     return `Hello from JS fallback, ${name}!`;
   },
   // Star field fallbacks (simplified versions)
   generate_star_positions: (count: number, start_index: number, min_radius: number, max_radius: number): Float32Array => {
-    logFallback('generate_star_positions');
     const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const globalIndex = start_index + i;
@@ -295,7 +276,6 @@ export const jsFallbacks: WASMModule = {
     return positions;
   },
   generate_star_colors: (count: number, start_index: number): Float32Array => {
-    logFallback('generate_star_colors');
     const colors = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const globalIndex = start_index + i;
@@ -323,7 +303,6 @@ export const jsFallbacks: WASMModule = {
     return colors;
   },
   generate_star_sizes: (count: number, start_index: number, size_multiplier: number): Float32Array => {
-    logFallback('generate_star_sizes');
     const sizes = new Float32Array(count);
     for (let i = 0; i < count; i++) {
       const globalIndex = start_index + i;
@@ -340,16 +319,13 @@ export const jsFallbacks: WASMModule = {
     return sizes;
   },
   calculate_star_effects: (): Float32Array => {
-    logFallback('calculate_star_effects', 'not implemented');
     return new Float32Array(0);
   },
   calculate_star_effects_into_buffers: (positions_ptr: number, twinkles_ptr: number, sparkles_ptr: number, count: number, time: number): void => {
-    logFallback('calculate_star_effects_into_buffers', 'not implemented - using manual update');
     // This is a void function, so we don't need to return anything
     // In the actual component, we'll fall back to the manual calculation
   },
   calculate_star_effects_arrays: (positions: Float32Array, count: number, time: number): Float32Array => {
-    logFallback('calculate_star_effects_arrays');
     const effects = new Float32Array(count * 2);
     
     for (let i = 0; i < count; i++) {
@@ -371,11 +347,9 @@ export const jsFallbacks: WASMModule = {
     return effects;
   },
   calculate_twinkle_effects: (): Float32Array => {
-    logFallback('calculate_twinkle_effects', 'not implemented');
     return new Float32Array(0);
   },
   calculate_sparkle_effects: (): Float32Array => {
-    logFallback('calculate_sparkle_effects', 'not implemented');
     return new Float32Array(0);
   },
   calculate_rotation_delta: (base_speed_x: number, base_speed_y: number, speed_multiplier: number, delta_time: number): Float32Array => {
@@ -385,7 +359,6 @@ export const jsFallbacks: WASMModule = {
     ]);
   },
   calculate_speed_multiplier: (is_moving: boolean, click_time: number, current_time: number, current_multiplier: number): number => {
-    logFallback('calculate_speed_multiplier');
     let speed_multiplier = 1.0;
     
     // Apply movement boost
@@ -406,7 +379,6 @@ export const jsFallbacks: WASMModule = {
   },
   // Camera frustum culling fallbacks
   cull_stars_by_frustum: (positions: Float32Array, count: number, camera_matrix: Float32Array, fov: number, aspect_ratio: number, near: number, far: number): Uint8Array => {
-    logFallback('cull_stars_by_frustum');
     
     if (camera_matrix.length !== 16) {
       return new Uint8Array(count).fill(1);
@@ -455,7 +427,6 @@ export const jsFallbacks: WASMModule = {
     return visibility_mask;
   },
   get_visible_star_indices: (positions: Float32Array, count: number, camera_matrix: Float32Array, margin: number): Uint32Array => {
-    logFallback('get_visible_star_indices');
     
     if (camera_matrix.length !== 16) {
       return new Uint32Array(Array.from({length: count}, (_, i) => i));
@@ -517,7 +488,6 @@ export const jsFallbacks: WASMModule = {
     time: number,
     quality_tier: number
   ): Float32Array => {
-    logFallback('calculate_star_effects_by_lod');
     
     const total_count = near_count + medium_count + far_count;
     const effects = new Float32Array(total_count * 2);
@@ -600,7 +570,6 @@ export const jsFallbacks: WASMModule = {
     time: number,
     threshold: number
   ): Float32Array => {
-    logFallback('calculate_star_effects_with_temporal_coherence');
     
     // Result format: [need_update_flag, twinkle, sparkle] triplets
     const results = new Float32Array(count * 3);
@@ -638,7 +607,6 @@ export const jsFallbacks: WASMModule = {
     time: number,
     threshold: number
   ): Uint32Array => {
-    logFallback('get_stars_needing_update');
     
     const indices: number[] = [];
     
@@ -667,7 +635,6 @@ export const jsFallbacks: WASMModule = {
   calculate_star_effects_temporal_simd: undefined, // No SIMD fallback
   // LOD distribution calculations
   calculate_lod_distribution: (total_count: number, quality_tier: number): Uint32Array => {
-    logFallback('calculate_lod_distribution');
     
     // Distribution ratios for each quality tier
     let near_ratio: number;
@@ -696,7 +663,6 @@ export const jsFallbacks: WASMModule = {
   },
   // Frame rate calculation
   calculate_fps: (frame_count: number, current_time: number, last_time: number): Float32Array => {
-    logFallback('calculate_fps');
     
     // Check if we should calculate FPS (every 30 frames)
     if (frame_count % 30 === 0) {
@@ -745,7 +711,6 @@ export const jsFallbacks: WASMModule = {
   },
   // Bezier fallbacks
   precalculate_bezier_path: (start_x: number, start_y: number, control_x: number, control_y: number, end_x: number, end_y: number, segments: number): Float32Array => {
-    logFallback('precalculate_bezier_path');
     const points = new Float32Array((segments + 1) * 2);
     
     for (let i = 0; i <= segments; i++) {
@@ -768,7 +733,6 @@ export const jsFallbacks: WASMModule = {
     return points;
   },
   precalculate_bezier_paths_batch: (paths_data: Float32Array, segments: number): Float32Array => {
-    logFallback('precalculate_bezier_paths_batch');
     const pathCount = paths_data.length / 6;
     const pointsPerPath = (segments + 1) * 2;
     const allPoints = new Float32Array(pathCount * pointsPerPath);
@@ -825,7 +789,6 @@ export const jsFallbacks: WASMModule = {
     ]);
   },
   precalculate_cubic_bezier_path: (p0x: number, p0y: number, p1x: number, p1y: number, p2x: number, p2y: number, p3x: number, p3y: number, segments: number): Float32Array => {
-    logFallback('precalculate_cubic_bezier_path');
     const points = new Float32Array((segments + 1) * 2);
     
     for (let i = 0; i <= segments; i++) {
@@ -892,7 +855,6 @@ export const jsFallbacks: WASMModule = {
     return result;
   },
   batch_process_with_operation: (input: Float32Array, operation: string): Float32Array => {
-    logFallback('batch_process_with_operation', 'limited support');
     const result = new Float32Array(input.length);
     switch(operation) {
       case 'sin':
@@ -902,7 +864,6 @@ export const jsFallbacks: WASMModule = {
         for (let i = 0; i < input.length; i++) result[i] = Math.cos(input[i]);
         break;
       default:
-        console.warn(`Operation ${operation} not supported in JS fallback`);
         return input;
     }
     return result;
@@ -934,17 +895,3 @@ export function getWASMStatus(): { loaded: boolean; usingFallback: boolean } {
   };
 }
 
-// Log WASM status (respects debug config)
-export function logWASMStatus(): void {
-  const debugConfig = DebugConfigManager.getInstance();
-  if (debugConfig.isEnabled('enableConsoleLogs')) {
-    const status = getWASMStatus();
-    if (status.loaded) {
-      console.log('✅ WASM module loaded successfully');
-    } else if (status.usingFallback) {
-      console.log('⚠️ WASM module failed to load - using JavaScript fallback');
-    } else {
-      console.log('⏳ WASM module not yet loaded');
-    }
-  }
-}
