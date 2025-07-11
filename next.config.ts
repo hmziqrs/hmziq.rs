@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -8,13 +8,13 @@ const nextConfig: NextConfig = {
       ...config.experiments,
       asyncWebAssembly: true,
       layers: true,
-    };
+    }
 
     // Add rule for WASM files
     config.module.rules.push({
       test: /\.wasm$/,
       type: 'asset/resource',
-    });
+    })
 
     // Copy WASM files to public directory in production
     if (!isServer) {
@@ -22,10 +22,10 @@ const nextConfig: NextConfig = {
         ...config.resolve.fallback,
         fs: false,
         path: false,
-      };
+      }
     }
 
-    return config;
+    return config
   },
   // Serve WASM files with correct MIME type
   async headers() {
@@ -39,8 +39,8 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-    ];
+    ]
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

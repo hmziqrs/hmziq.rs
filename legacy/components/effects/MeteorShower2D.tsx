@@ -142,26 +142,26 @@ export default function MeteorShower2D() {
       const spawnType = Math.random()
       const centerX = canvas.width / 2
       const bottomY = canvas.height + 50
-      
+
       // ALGORITHM: Predetermine EXACT end position at spawn time
-      
+
       if (spawnType < 0.8) {
         // Top spawn - distributed across top (80% of meteors)
         meteor.startX = Math.random() * canvas.width
         meteor.startY = -20
-        
+
         // Determine which side of center
         const isLeftSide = meteor.startX < centerX
         const distanceFromCenter = Math.abs(meteor.startX - centerX)
         const canCross = distanceFromCenter < centerX * 0.1 // Within 10% of center
-        
+
         // CALCULATE EXACT END POSITION
         if (canCross) {
           // Can cross center by up to 15%
           const crossAmount = centerX * 0.15
-          meteor.endX = isLeftSide ? 
-            centerX + Math.random() * crossAmount : 
-            centerX - Math.random() * crossAmount
+          meteor.endX = isLeftSide
+            ? centerX + Math.random() * crossAmount
+            : centerX - Math.random() * crossAmount
         } else {
           // MUST NOT CROSS CENTER
           if (isLeftSide) {
@@ -178,24 +178,22 @@ export default function MeteorShower2D() {
             meteor.endX = Math.max(minEndX, maxEndX - Math.random() * (maxEndX - idealEndX))
           }
         }
-        
       } else if (spawnType < 0.9) {
         // Left side spawn (10% of meteors)
         meteor.startX = -20
         meteor.startY = Math.random() * canvas.height * 0.3
-        
+
         // MUST END LEFT OF CENTER
         meteor.endX = centerX * 0.2 + Math.random() * centerX * 0.6 // 10-40% of screen width
-        
       } else {
         // Right side spawn (10% of meteors)
         meteor.startX = canvas.width + 20
         meteor.startY = Math.random() * canvas.height * 0.3
-        
+
         // MUST END RIGHT OF CENTER
         meteor.endX = centerX * 1.2 + Math.random() * centerX * 0.6 // 60-90% of screen width
       }
-      
+
       // Set end Y and initial position
       meteor.endY = bottomY
       meteor.x = meteor.startX
@@ -207,21 +205,21 @@ export default function MeteorShower2D() {
       const sizeRatio = (meteor.size - 0.3) / 0.7 // Normalize size to 0-1 range
       const speed = 1.35 - sizeRatio * 0.225 // Larger size = slower: 1.35 to 1.125 (9x faster)
       meteor.speed = speed
-      
+
       // Calculate total distance for this predetermined path
       const dx = meteor.endX - meteor.startX
       const dy = meteor.endY - meteor.startY
       const distance = Math.sqrt(dx * dx + dy * dy)
-      
+
       // Calculate lifetime based on distance and speed
       meteor.maxLife = Math.floor(distance / speed)
       meteor.life = 0
-      
+
       // Calculate initial angle for visual reference
-      meteor.angle = Math.atan2(dy, dx) * 180 / Math.PI
-      
+      meteor.angle = (Math.atan2(dy, dx) * 180) / Math.PI
+
       // Set initial velocity for first frame particles
-      const angleRad = meteor.angle * Math.PI / 180
+      const angleRad = (meteor.angle * Math.PI) / 180
       meteor.vx = Math.cos(angleRad) * speed
       meteor.vy = Math.sin(angleRad) * speed
 
@@ -277,8 +275,9 @@ export default function MeteorShower2D() {
 
       // Smooth transition to prevent jumps
       const smoothingFactor = 0.15
-      speedMultiplierRef.current += (targetMultiplier - speedMultiplierRef.current) * smoothingFactor
-      
+      speedMultiplierRef.current +=
+        (targetMultiplier - speedMultiplierRef.current) * smoothingFactor
+
       // Ensure exact 1.0 when no interactions
       if (targetMultiplier === 1 && Math.abs(speedMultiplierRef.current - 1) < 0.001) {
         speedMultiplierRef.current = 1
@@ -299,29 +298,27 @@ export default function MeteorShower2D() {
         // Store previous position for velocity calculation
         const prevX = meteor.x
         const prevY = meteor.y
-        
+
         // Update life progress with speed multiplier
         meteor.life += speedMultiplierRef.current
         const t = Math.min(meteor.life / meteor.maxLife, 1) // Progress from 0 to 1, capped at 1
-        
+
         // Use quadratic Bezier curve for smooth arc
         // Control point creates the curve
         const isLeftSide = meteor.startX < canvas.width / 2
-        const controlX = isLeftSide ? 
-          meteor.startX + (meteor.endX - meteor.startX) * 0.8 : // Left side curves right
-          meteor.startX + (meteor.endX - meteor.startX) * 0.2  // Right side curves left
+        const controlX = isLeftSide
+          ? meteor.startX + (meteor.endX - meteor.startX) * 0.8 // Left side curves right
+          : meteor.startX + (meteor.endX - meteor.startX) * 0.2 // Right side curves left
         const controlY = meteor.startY + (meteor.endY - meteor.startY) * 0.6
-        
+
         // Quadratic Bezier interpolation
         const oneMinusT = 1 - t
-        meteor.x = oneMinusT * oneMinusT * meteor.startX + 
-                   2 * oneMinusT * t * controlX + 
-                   t * t * meteor.endX
-        
-        meteor.y = oneMinusT * oneMinusT * meteor.startY + 
-                   2 * oneMinusT * t * controlY + 
-                   t * t * meteor.endY
-                   
+        meteor.x =
+          oneMinusT * oneMinusT * meteor.startX + 2 * oneMinusT * t * controlX + t * t * meteor.endX
+
+        meteor.y =
+          oneMinusT * oneMinusT * meteor.startY + 2 * oneMinusT * t * controlY + t * t * meteor.endY
+
         // Calculate current velocity for particles
         meteor.vx = meteor.x - prevX
         meteor.vy = meteor.y - prevY
@@ -336,7 +333,7 @@ export default function MeteorShower2D() {
         // Size-based trail length: larger meteors have longer trails but capped
         const trailMultiplier = Math.min(0.5 + meteor.size, 1.2) // Cap at 1.2x for large meteors
         const meteorTrailLength = Math.floor(BASE_TRAIL_LENGTH * trailMultiplier)
-        
+
         // Limit trail length
         if (meteor.trail.length > meteorTrailLength) {
           meteor.trail.pop()
@@ -350,16 +347,16 @@ export default function MeteorShower2D() {
         // Generate sparkle particles (more when speed is accelerated)
         const baseSpawnRate = 0.35
         const baseMaxParticles = 15
-        
+
         // Increase particle generation when accelerated
         const particleBoost = speedMultiplierRef.current > 1.05 ? speedMultiplierRef.current : 1
         const spawnRate = baseSpawnRate * particleBoost
         const maxParticles = Math.floor(baseMaxParticles * particleBoost * 2) // More capacity when fast
-        
+
         if (Math.random() < spawnRate && meteor.particles.length < maxParticles) {
           const baseSparkleCount = meteor.type === 'bright' ? 2 : 1
           const sparkleCount = Math.ceil(baseSparkleCount * particleBoost)
-          
+
           for (let i = 0; i < sparkleCount; i++) {
             meteor.particles.push({
               x: meteor.x + (Math.random() - 0.5) * meteor.size * 4, // Wider spawn area
@@ -544,10 +541,12 @@ export default function MeteorShower2D() {
         // Outer glow - increase size when accelerating (more for smaller meteors)
         // Small meteors (0.3) get 2.0x boost factor, large meteors (1.3) get 0.3x boost factor
         const sizeNormalized = (meteor.size - 0.3) / 1.0 // 0 to 1 range
-        const sizeBasedBoostFactor = 2.0 - (sizeNormalized * 1.7) // 2.0 to 0.3
-        const glowBoost = speedMultiplierRef.current > 1.1 ? 
-          1 + (speedMultiplierRef.current - 1) * sizeBasedBoostFactor : 1
-        
+        const sizeBasedBoostFactor = 2.0 - sizeNormalized * 1.7 // 2.0 to 0.3
+        const glowBoost =
+          speedMultiplierRef.current > 1.1
+            ? 1 + (speedMultiplierRef.current - 1) * sizeBasedBoostFactor
+            : 1
+
         const baseGlowSize = meteor.type === 'bright' ? meteor.size * 15 : meteor.size * 10
         const glowSize = baseGlowSize * glowBoost
         const glowGradient = ctx.createRadialGradient(
@@ -559,11 +558,13 @@ export default function MeteorShower2D() {
           glowSize
         )
         // Boost glow intensity when accelerating (more for smaller meteors)
-        const intensityBoostFactor = 1.5 - (sizeNormalized * 1.2) // 1.5 to 0.3 for intensity
-        const intensityBoost = speedMultiplierRef.current > 1.1 ? 
-          1 + (speedMultiplierRef.current - 1) * intensityBoostFactor : 1
+        const intensityBoostFactor = 1.5 - sizeNormalized * 1.2 // 1.5 to 0.3 for intensity
+        const intensityBoost =
+          speedMultiplierRef.current > 1.1
+            ? 1 + (speedMultiplierRef.current - 1) * intensityBoostFactor
+            : 1
         const boostedIntensity = Math.min(meteor.glowIntensity * intensityBoost, 3.0) // Cap at 3x intensity
-        
+
         glowGradient.addColorStop(
           0,
           `rgba(${meteor.glowColor.r}, ${meteor.glowColor.g}, ${meteor.glowColor.b}, ${boostedIntensity})`
@@ -586,10 +587,13 @@ export default function MeteorShower2D() {
         ctx.fillRect(meteor.x - glowSize, meteor.y - glowSize, glowSize * 2, glowSize * 2)
 
         // Inner core - also boost size when accelerating (more for smaller meteors)
-        const coreSizeBoostFactor = 0.8 - (sizeNormalized * 0.6) // 0.8 to 0.2 for core
-        const coreSizeBoost = speedMultiplierRef.current > 1.1 ? 
-          1 + (speedMultiplierRef.current - 1) * coreSizeBoostFactor : 1
-        const baseCoreSize = meteor.type === 'bright' ? 3.0 + meteor.size * 2.5 : 2.5 + meteor.size * 2.0
+        const coreSizeBoostFactor = 0.8 - sizeNormalized * 0.6 // 0.8 to 0.2 for core
+        const coreSizeBoost =
+          speedMultiplierRef.current > 1.1
+            ? 1 + (speedMultiplierRef.current - 1) * coreSizeBoostFactor
+            : 1
+        const baseCoreSize =
+          meteor.type === 'bright' ? 3.0 + meteor.size * 2.5 : 2.5 + meteor.size * 2.0
         const coreSize = baseCoreSize * coreSizeBoost
         const coreGradient = ctx.createRadialGradient(
           meteor.x,
@@ -601,10 +605,12 @@ export default function MeteorShower2D() {
         )
 
         // Make core brighter when accelerating (more for smaller meteors)
-        const brightBoostFactor = 0.6 - (sizeNormalized * 0.45) // 0.6 to 0.15 for brightness
-        const brightBoost = speedMultiplierRef.current > 1.1 ? 
-          1 + (speedMultiplierRef.current - 1) * brightBoostFactor : 1
-        
+        const brightBoostFactor = 0.6 - sizeNormalized * 0.45 // 0.6 to 0.15 for brightness
+        const brightBoost =
+          speedMultiplierRef.current > 1.1
+            ? 1 + (speedMultiplierRef.current - 1) * brightBoostFactor
+            : 1
+
         if (meteor.type === 'warm') {
           coreGradient.addColorStop(0, `rgba(255, 255, 255, ${brightBoost})`)
           coreGradient.addColorStop(0.3, `rgba(255, 245, 230, ${0.9 * brightBoost})`)
@@ -648,7 +654,7 @@ export default function MeteorShower2D() {
         // Fade out near end of life
         if (lifeRatio > 0.9) {
           const fadeOpacity = 1 - (lifeRatio - 0.9) / 0.1
-          
+
           // Preserve type-based intensity while fading
           const baseIntensity =
             meteor.type === 'bright' ? 1.35 : meteor.type === 'warm' ? 1.1 : 0.95

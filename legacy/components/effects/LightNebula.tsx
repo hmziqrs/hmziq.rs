@@ -4,10 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { QualityManager } from '@/legacy/lib/performance/quality-manager'
 import { gradientCaches, generateGradientKey } from '@/legacy/lib/performance/gradient-cache'
-import { 
-  FrameTimer,
-  isInViewport
-} from '@/legacy/lib/performance/performance-utils'
+import { FrameTimer, isInViewport } from '@/legacy/lib/performance/performance-utils'
 import { getNebulaSpatialIndexing } from '@/lib/wasm/nebula-spatial'
 
 interface Cloud {
@@ -16,7 +13,7 @@ interface Cloud {
   radius: number
   baseOpacity: number
   color: { r: number; g: number; b: number }
-  
+
   // Orbital properties
   orbitCenterX: number
   orbitCenterY: number
@@ -24,19 +21,19 @@ interface Cloud {
   orbitAngle: number
   orbitSpeed: number
   orbitIndex: number
-  
+
   // Animation properties
   timeOffset: number
   opacityPhase: number
   morphPhase: number
-  
+
   // Current state
   x: number
   y: number
   currentOpacity: number
   scaleX: number
   scaleY: number
-  
+
   // Visibility
   isVisible: boolean
   lastVisibilityCheck: number
@@ -88,26 +85,26 @@ export default function LightNebula2DOptimized() {
   const animationIdRef = useRef<number>()
   const prefersReducedMotion = useReducedMotion()
   const frameTimer = useRef(new FrameTimer())
-  
+
   // Performance management
   const qualityManager = useRef<QualityManager>()
-  
+
   // Cloud management
   const cloudsRef = useRef<Cloud[]>([])
   const sortedCloudsRef = useRef<Cloud[]>([])
   const orbitalCentersRef = useRef<OrbitalCenter[]>([])
   const cloudsSortNeeded = useRef(true)
-  
+
   // Mouse interaction state
   const speedMultiplierRef = useRef(1)
   const isMovingRef = useRef(false)
   const clickBoostRef = useRef(0)
   const mouseMoveTimeoutRef = useRef<NodeJS.Timeout>()
-  
+
   // Frame counters for optimization
   const frameCountRef = useRef(0)
   const visibilityCheckInterval = useRef(10) // Check visibility every N frames
-  
+
   // Spatial indexing for efficient overlap detection
   const spatialIndexingRef = useRef(getNebulaSpatialIndexing())
 
@@ -117,24 +114,24 @@ export default function LightNebula2DOptimized() {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const ctx = canvas.getContext('2d', { 
+    const ctx = canvas.getContext('2d', {
       alpha: true,
-      desynchronized: true
+      desynchronized: true,
     })
     if (!ctx) return
 
     // Initialize performance management
     qualityManager.current = QualityManager.getInstance()
     const settings = qualityManager.current.getSettings()
-    
+
     // Initialize gradient cache
     gradientCaches.nebula.setContext(ctx)
-    
+
     // Update visibility check interval based on quality
     visibilityCheckInterval.current = {
       performance: 20,
       balanced: 15,
-      ultra: 10
+      ultra: 10,
     }[qualityManager.current.getTier()]
 
     // Set canvas size and initialize clouds
@@ -152,26 +149,26 @@ export default function LightNebula2DOptimized() {
           x: centerX - baseSize * 0.08,
           y: centerY - baseSize * 0.05,
           baseRadius: baseSize * 0.18,
-          radiusVariation: baseSize * 0.12
+          radiusVariation: baseSize * 0.12,
         },
         {
           x: centerX + baseSize * 0.06,
           y: centerY - baseSize * 0.03,
           baseRadius: baseSize * 0.22,
-          radiusVariation: baseSize * 0.15
+          radiusVariation: baseSize * 0.15,
         },
         {
           x: centerX - baseSize * 0.03,
           y: centerY + baseSize * 0.07,
           baseRadius: baseSize * 0.15,
-          radiusVariation: baseSize * 0.10
+          radiusVariation: baseSize * 0.1,
         },
         {
           x: centerX + baseSize * 0.09,
           y: centerY + baseSize * 0.04,
           baseRadius: baseSize * 0.25,
-          radiusVariation: baseSize * 0.18
-        }
+          radiusVariation: baseSize * 0.18,
+        },
       ]
 
       // Initialize clouds only once
@@ -181,9 +178,9 @@ export default function LightNebula2DOptimized() {
           canvas.width,
           canvas.height
         )
-        
+
         const configs = CLOUD_CONFIGS.slice(0, cloudCount)
-        
+
         cloudsRef.current = configs.map((config, index) => {
           const sizeVariation = 0.8 + Math.random() * 0.4
           const radius = baseSize * config.sizeMult * sizeVariation
@@ -197,9 +194,9 @@ export default function LightNebula2DOptimized() {
 
           const orbitIndex = index % orbitalCentersRef.current.length
           const orbitCenter = orbitalCentersRef.current[orbitIndex]
-          
+
           const sizeInfluence = radius / (baseSize * 0.4)
-          const orbitRadius = orbitCenter.baseRadius + (Math.random() * orbitCenter.radiusVariation)
+          const orbitRadius = orbitCenter.baseRadius + Math.random() * orbitCenter.radiusVariation
           const orbitAngle = Math.random() * Math.PI * 2
           const orbitSpeed = (0.5 + Math.random() * 0.3) / Math.sqrt(sizeInfluence)
 
@@ -225,10 +222,10 @@ export default function LightNebula2DOptimized() {
             scaleX: 1,
             scaleY: 1,
             isVisible: true,
-            lastVisibilityCheck: 0
+            lastVisibilityCheck: 0,
           }
         })
-        
+
         cloudsSortNeeded.current = true
       } else {
         // Update existing clouds for new canvas size
@@ -236,14 +233,14 @@ export default function LightNebula2DOptimized() {
           const orbitCenter = orbitalCentersRef.current[cloud.orbitIndex]
           cloud.orbitCenterX = orbitCenter.x
           cloud.orbitCenterY = orbitCenter.y
-          
-          cloud.orbitRadius = orbitCenter.baseRadius + (Math.random() * orbitCenter.radiusVariation)
-          
+
+          cloud.orbitRadius = orbitCenter.baseRadius + Math.random() * orbitCenter.radiusVariation
+
           cloud.x = cloud.orbitCenterX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius
           cloud.y = cloud.orbitCenterY + Math.sin(cloud.orbitAngle) * cloud.orbitRadius
         })
       }
-      
+
       // Re-initialize spatial indexing with new canvas dimensions
       spatialIndexingRef.current.initialize(canvas.width, canvas.height)
     }
@@ -280,12 +277,12 @@ export default function LightNebula2DOptimized() {
     // Optimized cloud rendering with gradient caching
     const renderCloud = (cloud: Cloud, settings: ReturnType<QualityManager['getSettings']>) => {
       if (!cloud.isVisible) return
-      
+
       ctx.save()
-      
+
       // Apply transformations
       ctx.translate(cloud.x, cloud.y)
-      
+
       // Only apply morphing in balanced/ultra modes
       if (settings.nebulaComplexity !== 'simple') {
         ctx.scale(cloud.scaleX, cloud.scaleY)
@@ -297,16 +294,29 @@ export default function LightNebula2DOptimized() {
         cloud.id,
         Math.floor(cloud.currentOpacity * 100)
       )
-      
+
       const gradient = gradientCaches.nebula.getRadialGradient(
         gradientKey,
-        0, 0, 0,
-        0, 0, cloud.radius,
+        0,
+        0,
+        0,
+        0,
+        0,
+        cloud.radius,
         [
-          [0, `rgba(${cloud.color.r}, ${cloud.color.g}, ${cloud.color.b}, ${cloud.currentOpacity * 2})`],
-          [0.4, `rgba(${cloud.color.r}, ${cloud.color.g}, ${cloud.color.b}, ${cloud.currentOpacity})`],
-          [0.7, `rgba(${cloud.color.r}, ${cloud.color.g}, ${cloud.color.b}, ${cloud.currentOpacity * 0.5})`],
-          [1, 'rgba(0, 0, 0, 0)']
+          [
+            0,
+            `rgba(${cloud.color.r}, ${cloud.color.g}, ${cloud.color.b}, ${cloud.currentOpacity * 2})`,
+          ],
+          [
+            0.4,
+            `rgba(${cloud.color.r}, ${cloud.color.g}, ${cloud.color.b}, ${cloud.currentOpacity})`,
+          ],
+          [
+            0.7,
+            `rgba(${cloud.color.r}, ${cloud.color.g}, ${cloud.color.b}, ${cloud.currentOpacity * 0.5})`,
+          ],
+          [1, 'rgba(0, 0, 0, 0)'],
         ]
       )
 
@@ -322,25 +332,25 @@ export default function LightNebula2DOptimized() {
     const animate = (currentTime: number) => {
       const deltaTime = frameTimer.current.update(currentTime)
       qualityManager.current!.updateMetrics(deltaTime)
-      
+
       const settings = qualityManager.current!.getSettings()
-      
+
       // Adaptive frame limiting based on quality
       const targetFPS = {
         performance: 30,
         balanced: 45,
-        ultra: 60
+        ultra: 60,
       }[qualityManager.current!.getTier()]
-      
+
       const frameInterval = 1000 / targetFPS
-      
+
       if (deltaTime < frameInterval * 0.9) {
         animationIdRef.current = requestAnimationFrame(animate)
         return
       }
-      
+
       frameCountRef.current++
-      
+
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
       // Calculate speed multiplier
@@ -376,10 +386,10 @@ export default function LightNebula2DOptimized() {
           )
           cloud.lastVisibilityCheck = frameCountRef.current
         }
-        
+
         // Skip updates for invisible clouds
         if (!cloud.isVisible) return
-        
+
         // Update orbital position
         cloud.orbitAngle += cloud.orbitSpeed * animDeltaTime
         cloud.x = cloud.orbitCenterX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius
@@ -391,7 +401,7 @@ export default function LightNebula2DOptimized() {
           cloud.opacityPhase += animDeltaTime * 2
           const opacityPulse = Math.sin(cloud.opacityPhase + cloud.timeOffset) * 0.3 + 1
           cloud.currentOpacity = cloud.baseOpacity * opacityPulse
-          
+
           // Shape morphing (only in medium/complex modes)
           if (settings.nebulaComplexity === 'complex') {
             cloud.morphPhase += animDeltaTime * 0.8
@@ -408,7 +418,7 @@ export default function LightNebula2DOptimized() {
         sortedCloudsRef.current = [...cloudsRef.current].sort((a, b) => b.radius - a.radius)
         cloudsSortNeeded.current = false
       }
-      
+
       // Update spatial indexing with current cloud positions
       spatialIndexingRef.current.updateCloudPositions(cloudsRef.current)
 
@@ -421,17 +431,17 @@ export default function LightNebula2DOptimized() {
       // Overlap glow effects (only in ultra mode)
       if (settings.nebulaComplexity === 'complex' && frameCountRef.current % 2 === 0) {
         ctx.globalCompositeOperation = 'screen'
-        
+
         // Use spatial indexing for efficient overlap detection
         const overlaps = spatialIndexingRef.current.findOverlaps(0.8)
-        
+
         overlaps.forEach((overlap) => {
           const cloud1 = cloudsRef.current[overlap.id1]
           const cloud2 = cloudsRef.current[overlap.id2]
-          
+
           // Check if both clouds are still visible
           if (!cloud1.isVisible || !cloud2.isVisible) return
-          
+
           const combinedRadius = (cloud1.radius + cloud2.radius) * 0.8
 
           const overlapKey = generateGradientKey(
@@ -440,15 +450,19 @@ export default function LightNebula2DOptimized() {
             overlap.id2,
             Math.floor(overlap.overlapStrength * 10)
           )
-          
+
           const overlapGlow = gradientCaches.nebula.getRadialGradient(
             overlapKey,
-            overlap.midX, overlap.midY, 0,
-            overlap.midX, overlap.midY, combinedRadius * 0.3,
+            overlap.midX,
+            overlap.midY,
+            0,
+            overlap.midX,
+            overlap.midY,
+            combinedRadius * 0.3,
             [
               [0, `rgba(255, 255, 255, ${overlap.overlapStrength * 0.02})`],
               [0.5, `rgba(200, 200, 255, ${overlap.overlapStrength * 0.01})`],
-              [1, 'rgba(0, 0, 0, 0)']
+              [1, 'rgba(0, 0, 0, 0)'],
             ]
           )
 
@@ -471,39 +485,42 @@ export default function LightNebula2DOptimized() {
     const handleQualityChange = (e: Event) => {
       const event = e as CustomEvent
       const newSettings = event.detail.settings
-      
+
       // Update cloud count if needed
       const newCount = qualityManager.current!.getAdaptiveCount(
         newSettings.nebulaCloudCount,
         canvas.width,
         canvas.height
       )
-      
+
       if (cloudsRef.current.length !== newCount) {
         // Adjust cloud count
         if (newCount > cloudsRef.current.length) {
           // Add more clouds
           const additionalCount = newCount - cloudsRef.current.length
-          const configs = CLOUD_CONFIGS.slice(cloudsRef.current.length, cloudsRef.current.length + additionalCount)
-          
+          const configs = CLOUD_CONFIGS.slice(
+            cloudsRef.current.length,
+            cloudsRef.current.length + additionalCount
+          )
+
           configs.forEach((config, idx) => {
             const index = cloudsRef.current.length + idx
             const baseSize = Math.min(canvas.width, canvas.height)
-            
+
             // Create new cloud similar to initialization
             const sizeVariation = 0.8 + Math.random() * 0.4
             const radius = baseSize * config.sizeMult * sizeVariation
-            
+
             const palette = COLOR_PALETTES[config.type as keyof typeof COLOR_PALETTES]
             const colorIndex = Math.floor(Math.random() * palette.length)
             const color = palette[colorIndex]
-            
+
             const opacityVariation = 0.7 + Math.random() * 0.6
             const baseOpacity = config.baseOpacity * opacityVariation
-            
+
             const orbitIndex = index % orbitalCentersRef.current.length
             const orbitCenter = orbitalCentersRef.current[orbitIndex]
-            
+
             const cloud: Cloud = {
               id: index,
               radius,
@@ -511,7 +528,7 @@ export default function LightNebula2DOptimized() {
               color,
               orbitCenterX: orbitCenter.x,
               orbitCenterY: orbitCenter.y,
-              orbitRadius: orbitCenter.baseRadius + (Math.random() * orbitCenter.radiusVariation),
+              orbitRadius: orbitCenter.baseRadius + Math.random() * orbitCenter.radiusVariation,
               orbitAngle: Math.random() * Math.PI * 2,
               orbitSpeed: (0.5 + Math.random() * 0.3) / Math.sqrt(radius / (baseSize * 0.4)),
               orbitIndex,
@@ -524,34 +541,34 @@ export default function LightNebula2DOptimized() {
               scaleX: 1,
               scaleY: 1,
               isVisible: true,
-              lastVisibilityCheck: 0
+              lastVisibilityCheck: 0,
             }
-            
+
             cloud.x = cloud.orbitCenterX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius
             cloud.y = cloud.orbitCenterY + Math.sin(cloud.orbitAngle) * cloud.orbitRadius
-            
+
             cloudsRef.current.push(cloud)
           })
         } else {
           // Remove excess clouds
           cloudsRef.current = cloudsRef.current.slice(0, newCount)
         }
-        
+
         cloudsSortNeeded.current = true
       }
-      
+
       // Update visibility check interval
       visibilityCheckInterval.current = {
         performance: 20,
         balanced: 15,
-        ultra: 10
+        ultra: 10,
       }[qualityManager.current!.getTier()]
     }
     window.addEventListener('qualityTierChanged', handleQualityChange)
 
     // Start animation
     animate(performance.now())
-    
+
     // Capture spatial indexing ref for cleanup
     const spatialIndexing = spatialIndexingRef.current
 
@@ -569,7 +586,7 @@ export default function LightNebula2DOptimized() {
         cancelAnimationFrame(animationIdRef.current)
       }
       gradientCaches.nebula.clear()
-      
+
       // Dispose spatial indexing
       if (spatialIndexing) {
         spatialIndexing.dispose()

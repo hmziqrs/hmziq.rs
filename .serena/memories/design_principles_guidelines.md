@@ -1,6 +1,7 @@
 # Design Principles & Guidelines
 
 ## Design Philosophy
+
 1. **Subtlety First**: Animations and effects should enhance, not overwhelm
 2. **Smooth Experience**: Focus on fluid animations (60fps target)
 3. **Accessibility**: Ensure content is accessible without JavaScript
@@ -8,13 +9,15 @@
 5. **Professionalism**: Maintain professional tone despite creative elements
 
 ## Color Palette
+
 - **Primary**: Neutral monochrome palette (black, white, grays)
 - **Background**: Deep black (#000000) for space theme
-- **Text**: High contrast white (#FFFFFF) on dark backgrounds  
+- **Text**: High contrast white (#FFFFFF) on dark backgrounds
 - **Accents**: Subtle gray variations (#111111, #222222, #888888)
 - **Effects**: Slight blue/purple tints for star glow effects only
 
 ## Animation Guidelines
+
 - Keep animations subtle and smooth (60fps target)
 - Implement parallax scrolling using Intersection Observer API
 - Use requestAnimationFrame for custom animations
@@ -22,6 +25,7 @@
 - **ALWAYS respect prefers-reduced-motion** preferences
 
 ## Three.js Implementation Guidelines
+
 - Use React Three Fiber for better React integration
 - Implement star field as separate component with performance optimization
 - Use @react-three/drei for common utilities
@@ -31,6 +35,7 @@
 - Use `dynamic` imports from Next.js for client-side only components
 
 ## Performance Optimization
+
 - Lazy load Three.js components
 - Use object pooling for frequently created/destroyed objects
 - Implement Level of Detail (LOD) for complex 3D scenes
@@ -39,6 +44,7 @@
 - Leverage WASM for intensive calculations
 
 ## Accessibility Requirements
+
 - Implement reduced motion preferences
 - Ensure keyboard navigation works
 - Provide proper focus indicators

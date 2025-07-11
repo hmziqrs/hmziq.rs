@@ -13,7 +13,7 @@ let fps = 60
 const LOD_LEVELS = {
   NEAR: { distance: 30, quality: 'full' },
   MEDIUM: { distance: 70, quality: 'medium' },
-  FAR: { distance: Infinity, quality: 'simple' }
+  FAR: { distance: Infinity, quality: 'simple' },
 }
 
 // Pre-calculated sin lookup table for performance
@@ -291,7 +291,8 @@ function Stars() {
 
         // Sizes - adjust based on LOD
         const sizeRandom = seed(globalIndex + 4000)
-        const baseSize = sizeRandom < 0.7 ? 1 + seed(globalIndex + 5000) * 1.5 : 2.5 + seed(globalIndex + 6000) * 2
+        const baseSize =
+          sizeRandom < 0.7 ? 1 + seed(globalIndex + 5000) * 1.5 : 2.5 + seed(globalIndex + 6000) * 2
         sizes[i] = lodLevel === 'simple' ? baseSize * 0.8 : baseSize
 
         // Initial twinkle and sparkle values
@@ -338,7 +339,8 @@ function Stars() {
         sparkles,
         count,
         material,
-        mesh: lodLevel === 'full' ? nearMeshRef : lodLevel === 'medium' ? mediumMeshRef : farMeshRef
+        mesh:
+          lodLevel === 'full' ? nearMeshRef : lodLevel === 'medium' ? mediumMeshRef : farMeshRef,
       }
     }
 
@@ -363,7 +365,7 @@ function Stars() {
 
       // Use fast sin approximation
       const twinkleBase = fastSin(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7
-      
+
       // Sparkle effect - simplified
       const sparklePhase = fastSin(time * 15.0 + x * 20.0 + y * 30.0)
       const sparkle = sparklePhase > 0.98 ? (sparklePhase - 0.98) / 0.02 : 0
@@ -377,7 +379,7 @@ function Stars() {
       const geometry = mesh.current.geometry
       const twinkleAttr = geometry.getAttribute('twinkle') as THREE.BufferAttribute
       const sparkleAttr = geometry.getAttribute('sparkle') as THREE.BufferAttribute
-      
+
       if (twinkleAttr) {
         twinkleAttr.needsUpdate = true
       }
@@ -399,7 +401,8 @@ function Stars() {
 
     // Calculate delta time
     const currentFrameTime = state.clock.elapsedTime
-    const deltaTime = lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
+    const deltaTime =
+      lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
     lastFrameTimeRef.current = currentFrameTime
 
     // Calculate speed multiplier
@@ -428,7 +431,7 @@ function Stars() {
 
     // Apply rotation to all LOD groups
     const meshes = [nearMeshRef.current, mediumMeshRef.current, farMeshRef.current]
-    meshes.forEach(mesh => {
+    meshes.forEach((mesh) => {
       if (mesh) {
         mesh.rotation.x = rotationXRef.current
         mesh.rotation.y = rotationYRef.current
@@ -449,8 +452,12 @@ function Stars() {
         <bufferAttribute attach="attributes-position" args={[group.positions, 3]} />
         <bufferAttribute attach="attributes-customColor" args={[group.colors, 3]} />
         <bufferAttribute attach="attributes-size" args={[group.sizes, 1]} />
-        {group.twinkles && <bufferAttribute attach="attributes-twinkle" args={[group.twinkles, 1]} />}
-        {group.sparkles && <bufferAttribute attach="attributes-sparkle" args={[group.sparkles, 1]} />}
+        {group.twinkles && (
+          <bufferAttribute attach="attributes-twinkle" args={[group.twinkles, 1]} />
+        )}
+        {group.sparkles && (
+          <bufferAttribute attach="attributes-sparkle" args={[group.sparkles, 1]} />
+        )}
       </bufferGeometry>
     </points>
   )
@@ -470,7 +477,7 @@ export default function OptimizedStarField() {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'p' && e.ctrlKey) {
-        setShowStats(prev => !prev)
+        setShowStats((prev) => !prev)
       }
     }
     window.addEventListener('keypress', handleKeyPress)
@@ -488,9 +495,12 @@ export default function OptimizedStarField() {
         <pointLight position={[10, 10, 10]} intensity={0.5} />
         <Stars />
       </Canvas>
-      
+
       {showStats && (
-        <div className="fixed top-4 right-4 bg-black/80 text-white p-4 rounded font-mono text-sm" style={{ zIndex: 100 }}>
+        <div
+          className="fixed top-4 right-4 bg-black/80 text-white p-4 rounded font-mono text-sm"
+          style={{ zIndex: 100 }}
+        >
           <div>FPS: {fps.toFixed(1)}</div>
           <div className="text-xs mt-2 text-gray-400">Press Ctrl+P to toggle</div>
         </div>

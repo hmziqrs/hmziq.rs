@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* Global styles */
 * {
@@ -13,7 +13,11 @@ body {
   overflow-x: hidden;
   background-color: #000000;
   color: #ffffff;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -80,7 +84,9 @@ a {
 }
 
 .star-glow {
-  box-shadow: 0 0 10px #4f46e5, 0 0 20px #4f46e5;
+  box-shadow:
+    0 0 10px #4f46e5,
+    0 0 20px #4f46e5;
 }
 
 .nebula-glow {

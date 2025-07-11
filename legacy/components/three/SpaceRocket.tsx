@@ -12,7 +12,7 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
   const rocketRef = useRef<THREE.Group>(null)
   const { viewport } = useThree()
   const isMobile = viewport.width < 10 // Roughly mobile if viewport width is less than 10 units
-  
+
   // Movement state
   const velocityRef = useRef({ x: 0, y: 0, z: 0 })
   const targetRotationRef = useRef({ x: 0, y: 0, z: 0 })
@@ -27,9 +27,9 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
     velocityRef.current = {
       x: Math.cos(angle) * speed,
       y: Math.sin(angle) * speed,
-      z: 0
+      z: 0,
     }
-    
+
     // Start from center
     positionRef.current = { x: 0, y: 0, z: 0 }
     setIsInitialized(true)
@@ -62,7 +62,7 @@ export default function SpaceRocket({ bounds = { x: 50, y: 30 } }: RocketProps) 
       // Keep rocket within bounds
       position.x = Math.sign(position.x) * boundaryX
     }
-    
+
     if (Math.abs(position.y) > boundaryY) {
       // Reverse Y velocity and add some randomness
       velocity.y = -velocity.y * (0.8 + Math.random() * 0.4)

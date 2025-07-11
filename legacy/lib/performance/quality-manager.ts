@@ -19,7 +19,7 @@ export interface QualitySettings {
   starSparkleFrequency: number
   starGlowLayers: number
   starLODEnabled: boolean
-  
+
   // Nebula settings
   nebulaCloudCount: number
   nebulaComplexity: 'simple' | 'medium' | 'complex'
@@ -42,7 +42,7 @@ export class QualityManager {
       frameTime: 0,
       frameCount: 0,
       lastTime: performance.now(),
-      samples: []
+      samples: [],
     }
     this.settings = this.getSettingsForTier(this.currentTier)
   }
@@ -59,23 +59,26 @@ export class QualityManager {
     if (this.userPreference) return this.userPreference
 
     // Check for mobile devices
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    )
+
     // Check hardware capabilities
     const cores = navigator.hardwareConcurrency || 4
     const memory = (navigator as any).deviceMemory || 4
-    
+
     // Check connection for battery-powered devices
     const connection = (navigator as any).connection
-    const isSlowConnection = connection?.effectiveType === '2g' || connection?.effectiveType === 'slow-2g'
-    
+    const isSlowConnection =
+      connection?.effectiveType === '2g' || connection?.effectiveType === 'slow-2g'
+
     // Simple GPU detection (can be enhanced)
     const canvas = document.createElement('canvas')
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
     const debugInfo = gl?.getExtension('WEBGL_debug_renderer_info')
     const renderer = debugInfo ? gl?.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : null
     const hasDiscreteGPU = renderer ? !renderer.toLowerCase().includes('intel') : false
-    
+
     // Calculate tier
     if (isMobile || cores <= 2 || memory <= 2 || isSlowConnection) {
       return 'performance'
@@ -97,9 +100,9 @@ export class QualityManager {
           nebulaComplexity: 'simple',
           nebulaUpdateFrequency: 30,
           nebulaGradientCaching: true,
-          nebulaOverlapChecks: false
+          nebulaOverlapChecks: false,
         }
-      
+
       case 'balanced':
         return {
           starCount: 400,
@@ -110,9 +113,9 @@ export class QualityManager {
           nebulaComplexity: 'medium',
           nebulaUpdateFrequency: 60,
           nebulaGradientCaching: true,
-          nebulaOverlapChecks: true
+          nebulaOverlapChecks: true,
         }
-      
+
       case 'ultra':
         return {
           starCount: 600,
@@ -123,7 +126,7 @@ export class QualityManager {
           nebulaComplexity: 'complex',
           nebulaUpdateFrequency: 60,
           nebulaGradientCaching: false,
-          nebulaOverlapChecks: true
+          nebulaOverlapChecks: true,
         }
     }
   }
@@ -131,20 +134,20 @@ export class QualityManager {
   updateMetrics(deltaTime: number) {
     this.metrics.frameCount++
     this.metrics.frameTime = deltaTime
-    
+
     // Calculate FPS every 30 frames
     if (this.metrics.frameCount % 30 === 0) {
       const currentTime = performance.now()
       const elapsed = currentTime - this.metrics.lastTime
       this.metrics.fps = 30000 / elapsed
       this.metrics.lastTime = currentTime
-      
+
       // Store sample for stability analysis
       this.metrics.samples.push(this.metrics.fps)
       if (this.metrics.samples.length > 60) {
         this.metrics.samples.shift()
       }
-      
+
       // Check if we need to adjust quality
       this.checkPerformanceAndAdjust()
     }
@@ -158,9 +161,9 @@ export class QualityManager {
   private calculateFPSVariance(): number {
     if (this.metrics.samples.length === 0) return 1
     const mean = this.metrics.samples.reduce((a, b) => a + b) / this.metrics.samples.length
-    const variance = this.metrics.samples.reduce((sq, n) => 
-      sq + Math.pow(n - mean, 2), 0
-    ) / this.metrics.samples.length
+    const variance =
+      this.metrics.samples.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) /
+      this.metrics.samples.length
     return Math.sqrt(variance) / mean
   }
 
@@ -182,14 +185,16 @@ export class QualityManager {
 
   setTier(tier: QualityTier) {
     if (this.currentTier === tier) return
-    
+
     this.currentTier = tier
     this.settings = this.getSettingsForTier(tier)
-    
+
     // Dispatch event for components to react
-    window.dispatchEvent(new CustomEvent('qualityTierChanged', {
-      detail: { tier, settings: this.settings }
-    }))
+    window.dispatchEvent(
+      new CustomEvent('qualityTierChanged', {
+        detail: { tier, settings: this.settings },
+      })
+    )
   }
 
   setUserPreference(tier: QualityTier | null) {
@@ -213,13 +218,13 @@ export class QualityManager {
   getAdaptiveCount(baseCount: number, screenWidth: number, screenHeight: number): number {
     const screenArea = screenWidth * screenHeight
     const sizeMultiplier = Math.sqrt(screenArea / 1920000) // Normalized to 1080p
-    
+
     const tierMultiplier = {
       performance: 0.5,
       balanced: 1.0,
-      ultra: 1.5
+      ultra: 1.5,
     }[this.currentTier]
-    
+
     return Math.floor(baseCount * sizeMultiplier * tierMultiplier)
   }
 }

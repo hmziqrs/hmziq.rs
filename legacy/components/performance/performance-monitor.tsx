@@ -1,7 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { QualityManager, type QualityTier, type PerformanceMetrics } from '@/legacy/lib/performance/quality-manager'
+import {
+  QualityManager,
+  type QualityTier,
+  type PerformanceMetrics,
+} from '@/legacy/lib/performance/quality-manager'
 import { DebugConfigManager, type DebugConfig } from '@/legacy/lib/performance/debug-config'
 import { getWASMStatus } from '@/lib/wasm'
 
@@ -10,9 +14,9 @@ interface PerformanceMonitorProps {
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 }
 
-export default function PerformanceMonitor({ 
-  enabled = false, 
-  position = 'top-right' 
+export default function PerformanceMonitor({
+  enabled = false,
+  position = 'top-right',
 }: PerformanceMonitorProps) {
   const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null)
   const [tier, setTier] = useState<QualityTier>('balanced')
@@ -21,10 +25,10 @@ export default function PerformanceMonitor({
     DebugConfigManager.getInstance().getConfig()
   )
   const [wasmStatus, setWasmStatus] = useState(getWASMStatus())
-  
+
   useEffect(() => {
     const qualityManager = QualityManager.getInstance()
-    
+
     // Update metrics every frame
     let animationId: number
     const updateMetrics = () => {
@@ -33,34 +37,34 @@ export default function PerformanceMonitor({
       setWasmStatus(getWASMStatus())
       animationId = requestAnimationFrame(updateMetrics)
     }
-    
+
     if (isVisible) {
       updateMetrics()
     }
-    
+
     // Listen for tier changes
     const handleTierChange = (e: Event) => {
       const event = e as CustomEvent
       setTier(event.detail.tier)
     }
     window.addEventListener('qualityTierChanged', handleTierChange)
-    
+
     // Keyboard shortcut (Ctrl+P)
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 'p') {
         e.preventDefault()
-        setIsVisible(prev => !prev)
+        setIsVisible((prev) => !prev)
       }
     }
     window.addEventListener('keydown', handleKeyPress)
-    
+
     // Listen for debug config changes
     const handleDebugConfigChange = (e: Event) => {
       const event = e as CustomEvent<DebugConfig>
       setDebugConfig(event.detail)
     }
     window.addEventListener('debugConfigChanged', handleDebugConfigChange)
-    
+
     return () => {
       if (animationId) cancelAnimationFrame(animationId)
       window.removeEventListener('qualityTierChanged', handleTierChange)
@@ -68,30 +72,30 @@ export default function PerformanceMonitor({
       window.removeEventListener('debugConfigChanged', handleDebugConfigChange)
     }
   }, [isVisible])
-  
+
   if (!isVisible || !metrics) return null
-  
+
   const positionClasses = {
     'top-left': 'top-4 left-4',
     'top-right': 'top-4 right-4',
     'bottom-left': 'bottom-4 left-4',
-    'bottom-right': 'bottom-4 right-4'
+    'bottom-right': 'bottom-4 right-4',
   }
-  
+
   const tierColors = {
     performance: 'text-yellow-400',
     balanced: 'text-blue-400',
-    ultra: 'text-purple-400'
+    ultra: 'text-purple-400',
   }
-  
+
   const getFPSColor = (fps: number) => {
     if (fps >= 55) return 'text-green-400'
     if (fps >= 30) return 'text-yellow-400'
     return 'text-red-400'
   }
-  
+
   return (
-    <div 
+    <div
       className={`fixed ${positionClasses[position]} bg-black/80 backdrop-blur-sm 
                   border border-white/20 rounded-lg p-3 font-mono text-xs text-white
                   shadow-lg min-w-[200px]`}
@@ -100,40 +104,36 @@ export default function PerformanceMonitor({
       <div className="space-y-1">
         <div className="flex justify-between items-center border-b border-white/20 pb-1 mb-1">
           <span className="font-semibold">Performance Monitor</span>
-          <button 
+          <button
             onClick={() => setIsVisible(false)}
             className="text-white/50 hover:text-white ml-2"
           >
             ×
           </button>
         </div>
-        
+
         <div className="flex justify-between">
           <span>FPS:</span>
-          <span className={getFPSColor(metrics.fps)}>
-            {metrics.fps.toFixed(1)}
-          </span>
+          <span className={getFPSColor(metrics.fps)}>{metrics.fps.toFixed(1)}</span>
         </div>
-        
+
         <div className="flex justify-between">
           <span>Frame Time:</span>
           <span className={metrics.frameTime > 16.67 ? 'text-yellow-400' : 'text-green-400'}>
             {metrics.frameTime.toFixed(2)}ms
           </span>
         </div>
-        
+
         <div className="flex justify-between">
           <span>Quality Tier:</span>
-          <span className={tierColors[tier]}>
-            {tier.charAt(0).toUpperCase() + tier.slice(1)}
-          </span>
+          <span className={tierColors[tier]}>{tier.charAt(0).toUpperCase() + tier.slice(1)}</span>
         </div>
-        
+
         <div className="flex justify-between">
           <span>Samples:</span>
           <span className="text-white/70">{metrics.samples.length}</span>
         </div>
-        
+
         {metrics.samples.length > 0 && (
           <div className="flex justify-between">
             <span>Avg FPS:</span>
@@ -142,14 +142,22 @@ export default function PerformanceMonitor({
             </span>
           </div>
         )}
-        
+
         <div className="flex justify-between">
           <span>WASM Status:</span>
-          <span className={wasmStatus.loaded ? 'text-green-400' : (wasmStatus.usingFallback ? 'text-yellow-400' : 'text-gray-400')}>
-            {wasmStatus.loaded ? 'Loaded' : (wasmStatus.usingFallback ? 'Fallback' : 'Loading')}
+          <span
+            className={
+              wasmStatus.loaded
+                ? 'text-green-400'
+                : wasmStatus.usingFallback
+                  ? 'text-yellow-400'
+                  : 'text-gray-400'
+            }
+          >
+            {wasmStatus.loaded ? 'Loaded' : wasmStatus.usingFallback ? 'Fallback' : 'Loading'}
           </span>
         </div>
-        
+
         <div className="mt-2 pt-2 border-t border-white/20 text-white/50">
           <div>Press Ctrl+P to toggle</div>
           <div className="mt-1">
@@ -173,7 +181,7 @@ export default function PerformanceMonitor({
               Auto
             </button>
           </div>
-          
+
           {/* Console Logs Toggle Section */}
           <div className="mt-2 pt-2 border-t border-white/20">
             <div className="font-semibold mb-1">Console Logs:</div>
@@ -184,8 +192,8 @@ export default function PerformanceMonitor({
                   type="checkbox"
                   checked={debugConfig.enableConsoleLogs}
                   onChange={(e) => {
-                    DebugConfigManager.getInstance().setConfig({ 
-                      enableConsoleLogs: e.target.checked 
+                    DebugConfigManager.getInstance().setConfig({
+                      enableConsoleLogs: e.target.checked,
                     })
                   }}
                   className="ml-2"

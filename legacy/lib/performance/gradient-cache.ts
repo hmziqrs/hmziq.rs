@@ -45,7 +45,7 @@ export class GradientCache {
 
     // Cache miss
     this.misses++
-    
+
     // Create new gradient
     try {
       const gradient = this.ctx.createLinearGradient(x0, y0, x1, y1)
@@ -83,7 +83,7 @@ export class GradientCache {
 
     // Cache miss
     this.misses++
-    
+
     // Create new gradient
     try {
       const gradient = this.ctx.createRadialGradient(x0, y0, r0, x1, y1, r1)
@@ -134,12 +134,12 @@ export class GradientCache {
     const total = this.hits + this.misses
     return total > 0 ? this.hits / total : 0
   }
-  
+
   getStats(): { hits: number; misses: number; size: number } {
     return {
       hits: this.hits,
       misses: this.misses,
-      size: this.cache.size
+      size: this.cache.size,
     }
   }
 }
@@ -147,12 +147,12 @@ export class GradientCache {
 // Global gradient cache instances for each component
 export const gradientCaches = {
   stars: new GradientCache(30),
-  nebula: new GradientCache(20)
+  nebula: new GradientCache(20),
 }
 
 // Make gradient caches accessible globally for debugging
 if (typeof window !== 'undefined') {
-  (window as any).gradientCaches = gradientCaches
+  ;(window as any).gradientCaches = gradientCaches
 }
 
 // Utility function to generate consistent gradient keys

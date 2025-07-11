@@ -11,11 +11,11 @@ ignore_all_files_in_gitignore: true
 # Was previously called `ignored_dirs`, please update your config if you are using that.
 # Added (renamed)on 2025-04-07
 ignored_paths: [
-  "wasm/target/**",    # Rust build artifacts
-  "wasm/pkg/**",       # Generated WASM package
-  "node_modules/**",   # Node.js dependencies
-  ".next/**"           # Next.js build output
-]
+    'wasm/target/**', # Rust build artifacts
+    'wasm/pkg/**', # Generated WASM package
+    'node_modules/**', # Node.js dependencies
+    '.next/**', # Next.js build output
+  ]
 
 # whether the project is in read-only mode
 # If set to true, all editing tools will be disabled and attempts to use them will result in an error
@@ -27,6 +27,6 @@ excluded_tools: []
 
 # initial prompt for the project. It will always be given to the LLM upon activating the project
 # (contrary to the memories, which are loaded on demand).
-initial_prompt: "Multi-language project: TypeScript/Next.js frontend with Rust/WASM backend for performance-critical computations. Primary language is TypeScript for main application logic."
+initial_prompt: 'Multi-language project: TypeScript/Next.js frontend with Rust/WASM backend for performance-critical computations. Primary language is TypeScript for main application logic.'
 
-project_name: "hmziq.rs"
+project_name: 'hmziq.rs'

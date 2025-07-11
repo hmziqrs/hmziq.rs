@@ -34,6 +34,7 @@ bun run build:wasm
 ## Integration
 
 The WASM module is loaded via `/lib/wasm/index.ts` which provides:
+
 - Automatic WASM loading with fallback
 - TypeScript types
 - JavaScript fallback implementations
