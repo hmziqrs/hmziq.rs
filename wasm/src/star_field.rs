@@ -15,6 +15,72 @@ use std::simd::{f32x4, f32x8};
 // SIMD batch size constants
 const SIMD_BATCH_SIZE: usize = 8;
 
+// Persistent memory pool for zero-copy architecture
+static mut STAR_MEMORY_POOL: Option<StarMemoryPool> = None;
+
+#[repr(C)]
+pub struct StarMemoryPool {
+    // All star data lives in WASM linear memory
+    positions: Vec<f32>,      // xyz * count
+    colors: Vec<f32>,         // rgb * count
+    sizes: Vec<f32>,          // size * count
+    twinkles: Vec<f32>,       // intensity * count
+    sparkles: Vec<f32>,       // intensity * count
+    visibility_mask: Vec<u8>, // culling results
+    
+    // Metadata
+    count: usize,
+}
+
+impl StarMemoryPool {
+    fn new(count: usize) -> Self {
+        Self {
+            positions: vec![0.0; count * 3],
+            colors: vec![1.0; count * 3],
+            sizes: vec![1.0; count],
+            twinkles: vec![1.0; count],
+            sparkles: vec![0.0; count],
+            visibility_mask: vec![1; count],
+            count,
+        }
+    }
+    
+    fn get_pointers(&mut self) -> StarMemoryPointers {
+        StarMemoryPointers {
+            positions_ptr: self.positions.as_mut_ptr() as u32,
+            colors_ptr: self.colors.as_mut_ptr() as u32,
+            sizes_ptr: self.sizes.as_mut_ptr() as u32,
+            twinkles_ptr: self.twinkles.as_mut_ptr() as u32,
+            sparkles_ptr: self.sparkles.as_mut_ptr() as u32,
+            visibility_ptr: self.visibility_mask.as_mut_ptr() as u32,
+            count: self.count,
+            positions_length: self.positions.len(),
+            colors_length: self.colors.len(),
+            sizes_length: self.sizes.len(),
+            twinkles_length: self.twinkles.len(),
+            sparkles_length: self.sparkles.len(),
+            visibility_length: self.visibility_mask.len(),
+        }
+    }
+}
+
+#[wasm_bindgen]
+pub struct StarMemoryPointers {
+    pub positions_ptr: u32,
+    pub colors_ptr: u32,
+    pub sizes_ptr: u32,
+    pub twinkles_ptr: u32,
+    pub sparkles_ptr: u32,
+    pub visibility_ptr: u32,
+    pub count: usize,
+    pub positions_length: usize,
+    pub colors_length: usize,
+    pub sizes_length: usize,
+    pub twinkles_length: usize,
+    pub sparkles_length: usize,
+    pub visibility_length: usize,
+}
+
 // SIMD sin lookup helper function
 fn simd_sin_lookup_batch(values: f32x8, sin_table: &[f32]) -> f32x8 {
     // Normalize values to [0, 2π] range
@@ -108,6 +174,38 @@ pub fn generate_star_sizes(count: usize, start_index: usize, size_multiplier: f3
     }
 
     sizes
+}
+
+// Initialize persistent memory pool for zero-copy architecture
+#[wasm_bindgen]
+pub fn initialize_star_memory_pool(count: usize) -> StarMemoryPointers {
+    unsafe {
+        // Create new memory pool
+        let mut pool = StarMemoryPool::new(count);
+        
+        // Initialize star data using existing generation functions
+        let positions = generate_star_positions(count, 0, 20.0, 150.0);
+        let colors = generate_star_colors(count, 0);
+        let sizes = generate_star_sizes(count, 0, 1.0);
+        
+        // Copy generated data to pool
+        pool.positions.copy_from_slice(&positions);
+        pool.colors.copy_from_slice(&colors);
+        pool.sizes.copy_from_slice(&sizes);
+        
+        // Initialize twinkles with random values
+        for i in 0..count {
+            pool.twinkles[i] = 0.8 + seed_random(i as i32 + 7000) * 0.2;
+        }
+        
+        // Get pointers before moving pool
+        let pointers = pool.get_pointers();
+        
+        // Store pool globally
+        STAR_MEMORY_POOL = Some(pool);
+        
+        pointers
+    }
 }
 
 // Calculate star effects (twinkle and sparkle)
@@ -1145,4 +1243,80 @@ pub fn calculate_lod_distribution(total_count: usize, quality_tier: u32) -> Vec<
 
     // Return [near_count, medium_count, far_count]
     vec![near_count, medium_count, far_count]
+}
+
+// Frame update result structure
+#[wasm_bindgen]
+pub struct FrameUpdateResult {
+    pub visible_count: usize,
+    pub positions_dirty: bool,
+    pub effects_dirty: bool,
+    pub culling_dirty: bool,
+}
+
+// In-place frame update using shared memory
+#[wasm_bindgen]
+pub fn update_frame_simd(
+    time: f32,
+    delta_time: f32,
+    camera_matrix_ptr: *const f32,
+    is_moving: bool,
+    click_time: f32,
+    current_speed_multiplier: f32,
+) -> FrameUpdateResult {
+    unsafe {
+        if let Some(pool) = &mut STAR_MEMORY_POOL {
+            // All computation happens in-place on WASM memory
+            let count = pool.count;
+            
+            // 1. Update speed multiplier
+            let speed_multiplier = calculate_speed_multiplier(
+                is_moving,
+                click_time as f64,
+                time as f64,
+                current_speed_multiplier
+            );
+            
+            // 2. SIMD effects calculations (direct memory writes)
+            calculate_star_effects_into_buffers(
+                pool.positions.as_ptr(),
+                pool.twinkles.as_mut_ptr(),
+                pool.sparkles.as_mut_ptr(),
+                count,
+                time
+            );
+            
+            // 3. SIMD frustum culling if camera matrix provided
+            let visible_count = if !camera_matrix_ptr.is_null() {
+                let camera_matrix = std::slice::from_raw_parts(camera_matrix_ptr, 16);
+                let visibility = cull_stars_by_frustum_simd(
+                    &pool.positions,
+                    count,
+                    camera_matrix,
+                    2.0
+                );
+                pool.visibility_mask.copy_from_slice(&visibility);
+                
+                // Count visible stars
+                visibility.iter().filter(|&&v| v > 0).count()
+            } else {
+                count // All visible if no camera matrix
+            };
+            
+            FrameUpdateResult {
+                visible_count,
+                positions_dirty: true,
+                effects_dirty: true,
+                culling_dirty: !camera_matrix_ptr.is_null(),
+            }
+        } else {
+            // Pool not initialized
+            FrameUpdateResult {
+                visible_count: 0,
+                positions_dirty: false,
+                effects_dirty: false,
+                culling_dirty: false,
+            }
+        }
+    }
 }

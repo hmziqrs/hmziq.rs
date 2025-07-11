@@ -32,6 +32,12 @@ pub fn greet(name: &str) -> String {
 }
 
 
+// Export memory for JavaScript access
+#[wasm_bindgen]
+pub fn get_wasm_memory() -> JsValue {
+    wasm_bindgen::memory()
+}
+
 #[wasm_bindgen(start)]
 pub fn main() {
     console_log!("WASM module loaded successfully!");
