@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "simd", feature(portable_simd))]
+#![feature(portable_simd)]
 use wasm_bindgen::prelude::*;
 
 // Module imports - active modules only

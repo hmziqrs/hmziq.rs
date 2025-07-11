@@ -5,23 +5,17 @@ use std::f32::consts::PI;
 use crate::math::{seed_random, fast_sin_lookup};
 
 // Import sin table initializer for SIMD operations
-#[cfg(feature = "simd")]
 use crate::math::init_sin_table;
 
-// SIMD imports when feature is enabled
-#[cfg(feature = "simd")]
+// SIMD imports - now mandatory
 use std::simd::{f32x4, f32x8};
-#[cfg(feature = "simd")]
 use std::simd::num::SimdFloat;
-#[cfg(feature = "simd")]
 use std::simd::cmp::SimdPartialOrd;
 
 // SIMD batch size constants
-#[cfg(feature = "simd")]
 const SIMD_BATCH_SIZE: usize = 8;
 
 // SIMD sin lookup helper function
-#[cfg(feature = "simd")]
 fn simd_sin_lookup_batch(values: f32x8, sin_table: &[f32]) -> f32x8 {
     // Normalize values to [0, 2π] range
     let two_pi = f32x8::splat(2.0 * PI);
@@ -164,19 +158,12 @@ pub fn calculate_star_effects_into_buffers(
         let twinkles = std::slice::from_raw_parts_mut(twinkles_ptr, count);
         let sparkles = std::slice::from_raw_parts_mut(sparkles_ptr, count);
         
-        // Use SIMD if available and count is large enough
-        #[cfg(feature = "simd")]
-        if count >= SIMD_BATCH_SIZE * 2 {
-            calculate_effects_into_buffers_simd(positions, twinkles, sparkles, count, time);
-            return;
-        }
-        
-        calculate_effects_into_buffers_scalar(positions, twinkles, sparkles, count, time);
+        // Always use SIMD - now mandatory
+        calculate_effects_into_buffers_simd(positions, twinkles, sparkles, count, time);
     }
 }
 
 // SIMD version for batch processing
-#[cfg(feature = "simd")]
 fn calculate_effects_into_buffers_simd(
     positions: &[f32],
     twinkles: &mut [f32],
@@ -249,16 +236,19 @@ fn calculate_effects_into_buffers_simd(
         }
     }
     
-    // Process remaining elements
+    // Process remaining elements scalar-style (small count, direct processing)
     let remaining_start = chunks * SIMD_BATCH_SIZE;
-    if remaining_start < count {
-        calculate_effects_into_buffers_scalar(
-            &positions[remaining_start * 3..],
-            &mut twinkles[remaining_start..],
-            &mut sparkles[remaining_start..],
-            count - remaining_start,
-            time
-        );
+    for i in remaining_start..count {
+        let i3 = i * 3;
+        let x = positions[i3];
+        let y = positions[i3 + 1];
+        
+        let twinkle_base = crate::math::fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
+        let sparkle_phase = crate::math::fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
+        let sparkle = if sparkle_phase > 0.98 { (sparkle_phase - 0.98) / 0.02 } else { 0.0 };
+        
+        twinkles[i] = twinkle_base + sparkle;
+        sparkles[i] = sparkle;
     }
 }
 
@@ -396,37 +386,9 @@ fn normalize_plane(plane: &mut [f32; 4]) {
     }
 }
 
-// Scalar version for direct buffer updates
-fn calculate_effects_into_buffers_scalar(
-    positions: &[f32],
-    twinkles: &mut [f32],
-    sparkles: &mut [f32],
-    count: usize,
-    time: f32,
-) {
-    for i in 0..count {
-        let i3 = i * 3;
-        let x = positions[i3];
-        let y = positions[i3 + 1];
-        
-        // Twinkle effect
-        let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
-        
-        // Sparkle effect
-        let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
-        let sparkle = if sparkle_phase > 0.98 {
-            (sparkle_phase - 0.98) / 0.02
-        } else {
-            0.0
-        };
-        
-        twinkles[i] = twinkle_base + sparkle;
-        sparkles[i] = sparkle;
-    }
-}
+
 
 // Process star groups with different LOD (Level of Detail) strategies
-#[cfg(feature = "simd")]
 fn process_star_group_simd(
     positions: &[f32],
     count: usize,
@@ -444,7 +406,6 @@ fn process_star_group_simd(
 }
 
 // Full quality effects with SIMD
-#[cfg(feature = "simd")]
 fn process_full_effects_simd(
     positions: &[f32],
     count: usize,
@@ -522,7 +483,6 @@ fn process_full_effects_simd(
 }
 
 // Medium quality effects (no sparkle)
-#[cfg(feature = "simd")]
 fn process_medium_effects_simd(
     positions: &[f32],
     count: usize,
@@ -604,7 +564,6 @@ pub fn calculate_speed_multiplier(
 }
 
 // Helper function for cull_stars_by_frustum (SIMD version uses this)
-#[cfg(feature = "simd")]
 fn get_sin_table() -> &'static [f32] {
     crate::math::get_sin_table()
 }
@@ -722,8 +681,7 @@ pub fn calculate_star_effects_by_lod(
     time: f32,
     quality_tier: u32,
 ) -> Vec<f32> {
-    // Initialize SIMD if available
-    #[cfg(feature = "simd")]
+    // Initialize SIMD
     init_sin_table();
     
     let total_count = near_count + medium_count + far_count;
@@ -762,66 +720,11 @@ fn process_star_group(
     quality_mode: u32,
     effects: &mut Vec<f32>,
 ) {
-    // Use SIMD version if available
-    #[cfg(feature = "simd")]
-    {
-        process_star_group_simd(positions, count, time, quality_mode, effects);
-        return;
-    }
-    
-    // Scalar fallback
-    match quality_mode {
-        0 => {
-            // Full quality: twinkle + sparkle
-            for i in 0..count {
-                let i3 = i * 3;
-                let x = positions[i3];
-                let y = positions[i3 + 1];
-                
-                let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
-                let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
-                let sparkle = if sparkle_phase > 0.98 { (sparkle_phase - 0.98) / 0.02 } else { 0.0 };
-                
-                effects.push(twinkle_base + sparkle);
-                effects.push(sparkle);
-            }
-        }
-        1 => {
-            // Medium quality: twinkle only
-            for i in 0..count {
-                let i3 = i * 3;
-                let x = positions[i3];
-                let y = positions[i3 + 1];
-                
-                let twinkle = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
-                effects.push(twinkle);
-                effects.push(0.0);
-            }
-        }
-        2 => {
-            // Simple quality: basic twinkle
-            for i in 0..count {
-                let i3 = i * 3;
-                let x = positions[i3];
-                let y = positions[i3 + 1];
-                
-                let twinkle = fast_sin_lookup(time * 2.0 + x * 5.0 + y * 5.0) * 0.2 + 0.8;
-                effects.push(twinkle);
-                effects.push(0.0);
-            }
-        }
-        _ => {
-            // No effects
-            for _ in 0..count {
-                effects.push(1.0);
-                effects.push(0.0);
-            }
-        }
-    }
+    // Always use SIMD version
+    process_star_group_simd(positions, count, time, quality_mode, effects);
 }
 
 // Simple quality effects with SIMD (basic twinkle only)
-#[cfg(feature = "simd")]
 fn process_simple_effects_simd(
     positions: &[f32],
     count: usize,
@@ -904,7 +807,6 @@ fn process_simple_effects_simd(
 }
 
 // SIMD-optimized frustum culling for better performance
-#[cfg(feature = "simd")]
 #[wasm_bindgen]
 pub fn cull_stars_by_frustum_simd(
     positions: &[f32],
@@ -1086,7 +988,6 @@ pub fn get_stars_needing_update(
 }
 
 // SIMD-optimized temporal coherence check
-#[cfg(feature = "simd")]
 #[wasm_bindgen]
 pub fn calculate_star_effects_temporal_simd(
     positions: &[f32],
