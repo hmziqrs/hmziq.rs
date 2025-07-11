@@ -33,6 +33,11 @@ This folder contains files that are no longer actively used in the current codeb
 ### WASM Utilities
 - `lib/wasm/nebula-spatial.ts` - Spatial indexing for nebula overlap detection
 
+### Performance Utilities
+- `lib/performance/gradient-cache.ts` - Canvas gradient caching system with LRU eviction (used only by nebula)
+- `lib/performance/performance-utils.ts` - Frame timing, object pooling, Bezier calculations, spatial grid (used only by legacy components)
+- `lib/performance/quality-manager.ts` - Quality tier management system (replaced by ultra-only rendering)
+
 ### Rust/WASM Source
 - `wasm/src/nebula_system.rs` - Rust implementation for nebula particle system
 

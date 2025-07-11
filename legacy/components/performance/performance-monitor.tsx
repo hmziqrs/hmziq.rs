@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { QualityManager, type QualityTier, type PerformanceMetrics } from '@/lib/performance/quality-manager'
+import { QualityManager, type QualityTier, type PerformanceMetrics } from '@/legacy/lib/performance/quality-manager'
 import { DebugConfigManager, type DebugConfig } from '@/lib/performance/debug-config'
 import { getWASMStatus } from '@/lib/wasm'
 
