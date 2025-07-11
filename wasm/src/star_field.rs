@@ -5,8 +5,7 @@ use wasm_bindgen::prelude::*;
 // Import math utilities
 use crate::math::{fast_sin_lookup, seed_random};
 
-// Import sin table initializer for SIMD operations
-use crate::math::init_sin_table;
+// Note: init_sin_table no longer needed as sin lookup is now handled internally
 
 // SIMD imports - now mandatory
 use std::simd::cmp::SimdPartialOrd;
@@ -87,23 +86,13 @@ pub struct StarMemoryPointers {
 }
 
 // SIMD sin lookup helper function
-fn simd_sin_lookup_batch(values: f32x8, sin_table: &[f32]) -> f32x8 {
-    // Normalize values to [0, 2π] range
-    let two_pi = f32x8::splat(2.0 * PI);
-    let normalized = values % two_pi;
-
-    // Convert to table indices
-    let table_size = sin_table.len() as f32;
-    let scale = f32x8::splat(table_size / (2.0 * PI));
-    let indices = normalized * scale;
-
-    // Extract individual values and perform lookups
-    let indices_arr: [f32; 8] = indices.to_array();
+fn simd_sin_lookup_batch(values: f32x8) -> f32x8 {
+    // Extract individual values and perform lookups using fast_sin_lookup
+    let values_arr: [f32; 8] = values.to_array();
     let mut results = [0.0f32; 8];
 
-    for (i, &idx) in indices_arr.iter().enumerate() {
-        let index = (idx as usize) % sin_table.len();
-        results[i] = sin_table[index];
+    for (i, &val) in values_arr.iter().enumerate() {
+        results[i] = fast_sin_lookup(val);
     }
 
     f32x8::from_array(results)
@@ -213,8 +202,6 @@ pub fn initialize_star_memory_pool(count: usize) -> StarMemoryPointers {
     pointers
 }
 
-
-
 // SIMD version for batch processing
 fn calculate_effects_into_buffers_simd(
     positions: &[f32],
@@ -223,10 +210,6 @@ fn calculate_effects_into_buffers_simd(
     count: usize,
     time: f32,
 ) {
-    // Initialize sin table if needed
-    init_sin_table();
-    let sin_table = crate::math::get_sin_table();
-
     // Pre-calculate time factors
     let time_3 = time * 3.0;
     let time_15 = time * 15.0;
@@ -254,7 +237,7 @@ fn calculate_effects_into_buffers_simd(
         let time_3_vec = f32x8::splat(time_3);
         let factor_10 = f32x8::splat(10.0);
         let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
-        let twinkle_sin = simd_sin_lookup_batch(twinkle_arg, sin_table);
+        let twinkle_sin = simd_sin_lookup_batch(twinkle_arg);
         let twinkle_scale = f32x8::splat(0.3);
         let twinkle_offset = f32x8::splat(0.7);
         let twinkle_base = twinkle_sin * twinkle_scale + twinkle_offset;
@@ -264,7 +247,7 @@ fn calculate_effects_into_buffers_simd(
         let factor_20 = f32x8::splat(20.0);
         let factor_30 = f32x8::splat(30.0);
         let sparkle_arg = time_15_vec + x_vec * factor_20 + y_vec * factor_30;
-        let sparkle_phase = simd_sin_lookup_batch(sparkle_arg, sin_table);
+        let sparkle_phase = simd_sin_lookup_batch(sparkle_arg);
 
         // Conditional sparkle effect
         let sparkle_threshold = f32x8::splat(0.98);
@@ -308,8 +291,6 @@ fn calculate_effects_into_buffers_simd(
         sparkles[i] = sparkle;
     }
 }
-
-
 
 // Calculate rotation delta based on speed multiplier
 #[wasm_bindgen]
@@ -405,23 +386,15 @@ fn process_star_group_simd(
     quality_mode: u32,
     effects: &mut Vec<f32>,
 ) {
-    let sin_table = crate::math::get_sin_table();
-
     match quality_mode {
-        0 => process_simple_effects_simd(positions, count, time, effects, sin_table),
-        1 => process_medium_effects_simd(positions, count, time, effects, sin_table),
-        _ => process_full_effects_simd(positions, count, time, effects, sin_table),
+        0 => process_simple_effects_simd(positions, count, time, effects),
+        1 => process_medium_effects_simd(positions, count, time, effects),
+        _ => process_full_effects_simd(positions, count, time, effects),
     }
 }
 
 // Full quality effects with SIMD
-fn process_full_effects_simd(
-    positions: &[f32],
-    count: usize,
-    time: f32,
-    effects: &mut Vec<f32>,
-    sin_table: &[f32],
-) {
+fn process_full_effects_simd(positions: &[f32], count: usize, time: f32, effects: &mut Vec<f32>) {
     let time_3 = time * 3.0;
     let time_15 = time * 15.0;
     let time_3_vec = f32x8::splat(time_3);
@@ -453,12 +426,11 @@ fn process_full_effects_simd(
 
         // Twinkle calculation
         let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
-        let twinkle_base_vec =
-            simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
+        let twinkle_base_vec = simd_sin_lookup_batch(twinkle_arg) * twinkle_scale + twinkle_offset;
 
         // Sparkle calculation
         let sparkle_arg = time_15_vec + x_vec * factor_20 + y_vec * factor_30;
-        let sparkle_phase_vec = simd_sin_lookup_batch(sparkle_arg, sin_table);
+        let sparkle_phase_vec = simd_sin_lookup_batch(sparkle_arg);
         let sparkle_mask = sparkle_phase_vec.simd_gt(sparkle_threshold);
         let sparkle_vec = sparkle_mask.select(
             (sparkle_phase_vec - sparkle_threshold) * sparkle_scale,
@@ -497,13 +469,7 @@ fn process_full_effects_simd(
 }
 
 // Medium quality effects (no sparkle)
-fn process_medium_effects_simd(
-    positions: &[f32],
-    count: usize,
-    time: f32,
-    effects: &mut Vec<f32>,
-    sin_table: &[f32],
-) {
+fn process_medium_effects_simd(positions: &[f32], count: usize, time: f32, effects: &mut Vec<f32>) {
     let time_3 = time * 3.0;
     let time_3_vec = f32x8::splat(time_3);
     let factor_10 = f32x8::splat(10.0);
@@ -527,8 +493,7 @@ fn process_medium_effects_simd(
         let y_vec = f32x8::from_array(y_values);
 
         let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
-        let twinkle_vec =
-            simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
+        let twinkle_vec = simd_sin_lookup_batch(twinkle_arg) * twinkle_scale + twinkle_offset;
 
         let twinkle_arr: [f32; 8] = twinkle_vec.to_array();
 
@@ -578,10 +543,7 @@ pub fn calculate_speed_multiplier(
     current_multiplier + (speed_multiplier - current_multiplier) * 0.2
 }
 
-// Helper function for cull_stars_by_frustum (SIMD version uses this)
-fn get_sin_table() -> &'static [f32] {
-    crate::math::get_sin_table()
-}
+// Note: get_sin_table() helper function has been removed as we now use fast_sin_lookup directly
 
 // Camera frustum culling - returns visibility mask
 #[wasm_bindgen]
@@ -696,9 +658,6 @@ pub fn calculate_star_effects_by_lod(
     time: f32,
     quality_tier: u32,
 ) -> Vec<f32> {
-    // Initialize SIMD
-    init_sin_table();
-
     let total_count = near_count + medium_count + far_count;
     let mut effects = Vec::with_capacity(total_count * 2);
 
@@ -740,13 +699,7 @@ fn process_star_group(
 }
 
 // Simple quality effects with SIMD (basic twinkle only)
-fn process_simple_effects_simd(
-    positions: &[f32],
-    count: usize,
-    time: f32,
-    effects: &mut Vec<f32>,
-    sin_table: &[f32],
-) {
+fn process_simple_effects_simd(positions: &[f32], count: usize, time: f32, effects: &mut Vec<f32>) {
     // Process 16 stars at once (2x f32x8)
     const CHUNK_SIZE: usize = 16;
 
@@ -776,8 +729,7 @@ fn process_simple_effects_simd(
         let y_vec = f32x8::from_array(y_values);
 
         let twinkle_arg = time_2_vec + x_vec * factor_5 + y_vec * factor_5;
-        let twinkle_vec =
-            simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
+        let twinkle_vec = simd_sin_lookup_batch(twinkle_arg) * twinkle_scale + twinkle_offset;
 
         let twinkle_arr: [f32; 8] = twinkle_vec.to_array();
 
@@ -798,8 +750,7 @@ fn process_simple_effects_simd(
 
         // Simple twinkle calculation
         let twinkle_arg = time_2_vec + x_vec * factor_5 + y_vec * factor_5;
-        let twinkle_vec =
-            simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
+        let twinkle_vec = simd_sin_lookup_batch(twinkle_arg) * twinkle_scale + twinkle_offset;
 
         let twinkle_arr: [f32; 8] = twinkle_vec.to_array();
 
@@ -1040,8 +991,7 @@ pub fn calculate_star_effects_temporal_simd(
     let zero = f32x8::splat(0.0);
     let one = f32x8::splat(1.0);
 
-    // Get sin table reference
-    let sin_table = get_sin_table();
+    // Note: Sin table no longer needed as we use fast_sin_lookup directly
 
     // Process in batches of 8
     let chunks = count / 8;
@@ -1064,12 +1014,11 @@ pub fn calculate_star_effects_temporal_simd(
 
         // Calculate twinkle
         let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
-        let twinkle_base_vec =
-            simd_sin_lookup_batch(twinkle_arg, sin_table) * twinkle_scale + twinkle_offset;
+        let twinkle_base_vec = simd_sin_lookup_batch(twinkle_arg) * twinkle_scale + twinkle_offset;
 
         // Calculate sparkle
         let sparkle_arg = time_15_vec + x_vec * factor_20 + y_vec * factor_30;
-        let sparkle_phase_vec = simd_sin_lookup_batch(sparkle_arg, sin_table);
+        let sparkle_phase_vec = simd_sin_lookup_batch(sparkle_arg);
         let sparkle_mask = sparkle_phase_vec.simd_gt(sparkle_threshold);
         let sparkle_vec = sparkle_mask.select(
             (sparkle_phase_vec - sparkle_threshold) * sparkle_scale,

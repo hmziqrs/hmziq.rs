@@ -88,6 +88,28 @@ This document tracks the implementation progress of star field optimizations. Ea
 
 ---
 
+## Phase 1.4: Remove Unsafe Code from math.rs
+**Status:** 🟢 COMPLETED  
+**Goal:** Eliminate all unsafe blocks from math module
+
+### Tasks:
+- [x] Replace `static mut SIN_TABLE` with `thread_local!` + `RefCell`
+- [x] Update `init_sin_table` to use thread_local storage
+- [x] Convert `get_sin_table` to safe internal access
+- [x] Update all sin/cos functions to use safe borrowing
+- [x] Update star_field.rs to remove direct sin table access
+- [x] Test that performance is maintained
+
+### Implementation Details:
+- Used `thread_local!` with `RefCell<Option<Vec<f32>>>`
+- Sin table initialization now happens on-demand internally
+- `fast_sin_lookup` and batch functions use safe borrowing
+- Removed all `unsafe` blocks from math.rs
+- Updated SIMD functions in star_field.rs to use fast_sin_lookup directly
+- Zero performance impact due to efficient thread_local access in WASM
+
+---
+
 ## Phase 2: Structure-of-Arrays Memory Layout
 **Status:** 🔴 NOT_STARTED  
 **Goal:** Optimize for SIMD cache efficiency
