@@ -1,6 +1,6 @@
+use std::cell::RefCell;
 use std::f32::consts::PI;
 use wasm_bindgen::prelude::*;
-use std::cell::RefCell;
 
 // Import math utilities
 use crate::math::{fast_sin_lookup, seed_random};
@@ -24,7 +24,6 @@ thread_local! {
 }
 
 #[repr(C)]
-#[derive(Debug)]
 pub struct StarMemoryPool {
     // All star data lives in WASM linear memory
     positions: Vec<f32>,      // xyz * count
@@ -33,7 +32,7 @@ pub struct StarMemoryPool {
     twinkles: Vec<f32>,       // intensity * count
     sparkles: Vec<f32>,       // intensity * count
     visibility_mask: Vec<u8>, // culling results
-    
+
     // Metadata
     count: usize,
 }
@@ -50,7 +49,7 @@ impl StarMemoryPool {
             count,
         }
     }
-    
+
     fn get_pointers(&mut self) -> StarMemoryPointers {
         StarMemoryPointers {
             positions_ptr: self.positions.as_mut_ptr() as u32,
@@ -187,34 +186,36 @@ pub fn generate_star_sizes(count: usize, start_index: usize, size_multiplier: f3
 pub fn initialize_star_memory_pool(count: usize) -> StarMemoryPointers {
     // Create new memory pool
     let mut pool = StarMemoryPool::new(count);
-    
+
     // Initialize star data using existing generation functions
     let positions = generate_star_positions(count, 0, 20.0, 150.0);
     let colors = generate_star_colors(count, 0);
     let sizes = generate_star_sizes(count, 0, 1.0);
-    
+
     // Copy generated data to pool
     pool.positions.copy_from_slice(&positions);
     pool.colors.copy_from_slice(&colors);
     pool.sizes.copy_from_slice(&sizes);
-    
+
     // Initialize twinkles with random values
     for i in 0..count {
         pool.twinkles[i] = 0.8 + seed_random(i as i32 + 7000) * 0.2;
     }
-    
+
     // Get pointers before storing pool
     let pointers = pool.get_pointers();
-    
+
     // Store pool globally using thread_local
     STAR_MEMORY_POOL.with(|pool_cell| {
         *pool_cell.borrow_mut() = Some(pool);
     });
-    
+
     pointers
 }
 
 // Calculate star effects (twinkle and sparkle)
+// DEPRECATED: Use update_frame_simd instead for better performance and safety
+#[deprecated(note = "Use update_frame_simd instead")]
 #[wasm_bindgen]
 pub fn calculate_star_effects(positions_ptr: *const f32, count: usize, time: f32) -> Vec<f32> {
     let mut effects = Vec::with_capacity(count * 2);
@@ -249,6 +250,8 @@ pub fn calculate_star_effects(positions_ptr: *const f32, count: usize, time: f32
 }
 
 // Direct buffer update version - fills existing buffers to avoid allocations
+// DEPRECATED: Use update_frame_simd instead for better performance and safety
+#[deprecated(note = "Use update_frame_simd instead")]
 #[wasm_bindgen]
 pub fn calculate_star_effects_into_buffers(
     positions_ptr: *const f32,
@@ -362,6 +365,8 @@ fn calculate_effects_into_buffers_simd(
 }
 
 // Calculate only twinkle effects (simplified)
+// DEPRECATED: Use update_frame_simd instead for better performance and safety
+#[deprecated(note = "Use update_frame_simd instead")]
 #[wasm_bindgen]
 pub fn calculate_twinkle_effects(positions_ptr: *const f32, count: usize, time: f32) -> Vec<f32> {
     let mut twinkles = Vec::with_capacity(count);
@@ -383,6 +388,8 @@ pub fn calculate_twinkle_effects(positions_ptr: *const f32, count: usize, time: 
 }
 
 // Calculate only sparkle effects (for performance mode)
+// DEPRECATED: Use update_frame_simd instead for better performance and safety
+#[deprecated(note = "Use update_frame_simd instead")]
 #[wasm_bindgen]
 pub fn calculate_sparkle_effects(positions_ptr: *const f32, count: usize, time: f32) -> Vec<f32> {
     let mut sparkles = Vec::with_capacity(count);
@@ -1272,62 +1279,50 @@ pub fn update_frame_simd(
 ) -> FrameUpdateResult {
     STAR_MEMORY_POOL.with(|pool_cell| {
         if let Some(pool) = pool_cell.borrow_mut().as_mut() {
-        
-        // All computation happens in-place on WASM memory
-        let count = pool.count;
-        
-        // 1. Update speed multiplier
-        let speed_multiplier = calculate_speed_multiplier(
-            is_moving,
-            click_time as f64,
-            time as f64,
-            current_speed_multiplier
-        );
-        
-        // 2. SIMD effects calculations (direct memory writes)
-        // Note: We still need unsafe here for raw pointer operations
-        unsafe {
-            calculate_star_effects_into_buffers(
-                pool.positions.as_ptr(),
-                pool.twinkles.as_mut_ptr(),
-                pool.sparkles.as_mut_ptr(),
-                count,
-                time
+            // All computation happens in-place on WASM memory
+            let count = pool.count;
+
+            // 1. Update speed multiplier
+            let speed_multiplier = calculate_speed_multiplier(
+                is_moving,
+                click_time as f64,
+                time as f64,
+                current_speed_multiplier,
             );
-        }
-        
-        // 3. SIMD frustum culling if camera matrix provided
-        let visible_count = if !camera_matrix_ptr.is_null() {
-            // Still need unsafe for camera matrix pointer
-            let camera_matrix = unsafe { std::slice::from_raw_parts(camera_matrix_ptr, 16) };
-            let visibility = cull_stars_by_frustum_simd(
+
+            // 2. SIMD effects calculations (direct memory writes) - now safe!
+            calculate_effects_into_buffers_simd(
                 &pool.positions,
+                &mut pool.twinkles,
+                &mut pool.sparkles,
                 count,
-                camera_matrix,
-                2.0
+                time,
             );
-            pool.visibility_mask.copy_from_slice(&visibility);
-            
-            // Count visible stars
-            visibility.iter().filter(|&&v| v > 0).count()
+
+            // 3. SIMD frustum culling if camera matrix provided
+            // Note: Currently camera matrix is always null (disabled) from TypeScript
+            let visible_count = if !camera_matrix_ptr.is_null() {
+                // TODO: Implement safe camera matrix handling when needed
+                // For now, treat as if no camera matrix provided
+                count
+            } else {
+                count // All visible if no camera matrix
+            };
+
+            FrameUpdateResult {
+                visible_count,
+                positions_dirty: true,
+                effects_dirty: true,
+                culling_dirty: false, // No culling performed currently
+            }
         } else {
-            count // All visible if no camera matrix
-        };
-        
-        FrameUpdateResult {
-            visible_count,
-            positions_dirty: true,
-            effects_dirty: true,
-            culling_dirty: !camera_matrix_ptr.is_null(),
+            // Pool not initialized
+            FrameUpdateResult {
+                visible_count: 0,
+                positions_dirty: false,
+                effects_dirty: false,
+                culling_dirty: false,
+            }
         }
-    } else {
-        // Pool not initialized
-        FrameUpdateResult {
-            visible_count: 0,
-            positions_dirty: false,
-            effects_dirty: false,
-            culling_dirty: false,
-        }
-    }
     })
 }
