@@ -5,7 +5,6 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { getOptimizedFunctions } from '@/lib/wasm'
 import { QualityManager, type QualityTier } from '@/lib/performance/quality-manager'
-import PerformanceMonitor from '@/components/performance/performance-monitor'
 
 // Performance monitoring
 let frameCount = 0
@@ -754,8 +753,6 @@ export default function OptimizedStarField() {
         <pointLight position={[10, 10, 10]} intensity={0.5} />
         <Stars />
       </Canvas>
-      
-      <PerformanceMonitor enabled={true} position="top-right" />
     </div>
   )
 }

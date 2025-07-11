@@ -20,6 +20,9 @@ This folder contains files that are no longer actively used in the current codeb
 ### Other Components
 - `LoadingSpinner.tsx` - Generic loading spinner component
 
+### Performance Components  
+- `performance/performance-monitor.tsx` - Debug UI overlay for monitoring FPS, quality tiers, and performance metrics
+
 ## Hooks
 - `useScrollProgress.ts` - Hook for tracking scroll progress (used by legacy StarField)
 - `useViewportSize.ts` - Hook for tracking viewport dimensions (used by legacy StarField)
@@ -43,5 +46,6 @@ These files were moved to legacy because:
 2. They are experimental components not used in production
 3. They are utility functions only used by other legacy components
 4. They represent older architectural decisions that have been superseded
+5. They are debug/development tools not needed in production (performance monitor)
 
 All files are functional and can be restored if needed.

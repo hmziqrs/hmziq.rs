@@ -36,7 +36,7 @@ export class QualityManager {
   private userPreference: QualityTier | null = null
 
   private constructor() {
-    this.currentTier = this.detectOptimalTier()
+    this.currentTier = 'ultra' // Always use ultra tier
     this.metrics = {
       fps: 60,
       frameTime: 0,
@@ -151,26 +151,8 @@ export class QualityManager {
   }
 
   private checkPerformanceAndAdjust() {
-    // Don't adjust if user has set preference
-    if (this.userPreference) return
-    
-    // Need at least 10 samples for reliable measurement
-    if (this.metrics.samples.length < 10) return
-    
-    const avgFPS = this.metrics.samples.reduce((a, b) => a + b) / this.metrics.samples.length
-    
-    // Decrease quality if struggling
-    if (avgFPS < 30 && this.currentTier !== 'performance') {
-      this.decreaseTier()
-    }
-    // Increase quality if performing well
-    else if (avgFPS > 58 && this.metrics.frameTime < 14 && this.currentTier !== 'ultra') {
-      // Check FPS stability before increasing
-      const variance = this.calculateFPSVariance()
-      if (variance < 0.1) { // Less than 10% variance
-        this.increaseTier()
-      }
-    }
+    // Quality locked to ultra tier - no automatic adjustments
+    return
   }
 
   private calculateFPSVariance(): number {
@@ -211,17 +193,12 @@ export class QualityManager {
   }
 
   setUserPreference(tier: QualityTier | null) {
-    this.userPreference = tier
-    if (tier) {
-      this.setTier(tier)
-    } else {
-      // Auto-detect again
-      this.setTier(this.detectOptimalTier())
-    }
+    // Quality locked to ultra tier - ignore user preferences
+    this.userPreference = 'ultra'
   }
 
   getTier(): QualityTier {
-    return this.currentTier
+    return 'ultra' // Always return ultra tier
   }
 
   getSettings(): QualitySettings {
