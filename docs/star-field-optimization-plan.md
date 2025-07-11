@@ -68,6 +68,26 @@ This document tracks the implementation progress of star field optimizations. Ea
 
 ---
 
+## Phase 1.3: Simplified External API
+**Status:** 🟢 COMPLETED  
+**Goal:** Move deprecated functions to legacy directory
+
+### Tasks:
+- [x] Create star_field_deprecated.rs in legacy/wasm/src/
+- [x] Move all deprecated raw pointer functions to legacy module
+- [x] Remove deprecated functions from main star_field.rs
+- [x] Clean up WASM exports (deprecated functions no longer exported)
+- [x] Build and test - confirmed working
+
+### Implementation Details:
+- Deprecated functions moved to `/legacy/wasm/src/star_field_deprecated.rs`
+- Legacy functions use simple sin() instead of optimized lookup tables
+- Main API now clean with only safe, actively used functions
+- Zero impact on active codebase - all functionality preserved
+- Clear separation between legacy and active code
+
+---
+
 ## Phase 2: Structure-of-Arrays Memory Layout
 **Status:** 🔴 NOT_STARTED  
 **Goal:** Optimize for SIMD cache efficiency
