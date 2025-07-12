@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::f32::consts::PI;
-use std::simd::{f32x16, f32x8, StdFloat};
+use std::simd::{f32x16, StdFloat};
 use wasm_bindgen::prelude::*;
 
 // Pre-calculated sin lookup table size (matching JS implementation)
@@ -150,41 +150,6 @@ pub fn seed_random_batch(start: i32, count: usize) -> Vec<f32> {
         .collect()
 }
 
-// SIMD random number generation - generates 8 random numbers at once
-pub fn seed_random_simd_batch(start: i32) -> f32x8 {
-    let indices = f32x8::from_array([
-        start as f32,
-        (start + 1) as f32,
-        (start + 2) as f32,
-        (start + 3) as f32,
-        (start + 4) as f32,
-        (start + 5) as f32,
-        (start + 6) as f32,
-        (start + 7) as f32,
-    ]);
-
-    let factor1 = f32x8::splat(12.9898);
-    let factor2 = f32x8::splat(78.233);
-    let factor3 = f32x8::splat(43758.5453);
-
-    // Use fast sin lookup for SIMD processing
-    let x_values = indices * factor1 + factor2;
-
-    // Process each value individually for sin (we'll optimize this later)
-    let sin_results = f32x8::from_array([
-        fast_sin_lookup(x_values.as_array()[0]),
-        fast_sin_lookup(x_values.as_array()[1]),
-        fast_sin_lookup(x_values.as_array()[2]),
-        fast_sin_lookup(x_values.as_array()[3]),
-        fast_sin_lookup(x_values.as_array()[4]),
-        fast_sin_lookup(x_values.as_array()[5]),
-        fast_sin_lookup(x_values.as_array()[6]),
-        fast_sin_lookup(x_values.as_array()[7]),
-    ]);
-
-    let scaled = sin_results * factor3;
-    scaled - scaled.floor()
-}
 
 // SIMD sin lookup batch function using f32x16 for AVX-512 optimization
 pub fn fast_sin_lookup_simd_16(values: f32x16) -> f32x16 {

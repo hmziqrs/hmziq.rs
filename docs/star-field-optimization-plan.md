@@ -253,12 +253,12 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 6.1: Remove Orphaned Functions
-**Status:** 🔴 NOT_STARTED
+**Status:** 🟢 COMPLETED
 **Goal:** Clean up unused code that causes compiler warnings
 
 ### Tasks:
-- [ ] Remove `seed_random_simd_batch()` from math.rs (unused f32x8 function)
-- [ ] Keep other functions for now (they're still used)
+- [x] Remove `seed_random_simd_batch()` from math.rs (unused f32x8 function)
+- [x] Keep other functions for now (they're still used)
 
 ---
 
