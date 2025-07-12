@@ -984,14 +984,10 @@ fn process_star_group_simd(
     positions: &[f32],
     count: usize,
     time: f32,
-    quality_mode: u32,
     effects: &mut Vec<f32>,
 ) {
-    match quality_mode {
-        0 => process_simple_effects_simd(positions, count, time, effects),
-        1 => process_medium_effects_simd(positions, count, time, effects),
-        _ => process_full_effects_simd(positions, count, time, effects),
-    }
+    // Always use full effects for maximum quality
+    process_full_effects_simd(positions, count, time, effects);
 }
 
 // Full quality effects with SIMD
@@ -1257,46 +1253,27 @@ pub fn calculate_star_effects_by_lod(
     far_positions: &[f32],
     far_count: usize,
     time: f32,
-    quality_tier: u32,
 ) -> Vec<f32> {
     let total_count = near_count + medium_count + far_count;
     let mut effects = Vec::with_capacity(total_count * 2);
 
-    // Process based on quality tier
-    match quality_tier {
-        0 => {
-            // Performance tier: Simple effects for all
-            process_star_group(near_positions, near_count, time, 2, &mut effects);
-            process_star_group(medium_positions, medium_count, time, 2, &mut effects);
-            process_star_group(far_positions, far_count, time, 3, &mut effects);
-        }
-        1 => {
-            // Balanced tier: Full for near, simple for medium/far
-            process_star_group(near_positions, near_count, time, 0, &mut effects);
-            process_star_group(medium_positions, medium_count, time, 2, &mut effects);
-            process_star_group(far_positions, far_count, time, 3, &mut effects);
-        }
-        _ => {
-            // Ultra tier: Full for near/medium, simple for far
-            process_star_group(near_positions, near_count, time, 0, &mut effects);
-            process_star_group(medium_positions, medium_count, time, 0, &mut effects);
-            process_star_group(far_positions, far_count, time, 2, &mut effects);
-        }
-    }
+    // Always use full quality effects for all star groups
+    process_star_group(near_positions, near_count, time, &mut effects);
+    process_star_group(medium_positions, medium_count, time, &mut effects);
+    process_star_group(far_positions, far_count, time, &mut effects);
 
     effects
 }
 
-// Process a single star group with specified quality mode
+// Process a single star group with full quality effects
 fn process_star_group(
     positions: &[f32],
     count: usize,
     time: f32,
-    quality_mode: u32,
     effects: &mut Vec<f32>,
 ) {
-    // Always use SIMD version
-    process_star_group_simd(positions, count, time, quality_mode, effects);
+    // Always use SIMD version with full effects
+    process_star_group_simd(positions, count, time, effects);
 }
 
 // Simple quality effects with SIMD (basic twinkle only)
@@ -1687,13 +1664,9 @@ pub fn calculate_star_effects_temporal_simd(
 
 // LOD (Level of Detail) distribution calculations
 #[wasm_bindgen]
-pub fn calculate_lod_distribution(total_count: usize, quality_tier: u32) -> Vec<u32> {
-    // Distribution ratios for each quality tier
-    let (near_ratio, medium_ratio) = match quality_tier {
-        0 => (0.1, 0.3),   // Performance: 10% near, 30% medium, 60% far
-        1 => (0.15, 0.35), // Balanced: 15% near, 35% medium, 50% far
-        _ => (0.2, 0.4),   // Ultra: 20% near, 40% medium, 40% far
-    };
+pub fn calculate_lod_distribution(total_count: usize) -> Vec<u32> {
+    // Always use ultra quality distribution ratios
+    let (near_ratio, medium_ratio) = (0.2, 0.4); // Ultra: 20% near, 40% medium, 40% far
 
     let near_count = (total_count as f32 * near_ratio).floor() as u32;
     let medium_count = (total_count as f32 * medium_ratio).floor() as u32;
