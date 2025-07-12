@@ -24,6 +24,8 @@ Bun, Next.js 15+ (App Router), shadcn/ui, Tailwind CSS v4, Three.js + React Thre
 - WASM: `bun run build:wasm` for Rust compilation, use for particle calculations
 - Never read, analyze, or ever touch the `legacy/` directory unless explicitly specified; you don’t need to update or maintain import references in legacy files—even when moving orphaned or closely-related code
 - Utilize sub-agents for multi-file operations when reading, updating, or performing actions across multiple files
+- Only execute `git commit` or `git push` when the user has given explicit permission to do so
+- The AI must never access, read, or modify any files under the `docs/completed` directory, as they contain no relevant information and provide no benefit.
 
 ## Common Patterns
 

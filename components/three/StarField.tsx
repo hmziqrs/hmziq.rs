@@ -70,13 +70,6 @@ const FRAGMENT_SHADER = `
     gl_FragColor = vec4(finalColor * vTwinkle, finalAlpha);
   }
 `
-
-// interface StarGroup {
-//   count: number
-//   material: THREE.ShaderMaterial
-//   mesh: React.RefObject<THREE.Points>
-// }
-
 function Stars() {
   const [screenDimensions, setScreenDimensions] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 1920,
