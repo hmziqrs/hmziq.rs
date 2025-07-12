@@ -199,25 +199,6 @@ function Stars() {
         const geometry = starMeshRef.current.geometry
         const sharedMem = sharedMemoryRef.current
 
-        // DEBUG: Check if SIMD generated valid star data
-        console.log('SIMD positions_x sample:', sharedMem.positions_x.slice(0, 10))
-        console.log('SIMD positions_y sample:', sharedMem.positions_y.slice(0, 10))
-        console.log('SIMD positions_z sample:', sharedMem.positions_z.slice(0, 10))
-        console.log('SIMD colors_r sample:', sharedMem.colors_r.slice(0, 10))
-
-        // Check for invalid values (NaN, Infinity)
-        const hasNaN =
-          Array.from(sharedMem.positions_x.slice(0, count)).some(isNaN) ||
-          Array.from(sharedMem.positions_y.slice(0, count)).some(isNaN) ||
-          Array.from(sharedMem.positions_z.slice(0, count)).some(isNaN)
-        const hasInf =
-          Array.from(sharedMem.positions_x.slice(0, count)).some((x) => !isFinite(x)) ||
-          Array.from(sharedMem.positions_y.slice(0, count)).some((x) => !isFinite(x)) ||
-          Array.from(sharedMem.positions_z.slice(0, count)).some((x) => !isFinite(x))
-
-        console.log('Has NaN coordinates:', hasNaN)
-        console.log('Has Infinite coordinates:', hasInf)
-
         // SoA layout: separate attributes for optimal SIMD performance (zero-copy!)
         geometry.setAttribute('positionX', new THREE.BufferAttribute(sharedMem.positions_x, 1))
         geometry.setAttribute('positionY', new THREE.BufferAttribute(sharedMem.positions_y, 1))

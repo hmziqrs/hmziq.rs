@@ -211,6 +211,168 @@ pub fn generate_star_sizes(count: usize, start_index: usize, size_multiplier: f3
     sizes
 }
 
+// SIMD color generation - generates directly into SoA arrays for maximum performance
+fn generate_star_colors_simd_direct(
+    colors_r: &mut [f32],
+    colors_g: &mut [f32],
+    colors_b: &mut [f32],
+    count: usize,
+) {
+    use std::simd::{f32x8, mask32x8, Simd};
+    
+    // Color constants as SIMD vectors
+    let white_r = f32x8::splat(1.0);
+    let white_g = f32x8::splat(1.0);
+    let white_b = f32x8::splat(1.0);
+    
+    let blue_r = f32x8::splat(0.6);
+    let blue_g = f32x8::splat(0.8);
+    let blue_b = f32x8::splat(1.0);
+    
+    let yellow_r = f32x8::splat(1.0);
+    let yellow_g = f32x8::splat(0.8);
+    let yellow_b = f32x8::splat(0.4);
+    
+    let purple_r = f32x8::splat(0.8);
+    let purple_g = f32x8::splat(0.6);
+    let purple_b = f32x8::splat(1.0);
+    
+    // Threshold constants
+    let threshold_50 = f32x8::splat(0.5);
+    let threshold_70 = f32x8::splat(0.7);
+    let threshold_85 = f32x8::splat(0.85);
+    
+    // Process in batches of 8 stars
+    let chunks = count / SIMD_BATCH_SIZE;
+    
+    for chunk in 0..chunks {
+        let base_idx = chunk * SIMD_BATCH_SIZE;
+        let start_index = base_idx as i32;
+        
+        // Generate 8 color choice values
+        let color_choice = seed_random_simd_batch(start_index + 3000);
+        
+        // Create masks for each color category
+        let is_white = color_choice.simd_lt(threshold_50);
+        let is_blue = color_choice.simd_ge(threshold_50) & color_choice.simd_lt(threshold_70);
+        let is_yellow = color_choice.simd_ge(threshold_70) & color_choice.simd_lt(threshold_85);
+        // Purple is everything else (>= 0.85)
+        
+        // Select colors using SIMD masks
+        let mut result_r = purple_r; // Default to purple
+        let mut result_g = purple_g;
+        let mut result_b = purple_b;
+        
+        // Apply colors in reverse order (purple -> yellow -> blue -> white)
+        result_r = is_yellow.select(yellow_r, result_r);
+        result_g = is_yellow.select(yellow_g, result_g);
+        result_b = is_yellow.select(yellow_b, result_b);
+        
+        result_r = is_blue.select(blue_r, result_r);
+        result_g = is_blue.select(blue_g, result_g);
+        result_b = is_blue.select(blue_b, result_b);
+        
+        result_r = is_white.select(white_r, result_r);
+        result_g = is_white.select(white_g, result_g);
+        result_b = is_white.select(white_b, result_b);
+        
+        // Store directly into SoA arrays (zero-copy!)
+        result_r.copy_to_slice(&mut colors_r[base_idx..base_idx + SIMD_BATCH_SIZE]);
+        result_g.copy_to_slice(&mut colors_g[base_idx..base_idx + SIMD_BATCH_SIZE]);
+        result_b.copy_to_slice(&mut colors_b[base_idx..base_idx + SIMD_BATCH_SIZE]);
+    }
+    
+    // Handle remaining stars (count % 8) using scalar fallback
+    let remaining = count % SIMD_BATCH_SIZE;
+    if remaining > 0 {
+        let base_idx = chunks * SIMD_BATCH_SIZE;
+        for i in 0..remaining {
+            let global_index = (base_idx + i) as i32;
+            let color_choice = seed_random(global_index + 3000);
+            
+            let (r, g, b) = if color_choice < 0.5 {
+                (1.0, 1.0, 1.0) // White
+            } else if color_choice < 0.7 {
+                (0.6, 0.8, 1.0) // Blue
+            } else if color_choice < 0.85 {
+                (1.0, 0.8, 0.4) // Yellow
+            } else {
+                (0.8, 0.6, 1.0) // Purple
+            };
+            
+            colors_r[base_idx + i] = r;
+            colors_g[base_idx + i] = g;
+            colors_b[base_idx + i] = b;
+        }
+    }
+}
+
+// SIMD size generation - generates directly into SoA arrays for maximum performance
+fn generate_star_sizes_simd_direct(
+    sizes: &mut [f32],
+    count: usize,
+    size_multiplier: f32,
+) {
+    use std::simd::{f32x8, mask32x8};
+    
+    // Size calculation constants
+    let threshold_70 = f32x8::splat(0.7);
+    let small_base = f32x8::splat(1.0);
+    let small_range = f32x8::splat(1.5);
+    let large_base = f32x8::splat(2.5);
+    let large_range = f32x8::splat(2.0);
+    let multiplier = f32x8::splat(size_multiplier);
+    
+    // Process in batches of 8 stars
+    let chunks = count / SIMD_BATCH_SIZE;
+    
+    for chunk in 0..chunks {
+        let base_idx = chunk * SIMD_BATCH_SIZE;
+        let start_index = base_idx as i32;
+        
+        // Generate 8 size choice values
+        let size_random = seed_random_simd_batch(start_index + 4000);
+        
+        // Generate additional random values for size calculation
+        let small_random = seed_random_simd_batch(start_index + 5000);
+        let large_random = seed_random_simd_batch(start_index + 6000);
+        
+        // Calculate small star sizes: 1.0 + random * 1.5
+        let small_sizes = small_base + small_random * small_range;
+        
+        // Calculate large star sizes: 2.5 + random * 2.0  
+        let large_sizes = large_base + large_random * large_range;
+        
+        // Create mask for small vs large stars
+        let is_small = size_random.simd_lt(threshold_70);
+        
+        // Select between small and large sizes
+        let base_sizes = is_small.select(small_sizes, large_sizes);
+        
+        // Apply size multiplier
+        let final_sizes = base_sizes * multiplier;
+        
+        // Store directly into SoA array (zero-copy!)
+        final_sizes.copy_to_slice(&mut sizes[base_idx..base_idx + SIMD_BATCH_SIZE]);
+    }
+    
+    // Handle remaining stars (count % 8) using scalar fallback
+    let remaining = count % SIMD_BATCH_SIZE;
+    if remaining > 0 {
+        let base_idx = chunks * SIMD_BATCH_SIZE;
+        for i in 0..remaining {
+            let global_index = (base_idx + i) as i32;
+            let size_random = seed_random(global_index + 4000);
+            let base_size = if size_random < 0.7 {
+                1.0 + seed_random(global_index + 5000) * 1.5
+            } else {
+                2.5 + seed_random(global_index + 6000) * 2.0
+            };
+            sizes[base_idx + i] = base_size * size_multiplier;
+        }
+    }
+}
+
 // SIMD star generation - generates directly into SoA arrays for maximum performance
 fn generate_star_positions_simd_direct(
     positions_x: &mut [f32],
@@ -351,20 +513,20 @@ pub fn initialize_star_memory_pool(count: usize) -> StarMemoryPointers {
         150.0, // max_radius
     );
     
-    // TODO: Add SIMD color generation (next step)
-    // For now, generate colors using existing function but store directly
-    let colors = generate_star_colors(count, 0);
-    for i in 0..count {
-        let i3 = i * 3;
-        pool.colors_r[i] = colors[i3];
-        pool.colors_g[i] = colors[i3 + 1];
-        pool.colors_b[i] = colors[i3 + 2];
-    }
+    // Generate colors directly into SoA arrays using SIMD (8x faster!)
+    generate_star_colors_simd_direct(
+        &mut pool.colors_r,
+        &mut pool.colors_g,
+        &mut pool.colors_b,
+        count,
+    );
     
-    // TODO: Add SIMD size generation (next step)
-    // For now, generate sizes using existing function
-    let sizes = generate_star_sizes(count, 0, 1.0);
-    pool.sizes[..count].copy_from_slice(&sizes);
+    // Generate sizes directly into SoA array using SIMD (8x faster!)
+    generate_star_sizes_simd_direct(
+        &mut pool.sizes,
+        count,
+        1.0, // size_multiplier
+    );
 
     // Initialize twinkles with random values
     for i in 0..count {
