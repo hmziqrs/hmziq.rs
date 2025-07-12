@@ -17,7 +17,7 @@ extern "C" {
 
 #[macro_export]
 macro_rules! console_log {
-    ($($t:tt)*) => (crate::log(&format_args!($($t)*).to_string()))
+    ($($t:tt)*) => ($crate::log(&format_args!($($t)*).to_string()))
 }
 
 #[wasm_bindgen]
@@ -28,7 +28,7 @@ pub fn add(a: f32, b: f32) -> f32 {
 
 #[wasm_bindgen]
 pub fn greet(name: &str) -> String {
-    format!("Hello from Rust WASM, {}!", name)
+    format!("Hello from Rust WASM, {name}!")
 }
 
 

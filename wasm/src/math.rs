@@ -8,7 +8,7 @@ const SIN_TABLE_SIZE: usize = 1024;
 
 // Thread-local sin lookup table for safe access
 thread_local! {
-    static SIN_TABLE: RefCell<Option<Vec<f32>>> = RefCell::new(None);
+    static SIN_TABLE: RefCell<Option<Vec<f32>>> = const { RefCell::new(None) };
 }
 
 // Initialize the sin lookup table (now returns nothing, initialization is internal)
@@ -135,7 +135,7 @@ pub fn distance_3d(x1: f32, y1: f32, z1: f32, x2: f32, y2: f32, z2: f32) -> f32 
 // Seed function for consistent random values (matching StarField.tsx lines 242-245)
 #[wasm_bindgen]
 pub fn seed_random(i: i32) -> f32 {
-    let x = (i as f32 * 12.9898 + 78.233).sin() * 43758.5453;
+    let x = (i as f32 * 12.9898 + 78.233).sin() * 43_758.547;
     x - x.floor()
 }
 
@@ -144,7 +144,7 @@ pub fn seed_random(i: i32) -> f32 {
 pub fn seed_random_batch(start: i32, count: usize) -> Vec<f32> {
     (start..start + count as i32)
         .map(|i| {
-            let x = (i as f32 * 12.9898 + 78.233).sin() * 43758.5453;
+            let x = (i as f32 * 12.9898 + 78.233).sin() * 43_758.547;
             x - x.floor()
         })
         .collect()
@@ -197,7 +197,7 @@ pub fn seed_random_simd_batch_16(start: i32) -> f32x16 {
 
     let factor1 = f32x16::splat(12.9898);
     let factor2 = f32x16::splat(78.233);
-    let factor3 = f32x16::splat(43758.5453);
+    let factor3 = f32x16::splat(43_758.547);
 
     // Use fast sin lookup for SIMD processing
     let x_values = indices * factor1 + factor2;

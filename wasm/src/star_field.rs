@@ -24,7 +24,7 @@ const BITPACK_BATCH_SIZE: usize = 8;
 // SAFETY: thread_local is safe in WASM's single-threaded environment
 // RefCell provides interior mutability for the pool
 thread_local! {
-    static STAR_MEMORY_POOL: RefCell<Option<StarMemoryPool>> = RefCell::new(None);
+    static STAR_MEMORY_POOL: RefCell<Option<StarMemoryPool>> = const { RefCell::new(None) };
 }
 
 #[repr(C)]
@@ -50,7 +50,7 @@ pub struct StarMemoryPool {
 impl StarMemoryPool {
     fn new(count: usize) -> Self {
         // Ensure count is aligned to SIMD batch size for optimal performance
-        let aligned_count = (count + SIMD_BATCH_SIZE - 1) / SIMD_BATCH_SIZE * SIMD_BATCH_SIZE;
+        let aligned_count = count.div_ceil(SIMD_BATCH_SIZE) * SIMD_BATCH_SIZE;
 
         Self {
             // Initialize pure SoA arrays for optimal SIMD computation
@@ -63,7 +63,7 @@ impl StarMemoryPool {
             sizes: Self::create_aligned_vec(aligned_count, 1.0),
             twinkles: Self::create_aligned_vec(aligned_count, 1.0),
             sparkles: Self::create_aligned_vec(aligned_count, 0.0),
-            visibility_mask: vec![u64::MAX; (aligned_count + 63) / 64], // Bitpacked: all visible initially
+            visibility_mask: vec![u64::MAX; aligned_count.div_ceil(64)], // Bitpacked: all visible initially
             count, // Keep original count for indexing
         }
     }
@@ -585,10 +585,8 @@ fn calculate_effects_into_buffers_simd(
         let twinkle_array: [f32; SIMD_BATCH_SIZE] = final_twinkle.to_array();
         let sparkle_array: [f32; SIMD_BATCH_SIZE] = sparkle_values.to_array();
 
-        for i in 0..SIMD_BATCH_SIZE {
-            twinkles[base_idx + i] = twinkle_array[i];
-            sparkles[base_idx + i] = sparkle_array[i];
-        }
+        twinkles[base_idx..(SIMD_BATCH_SIZE + base_idx)].copy_from_slice(&twinkle_array[..SIMD_BATCH_SIZE]);
+        sparkles[base_idx..(SIMD_BATCH_SIZE + base_idx)].copy_from_slice(&sparkle_array[..SIMD_BATCH_SIZE]);
 
         // Process second chunk (16 more stars) - unrolled for better ILP
         let chunk2 = chunk + 1;
@@ -619,10 +617,8 @@ fn calculate_effects_into_buffers_simd(
         let twinkle_array2: [f32; SIMD_BATCH_SIZE] = final_twinkle2.to_array();
         let sparkle_array2: [f32; SIMD_BATCH_SIZE] = sparkle_values2.to_array();
 
-        for i in 0..SIMD_BATCH_SIZE {
-            twinkles[base_idx2 + i] = twinkle_array2[i];
-            sparkles[base_idx2 + i] = sparkle_array2[i];
-        }
+        twinkles[base_idx2..(SIMD_BATCH_SIZE + base_idx2)].copy_from_slice(&twinkle_array2[..SIMD_BATCH_SIZE]);
+        sparkles[base_idx2..(SIMD_BATCH_SIZE + base_idx2)].copy_from_slice(&sparkle_array2[..SIMD_BATCH_SIZE]);
     }
 
     // Process remaining chunks that couldn't be unrolled
@@ -672,10 +668,8 @@ fn calculate_effects_into_buffers_simd(
         let twinkle_array: [f32; SIMD_BATCH_SIZE] = final_twinkle.to_array();
         let sparkle_array: [f32; SIMD_BATCH_SIZE] = sparkle_values.to_array();
 
-        for i in 0..SIMD_BATCH_SIZE {
-            twinkles[base_idx + i] = twinkle_array[i];
-            sparkles[base_idx + i] = sparkle_array[i];
-        }
+        twinkles[base_idx..(SIMD_BATCH_SIZE + base_idx)].copy_from_slice(&twinkle_array[..SIMD_BATCH_SIZE]);
+        sparkles[base_idx..(SIMD_BATCH_SIZE + base_idx)].copy_from_slice(&sparkle_array[..SIMD_BATCH_SIZE]);
     }
 
     // Process remaining elements scalar-style (small count, direct processing)
@@ -760,18 +754,6 @@ fn set_visibility_bit(visibility_mask: &mut [u64], star_index: usize, visible: b
     }
 }
 
-/// Get visibility bit for a single star (star_index in 0..count)
-#[inline]
-fn get_visibility_bit(visibility_mask: &[u64], star_index: usize) -> bool {
-    let word_index = star_index / 64;
-    let bit_index = star_index % 64;
-
-    if word_index < visibility_mask.len() {
-        (visibility_mask[word_index] >> bit_index) & 1 != 0
-    } else {
-        false
-    }
-}
 
 /// SIMD bulk visibility operations - set 8 consecutive visibility bits
 /// Uses bit manipulation for 8x more efficient operations than byte arrays
@@ -785,27 +767,6 @@ fn set_visibility_bits_simd(visibility_mask: &mut [u64], start_index: usize, vis
     }
 }
 
-/// Count visible stars using SIMD population count (POPCNT)
-/// Much faster than iterating through individual bits
-fn count_visible_stars_simd(visibility_mask: &[u64], total_count: usize) -> usize {
-    let mut visible_count = 0;
-
-    // Process complete u64 words using POPCNT
-    let complete_words = total_count / 64;
-    for i in 0..complete_words {
-        visible_count += visibility_mask[i].count_ones() as usize;
-    }
-
-    // Handle remaining bits in the last partial word
-    let remaining_bits = total_count % 64;
-    if remaining_bits > 0 && complete_words < visibility_mask.len() {
-        let mask = (1u64 << remaining_bits) - 1; // Create mask for valid bits
-        let masked_word = visibility_mask[complete_words] & mask;
-        visible_count += masked_word.count_ones() as usize;
-    }
-
-    visible_count
-}
 
 /// SIMD bitpacked frustum culling - 8x memory reduction
 /// Processes 8 stars at once and sets visibility bits directly
@@ -818,10 +779,10 @@ pub fn cull_stars_by_frustum_bitpacked(
 ) -> Vec<u64> {
     if camera_matrix.len() != 16 {
         // Return all visible for invalid matrix
-        return vec![u64::MAX; (count + 63) / 64];
+        return vec![u64::MAX; count.div_ceil(64)];
     }
 
-    let mut visibility_mask = vec![0u64; (count + 63) / 64];
+    let mut visibility_mask = vec![0u64; count.div_ceil(64)];
 
     // Extract and normalize frustum planes (same as SIMD version)
     let m = camera_matrix;
@@ -889,14 +850,14 @@ pub fn cull_stars_by_frustum_bitpacked(
             let plane_inside = distances.simd_ge(neg_margin);
 
             // AND with existing mask (star must be inside ALL planes)
-            inside_mask = inside_mask & plane_inside;
+            inside_mask &= plane_inside;
         }
 
         // Convert SIMD mask to u8 for bitpacked storage
         let inside_arr: [bool; 8] = inside_mask.to_array();
         let mut visibility_bits = 0u8;
-        for i in 0..8 {
-            if inside_arr[i] {
+        for (i, &is_inside) in inside_arr.iter().enumerate() {
+            if is_inside {
                 visibility_bits |= 1u8 << i;
             }
         }
@@ -928,11 +889,6 @@ pub fn cull_stars_by_frustum_bitpacked(
     visibility_mask
 }
 
-// Helper function to convert degrees to radians
-#[inline]
-fn deg_to_rad(degrees: f32) -> f32 {
-    degrees * PI / 180.0
-}
 
 // Extract frustum planes from view-projection matrix
 fn extract_frustum_planes(vp_matrix: &[f32]) -> [[f32; 4]; 6] {
@@ -1234,7 +1190,7 @@ pub fn cull_stars_by_frustum_simd(
             let outside_mask = distance.simd_lt(neg_margin);
 
             // Update inside status
-            inside_vec = inside_vec * outside_mask.select(f32x16::splat(0.0), f32x16::splat(1.0));
+            inside_vec *= outside_mask.select(f32x16::splat(0.0), f32x16::splat(1.0));
         }
 
         // Store results (upgraded to 16 values)
@@ -1456,7 +1412,7 @@ pub struct FrameUpdateResult {
 #[wasm_bindgen]
 pub fn update_frame_simd(
     time: f32,
-    delta_time: f32,
+    _delta_time: f32,
     camera_matrix_ptr: *const f32,
     is_moving: bool,
     click_time: f32,
@@ -1468,7 +1424,7 @@ pub fn update_frame_simd(
             let count = pool.count;
 
             // 1. Update speed multiplier
-            let speed_multiplier = calculate_speed_multiplier(
+            let _speed_multiplier = calculate_speed_multiplier(
                 is_moving,
                 click_time as f64,
                 time as f64,
