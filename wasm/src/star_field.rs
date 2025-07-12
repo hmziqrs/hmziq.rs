@@ -10,10 +10,13 @@ use crate::math::{fast_sin_lookup, fast_sin_lookup_simd_16, seed_random, seed_ra
 // SIMD imports - now mandatory, upgraded to f32x16 for AVX-512
 use std::simd::cmp::SimdPartialOrd;
 use std::simd::num::SimdFloat;
-use std::simd::{f32x4, f32x8, f32x16, mask32x8};
+use std::simd::{f32x8, f32x16, mask32x8, mask32x16};
 
 // SIMD batch size constants - upgraded to 16 for AVX-512
 const SIMD_BATCH_SIZE: usize = 16;
+
+// Bitpacked SIMD batch size - optimized for 8 stars per u8 byte
+const BITPACK_BATCH_SIZE: usize = 8;
 
 // Persistent memory pool for zero-copy architecture
 // SAFETY: thread_local is safe in WASM's single-threaded environment
@@ -135,18 +138,6 @@ pub struct StarMemoryPointers {
     pub visibility_length: usize,
 }
 
-// SIMD sin lookup helper function (legacy f32x8 version)
-fn simd_sin_lookup_batch(values: f32x8) -> f32x8 {
-    // Extract individual values and perform lookups using fast_sin_lookup
-    let values_arr: [f32; 8] = values.to_array();
-    let mut results = [0.0f32; 8];
-
-    for (i, &val) in values_arr.iter().enumerate() {
-        results[i] = fast_sin_lookup(val);
-    }
-
-    f32x8::from_array(results)
-}
 
 // SIMD sin lookup helper function (optimized f32x16 version for AVX-512)
 fn simd_sin_lookup_batch_16(values: f32x16) -> f32x16 {
@@ -860,11 +851,11 @@ pub fn cull_stars_by_frustum_bitpacked(
     }
     
     // SIMD processing with f32x8 - optimal for our SoA layout
-    let chunks = count / SIMD_BATCH_SIZE;
+    let chunks = count / BITPACK_BATCH_SIZE;
     let neg_margin = f32x8::splat(-margin);
     
     for chunk in 0..chunks {
-        let base_idx = chunk * SIMD_BATCH_SIZE;
+        let base_idx = chunk * BITPACK_BATCH_SIZE;
         
         // Load 8 star positions (taking advantage of SoA layout in calling code)
         let mut x_arr = [0.0f32; 8];
@@ -915,7 +906,7 @@ pub fn cull_stars_by_frustum_bitpacked(
     }
     
     // Handle remaining stars (count % 8) using scalar fallback
-    let remaining_start = chunks * SIMD_BATCH_SIZE;
+    let remaining_start = chunks * BITPACK_BATCH_SIZE;
     for i in remaining_start..count {
         let i3 = i * 3;
         let x = positions[i3];

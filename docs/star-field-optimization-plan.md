@@ -312,14 +312,14 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 6.6: Upgrade Core Effects Functions to f32x16
-**Status:** 🔴 NOT_STARTED
+**Status:** 🟢 COMPLETED
 **Goal:** Complete f32x16 migration for main effect calculations
 
 ### Tasks:
-- [ ] Upgrade `process_star_effects_simd()` from f32x8 to f32x16
-- [ ] Update loop to process 16 stars per iteration
-- [ ] Replace all f32x8 types with f32x16
-- [ ] Update `simd_sin_lookup_batch` calls to `simd_sin_lookup_batch_16`
+- [x] Upgrade `process_star_effects_simd()` from f32x8 to f32x16
+- [x] Update loop to process 16 stars per iteration
+- [x] Replace all f32x8 types with f32x16
+- [x] Update `simd_sin_lookup_batch` calls to `simd_sin_lookup_batch_16`
 
 ---
 
@@ -346,13 +346,14 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 6.9: Remove Legacy SIMD Helpers
-**Status:** 🔴 NOT_STARTED
+**Status:** 🟢 COMPLETED
 **Goal:** Clean up f32x8 helper functions
 
 ### Tasks:
-- [ ] Delete `simd_sin_lookup_batch()` (f32x8 version)
-- [ ] Ensure all code uses `simd_sin_lookup_batch_16()` (f32x16 version)
-- [ ] Update any remaining references
+- [x] Delete `simd_sin_lookup_batch()` (f32x8 version)
+- [x] Ensure all code uses `simd_sin_lookup_batch_16()` (f32x16 version)
+- [x] Update any remaining references
+- [x] Fix BITPACK_BATCH_SIZE inconsistency in cull_stars_by_frustum_bitpacked()
 
 ---
 
