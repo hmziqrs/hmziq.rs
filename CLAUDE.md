@@ -22,7 +22,8 @@ Bun, Next.js 15+ (App Router), shadcn/ui, Tailwind CSS v4, Three.js + React Thre
 - Colors: Black bg (#000000), white text (#FFFFFF), gray accents, blue/purple star glow only
 - Content: hero, skills, contacts sections. Ensure accessibility without JS.
 - WASM: `bun run build:wasm` for Rust compilation, use for particle calculations
-- Never read, analyze, or ever touch the `legacy/` directory unless explicitly specified
+- Never read, analyze, or ever touch the `legacy/` directory unless explicitly specified; you don’t need to update or maintain import references in legacy files—even when moving orphaned or closely-related code
+- Utilize sub-agents for multi-file operations when reading, updating, or performing actions across multiple files
 
 ## Common Patterns
 
