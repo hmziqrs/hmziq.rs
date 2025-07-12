@@ -15,14 +15,14 @@ let totalSectors = 0
 const LOD_LEVELS = {
   NEAR: { distance: 30, quality: 'full' },
   MEDIUM: { distance: 70, quality: 'medium' },
-  FAR: { distance: Infinity, quality: 'simple' }
+  FAR: { distance: Infinity, quality: 'simple' },
 }
 
 // Spatial subdivision configuration
 const SECTORS_PER_LOD = {
-  NEAR: 8,    // 8 sectors for near stars (more granular culling)
-  MEDIUM: 6,  // 6 sectors for medium stars
-  FAR: 4      // 4 sectors for far stars (less granular, they're small anyway)
+  NEAR: 8, // 8 sectors for near stars (more granular culling)
+  MEDIUM: 6, // 6 sectors for medium stars
+  FAR: 4, // 4 sectors for far stars (less granular, they're small anyway)
 }
 
 // Pre-calculated sin lookup table for performance
@@ -276,14 +276,10 @@ function Stars() {
         // Calculate sector boundaries (spherical segments)
         const phiStart = (sectorIdx / sectorCount) * Math.PI * 2
         const phiEnd = ((sectorIdx + 1) / sectorCount) * Math.PI * 2
-        
+
         // Center direction of this sector (for culling reference)
         const phiCenter = (phiStart + phiEnd) / 2
-        const centerVector = new THREE.Vector3(
-          Math.cos(phiCenter),
-          0,
-          Math.sin(phiCenter)
-        )
+        const centerVector = new THREE.Vector3(Math.cos(phiCenter), 0, Math.sin(phiCenter))
 
         // Allocate arrays for this sector
         const sectorStarCount = Math.min(starsPerSector, totalCount - sectorIdx * starsPerSector)
@@ -329,7 +325,10 @@ function Stars() {
 
           // Sizes
           const sizeRandom = seed(globalIndex + 4000)
-          const baseSize = sizeRandom < 0.7 ? 1 + seed(globalIndex + 5000) * 1.5 : 2.5 + seed(globalIndex + 6000) * 2
+          const baseSize =
+            sizeRandom < 0.7
+              ? 1 + seed(globalIndex + 5000) * 1.5
+              : 2.5 + seed(globalIndex + 6000) * 2
           sizes[i] = lodLevel === 'simple' ? baseSize * 0.8 : baseSize
 
           // Initial twinkle and sparkle values
@@ -384,21 +383,35 @@ function Stars() {
           material,
           mesh: sectorMeshRefs.current[refKey],
           centerVector,
-          sectorIndex: sectorIdx
+          sectorIndex: sectorIdx,
         })
       }
 
       return {
         sectors,
         lodLevel,
-        updateRate: lodLevel === 'full' ? 1 : lodLevel === 'medium' ? 2 : 0
+        updateRate: lodLevel === 'full' ? 1 : lodLevel === 'medium' ? 2 : 0,
       }
     }
 
     // Create LOD groups with spatial sectors
     const near = createStarLODGroup(nearCount, 0, 20, 30, 'full', SECTORS_PER_LOD.NEAR)
-    const medium = createStarLODGroup(mediumCount, nearCount, 30, 70, 'medium', SECTORS_PER_LOD.MEDIUM)
-    const far = createStarLODGroup(farCount, nearCount + mediumCount, 70, 150, 'simple', SECTORS_PER_LOD.FAR)
+    const medium = createStarLODGroup(
+      mediumCount,
+      nearCount,
+      30,
+      70,
+      'medium',
+      SECTORS_PER_LOD.MEDIUM
+    )
+    const far = createStarLODGroup(
+      farCount,
+      nearCount + mediumCount,
+      70,
+      150,
+      'simple',
+      SECTORS_PER_LOD.FAR
+    )
 
     // Count total sectors for stats
     totalSectors = near.sectors.length + medium.sectors.length + far.sectors.length
@@ -419,7 +432,7 @@ function Stars() {
 
       // Use fast sin approximation
       const twinkleBase = fastSin(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7
-      
+
       // Sparkle effect - simplified
       if (sparkles) {
         const sparklePhase = fastSin(time * 15.0 + x * 20.0 + y * 30.0)
@@ -436,7 +449,7 @@ function Stars() {
       const geometry = sector.mesh.current.geometry
       const twinkleAttr = geometry.getAttribute('twinkle') as THREE.BufferAttribute
       const sparkleAttr = geometry.getAttribute('sparkle') as THREE.BufferAttribute
-      
+
       if (twinkleAttr) twinkleAttr.needsUpdate = true
       if (sparkleAttr) sparkleAttr.needsUpdate = true
     }
@@ -453,7 +466,7 @@ function Stars() {
 
       // Count visible sectors
       culledSectors = 0
-      Object.values(sectorMeshRefs.current).forEach(meshRef => {
+      Object.values(sectorMeshRefs.current).forEach((meshRef) => {
         if (meshRef.current && !meshRef.current.visible) {
           culledSectors++
         }
@@ -462,7 +475,8 @@ function Stars() {
 
     // Calculate delta time
     const currentFrameTime = state.clock.elapsedTime
-    const deltaTime = lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
+    const deltaTime =
+      lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
     lastFrameTimeRef.current = currentFrameTime
 
     // Calculate speed multiplier
@@ -490,7 +504,7 @@ function Stars() {
     rotationYRef.current += baseRotationSpeedY * speedMultiplierRef.current * deltaTime
 
     // Apply rotation to all sector meshes
-    Object.values(sectorMeshRefs.current).forEach(meshRef => {
+    Object.values(sectorMeshRefs.current).forEach((meshRef) => {
       if (meshRef.current) {
         meshRef.current.rotation.x = rotationXRef.current
         meshRef.current.rotation.y = rotationYRef.current
@@ -499,25 +513,31 @@ function Stars() {
 
     // Update star effects based on LOD and update rate
     const time = state.clock.elapsedTime
-    
+
     // Update near stars every frame
-    if (starLODGroups.near.updateRate > 0 && frameCounterRef.current % starLODGroups.near.updateRate === 0) {
-      starLODGroups.near.sectors.forEach(sector => updateSectorEffects(sector, time))
+    if (
+      starLODGroups.near.updateRate > 0 &&
+      frameCounterRef.current % starLODGroups.near.updateRate === 0
+    ) {
+      starLODGroups.near.sectors.forEach((sector) => updateSectorEffects(sector, time))
     }
-    
+
     // Update medium stars every 2 frames
-    if (starLODGroups.medium.updateRate > 0 && frameCounterRef.current % starLODGroups.medium.updateRate === 0) {
-      starLODGroups.medium.sectors.forEach(sector => updateSectorEffects(sector, time))
+    if (
+      starLODGroups.medium.updateRate > 0 &&
+      frameCounterRef.current % starLODGroups.medium.updateRate === 0
+    ) {
+      starLODGroups.medium.sectors.forEach((sector) => updateSectorEffects(sector, time))
     }
-    
+
     // Far stars don't update (updateRate = 0)
   })
 
   // Render all star sectors
   const renderStarSector = (sector: StarSector, lodLevel: string) => (
-    <points 
-      key={`${lodLevel}_${sector.sectorIndex}`} 
-      ref={sector.mesh} 
+    <points
+      key={`${lodLevel}_${sector.sectorIndex}`}
+      ref={sector.mesh}
       material={sector.material}
       frustumCulled={true} // Explicitly enable frustum culling
     >
@@ -525,8 +545,12 @@ function Stars() {
         <bufferAttribute attach="attributes-position" args={[sector.positions, 3]} />
         <bufferAttribute attach="attributes-customColor" args={[sector.colors, 3]} />
         <bufferAttribute attach="attributes-size" args={[sector.sizes, 1]} />
-        {sector.twinkles && <bufferAttribute attach="attributes-twinkle" args={[sector.twinkles, 1]} />}
-        {sector.sparkles && <bufferAttribute attach="attributes-sparkle" args={[sector.sparkles, 1]} />}
+        {sector.twinkles && (
+          <bufferAttribute attach="attributes-twinkle" args={[sector.twinkles, 1]} />
+        )}
+        {sector.sparkles && (
+          <bufferAttribute attach="attributes-sparkle" args={[sector.sparkles, 1]} />
+        )}
       </bufferGeometry>
     </points>
   )
@@ -534,9 +558,9 @@ function Stars() {
   return (
     <>
       {/* Render all sectors from all LOD groups */}
-      {starLODGroups.far.sectors.map(sector => renderStarSector(sector, 'far'))}
-      {starLODGroups.medium.sectors.map(sector => renderStarSector(sector, 'medium'))}
-      {starLODGroups.near.sectors.map(sector => renderStarSector(sector, 'near'))}
+      {starLODGroups.far.sectors.map((sector) => renderStarSector(sector, 'far'))}
+      {starLODGroups.medium.sectors.map((sector) => renderStarSector(sector, 'medium'))}
+      {starLODGroups.near.sectors.map((sector) => renderStarSector(sector, 'near'))}
     </>
   )
 }
@@ -547,7 +571,7 @@ export default function OptimizedStarFieldWithCulling() {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'p' && e.ctrlKey) {
-        setShowStats(prev => !prev)
+        setShowStats((prev) => !prev)
       }
     }
     window.addEventListener('keypress', handleKeyPress)
@@ -565,11 +589,16 @@ export default function OptimizedStarFieldWithCulling() {
         <pointLight position={[10, 10, 10]} intensity={0.5} />
         <Stars />
       </Canvas>
-      
+
       {showStats && (
-        <div className="fixed top-4 right-4 bg-black/80 text-white p-4 rounded font-mono text-sm" style={{ zIndex: 100 }}>
+        <div
+          className="fixed top-4 right-4 bg-black/80 text-white p-4 rounded font-mono text-sm"
+          style={{ zIndex: 100 }}
+        >
           <div>FPS: {fps.toFixed(1)}</div>
-          <div>Culled: {culledSectors}/{totalSectors} sectors</div>
+          <div>
+            Culled: {culledSectors}/{totalSectors} sectors
+          </div>
           <div className="text-xs mt-2 text-gray-400">Press Ctrl+P to toggle</div>
         </div>
       )}

@@ -15,14 +15,11 @@ const StarField3D = dynamic(() => import('@/components/three/StarField'), {
   ),
 })
 
-
-
 export default function Home() {
   return (
     <main className="relative min-h-screen">
       {/* 2D Background star field */}
       <StarField3D />
-
 
       {/* Content sections */}
       <div className="relative" style={{ zIndex: 10 }}>
@@ -31,7 +28,6 @@ export default function Home() {
         <Skills />
         <Contact />
       </div>
-
     </main>
   )
 }

@@ -25,7 +25,7 @@ export default function LightNebula2D() {
 
       // Orbital properties
       orbitCenterX: number // Individual orbital center
-      orbitCenterY: number // Individual orbital center  
+      orbitCenterY: number // Individual orbital center
       orbitRadius: number
       orbitAngle: number
       orbitSpeed: number // Base orbital speed
@@ -81,26 +81,26 @@ export default function LightNebula2D() {
             x: centerX - baseSize * 0.08, // Slightly left
             y: centerY - baseSize * 0.05, // Slightly up
             baseRadius: baseSize * 0.18,
-            radiusVariation: baseSize * 0.12
+            radiusVariation: baseSize * 0.12,
           },
           {
             x: centerX + baseSize * 0.06, // Slightly right
             y: centerY - baseSize * 0.03, // Slightly up
             baseRadius: baseSize * 0.22,
-            radiusVariation: baseSize * 0.15
+            radiusVariation: baseSize * 0.15,
           },
           {
             x: centerX - baseSize * 0.03, // Slightly left
             y: centerY + baseSize * 0.07, // Slightly down
             baseRadius: baseSize * 0.15,
-            radiusVariation: baseSize * 0.10
+            radiusVariation: baseSize * 0.1,
           },
           {
             x: centerX + baseSize * 0.09, // More right
             y: centerY + baseSize * 0.04, // Slightly down
             baseRadius: baseSize * 0.25,
-            radiusVariation: baseSize * 0.18
-          }
+            radiusVariation: baseSize * 0.18,
+          },
         ]
 
         // Color variations for each cloud type
@@ -153,10 +153,10 @@ export default function LightNebula2D() {
           // Assign cloud to orbital center (distribute evenly)
           const orbitIndex = index % orbitalCentersRef.current.length
           const orbitCenter = orbitalCentersRef.current[orbitIndex]
-          
+
           // Orbital properties based on size and assigned center
           const sizeInfluence = radius / (baseSize * 0.4) // Normalize to size factor
-          const orbitRadius = orbitCenter.baseRadius + (Math.random() * orbitCenter.radiusVariation)
+          const orbitRadius = orbitCenter.baseRadius + Math.random() * orbitCenter.radiusVariation
           const orbitAngle = Math.random() * Math.PI * 2
           const orbitSpeed = (0.5 + Math.random() * 0.3) / Math.sqrt(sizeInfluence) // Clearly visible orbital motion
 
@@ -197,26 +197,26 @@ export default function LightNebula2D() {
             x: centerX - baseSize * 0.08, // Slightly left
             y: centerY - baseSize * 0.05, // Slightly up
             baseRadius: baseSize * 0.18,
-            radiusVariation: baseSize * 0.12
+            radiusVariation: baseSize * 0.12,
           },
           {
             x: centerX + baseSize * 0.06, // Slightly right
             y: centerY - baseSize * 0.03, // Slightly up
             baseRadius: baseSize * 0.22,
-            radiusVariation: baseSize * 0.15
+            radiusVariation: baseSize * 0.15,
           },
           {
             x: centerX - baseSize * 0.03, // Slightly left
             y: centerY + baseSize * 0.07, // Slightly down
             baseRadius: baseSize * 0.15,
-            radiusVariation: baseSize * 0.10
+            radiusVariation: baseSize * 0.1,
           },
           {
             x: centerX + baseSize * 0.09, // More right
             y: centerY + baseSize * 0.04, // Slightly down
             baseRadius: baseSize * 0.25,
-            radiusVariation: baseSize * 0.18
-          }
+            radiusVariation: baseSize * 0.18,
+          },
         ]
 
         cloudsRef.current.forEach((cloud) => {
@@ -227,7 +227,7 @@ export default function LightNebula2D() {
 
           // Recalculate orbital radius based on the new center
           const sizeInfluence = cloud.radius / (baseSize * 0.4)
-          cloud.orbitRadius = orbitCenter.baseRadius + (Math.random() * orbitCenter.radiusVariation)
+          cloud.orbitRadius = orbitCenter.baseRadius + Math.random() * orbitCenter.radiusVariation
 
           // Update position based on current angle and new orbital center
           cloud.x = cloud.orbitCenterX + Math.cos(cloud.orbitAngle) * cloud.orbitRadius

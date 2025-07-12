@@ -11,20 +11,20 @@ interface SkillCategory {
 
 const skillCategories: SkillCategory[] = [
   {
-    title: "Frontend",
-    description: "Crafting intuitive user experiences",
-    skills: ["TypeScript", "React.js", "Next.js", "React Native"]
+    title: 'Frontend',
+    description: 'Crafting intuitive user experiences',
+    skills: ['TypeScript', 'React.js', 'Next.js', 'React Native'],
   },
   {
-    title: "Backend", 
-    description: "Building robust server architectures",
-    skills: ["AdonisJS", "Express.js", "Rust (Axum)", "Node.js"]
+    title: 'Backend',
+    description: 'Building robust server architectures',
+    skills: ['AdonisJS', 'Express.js', 'Rust (Axum)', 'Node.js'],
   },
   {
-    title: "Cross-Platform",
-    description: "Delivering seamless multi-platform solutions", 
-    skills: ["Flutter", "Dioxus", "Electron", "Tauri"]
-  }
+    title: 'Cross-Platform',
+    description: 'Delivering seamless multi-platform solutions',
+    skills: ['Flutter', 'Dioxus', 'Electron', 'Tauri'],
+  },
 ]
 
 const Skills: React.FC = () => {
@@ -48,7 +48,7 @@ const Skills: React.FC = () => {
       opacity: 1,
       transition: {
         duration: prefersReducedMotion ? 0 : 0.6,
-        ease: "easeOut",
+        ease: 'easeOut',
       },
     },
   }
@@ -60,19 +60,22 @@ const Skills: React.FC = () => {
       opacity: 1,
       transition: {
         duration: prefersReducedMotion ? 0 : 0.4,
-        ease: "easeOut",
+        ease: 'easeOut',
       },
     },
   }
 
   return (
-    <section id="skills" className="relative min-h-screen flex items-center justify-center px-6 py-20">
+    <section
+      id="skills"
+      className="relative min-h-screen flex items-center justify-center px-6 py-20"
+    >
       <motion.div
         className="max-w-6xl mx-auto"
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
+        viewport={{ once: true, margin: '-100px' }}
       >
         <motion.h2
           className="text-4xl md:text-6xl font-bold text-center mb-16 text-gradient"
@@ -83,20 +86,12 @@ const Skills: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {skillCategories.map((category) => (
-            <motion.div
-              key={category.title}
-              className="relative group"
-              variants={cardVariants}
-            >
+            <motion.div key={category.title} className="relative group" variants={cardVariants}>
               <div className="bg-dark-200 border border-gray-800 rounded-lg p-8 h-full transition-all duration-300 hover:border-gray-600 hover:bg-dark-100">
                 {/* Category Header */}
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-white mb-2">
-                    {category.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm">
-                    {category.description}
-                  </p>
+                  <h3 className="text-2xl font-bold text-white mb-2">{category.title}</h3>
+                  <p className="text-gray-400 text-sm">{category.description}</p>
                 </div>
 
                 {/* Skills Grid */}
@@ -123,13 +118,10 @@ const Skills: React.FC = () => {
         </div>
 
         {/* Additional Info */}
-        <motion.div
-          className="text-center mt-16"
-          variants={cardVariants}
-        >
+        <motion.div className="text-center mt-16" variants={cardVariants}>
           <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            Continuously learning and adapting to new technologies. 
-            My focus is on delivering high-quality solutions that make a real impact.
+            Continuously learning and adapting to new technologies. My focus is on delivering
+            high-quality solutions that make a real impact.
           </p>
         </motion.div>
       </motion.div>

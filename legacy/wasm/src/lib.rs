@@ -9,6 +9,7 @@ mod bezier;
 mod memory;
 mod physics_utils;
 mod spatial;
+mod star_field_deprecated;
 
 // Re-export legacy functions
 pub use batch_transfer::*;
@@ -16,6 +17,7 @@ pub use bezier::*;
 pub use memory::*;
 pub use physics_utils::*;
 pub use spatial::*;
+pub use star_field_deprecated::*;
 
 #[wasm_bindgen]
 extern "C" {
@@ -30,7 +32,8 @@ macro_rules! console_log {
 // Legacy functions that were removed from active codebase
 // These were related to:
 // - Bezier path calculations (meteor system)
-// - Physics utilities (meteor system)
+// - Physics utilities (meteor system) 
 // - Spatial indexing (nebula system)
 // - Memory management (unused)
 // - Batch transfer (unused)
+// - Star field raw pointer functions (replaced with safe alternatives)

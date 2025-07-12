@@ -20,19 +20,19 @@ export class RenderPipelineFactory {
         console.warn('⚠️ WASM initialization failed, falling back to JS:', error)
       }
     }
-    
+
     // Fallback to JavaScript implementation
     console.log('📦 Using JavaScript render pipeline')
     return new JSRenderPipeline(canvas, options)
   }
-  
+
   static async createJS(
     canvas: HTMLCanvasElement,
     options: PipelineOptions = {}
   ): Promise<IRenderPipeline> {
     return new JSRenderPipeline(canvas, { ...options, forceJavaScript: true })
   }
-  
+
   static async createWASM(
     canvas: HTMLCanvasElement,
     options: PipelineOptions = {}

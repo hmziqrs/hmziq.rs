@@ -1,13 +1,58 @@
-// WASM module loader with graceful fallback - Active functions only
+// WASM SIMD module loader - mandatory WASM, no JavaScript fallbacks
 
 let wasmModule: WASMModule | null = null
-let loadPromise: Promise<void> | null = null
-let isUsingFallback = false
+let loadPromise: Promise<WASMModule> | null = null
+
+// Structure-of-Arrays memory pointer structure
+export interface StarMemoryPointers {
+  // Separate pointers for SoA layout
+  positions_x_ptr: number
+  positions_y_ptr: number
+  positions_z_ptr: number
+  colors_r_ptr: number
+  colors_g_ptr: number
+  colors_b_ptr: number
+  sizes_ptr: number
+  twinkles_ptr: number
+  sparkles_ptr: number
+  visibility_ptr: number
+  count: number
+  // Separate lengths for each SoA array
+  positions_x_length: number
+  positions_y_length: number
+  positions_z_length: number
+  colors_r_length: number
+  colors_g_length: number
+  colors_b_length: number
+  sizes_length: number
+  twinkles_length: number
+  sparkles_length: number
+  visibility_length: number
+}
+
+// Frame update result structure
+export interface FrameUpdateResult {
+  visible_count: number
+  positions_dirty: boolean
+  effects_dirty: boolean
+  culling_dirty: boolean
+}
 
 export interface WASMModule {
   add: (a: number, b: number) => number
   greet: (name: string) => string
-  // Star field functions - core functionality only
+  // Shared memory management
+  memory: WebAssembly.Memory
+  initialize_star_memory_pool: (count: number) => StarMemoryPointers
+  update_frame_simd: (
+    time: number,
+    delta_time: number,
+    camera_matrix_ptr: number,
+    is_moving: boolean,
+    click_time: number,
+    current_speed_multiplier: number
+  ) => FrameUpdateResult
+  // Star field functions
   generate_star_positions: (
     count: number,
     start_index: number,
@@ -36,14 +81,20 @@ export interface WASMModule {
     camera_matrix: Float32Array,
     margin: number
   ) => Uint32Array
-  cull_stars_by_frustum_simd?: (
+  cull_stars_by_frustum_simd: (
     positions: Float32Array,
     count: number,
     camera_matrix: Float32Array,
     margin: number
   ) => Uint8Array
-  // Animation and performance functions
-  calculate_fps: (frame_count: number, current_time: number, last_time: number) => Float32Array
+  // Phase 5: Bitpacked visibility culling (8x memory reduction)
+  cull_stars_by_frustum_bitpacked: (
+    positions: Float32Array,
+    count: number,
+    camera_matrix: Float32Array,
+    margin: number
+  ) => BigUint64Array
+  // Animation functions
   calculate_speed_multiplier: (
     is_moving: boolean,
     click_time: number,
@@ -56,7 +107,7 @@ export interface WASMModule {
     speed_multiplier: number,
     delta_time: number
   ) => Float32Array
-  // Math utilities - essential functions only
+  // Math utilities
   fast_sin: (x: number) => number
   fast_cos: (x: number) => number
   fast_sin_batch: (values: Float32Array) => Float32Array
@@ -65,7 +116,7 @@ export interface WASMModule {
   seed_random_batch: (start: number, count: number) => Float32Array
 }
 
-export async function loadWASM(): Promise<WASMModule | null> {
+export async function loadWASM(): Promise<WASMModule> {
   // Return cached module if already loaded
   if (wasmModule) {
     return wasmModule
@@ -73,354 +124,240 @@ export async function loadWASM(): Promise<WASMModule | null> {
 
   // Return existing load promise if loading is in progress
   if (loadPromise) {
-    await loadPromise
-    return wasmModule
+    return await loadPromise
   }
 
-  // Start loading process
-  loadPromise = (async () => {
+  // Start mandatory WASM loading - fail if unavailable
+  loadPromise = (async (): Promise<WASMModule> => {
     try {
-      // Dynamic import to avoid build-time errors
       const wasmPath = '/wasm/pkg/hmziq_wasm_bg.wasm'
-      
-      // Use dynamic import with string interpolation to avoid TypeScript resolution
       const wasmModulePath = '/wasm/pkg/hmziq_wasm.js'
-      const wasm = await import(/* webpackIgnore: true */ /* @ts-ignore */ wasmModulePath)
 
-      // Initialize WASM module
-      await wasm.default(wasmPath)
+      const wasmImport = await import(/* webpackIgnore: true */ /* @ts-ignore */ wasmModulePath)
+      await wasmImport.default(wasmPath)
 
-      // Store module functions - only active functions
+      // Create WASM module with all SIMD functions
       wasmModule = {
-        add: wasm.add,
-        greet: wasm.greet,
+        add: wasmImport.add,
+        greet: wasmImport.greet,
+        // Shared memory management
+        memory: wasmImport.get_wasm_memory(),
+        initialize_star_memory_pool: wasmImport.initialize_star_memory_pool,
+        update_frame_simd: wasmImport.update_frame_simd,
         // Star field functions
-        generate_star_positions: wasm.generate_star_positions,
-        generate_star_colors: wasm.generate_star_colors,
-        generate_star_sizes: wasm.generate_star_sizes,
-        calculate_star_effects_arrays: wasm.calculate_star_effects_arrays,
+        generate_star_positions: wasmImport.generate_star_positions,
+        generate_star_colors: wasmImport.generate_star_colors,
+        generate_star_sizes: wasmImport.generate_star_sizes,
+        calculate_star_effects_arrays: wasmImport.calculate_star_effects_arrays,
         calculate_star_effects_with_temporal_coherence:
-          wasm.calculate_star_effects_with_temporal_coherence,
+          wasmImport.calculate_star_effects_with_temporal_coherence,
         // Camera frustum culling
-        get_visible_star_indices: wasm.get_visible_star_indices,
-        cull_stars_by_frustum_simd: wasm.cull_stars_by_frustum_simd,
-        // Animation and performance functions
-        calculate_fps: wasm.calculate_fps,
-        calculate_speed_multiplier: wasm.calculate_speed_multiplier,
-        calculate_rotation_delta: wasm.calculate_rotation_delta,
+        get_visible_star_indices: wasmImport.get_visible_star_indices,
+        cull_stars_by_frustum_simd: wasmImport.cull_stars_by_frustum_simd,
+        cull_stars_by_frustum_bitpacked: wasmImport.cull_stars_by_frustum_bitpacked,
+        // Animation functions
+        calculate_speed_multiplier: wasmImport.calculate_speed_multiplier,
+        calculate_rotation_delta: wasmImport.calculate_rotation_delta,
         // Math utilities
-        fast_sin: wasm.fast_sin,
-        fast_cos: wasm.fast_cos,
-        fast_sin_batch: wasm.fast_sin_batch,
-        fast_cos_batch: wasm.fast_cos_batch,
-        seed_random: wasm.seed_random,
-        seed_random_batch: wasm.seed_random_batch,
+        fast_sin: wasmImport.fast_sin,
+        fast_cos: wasmImport.fast_cos,
+        fast_sin_batch: wasmImport.fast_sin_batch,
+        fast_cos_batch: wasmImport.fast_cos_batch,
+        seed_random: wasmImport.seed_random,
+        seed_random_batch: wasmImport.seed_random_batch,
       }
-    } catch {
-      isUsingFallback = true
-      wasmModule = null
+
+      return wasmModule
+    } catch (error) {
+      throw new Error(`WASM SIMD module failed to load: ${error}`)
     }
   })()
 
-  await loadPromise
-  return wasmModule
+  return await loadPromise
 }
 
-// JavaScript fallback implementations - essential functions only
-export const jsFallbacks: WASMModule = {
-  add: (a: number, b: number): number => {
-    return a + b
-  },
-  greet: (name: string): string => {
-    return `Hello from JS fallback, ${name}!`
-  },
-  // Star field fallbacks (simplified versions)
-  generate_star_positions: (
-    count: number,
-    start_index: number,
-    min_radius: number,
-    max_radius: number
-  ): Float32Array => {
-    const positions = new Float32Array(count * 3)
-    for (let i = 0; i < count; i++) {
-      const globalIndex = start_index + i
-      const seed = (x: number) => {
-        const val = Math.sin(x * 12.9898 + 78.233) * 43758.5453
-        return val - Math.floor(val)
-      }
+// Direct export - WASM SIMD is mandatory
+export const getOptimizedFunctions = loadWASM
 
-      const radius = min_radius + seed(globalIndex) * (max_radius - min_radius)
-      const theta = seed(globalIndex + 1000) * Math.PI * 2
-      const phi = Math.acos(2 * seed(globalIndex + 2000) - 1)
+// Simple status check
+export function isWASMLoaded(): boolean {
+  return wasmModule !== null
+}
 
-      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta)
-      positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta)
-      positions[i * 3 + 2] = radius * Math.cos(phi)
+// Zero-copy shared memory wrapper for star field
+export class StarFieldSharedMemory {
+  private wasmMemory: WebAssembly.Memory
+  private pointers: StarMemoryPointers
+
+  // Structure-of-Arrays for positions and colors (optimal for SIMD)
+  public positions_x: Float32Array
+  public positions_y: Float32Array
+  public positions_z: Float32Array
+  public colors_r: Float32Array
+  public colors_g: Float32Array
+  public colors_b: Float32Array
+
+  // Other attributes (already optimal)
+  public sizes: Float32Array
+  public twinkles: Float32Array
+  public sparkles: Float32Array
+  public visibilityMask: BigUint64Array
+
+  constructor(wasmModule: WASMModule, starCount: number) {
+    this.wasmMemory = wasmModule.memory
+    this.pointers = wasmModule.initialize_star_memory_pool(starCount)
+
+    // Create direct views into WASM memory for SoA layout (zero-copy!)
+    this.positions_x = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.positions_x_ptr,
+      this.pointers.positions_x_length
+    )
+    this.positions_y = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.positions_y_ptr,
+      this.pointers.positions_y_length
+    )
+    this.positions_z = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.positions_z_ptr,
+      this.pointers.positions_z_length
+    )
+
+    this.colors_r = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.colors_r_ptr,
+      this.pointers.colors_r_length
+    )
+    this.colors_g = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.colors_g_ptr,
+      this.pointers.colors_g_length
+    )
+    this.colors_b = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.colors_b_ptr,
+      this.pointers.colors_b_length
+    )
+
+    this.sizes = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.sizes_ptr,
+      this.pointers.sizes_length
+    )
+
+    this.twinkles = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.twinkles_ptr,
+      this.pointers.twinkles_length
+    )
+
+    this.sparkles = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.sparkles_ptr,
+      this.pointers.sparkles_length
+    )
+
+    this.visibilityMask = new BigUint64Array(
+      this.wasmMemory.buffer,
+      this.pointers.visibility_ptr,
+      this.pointers.visibility_length
+    )
+  }
+
+  get count(): number {
+    return this.pointers.count
+  }
+
+  // Phase 5: Bitpacked visibility utilities for JavaScript
+  // Check if a specific star is visible (star_index in 0..count)
+  isStarVisible(starIndex: number): boolean {
+    const wordIndex = Math.floor(starIndex / 64)
+    const bitIndex = starIndex % 64
+    
+    if (wordIndex >= this.visibilityMask.length) {
+      return false
     }
-    return positions
-  },
-  generate_star_colors: (count: number, start_index: number): Float32Array => {
-    const colors = new Float32Array(count * 3)
-    for (let i = 0; i < count; i++) {
-      const globalIndex = start_index + i
-      const seed = (x: number) => {
-        const val = Math.sin(x * 12.9898 + 78.233) * 43758.5453
-        return val - Math.floor(val)
-      }
-      const colorChoice = seed(globalIndex + 3000)
+    
+    const word = this.visibilityMask[wordIndex]
+    return (word & (1n << BigInt(bitIndex))) !== 0n
+  }
 
-      let r, g, b
-      if (colorChoice < 0.5) {
-        r = g = b = 1
-      } else if (colorChoice < 0.7) {
-        r = 0.6
-        g = 0.8
-        b = 1
-      } else if (colorChoice < 0.85) {
-        r = 1
-        g = 0.8
-        b = 0.4
-      } else {
-        r = 0.8
-        g = 0.6
-        b = 1
-      }
-
-      colors[i * 3] = r
-      colors[i * 3 + 1] = g
-      colors[i * 3 + 2] = b
+  // Set visibility for a specific star
+  setStarVisible(starIndex: number, visible: boolean): void {
+    const wordIndex = Math.floor(starIndex / 64)
+    const bitIndex = starIndex % 64
+    
+    if (wordIndex >= this.visibilityMask.length) {
+      return
     }
-    return colors
-  },
-  generate_star_sizes: (
-    count: number,
-    start_index: number,
-    size_multiplier: number
-  ): Float32Array => {
-    const sizes = new Float32Array(count)
-    for (let i = 0; i < count; i++) {
-      const globalIndex = start_index + i
-      const seed = (x: number) => {
-        const val = Math.sin(x * 12.9898 + 78.233) * 43758.5453
-        return val - Math.floor(val)
-      }
-      const sizeRandom = seed(globalIndex + 4000)
-      const baseSize =
-        sizeRandom < 0.7 ? 1 + seed(globalIndex + 5000) * 1.5 : 2.5 + seed(globalIndex + 6000) * 2
-      sizes[i] = baseSize * size_multiplier
-    }
-    return sizes
-  },
-  calculate_star_effects_arrays: (
-    positions: Float32Array,
-    count: number,
-    time: number
-  ): Float32Array => {
-    const effects = new Float32Array(count * 2)
-
-    for (let i = 0; i < count; i++) {
-      const i3 = i * 3
-      const x = positions[i3]
-      const y = positions[i3 + 1]
-
-      // Twinkle calculation
-      const twinkleBase = Math.sin(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7
-
-      // Sparkle calculation
-      const sparklePhase = Math.sin(time * 15.0 + x * 20.0 + y * 30.0)
-      const sparkle = sparklePhase > 0.98 ? (sparklePhase - 0.98) / 0.02 : 0
-
-      effects[i * 2] = twinkleBase + sparkle
-      effects[i * 2 + 1] = sparkle
-    }
-
-    return effects
-  },
-  calculate_star_effects_with_temporal_coherence: (
-    positions: Float32Array,
-    previous_twinkles: Float32Array,
-    previous_sparkles: Float32Array,
-    count: number,
-    time: number,
-    threshold: number
-  ): Float32Array => {
-    // Result format: [need_update_flag, twinkle, sparkle] triplets
-    const results = new Float32Array(count * 3)
-
-    for (let i = 0; i < count; i++) {
-      const i3 = i * 3
-      const x = positions[i3]
-      const y = positions[i3 + 1]
-
-      // Calculate new effects
-      const twinkle_base = Math.sin(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7
-      const sparkle_phase = Math.sin(time * 15.0 + x * 20.0 + y * 30.0)
-      const sparkle = sparkle_phase > 0.98 ? (sparkle_phase - 0.98) / 0.02 : 0.0
-      const twinkle = twinkle_base + sparkle
-
-      // Check if update is needed
-      const twinkle_diff = Math.abs(twinkle - previous_twinkles[i])
-      const sparkle_diff = Math.abs(sparkle - previous_sparkles[i])
-
-      const needs_update = twinkle_diff > threshold || sparkle_diff > threshold
-
-      const idx = i * 3
-      results[idx] = needs_update ? 1.0 : 0.0
-      results[idx + 1] = twinkle
-      results[idx + 2] = sparkle
-    }
-
-    return results
-  },
-  get_visible_star_indices: (
-    positions: Float32Array,
-    count: number,
-    camera_matrix: Float32Array,
-    margin: number
-  ): Uint32Array => {
-    if (camera_matrix.length !== 16) {
-      return new Uint32Array(Array.from({ length: count }, (_, i) => i))
-    }
-
-    const visible_indices: number[] = []
-
-    // Extract frustum planes
-    const m = camera_matrix
-    const planes = [
-      [m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]],
-      [m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]],
-      [m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]],
-      [m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]],
-      [m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]],
-      [m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]],
-    ]
-
-    // Normalize planes
-    const normalized_planes = planes.map((plane) => {
-      const length = Math.sqrt(plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2])
-      return length > 0 ? plane.map((v) => v / length) : plane
-    })
-
-    // Check each star
-    for (let i = 0; i < count; i++) {
-      const i3 = i * 3
-      const x = positions[i3]
-      const y = positions[i3 + 1]
-      const z = positions[i3 + 2]
-
-      let inside = true
-
-      for (const plane of normalized_planes) {
-        const distance = plane[0] * x + plane[1] * y + plane[2] * z + plane[3]
-
-        if (distance < -margin) {
-          inside = false
-          break
-        }
-      }
-
-      if (inside) {
-        visible_indices.push(i)
-      }
-    }
-
-    return new Uint32Array(visible_indices)
-  },
-  cull_stars_by_frustum_simd: undefined, // No SIMD fallback
-  // Math utilities
-  fast_sin: (x: number): number => Math.sin(x),
-  fast_cos: (x: number): number => Math.cos(x),
-  fast_sin_batch: (values: Float32Array): Float32Array => {
-    const result = new Float32Array(values.length)
-    for (let i = 0; i < values.length; i++) {
-      result[i] = Math.sin(values[i])
-    }
-    return result
-  },
-  fast_cos_batch: (values: Float32Array): Float32Array => {
-    const result = new Float32Array(values.length)
-    for (let i = 0; i < values.length; i++) {
-      result[i] = Math.cos(values[i])
-    }
-    return result
-  },
-  seed_random: (i: number): number => {
-    const val = Math.sin(i * 12.9898 + 78.233) * 43758.5453
-    return val - Math.floor(val)
-  },
-  seed_random_batch: (start: number, count: number): Float32Array => {
-    const result = new Float32Array(count)
-    for (let i = 0; i < count; i++) {
-      const val = Math.sin((start + i) * 12.9898 + 78.233) * 43758.5453
-      result[i] = val - Math.floor(val)
-    }
-    return result
-  },
-  // Animation and performance function fallbacks
-  calculate_fps: (frame_count: number, current_time: number, last_time: number): Float32Array => {
-    // Check if we should calculate FPS (every 30 frames)
-    if (frame_count % 30 === 0) {
-      // Calculate FPS: 30 frames / time_elapsed (in seconds)
-      const time_elapsed = current_time - last_time
-      const fps = time_elapsed > 0 ? 30000 / time_elapsed : 60.0
-
-      // Return [fps, 1.0 (should update), current_time split into two f32s]
-      const time_high = Math.floor(current_time / 1000)
-      const time_low = current_time - time_high * 1000
-
-      return new Float32Array([fps, 1.0, time_high, time_low])
+    
+    const mask = 1n << BigInt(bitIndex)
+    if (visible) {
+      this.visibilityMask[wordIndex] |= mask
     } else {
-      // Don't update FPS
-      return new Float32Array([0.0, 0.0, 0.0, 0.0])
+      this.visibilityMask[wordIndex] &= ~mask
     }
-  },
-  calculate_speed_multiplier: (
-    is_moving: boolean,
-    click_time: number,
-    current_time: number,
-    current_multiplier: number
-  ): number => {
-    let speed_multiplier = 1.0
+  }
 
-    // Apply movement boost
-    if (is_moving) {
-      speed_multiplier *= 4.5
+  // Count total visible stars using efficient bit counting
+  countVisibleStars(): number {
+    let visibleCount = 0
+    const completeWords = Math.floor(this.count / 64)
+    
+    // Count bits in complete u64 words
+    for (let i = 0; i < completeWords; i++) {
+      // Use built-in bit counting (fast on modern browsers)
+      const word = this.visibilityMask[i]
+      visibleCount += this.popCount64(word)
     }
-
-    // Apply click boost with decay
-    const time_since_click = current_time - click_time
-    if (time_since_click < 1200) {
-      const click_decay = 1 - time_since_click / 1200
-      const click_boost = 1 + 4.3 * click_decay
-      speed_multiplier *= click_boost
+    
+    // Handle remaining bits in the last partial word
+    const remainingBits = this.count % 64
+    if (remainingBits > 0 && completeWords < this.visibilityMask.length) {
+      const mask = (1n << BigInt(remainingBits)) - 1n
+      const maskedWord = this.visibilityMask[completeWords] & mask
+      visibleCount += this.popCount64(maskedWord)
     }
+    
+    return visibleCount
+  }
 
-    // Apply smoothing (lerp with factor 0.2)
-    return current_multiplier + (speed_multiplier - current_multiplier) * 0.2
-  },
-  calculate_rotation_delta: (
-    base_speed_x: number,
-    base_speed_y: number,
-    speed_multiplier: number,
-    delta_time: number
-  ): Float32Array => {
-    return new Float32Array([
-      base_speed_x * speed_multiplier * delta_time,
-      base_speed_y * speed_multiplier * delta_time,
-    ])
-  },
-}
+  // Efficient 64-bit population count (count set bits)
+  private popCount64(n: bigint): number {
+    let count = 0
+    while (n !== 0n) {
+      count++
+      n &= n - 1n // Clear the lowest set bit
+    }
+    return count
+  }
 
-// Unified API that automatically uses WASM or JS fallback
-export async function getOptimizedFunctions(): Promise<WASMModule> {
-  const wasm = await loadWASM()
-  return wasm || jsFallbacks
-}
+  // Zero-copy frame update
+  updateFrame(
+    wasmModule: WASMModule,
+    time: number,
+    deltaTime: number,
+    cameraMatrix: Float32Array | null,
+    isMoving: boolean,
+    clickTime: number,
+    currentSpeedMultiplier: number
+  ): FrameUpdateResult {
+    // For now, pass 0 for camera matrix pointer
+    // TODO: Implement proper camera matrix handling in WASM
+    const cameraPtr = 0
 
-// Check WASM status
-export function getWASMStatus(): { loaded: boolean; usingFallback: boolean } {
-  return {
-    loaded: wasmModule !== null,
-    usingFallback: isUsingFallback,
+    // All computation happens in WASM, modifies shared memory directly
+    const result = wasmModule.update_frame_simd(
+      time,
+      deltaTime,
+      cameraPtr,
+      isMoving,
+      clickTime,
+      currentSpeedMultiplier
+    )
+
+    // JavaScript arrays are automatically updated (shared memory!)
+    return result
   }
 }

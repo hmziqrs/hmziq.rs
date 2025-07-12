@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev",
-    "build": "bun run build:wasm && next build",
+    "dev": "next dev --turbopack",
+    "build": "bun run build:wasm && next build --turbopack",
     "build:wasm": "cd wasm && wasm-pack build --target web --out-dir pkg && node ../scripts/copy-wasm.js",
     "build:wasm:dev": "cd wasm && wasm-pack build --target web --out-dir pkg --dev && node ../scripts/copy-wasm.js",
     "start": "next start",
@@ -22,7 +22,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/hmziqrs/hmziq.rs/issues"
   },

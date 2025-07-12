@@ -3,7 +3,7 @@
 ```
 ├── app/                    # Next.js App Router
 │   ├── layout.tsx         # Root layout with providers
-│   ├── page.tsx           # Main landing page  
+│   ├── page.tsx           # Main landing page
 │   └── globals.css        # Global styles and Tailwind imports
 ├── components/
 │   ├── ui/                # shadcn/ui components
@@ -31,9 +31,10 @@
 ```
 
 ## Key Files
+
 - `package.json` - Dependencies and scripts
 - `tsconfig.json` - TypeScript configuration
-- `.eslintrc.json` - ESLint configuration  
+- `.eslintrc.json` - ESLint configuration
 - `.prettierrc` - Prettier formatting rules
 - `next.config.mjs` - Next.js configuration
 - `postcss.config.mjs` - PostCSS configuration

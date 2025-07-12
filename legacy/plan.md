@@ -1,9 +1,11 @@
 # Implementation Plan for hmziq.rs
 
 ## Project Overview
+
 Personal landing page for @hmziqrs featuring creative visual experiences with canvas-based parallax animations, 3D components, and a space-themed background with star simulation.
 
 ## Current State
+
 - Basic Next.js project initialized with TypeScript
 - No actual implementation started
 - Missing required dependencies and project structure
@@ -12,12 +14,14 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 ## Phase 1: Project Setup & Configuration (Priority: Critical)
 
 ### 1.1 Switch to Bun Package Manager
+
 - [ ] Remove `node_modules` and `package-lock.json`
 - [ ] Install Bun globally if not already installed
 - [ ] Run `bun install` to reinstall dependencies with Bun
 - [ ] Verify `bun.lockb` is created
 
 ### 1.2 Install Core Dependencies
+
 - [ ] Install Tailwind CSS v4 beta
   ```bash
   bun add -d tailwindcss@next @tailwindcss/vite
@@ -40,18 +44,21 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
   ```
 
 ### 1.3 Configure Tailwind CSS v4
+
 - [ ] Create `app/globals.css` with Tailwind v4 imports
 - [ ] Set up CSS-first configuration approach
 - [ ] Define custom color palette (monochrome with space theme accents)
 - [ ] Configure typography and spacing scales
 
 ### 1.4 Initialize shadcn/ui
+
 - [ ] Run `bunx shadcn@latest init`
 - [ ] Choose default theme with custom colors
 - [ ] Configure components path as `components/ui`
 - [ ] Set up CSS variables for theming
 
 ### 1.5 Create Project Structure
+
 ```
 ├── app/
 │   ├── layout.tsx
@@ -83,6 +90,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 ```
 
 ### 1.6 Configure ESLint & Prettier
+
 - [ ] Create `.eslintrc.json` with Next.js and TypeScript rules
 - [ ] Create `.prettierrc` with consistent formatting rules
 - [ ] Add pre-commit hooks with husky (optional)
@@ -90,12 +98,14 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 ## Phase 2: Core Infrastructure (Priority: High)
 
 ### 2.1 Set Up Root Layout
+
 - [ ] Implement root layout with proper metadata
 - [ ] Add font configuration (Inter or similar clean font)
 - [ ] Set up viewport and theme color meta tags
 - [ ] Implement basic SEO tags
 
 ### 2.2 Create Three.js Infrastructure
+
 - [ ] Create reusable Canvas wrapper component
 - [ ] Implement performance monitoring
 - [ ] Set up proper lighting system
@@ -103,6 +113,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - [ ] Implement resize handlers
 
 ### 2.3 Develop Utility Functions
+
 - [ ] Scroll progress calculator
 - [ ] Intersection Observer hooks
 - [ ] Animation timing functions
@@ -110,6 +121,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - [ ] Performance optimization helpers
 
 ### 2.4 Implement Custom Hooks
+
 - [ ] `useScrollProgress`: Track scroll position and progress
 - [ ] `useReducedMotion`: Respect accessibility preferences
 - [ ] `useViewportSize`: Responsive viewport tracking
@@ -119,6 +131,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 ## Phase 3: 3D Components & Animations (Priority: High)
 
 ### 3.1 Star Field Implementation
+
 - [ ] Create procedural star generation system
 - [ ] Implement different star sizes and brightness
 - [ ] Add subtle twinkling animation
@@ -127,6 +140,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - [ ] Implement proper cleanup on unmount
 
 ### 3.2 Background Scene
+
 - [ ] Set up main Three.js scene
 - [ ] Implement fog for depth perception
 - [ ] Add subtle nebula/cloud effects
@@ -134,6 +148,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - [ ] Ensure 60fps performance
 
 ### 3.3 Interactive Elements
+
 - [ ] Mouse-following subtle effects
 - [ ] Scroll-triggered animations
 - [ ] Hover interactions on 3D elements
@@ -142,6 +157,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 ## Phase 4: Content Sections (Priority: High)
 
 ### 4.1 Hero Section
+
 - [ ] Implement name typography with custom styling
 - [ ] Add professional tagline
 - [ ] Create animated entrance effect
@@ -149,6 +165,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - [ ] Add subtle floating animation
 
 ### 4.2 About Section
+
 - [ ] Brief professional introduction
 - [ ] Years of experience indicator
 - [ ] Subtle skill visualization (not a list)
@@ -156,12 +173,14 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - [ ] Smooth reveal animation
 
 ### 4.3 Skills/Expertise Visualization
+
 - [ ] Create unique visual representation (not typical progress bars)
 - [ ] Categorize skills subtly (Frontend, Backend, Cross-platform)
 - [ ] Interactive hover states
 - [ ] Smooth transitions between states
 
 ### 4.4 Contact Section
+
 - [ ] Social links (GitHub, LinkedIn, etc.)
 - [ ] Email contact (obfuscated)
 - [ ] Smooth scroll-to-top functionality
@@ -170,6 +189,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 ## Phase 5: Performance & Polish (Priority: Medium)
 
 ### 5.1 Performance Optimization
+
 - [ ] Implement lazy loading for Three.js components
 - [ ] Use React.Suspense for loading states
 - [ ] Optimize bundle size with dynamic imports
@@ -177,6 +197,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - [ ] Add performance monitoring
 
 ### 5.2 Accessibility
+
 - [ ] Ensure keyboard navigation
 - [ ] Add proper ARIA labels
 - [ ] Implement skip links
@@ -184,6 +205,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - [ ] Ensure content works without JavaScript
 
 ### 5.3 Responsive Design
+
 - [ ] Mobile-first approach
 - [ ] Test on various devices
 - [ ] Optimize touch interactions
@@ -191,6 +213,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - [ ] Ensure text readability
 
 ### 5.4 Animation Polish
+
 - [ ] Fine-tune timing curves
 - [ ] Add micro-interactions
 - [ ] Implement smooth page transitions
@@ -200,6 +223,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 ## Phase 6: Testing & Deployment (Priority: Low)
 
 ### 6.1 Testing Setup
+
 - [ ] Unit tests for utilities
 - [ ] Visual regression tests
 - [ ] Performance benchmarks
@@ -207,6 +231,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - [ ] Cross-browser testing
 
 ### 6.2 SEO & Metadata
+
 - [ ] Optimize meta descriptions
 - [ ] Add Open Graph tags
 - [ ] Implement structured data
@@ -214,6 +239,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - [ ] Add robots.txt
 
 ### 6.3 Deployment Preparation
+
 - [ ] Environment variable setup
 - [ ] Build optimization
 - [ ] CDN configuration
@@ -223,6 +249,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 ## Implementation Notes
 
 ### Design Principles to Follow
+
 1. **Subtlety**: Effects enhance, never overwhelm
 2. **Performance**: Maintain 60fps at all times
 3. **Accessibility**: Full functionality without JS
@@ -230,6 +257,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 5. **Professionalism**: Clean, sophisticated implementation
 
 ### Technical Considerations
+
 - Use `requestAnimationFrame` for custom animations
 - Implement proper Three.js resource disposal
 - Use CSS transforms for smooth animations
@@ -237,6 +265,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - Minimize re-renders with proper memoization
 
 ### Color Palette
+
 - Background: #000000 (Deep space black)
 - Primary Text: #FFFFFF (High contrast white)
 - Secondary: #888888 (Subtle gray)
@@ -244,6 +273,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - Effects: Subtle blue/purple for star glow only
 
 ### Content Guidelines
+
 - Keep text minimal and impactful
 - Focus on visual storytelling
 - Avoid typical resume/CV format
@@ -251,6 +281,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - Maintain professional tone
 
 ## Next Steps
+
 1. Complete Phase 1 setup immediately
 2. Begin Phase 2 infrastructure in parallel
 3. Prototype star field effect early for feasibility
@@ -258,6 +289,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 5. Iterate on performance throughout development
 
 ## Success Metrics
+
 - [ ] Page loads in under 2 seconds
 - [ ] Maintains 60fps during animations
 - [ ] Passes WCAG 2.1 AA standards
@@ -266,6 +298,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 - [ ] Showcases technical capabilities subtly
 
 ## Estimated Timeline
+
 - Phase 1: 2-3 hours
 - Phase 2: 4-6 hours
 - Phase 3: 8-10 hours
@@ -276,6 +309,7 @@ Personal landing page for @hmziqrs featuring creative visual experiences with ca
 **Total: 26-37 hours of focused development**
 
 ## Risk Mitigation
+
 - **Performance Issues**: Profile early and often
 - **Browser Compatibility**: Test Three.js features early
 - **Mobile Performance**: Have fallback for complex 3D

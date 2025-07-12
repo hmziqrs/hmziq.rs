@@ -16,38 +16,42 @@ export class NebulaSpatialIndexing {
   private cellSize: number = 150 // Optimal cell size for typical nebula cloud radius
   private canvasWidth: number = 0
   private canvasHeight: number = 0
-  
+
   async initialize(canvasWidth: number, canvasHeight: number) {
     // Check if already initialized with same dimensions
-    if (this.isInitialized && 
-        this.canvasWidth === canvasWidth && 
-        this.canvasHeight === canvasHeight) {
+    if (
+      this.isInitialized &&
+      this.canvasWidth === canvasWidth &&
+      this.canvasHeight === canvasHeight
+    ) {
       const debugConfig = DebugConfigManager.getInstance()
       if (debugConfig.isEnabled('enableConsoleLogs')) {
         console.log('Nebula spatial indexing already initialized with same dimensions, skipping...')
       }
       return
     }
-    
+
     // If dimensions changed, we need to reinitialize
-    if (this.isInitialized && 
-        (this.canvasWidth !== canvasWidth || this.canvasHeight !== canvasHeight)) {
+    if (
+      this.isInitialized &&
+      (this.canvasWidth !== canvasWidth || this.canvasHeight !== canvasHeight)
+    ) {
       const debugConfig = DebugConfigManager.getInstance()
       if (debugConfig.isEnabled('enableConsoleLogs')) {
         console.log('Canvas dimensions changed, reinitializing spatial grid...')
       }
       this.dispose()
     }
-    
+
     try {
       const wasm = await getOptimizedFunctions()
-      
+
       if (wasm.SpatialGrid) {
         this.spatialGrid = new wasm.SpatialGrid(this.cellSize, canvasWidth, canvasHeight)
         this.isInitialized = true
         this.canvasWidth = canvasWidth
         this.canvasHeight = canvasHeight
-        
+
         const debugConfig = DebugConfigManager.getInstance()
         if (debugConfig.isEnabled('enableConsoleLogs')) {
           console.log('Nebula spatial indexing initialized with WASM')
@@ -66,44 +70,46 @@ export class NebulaSpatialIndexing {
       console.error('Failed to initialize nebula spatial indexing:', error)
     }
   }
-  
-  updateCloudPositions(clouds: Array<{
-    id: number
-    x: number
-    y: number
-    radius: number
-    isVisible: boolean
-  }>) {
+
+  updateCloudPositions(
+    clouds: Array<{
+      id: number
+      x: number
+      y: number
+      radius: number
+      isVisible: boolean
+    }>
+  ) {
     if (!this.spatialGrid || !this.isInitialized) {
       return
     }
-    
+
     // Prepare batch data
     const count = clouds.length
     const positions = new Float32Array(count * 2)
     const radii = new Float32Array(count)
     const visibilities = new Uint8Array(count)
-    
+
     clouds.forEach((cloud, i) => {
       positions[i * 2] = cloud.x
       positions[i * 2 + 1] = cloud.y
       radii[i] = cloud.radius
       visibilities[i] = cloud.isVisible ? 1 : 0
     })
-    
+
     // Batch update all positions
     this.spatialGrid.update_positions(positions, radii, visibilities)
   }
-  
+
   findOverlaps(overlapFactor: number = 0.8): NebulaOverlap[] {
     if (!this.spatialGrid || !this.isInitialized) {
       return []
     }
-    
+
     // Get overlaps as flat array [id1, id2, distance, overlap_strength, mid_x, mid_y, ...]
     const overlapsFlat = this.spatialGrid.find_overlaps(overlapFactor)
     const overlaps: NebulaOverlap[] = []
-    
+
     // Parse flat array into structured data
     for (let i = 0; i < overlapsFlat.length; i += 6) {
       overlaps.push({
@@ -115,15 +121,15 @@ export class NebulaSpatialIndexing {
         midY: overlapsFlat[i + 5],
       })
     }
-    
+
     return overlaps
   }
-  
+
   getStats() {
     if (!this.spatialGrid || !this.isInitialized) {
       return null
     }
-    
+
     const stats = this.spatialGrid.get_stats()
     return {
       totalObjects: stats[0],
@@ -132,29 +138,32 @@ export class NebulaSpatialIndexing {
       maxObjectsPerCell: stats[3],
     }
   }
-  
+
   // Fallback implementation for when WASM is not available
-  findOverlapsFallback(clouds: Array<{
-    id: number
-    x: number
-    y: number
-    radius: number
-    isVisible: boolean
-  }>, overlapFactor: number = 0.8): NebulaOverlap[] {
+  findOverlapsFallback(
+    clouds: Array<{
+      id: number
+      x: number
+      y: number
+      radius: number
+      isVisible: boolean
+    }>,
+    overlapFactor: number = 0.8
+  ): NebulaOverlap[] {
     const overlaps: NebulaOverlap[] = []
-    const visibleClouds = clouds.filter(c => c.isVisible)
-    
+    const visibleClouds = clouds.filter((c) => c.isVisible)
+
     // O(n²) fallback - same as original implementation
     for (let i = 0; i < visibleClouds.length; i++) {
       for (let j = i + 1; j < visibleClouds.length; j++) {
         const cloud1 = visibleClouds[i]
         const cloud2 = visibleClouds[j]
-        
+
         const dx = cloud1.x - cloud2.x
         const dy = cloud1.y - cloud2.y
         const distance = Math.sqrt(dx * dx + dy * dy)
         const combinedRadius = (cloud1.radius + cloud2.radius) * overlapFactor
-        
+
         if (distance < combinedRadius) {
           const overlapStrength = 1 - distance / combinedRadius
           overlaps.push({
@@ -168,12 +177,16 @@ export class NebulaSpatialIndexing {
         }
       }
     }
-    
+
     return overlaps
   }
-  
+
   dispose() {
-    if (this.spatialGrid && 'free' in this.spatialGrid && typeof this.spatialGrid.free === 'function') {
+    if (
+      this.spatialGrid &&
+      'free' in this.spatialGrid &&
+      typeof this.spatialGrid.free === 'function'
+    ) {
       this.spatialGrid.free()
     }
     this.spatialGrid = null

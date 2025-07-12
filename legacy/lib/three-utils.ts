@@ -11,32 +11,32 @@ export interface StarData {
 // Generate star field data
 export const generateStars = (count: number): StarData[] => {
   const stars: StarData[] = []
-  
+
   for (let i = 0; i < count; i++) {
     // Create stars in a spherical distribution
     const radius = Math.random() * 500 + 50
     const theta = Math.random() * Math.PI * 2
     const phi = Math.acos(2 * Math.random() - 1)
-    
+
     const x = radius * Math.sin(phi) * Math.cos(theta)
     const y = radius * Math.sin(phi) * Math.sin(theta)
     const z = radius * Math.cos(phi)
-    
+
     // Vary star properties
     const size = Math.random() * 2 + 0.5
     const brightness = Math.random() * 0.8 + 0.2
     const twinkleSpeed = Math.random() * 0.02 + 0.01
-    
+
     // Color variation (mostly white with slight blue/purple tints)
     const colorVariation = Math.random()
     let color = '#ffffff'
-    
+
     if (colorVariation < 0.1) {
       color = '#e0e7ff' // Slight blue tint
     } else if (colorVariation < 0.15) {
       color = '#ede9fe' // Slight purple tint
     }
-    
+
     stars.push({
       position: [x, y, z],
       size,
@@ -45,7 +45,7 @@ export const generateStars = (count: number): StarData[] => {
       twinkleSpeed,
     })
   }
-  
+
   return stars
 }
 
@@ -55,29 +55,29 @@ export const createStarGeometry = (stars: StarData[]) => {
   const positions = new Float32Array(stars.length * 3)
   const sizes = new Float32Array(stars.length)
   const colors = new Float32Array(stars.length * 3)
-  
+
   stars.forEach((star, i) => {
     const i3 = i * 3
-    
+
     // Position
     positions[i3] = star.position[0]
     positions[i3 + 1] = star.position[1]
     positions[i3 + 2] = star.position[2]
-    
+
     // Size
     sizes[i] = star.size
-    
+
     // Color (convert hex to RGB)
     const color = new THREE.Color(star.color)
     colors[i3] = color.r
     colors[i3 + 1] = color.g
     colors[i3 + 2] = color.b
   })
-  
+
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
   geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-  
+
   return geometry
 }
 
@@ -86,7 +86,7 @@ export const createStarMaterial = () => {
   return new THREE.ShaderMaterial({
     uniforms: {
       time: { value: 0 },
-      pointTexture: { value: new THREE.TextureLoader().load('/star.png') }
+      pointTexture: { value: new THREE.TextureLoader().load('/star.png') },
     },
     vertexShader: `
       attribute float size;
@@ -141,17 +141,17 @@ export const updateStarPositions = (
   originalPositions: Float32Array
 ) => {
   const positions = geometry.attributes.position.array as Float32Array
-  
+
   for (let i = 0; i < positions.length; i += 3) {
     // Apply parallax effect based on distance
     const z = originalPositions[i + 2]
     const parallaxFactor = Math.abs(z) / 500
-    
+
     positions[i] = originalPositions[i] + scrollProgress * parallaxFactor * 20
     positions[i + 1] = originalPositions[i + 1] - scrollProgress * parallaxFactor * 10
     positions[i + 2] = originalPositions[i + 2]
   }
-  
+
   geometry.attributes.position.needsUpdate = true
 }
 
@@ -160,16 +160,16 @@ export const getFrameRate = (() => {
   let lastTime = 0
   let frameCount = 0
   let fps = 60
-  
+
   return (currentTime: number) => {
     frameCount++
-    
+
     if (currentTime - lastTime >= 1000) {
       fps = Math.round((frameCount * 1000) / (currentTime - lastTime))
       frameCount = 0
       lastTime = currentTime
     }
-    
+
     return fps
   }
 })()

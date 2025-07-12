@@ -12,7 +12,7 @@ export const useScrollProgress = () => {
       const scrollTop = window.scrollY
       const docHeight = document.documentElement.scrollHeight - window.innerHeight
       const progress = Math.min(scrollTop / docHeight, 1)
-      
+
       setScrollProgress(progress)
       setScrollY(scrollTop)
     }, 16) // ~60fps

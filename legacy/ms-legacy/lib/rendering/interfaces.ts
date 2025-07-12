@@ -16,16 +16,16 @@ export interface RenderData {
 
 export interface MeteorRenderData {
   count: number
-  positions: Float32Array     // x,y pairs
-  properties: Float32Array    // size,angle,glow,life,type,active
+  positions: Float32Array // x,y pairs
+  properties: Float32Array // size,angle,glow,life,type,active
   trails: TrailData[]
 }
 
 export interface ParticleRenderData {
   count: number
-  positions: Float32Array     // x,y pairs  
-  velocities: Float32Array    // vx,vy pairs
-  properties: Float32Array    // size,opacity
+  positions: Float32Array // x,y pairs
+  velocities: Float32Array // vx,vy pairs
+  properties: Float32Array // size,opacity
 }
 
 export interface TrailData {
@@ -91,5 +91,5 @@ export enum DirtyFlags {
   METEORS = 0b00000001,
   PARTICLES = 0b00000010,
   STARS = 0b00000100,
-  ALL = 0b11111111
+  ALL = 0b11111111,
 }
