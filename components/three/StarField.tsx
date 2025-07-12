@@ -237,6 +237,14 @@ function Stars() {
       lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
     lastFrameTimeRef.current = currentFrameTime
 
+    // Calculate speed multiplier based on mouse/scroll interactions
+    speedMultiplierRef.current = wasmModule.calculate_speed_multiplier(
+      isMovingRef.current,
+      clickBoostRef.current / 1000, // Convert to seconds
+      currentFrameTime,
+      speedMultiplierRef.current
+    )
+
     // Prepare camera matrix
     const vpMatrix = new Float32Array(viewProjectionMatrix.elements)
 
