@@ -225,7 +225,7 @@ fn generate_star_colors_simd_direct(
     colors_b: &mut [f32],
     count: usize,
 ) {
-    use std::simd::{f32x16, Simd};
+    use std::simd::f32x16;
 
     // Color constants as SIMD vectors (upgraded to f32x16)
     let white_r = f32x16::splat(1.0);
@@ -1062,20 +1062,21 @@ pub fn calculate_speed_multiplier(
     current_time: f64,
     current_multiplier: f32,
 ) -> f32 {
-    let mut speed_multiplier = 1.0;
+    // Calculate movement boost (reduced from 4.5 to 3.0)
+    let movement_boost: f32 = if is_moving { 3.0 } else { 1.0 };
 
-    // Apply movement boost
-    if is_moving {
-        speed_multiplier *= 4.5;
-    }
-
-    // Apply click boost with decay
+    // Calculate click boost with decay (shorter duration, reasonable power)
     let time_since_click = current_time - click_time;
-    if time_since_click < 1200.0 {
-        let click_decay = 1.0 - (time_since_click / 1200.0) as f32;
-        let click_boost = 1.0 + 4.3 * click_decay;
-        speed_multiplier *= click_boost;
-    }
+    let click_boost: f32 = if time_since_click < 800.0 {
+        let click_decay = 1.0 - (time_since_click / 800.0) as f32;
+        1.0 + 1.5 * click_decay // Max 2.5x boost
+    } else {
+        1.0
+    };
+
+    // Allow mild stacking but cap the total (smooth interaction)
+    let combined_boost = movement_boost * click_boost;
+    let speed_multiplier = combined_boost.min(5.0); // Cap at 5x total
 
     // Apply smoothing (lerp with factor 0.2)
     current_multiplier + (speed_multiplier - current_multiplier) * 0.2
