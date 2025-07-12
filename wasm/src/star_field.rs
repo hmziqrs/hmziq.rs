@@ -986,12 +986,12 @@ fn process_star_group_simd(
     time: f32,
     effects: &mut Vec<f32>,
 ) {
-    // Always use full effects for maximum quality
-    process_full_effects_simd(positions, count, time, effects);
+    // Always use star effects for maximum quality
+    process_star_effects_simd(positions, count, time, effects);
 }
 
-// Full quality effects with SIMD
-fn process_full_effects_simd(positions: &[f32], count: usize, time: f32, effects: &mut Vec<f32>) {
+// Star effects with SIMD
+fn process_star_effects_simd(positions: &[f32], count: usize, time: f32, effects: &mut Vec<f32>) {
     let time_3 = time * 3.0;
     let time_15 = time * 15.0;
     let time_3_vec = f32x8::splat(time_3);
@@ -1065,53 +1065,6 @@ fn process_full_effects_simd(positions: &[f32], count: usize, time: f32, effects
     }
 }
 
-// Medium quality effects (no sparkle)
-fn process_medium_effects_simd(positions: &[f32], count: usize, time: f32, effects: &mut Vec<f32>) {
-    let time_3 = time * 3.0;
-    let time_3_vec = f32x8::splat(time_3);
-    let factor_10 = f32x8::splat(10.0);
-    let twinkle_scale = f32x8::splat(0.3);
-    let twinkle_offset = f32x8::splat(0.7);
-
-    let chunks = count / 8;
-
-    for chunk in 0..chunks {
-        let base = chunk * 8;
-        let mut x_values = [0.0f32; 8];
-        let mut y_values = [0.0f32; 8];
-
-        for i in 0..8 {
-            let i3 = (base + i) * 3;
-            x_values[i] = positions[i3];
-            y_values[i] = positions[i3 + 1];
-        }
-
-        let x_vec = f32x8::from_array(x_values);
-        let y_vec = f32x8::from_array(y_values);
-
-        let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
-        let twinkle_vec = simd_sin_lookup_batch(twinkle_arg) * twinkle_scale + twinkle_offset;
-
-        let twinkle_arr: [f32; 8] = twinkle_vec.to_array();
-
-        for i in 0..8 {
-            effects.push(twinkle_arr[i]);
-            effects.push(0.0); // No sparkle
-        }
-    }
-
-    // Process remaining
-    let remaining_start = chunks * 8;
-    for i in remaining_start..count {
-        let i3 = i * 3;
-        let x = positions[i3];
-        let y = positions[i3 + 1];
-
-        let twinkle = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
-        effects.push(twinkle);
-        effects.push(0.0);
-    }
-}
 
 // Calculate speed multiplier with smooth transitions
 #[wasm_bindgen]
@@ -1274,82 +1227,6 @@ fn process_star_group(
 ) {
     // Always use SIMD version with full effects
     process_star_group_simd(positions, count, time, effects);
-}
-
-// Simple quality effects with SIMD (basic twinkle only)
-fn process_simple_effects_simd(positions: &[f32], count: usize, time: f32, effects: &mut Vec<f32>) {
-    // Process 16 stars at once (2x f32x8)
-    const CHUNK_SIZE: usize = 16;
-
-    let time_2 = time * 2.0;
-    let time_2_vec = f32x8::splat(time_2);
-    let factor_5 = f32x8::splat(5.0);
-    let twinkle_scale = f32x8::splat(0.2);
-    let twinkle_offset = f32x8::splat(0.8);
-
-    let chunks = count / CHUNK_SIZE;
-
-    // Prefetch next chunk while processing current
-    for chunk in 0..chunks {
-        let base = chunk * CHUNK_SIZE;
-
-        // Process first 8
-        let mut x_values = [0.0f32; 8];
-        let mut y_values = [0.0f32; 8];
-
-        for i in 0..8 {
-            let i3 = (base + i) * 3;
-            x_values[i] = positions[i3];
-            y_values[i] = positions[i3 + 1];
-        }
-
-        let x_vec = f32x8::from_array(x_values);
-        let y_vec = f32x8::from_array(y_values);
-
-        let twinkle_arg = time_2_vec + x_vec * factor_5 + y_vec * factor_5;
-        let twinkle_vec = simd_sin_lookup_batch(twinkle_arg) * twinkle_scale + twinkle_offset;
-
-        let twinkle_arr: [f32; 8] = twinkle_vec.to_array();
-
-        for i in 0..8 {
-            effects.push(twinkle_arr[i]);
-            effects.push(0.0);
-        }
-
-        // Process second 8
-        for i in 0..8 {
-            let i3 = (base + 8 + i) * 3;
-            x_values[i] = positions[i3];
-            y_values[i] = positions[i3 + 1];
-        }
-
-        let x_vec = f32x8::from_array(x_values);
-        let y_vec = f32x8::from_array(y_values);
-
-        // Simple twinkle calculation
-        let twinkle_arg = time_2_vec + x_vec * factor_5 + y_vec * factor_5;
-        let twinkle_vec = simd_sin_lookup_batch(twinkle_arg) * twinkle_scale + twinkle_offset;
-
-        let twinkle_arr: [f32; 8] = twinkle_vec.to_array();
-
-        // No sparkle for simple mode
-        for i in 0..8 {
-            effects.push(twinkle_arr[i]);
-            effects.push(0.0);
-        }
-    }
-
-    // Process remaining
-    let remaining_start = chunks * 16;
-    for i in remaining_start..count {
-        let i3 = i * 3;
-        let x = positions[i3];
-        let y = positions[i3 + 1];
-
-        let twinkle = fast_sin_lookup(time * 2.0 + x * 5.0 + y * 5.0) * 0.2 + 0.8;
-        effects.push(twinkle);
-        effects.push(0.0);
-    }
 }
 
 // SIMD-optimized frustum culling for better performance
