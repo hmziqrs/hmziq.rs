@@ -280,7 +280,7 @@ export class StarFieldSharedMemory {
     }
     
     const word = this.visibilityMask[wordIndex]
-    return (word & (1n << BigInt(bitIndex))) !== 0n
+    return (word & (BigInt(1) << BigInt(bitIndex))) !== BigInt(0)
   }
 
   // Set visibility for a specific star
@@ -292,7 +292,7 @@ export class StarFieldSharedMemory {
       return
     }
     
-    const mask = 1n << BigInt(bitIndex)
+    const mask = BigInt(1) << BigInt(bitIndex)
     if (visible) {
       this.visibilityMask[wordIndex] |= mask
     } else {
@@ -315,7 +315,7 @@ export class StarFieldSharedMemory {
     // Handle remaining bits in the last partial word
     const remainingBits = this.count % 64
     if (remainingBits > 0 && completeWords < this.visibilityMask.length) {
-      const mask = (1n << BigInt(remainingBits)) - 1n
+      const mask = (BigInt(1) << BigInt(remainingBits)) - BigInt(1)
       const maskedWord = this.visibilityMask[completeWords] & mask
       visibleCount += this.popCount64(maskedWord)
     }
@@ -326,9 +326,9 @@ export class StarFieldSharedMemory {
   // Efficient 64-bit population count (count set bits)
   private popCount64(n: bigint): number {
     let count = 0
-    while (n !== 0n) {
+    while (n !== BigInt(0)) {
       count++
-      n &= n - 1n // Clear the lowest set bit
+      n &= n - BigInt(1) // Clear the lowest set bit
     }
     return count
   }
