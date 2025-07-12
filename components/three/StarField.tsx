@@ -88,6 +88,7 @@ function Stars() {
   const isMovingRef = useRef(false)
   const clickBoostRef = useRef(0)
   const mouseMoveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const shouldBoostFromClick = useRef(false)
 
   // Rotation tracking
   const rotationXRef = useRef(0)
@@ -132,7 +133,7 @@ function Stars() {
     }
 
     const handleClick = () => {
-      clickBoostRef.current = Date.now()
+      shouldBoostFromClick.current = true
     }
 
     const handleScroll = () => {
@@ -237,10 +238,16 @@ function Stars() {
       lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
     lastFrameTimeRef.current = currentFrameTime
 
+    // Capture click time in Three.js clock time
+    if (shouldBoostFromClick.current) {
+      clickBoostRef.current = currentFrameTime
+      shouldBoostFromClick.current = false
+    }
+
     // Calculate speed multiplier based on mouse/scroll interactions
     speedMultiplierRef.current = wasmModule.calculate_speed_multiplier(
       isMovingRef.current,
-      clickBoostRef.current / 1000, // Convert to seconds
+      clickBoostRef.current, // Already in seconds (Three.js time)
       currentFrameTime,
       speedMultiplierRef.current
     )
@@ -255,7 +262,7 @@ function Stars() {
       deltaTime,
       vpMatrix,
       isMovingRef.current,
-      clickBoostRef.current / 1000, // Convert to seconds
+      clickBoostRef.current, // Already in seconds (Three.js time)
       speedMultiplierRef.current
     )
 
