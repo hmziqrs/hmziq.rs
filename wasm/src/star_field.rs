@@ -1067,8 +1067,8 @@ pub fn calculate_speed_multiplier(
 
     // Calculate click boost with decay
     let time_since_click = current_time - click_time;
-    let click_boost: f32 = if time_since_click < 1000.0 {
-        let click_decay = 1.0 - (time_since_click / 1000.0) as f32;
+    let click_boost: f32 = if time_since_click < 1.0 {
+        let click_decay = 1.0 - time_since_click as f32;
         1.0 + 4.0 * click_decay // Max 5.0x boost
     } else {
         1.0
