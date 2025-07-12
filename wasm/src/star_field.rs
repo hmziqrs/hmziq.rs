@@ -1177,7 +1177,7 @@ fn process_star_group(
     process_star_group_simd(positions, count, time, effects);
 }
 
-// SIMD-optimized frustum culling for better performance
+// SIMD-optimized frustum culling for better performance (upgraded to f32x16 for AVX-512)
 #[wasm_bindgen]
 pub fn cull_stars_by_frustum_simd(
     positions: &[f32],
@@ -1215,54 +1215,54 @@ pub fn cull_stars_by_frustum_simd(
         }
     }
 
-    // Process in SIMD batches
-    let chunks = count / 4; // Process 4 stars at a time with f32x4
-    let neg_margin = f32x4::splat(-margin);
+    // Process in SIMD batches (upgraded to f32x16 for AVX-512)
+    let chunks = count / 16; // Process 16 stars at a time with f32x16 (upgraded from 4)
+    let neg_margin = f32x16::splat(-margin);
 
     for chunk in 0..chunks {
-        let base_idx = chunk * 4;
+        let base_idx = chunk * 16;
 
-        // Load 4 star positions
-        let mut x_arr = [0.0f32; 4];
-        let mut y_arr = [0.0f32; 4];
-        let mut z_arr = [0.0f32; 4];
+        // Load 16 star positions (upgraded from 4)
+        let mut x_arr = [0.0f32; 16];
+        let mut y_arr = [0.0f32; 16];
+        let mut z_arr = [0.0f32; 16];
 
-        for i in 0..4 {
+        for i in 0..16 {
             let i3 = (base_idx + i) * 3;
             x_arr[i] = positions[i3];
             y_arr[i] = positions[i3 + 1];
             z_arr[i] = positions[i3 + 2];
         }
 
-        let x_vec = f32x4::from_array(x_arr);
-        let y_vec = f32x4::from_array(y_arr);
-        let z_vec = f32x4::from_array(z_arr);
+        let x_vec = f32x16::from_array(x_arr);
+        let y_vec = f32x16::from_array(y_arr);
+        let z_vec = f32x16::from_array(z_arr);
 
-        let mut inside_vec = f32x4::splat(1.0);
+        let mut inside_vec = f32x16::splat(1.0);
 
-        // Test against each plane
+        // Test against each plane (upgraded to f32x16)
         for plane in &normalized_planes {
-            let plane_x = f32x4::splat(plane[0]);
-            let plane_y = f32x4::splat(plane[1]);
-            let plane_z = f32x4::splat(plane[2]);
-            let plane_w = f32x4::splat(plane[3]);
+            let plane_x = f32x16::splat(plane[0]);
+            let plane_y = f32x16::splat(plane[1]);
+            let plane_z = f32x16::splat(plane[2]);
+            let plane_w = f32x16::splat(plane[3]);
 
             let distance = plane_x * x_vec + plane_y * y_vec + plane_z * z_vec + plane_w;
             let outside_mask = distance.simd_lt(neg_margin);
 
             // Update inside status
-            inside_vec = inside_vec * outside_mask.select(f32x4::splat(0.0), f32x4::splat(1.0));
+            inside_vec = inside_vec * outside_mask.select(f32x16::splat(0.0), f32x16::splat(1.0));
         }
 
-        // Store results
-        let inside_arr: [f32; 4] = inside_vec.to_array();
-        for i in 0..4 {
+        // Store results (upgraded to 16 values)
+        let inside_arr: [f32; 16] = inside_vec.to_array();
+        for i in 0..16 {
             visibility_mask[base_idx + i] = if inside_arr[i] > 0.5 { 1 } else { 0 };
         }
     }
 
-    // Process remaining stars
-    for i in chunks * 4..count {
+    // Process remaining stars (updated for 16-chunk processing)
+    for i in chunks * 16..count {
         let i3 = i * 3;
         let x = positions[i3];
         let y = positions[i3 + 1];

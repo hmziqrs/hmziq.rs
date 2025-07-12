@@ -335,13 +335,13 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 6.8: Upgrade Frustum Culling to f32x16
-**Status:** 🔴 NOT_STARTED
+**Status:** 🟢 COMPLETED
 **Goal:** Upgrade frustum culling from f32x4 to f32x16 (4x improvement!)
 
 ### Tasks:
-- [ ] Upgrade `cull_stars_by_frustum_simd()` from f32x4 to f32x16
-- [ ] Process 16 stars per iteration instead of 4
-- [ ] Keep `cull_stars_by_frustum_bitpacked()` as-is (already uses f32x8 with bitpacking)
+- [x] Upgrade `cull_stars_by_frustum_simd()` from f32x4 to f32x16
+- [x] Process 16 stars per iteration instead of 4
+- [x] Keep `cull_stars_by_frustum_bitpacked()` as-is (already uses f32x8 with bitpacking)
 
 ---
 
