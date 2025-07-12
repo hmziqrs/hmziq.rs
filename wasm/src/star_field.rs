@@ -1063,20 +1063,20 @@ pub fn calculate_speed_multiplier(
     current_multiplier: f32,
 ) -> f32 {
     // Calculate movement boost (move/scroll speed)
-    let movement_boost: f32 = if is_moving { 4.0 } else { 1.0 };
+    let movement_boost: f32 = if is_moving { 8.0 } else { 1.0 };
 
     // Calculate click boost with decay (500ms duration)
     let time_since_click = current_time - click_time;
     let click_boost: f32 = if time_since_click < 0.5 {
         let click_decay = 1.0 - (time_since_click / 0.5) as f32;
-        1.0 + 4.0 * click_decay // Max 5.0x boost
+        1.0 + 8.0 * click_decay // Max 9.0x boost
     } else {
         1.0
     };
 
     // Allow stacking but cap the total (smooth interaction)
     let combined_boost = movement_boost * click_boost;
-    let speed_multiplier = combined_boost.min(8.0); // Cap at 8x total
+    let speed_multiplier = combined_boost.min(15.0); // Cap at 15x total
 
     // Apply smoothing (lerp with factor 0.2)
     current_multiplier + (speed_multiplier - current_multiplier) * 0.2
