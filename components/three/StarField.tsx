@@ -7,7 +7,7 @@ import { getOptimizedFunctions, type WASMModule, StarFieldSharedMemory } from '@
 
 // SoA optimized shaders
 const VERTEX_SHADER = `
-  // Structure-of-Arrays attributes for optimal SIMD performance
+  // SoA attributes for SIMD
   attribute float positionX;
   attribute float positionY;
   attribute float positionZ;
@@ -24,7 +24,7 @@ const VERTEX_SHADER = `
   varying float vSparkle;
 
   void main() {
-    // Reconstruct position and color from SoA components
+    // Reconstruct from SoA
     vec3 position = vec3(positionX, positionY, positionZ);
     vec3 customColor = vec3(colorR, colorG, colorB);
 
@@ -55,10 +55,10 @@ const FRAGMENT_SHADER = `
     // Glow effect
     float glow = exp(-dist * 2.0) * 0.8 * (vSize / 10.0);
 
-    // Simplified spike effect (only when sparkling)
+    // Spike effect when sparkling
     float spike = 0.0;
     if (vSparkle > 0.1) {
-      // Use step functions instead of complex trig
+      // Use step functions
       vec2 coord = gl_PointCoord - 0.5;
       float cross = step(0.95, abs(coord.x)) + step(0.95, abs(coord.y));
       spike = cross * vSparkle * (1.0 - dist * 2.0);
@@ -76,7 +76,7 @@ function Stars() {
     height: typeof window !== 'undefined' ? window.innerHeight : 1080,
   })
 
-  // WASM module state - mandatory, no fallbacks
+  // WASM module state
   const [wasmModule, setWasmModule] = useState<WASMModule | null>(null)
   const wasmLoadingRef = useRef(false)
 
@@ -98,7 +98,7 @@ function Stars() {
   // Ref for star mesh
   const starMeshRef = useRef<THREE.Points>(null)
 
-  // Load WASM module - mandatory
+  // Load WASM module
   useEffect(() => {
     if (!wasmLoadingRef.current) {
       wasmLoadingRef.current = true
@@ -157,13 +157,13 @@ function Stars() {
   }, [])
 
   const starGroup = useMemo(() => {
-    // Calculate total star count for ultra tier - always in batches of 8 for SIMD
+    // Calculate star count (SIMD batches)
     const ultraStarDensity = 0.36 * 1.125 // Ultra tier multiplier
     const screenArea = screenDimensions.width * screenDimensions.height
     const rawCount = Math.floor((screenArea / 1000) * ultraStarDensity)
-    const totalCount = Math.ceil(rawCount / 8) * 8 // Round up to nearest multiple of 8
+    const totalCount = Math.ceil(rawCount / 8) * 8 // Round to multiple of 8
 
-    // Create material (doesn't depend on WASM)
+    // Create material
     const material = new THREE.ShaderMaterial({
       uniforms: {},
       vertexShader: VERTEX_SHADER,
@@ -185,15 +185,15 @@ function Stars() {
     if (wasmModule && starGroup && !sharedMemoryRef.current) {
       const { count } = starGroup
 
-      // Create shared memory - all star data lives in WASM linear memory
+      // Create shared memory
       sharedMemoryRef.current = new StarFieldSharedMemory(wasmModule, count)
 
-      // Update geometry attributes to use shared memory views
+      // Update geometry attributes
       if (starMeshRef.current?.geometry) {
         const geometry = starMeshRef.current.geometry
         const sharedMem = sharedMemoryRef.current
 
-        // SoA layout: separate attributes for optimal SIMD performance (zero-copy!)
+        // SoA layout for SIMD
         geometry.setAttribute('positionX', new THREE.BufferAttribute(sharedMem.positions_x, 1))
         geometry.setAttribute('positionY', new THREE.BufferAttribute(sharedMem.positions_y, 1))
         geometry.setAttribute('positionZ', new THREE.BufferAttribute(sharedMem.positions_z, 1))

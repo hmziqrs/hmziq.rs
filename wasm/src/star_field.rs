@@ -2,28 +2,26 @@ use std::cell::RefCell;
 use std::f32::consts::PI;
 use wasm_bindgen::prelude::*;
 
-// Import math utilities - now including f32x16 optimized functions
+// Import math utils
 use crate::math::{fast_sin_lookup_simd_16, seed_random, seed_random_simd_batch_16};
 
-// Note: init_sin_table no longer needed as sin lookup is now handled internally
 
-// SIMD imports - now mandatory, upgraded to f32x16 for AVX-512
+// SIMD imports f32x16
 use std::simd::cmp::SimdPartialOrd;
 use std::simd::f32x16;
 
-// SIMD batch size constants - upgraded to 16 for AVX-512
+// SIMD batch size
 const SIMD_BATCH_SIZE: usize = 16;
 
-// Persistent memory pool for zero-copy architecture
-// SAFETY: thread_local is safe in WASM's single-threaded environment
-// RefCell provides interior mutability for the pool
+// Memory pool
+// SAFETY: thread_local safe in WASM single-threaded
 thread_local! {
     static STAR_MEMORY_POOL: RefCell<Option<StarMemoryPool>> = const { RefCell::new(None) };
 }
 
 #[repr(C)]
 pub struct StarMemoryPool {
-    // Pure Structure-of-Arrays for optimal SIMD cache efficiency
+    // SoA layout
     positions_x: Vec<f32>, // [x1, x2, x3, x4, x5, x6, x7, x8, ...] - sequential for SIMD
     positions_y: Vec<f32>, // [y1, y2, y3, y4, y5, y6, y7, y8, ...] - sequential for SIMD
     positions_z: Vec<f32>, // [z1, z2, z3, z4, z5, z6, z7, z8, ...] - sequential for SIMD
@@ -43,11 +41,11 @@ pub struct StarMemoryPool {
 
 impl StarMemoryPool {
     fn new(count: usize) -> Self {
-        // Ensure count is aligned to SIMD batch size for optimal performance
+        // Align count to SIMD batch size
         let aligned_count = count.div_ceil(SIMD_BATCH_SIZE) * SIMD_BATCH_SIZE;
 
         Self {
-            // Initialize pure SoA arrays for optimal SIMD computation
+            // Initialize SoA arrays
             positions_x: Self::create_aligned_vec(aligned_count, 0.0),
             positions_y: Self::create_aligned_vec(aligned_count, 0.0),
             positions_z: Self::create_aligned_vec(aligned_count, 0.0),
@@ -62,19 +60,9 @@ impl StarMemoryPool {
         }
     }
 
-    // Create a Vec optimized for 64-byte boundaries for optimal AVX-512 performance
+    // Create aligned Vec
     fn create_aligned_vec(size: usize, default_value: f32) -> Vec<f32> {
-        // For WASM, simple vec! is sufficient as WASM linear memory is already well-aligned
-        // The WASM allocator typically provides good alignment for large allocations
-        // In native code, we would use custom alignment with techniques like:
-        // - aligned_alloc() or posix_memalign()
-        // - std::alloc::Layout::from_size_align()
-        // - Manual padding and pointer arithmetic
-        //
-        // For Phase 6 AVX-512 optimization, we rely on:
-        // 1. Large allocation alignment from WASM allocator
-        // 2. Sequential memory access patterns in SoA layout
-        // 3. SIMD batch sizes aligned to 16-element (64-byte) boundaries
+        // WASM allocator provides sufficient alignment
         vec![default_value; size]
     }
 
@@ -92,7 +80,7 @@ impl StarMemoryPool {
             sparkles_ptr: self.sparkles.as_mut_ptr() as u32,
             visibility_ptr: self.visibility_mask.as_mut_ptr() as u32,
             count: self.count,
-            // All SoA arrays have the same length (aligned count)
+            // SoA arrays same length
             positions_x_length: self.positions_x.len(),
             positions_y_length: self.positions_y.len(),
             positions_z_length: self.positions_z.len(),
@@ -109,7 +97,6 @@ impl StarMemoryPool {
 
 #[wasm_bindgen]
 pub struct StarMemoryPointers {
-    // Separate pointers for Structure-of-Arrays layout
     pub positions_x_ptr: u32,
     pub positions_y_ptr: u32,
     pub positions_z_ptr: u32,
@@ -121,7 +108,6 @@ pub struct StarMemoryPointers {
     pub sparkles_ptr: u32,
     pub visibility_ptr: u32,
     pub count: usize,
-    // Separate lengths for each SoA array
     pub positions_x_length: usize,
     pub positions_y_length: usize,
     pub positions_z_length: usize,
@@ -134,16 +120,13 @@ pub struct StarMemoryPointers {
     pub visibility_length: usize,
 }
 
-// SIMD sin lookup helper function (optimized f32x16 version for AVX-512)
+// SIMD sin lookup f32x16
 fn simd_sin_lookup_batch_16(values: f32x16) -> f32x16 {
-    // Use the optimized SIMD lookup function from math.rs
+    // Use SIMD lookup
     fast_sin_lookup_simd_16(values)
 }
 
-
-
-
-// SIMD color generation - generates directly into SoA arrays for maximum performance (upgraded to f32x16)
+// SIMD color generation SoA
 fn generate_star_colors_simd_direct(
     colors_r: &mut [f32],
     colors_g: &mut [f32],
@@ -174,7 +157,7 @@ fn generate_star_colors_simd_direct(
     let threshold_70 = f32x16::splat(0.7);
     let threshold_85 = f32x16::splat(0.85);
 
-    // Process in batches of 16 stars (upgraded from 8 for AVX-512)
+    // Process 16-star batches
     let chunks = count / SIMD_BATCH_SIZE;
 
     for chunk in 0..chunks {
@@ -214,7 +197,7 @@ fn generate_star_colors_simd_direct(
         result_b.copy_to_slice(&mut colors_b[base_idx..base_idx + SIMD_BATCH_SIZE]);
     }
 
-    // Handle remaining stars (count % 16) using scalar fallback
+    // Handle remaining stars scalar
     let remaining = count % SIMD_BATCH_SIZE;
     if remaining > 0 {
         let base_idx = chunks * SIMD_BATCH_SIZE;
@@ -239,11 +222,11 @@ fn generate_star_colors_simd_direct(
     }
 }
 
-// SIMD size generation - generates directly into SoA arrays for maximum performance (upgraded to f32x16)
+// SIMD size generation SoA
 fn generate_star_sizes_simd_direct(sizes: &mut [f32], count: usize, size_multiplier: f32) {
     use std::simd::f32x16;
 
-    // Size calculation constants (upgraded to f32x16)
+    // Size constants f32x16
     let threshold_70 = f32x16::splat(0.7);
     let small_base = f32x16::splat(1.0);
     let small_range = f32x16::splat(1.5);
@@ -251,17 +234,17 @@ fn generate_star_sizes_simd_direct(sizes: &mut [f32], count: usize, size_multipl
     let large_range = f32x16::splat(2.0);
     let multiplier = f32x16::splat(size_multiplier);
 
-    // Process in batches of 16 stars (upgraded from 8 for AVX-512)
+    // Process 16-star batches
     let chunks = count / SIMD_BATCH_SIZE;
 
     for chunk in 0..chunks {
         let base_idx = chunk * SIMD_BATCH_SIZE;
         let start_index = base_idx as i32;
 
-        // Generate 16 size choice values
+        // Generate size values
         let size_random = seed_random_simd_batch_16(start_index + 4000);
 
-        // Generate additional random values for size calculation
+        // Generate size random values
         let small_random = seed_random_simd_batch_16(start_index + 5000);
         let large_random = seed_random_simd_batch_16(start_index + 6000);
 
@@ -284,7 +267,7 @@ fn generate_star_sizes_simd_direct(sizes: &mut [f32], count: usize, size_multipl
         final_sizes.copy_to_slice(&mut sizes[base_idx..base_idx + SIMD_BATCH_SIZE]);
     }
 
-    // Handle remaining stars (count % 16) using scalar fallback
+    // Handle remaining stars scalar
     let remaining = count % SIMD_BATCH_SIZE;
     if remaining > 0 {
         let base_idx = chunks * SIMD_BATCH_SIZE;
@@ -317,7 +300,7 @@ fn generate_star_positions_simd_direct(
     let two_vec = f32x16::splat(2.0);
     let one_vec = f32x16::splat(1.0);
 
-    // Process in batches of 16 stars (upgraded from 8 for AVX-512)
+    // Process 16-star batches
     let chunks = count / SIMD_BATCH_SIZE;
 
     for chunk in 0..chunks {
@@ -373,7 +356,7 @@ fn generate_star_positions_simd_direct(
         z_vec.copy_to_slice(&mut positions_z[base_idx..base_idx + SIMD_BATCH_SIZE]);
     }
 
-    // Handle remaining stars (count % 16) using scalar fallback
+    // Handle remaining stars scalar
     let remaining = count % SIMD_BATCH_SIZE;
     if remaining > 0 {
         let base_idx = chunks * SIMD_BATCH_SIZE;
@@ -510,8 +493,10 @@ fn calculate_effects_into_buffers_simd(
         let twinkle_array: [f32; SIMD_BATCH_SIZE] = final_twinkle.to_array();
         let sparkle_array: [f32; SIMD_BATCH_SIZE] = sparkle_values.to_array();
 
-        twinkles[base_idx..(SIMD_BATCH_SIZE + base_idx)].copy_from_slice(&twinkle_array[..SIMD_BATCH_SIZE]);
-        sparkles[base_idx..(SIMD_BATCH_SIZE + base_idx)].copy_from_slice(&sparkle_array[..SIMD_BATCH_SIZE]);
+        twinkles[base_idx..(SIMD_BATCH_SIZE + base_idx)]
+            .copy_from_slice(&twinkle_array[..SIMD_BATCH_SIZE]);
+        sparkles[base_idx..(SIMD_BATCH_SIZE + base_idx)]
+            .copy_from_slice(&sparkle_array[..SIMD_BATCH_SIZE]);
 
         // Process second chunk (16 more stars) - unrolled for better ILP
         let chunk2 = chunk + 1;
@@ -542,8 +527,10 @@ fn calculate_effects_into_buffers_simd(
         let twinkle_array2: [f32; SIMD_BATCH_SIZE] = final_twinkle2.to_array();
         let sparkle_array2: [f32; SIMD_BATCH_SIZE] = sparkle_values2.to_array();
 
-        twinkles[base_idx2..(SIMD_BATCH_SIZE + base_idx2)].copy_from_slice(&twinkle_array2[..SIMD_BATCH_SIZE]);
-        sparkles[base_idx2..(SIMD_BATCH_SIZE + base_idx2)].copy_from_slice(&sparkle_array2[..SIMD_BATCH_SIZE]);
+        twinkles[base_idx2..(SIMD_BATCH_SIZE + base_idx2)]
+            .copy_from_slice(&twinkle_array2[..SIMD_BATCH_SIZE]);
+        sparkles[base_idx2..(SIMD_BATCH_SIZE + base_idx2)]
+            .copy_from_slice(&sparkle_array2[..SIMD_BATCH_SIZE]);
     }
 
     // Process remaining chunks that couldn't be unrolled
@@ -593,8 +580,10 @@ fn calculate_effects_into_buffers_simd(
         let twinkle_array: [f32; SIMD_BATCH_SIZE] = final_twinkle.to_array();
         let sparkle_array: [f32; SIMD_BATCH_SIZE] = sparkle_values.to_array();
 
-        twinkles[base_idx..(SIMD_BATCH_SIZE + base_idx)].copy_from_slice(&twinkle_array[..SIMD_BATCH_SIZE]);
-        sparkles[base_idx..(SIMD_BATCH_SIZE + base_idx)].copy_from_slice(&sparkle_array[..SIMD_BATCH_SIZE]);
+        twinkles[base_idx..(SIMD_BATCH_SIZE + base_idx)]
+            .copy_from_slice(&twinkle_array[..SIMD_BATCH_SIZE]);
+        sparkles[base_idx..(SIMD_BATCH_SIZE + base_idx)]
+            .copy_from_slice(&sparkle_array[..SIMD_BATCH_SIZE]);
     }
 
     // Process remaining elements scalar-style (small count, direct processing)
@@ -632,9 +621,6 @@ pub fn calculate_rotation_delta(
     ]
 }
 
-
-
-
 // Calculate speed multiplier with smooth transitions
 #[wasm_bindgen]
 pub fn calculate_speed_multiplier(
@@ -664,11 +650,6 @@ pub fn calculate_speed_multiplier(
 }
 
 // Note: get_sin_table() helper function has been removed as we now use fast_sin_lookup directly
-
-
-
-
-
 
 // Frame update result structure
 #[wasm_bindgen]
