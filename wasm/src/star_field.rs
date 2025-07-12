@@ -1095,58 +1095,6 @@ pub fn calculate_speed_multiplier(
 
 // Note: get_sin_table() helper function has been removed as we now use fast_sin_lookup directly
 
-// Camera frustum culling - returns visibility mask
-#[wasm_bindgen]
-pub fn cull_stars_by_frustum(
-    positions: &[f32],
-    count: usize,
-    camera_matrix: &[f32],
-    fov: f32,
-    aspect_ratio: f32,
-    near: f32,
-    far: f32,
-) -> Vec<u8> {
-    if camera_matrix.len() != 16 {
-        // Invalid matrix, return all visible
-        return vec![1; count];
-    }
-
-    let mut visibility_mask = vec![0u8; count];
-
-    // Extract frustum planes from view projection matrix
-    let planes = extract_frustum_planes(camera_matrix);
-
-    // Normalize planes
-    let mut normalized_planes = planes;
-    for plane in &mut normalized_planes {
-        normalize_plane(plane);
-    }
-
-    // Check each star against frustum planes
-    for i in 0..count {
-        let i3 = i * 3;
-        let x = positions[i3];
-        let y = positions[i3 + 1];
-        let z = positions[i3 + 2];
-
-        let mut inside = true;
-
-        // Test against each plane
-        for plane in &normalized_planes {
-            let distance = plane[0] * x + plane[1] * y + plane[2] * z + plane[3];
-
-            // Star is outside if behind any plane (with small margin for star size)
-            if distance < -2.0 {
-                inside = false;
-                break;
-            }
-        }
-
-        visibility_mask[i] = if inside { 1 } else { 0 };
-    }
-
-    visibility_mask
-}
 
 // Get indices of visible stars (more efficient than returning mask)
 #[wasm_bindgen]
@@ -1337,47 +1285,6 @@ pub fn cull_stars_by_frustum_simd(
     visibility_mask
 }
 
-// Temporal coherence optimization - update only stars that have changed significantly
-#[wasm_bindgen]
-pub fn calculate_star_effects_with_temporal_coherence(
-    positions: &[f32],
-    previous_twinkles: &[f32],
-    previous_sparkles: &[f32],
-    count: usize,
-    time: f32,
-    threshold: f32,
-) -> Vec<f32> {
-    // Result format: [need_update_flag, twinkle, sparkle] triplets
-    let mut results = Vec::with_capacity(count * 3);
-
-    for i in 0..count {
-        let i3 = i * 3;
-        let x = positions[i3];
-        let y = positions[i3 + 1];
-
-        // Calculate new effects
-        let twinkle_base = fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
-        let sparkle_phase = fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
-        let sparkle = if sparkle_phase > 0.98 {
-            (sparkle_phase - 0.98) / 0.02
-        } else {
-            0.0
-        };
-        let twinkle = twinkle_base + sparkle;
-
-        // Check if update is needed
-        let twinkle_diff = (twinkle - previous_twinkles[i]).abs();
-        let sparkle_diff = (sparkle - previous_sparkles[i]).abs();
-
-        let needs_update = twinkle_diff > threshold || sparkle_diff > threshold;
-
-        results.push(if needs_update { 1.0 } else { 0.0 });
-        results.push(twinkle);
-        results.push(sparkle);
-    }
-
-    results
-}
 
 // Get indices of stars that need updating based on temporal coherence
 #[wasm_bindgen]

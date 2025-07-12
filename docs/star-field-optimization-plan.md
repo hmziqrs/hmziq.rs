@@ -300,14 +300,14 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 6.5: Remove Non-SIMD Duplicates
-**Status:** 🔴 NOT_STARTED
+**Status:** 🟢 COMPLETED
 **Goal:** Keep only SIMD versions where both exist
 
 ### Tasks:
-- [ ] Remove `cull_stars_by_frustum()` (non-SIMD version)
-- [ ] Remove `calculate_star_effects_with_temporal_coherence()` (non-SIMD version)
-- [ ] Keep only SIMD versions of these functions
-- [ ] Update any callers if needed
+- [x] Remove `cull_stars_by_frustum()` (non-SIMD version)
+- [x] Remove `calculate_star_effects_with_temporal_coherence()` (non-SIMD version)
+- [x] Keep only SIMD versions of these functions
+- [x] Update any callers if needed
 
 ---
 
