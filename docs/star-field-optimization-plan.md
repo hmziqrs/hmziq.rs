@@ -226,7 +226,7 @@ This document tracks the implementation progress of star field optimizations. Ea
 ---
 
 ## Phase 6: Advanced SIMD Operations
-**Status:** 🟢 COMPLETED
+**Status:** 🟡 IN_PROGRESS (Partial f32x16 migration completed, cleanup needed)
 **Goal:** Maximize SIMD throughput
 
 ### Tasks:
@@ -236,7 +236,7 @@ This document tracks the implementation progress of star field optimizations. Ea
 - [x] Optimize sin/cos lookup tables for SIMD
 
 ### Implementation Details:
-- **f32x16 Upgrade**: All core SIMD functions upgraded from f32x8 to f32x16 (2x theoretical throughput)
+- **f32x16 Upgrade**: Core generation functions upgraded from f32x8 to f32x16
   - `calculate_effects_into_buffers_simd()` - star effects processing (16 stars per iteration)
   - `generate_star_positions_simd_direct()` - position generation with optimized sin/cos lookups
   - `generate_star_colors_simd_direct()` - color generation with SIMD masking
@@ -247,6 +247,124 @@ This document tracks the implementation progress of star field optimizations. Ea
 - **Memory Alignment**: Updated comments for 64-byte boundary alignment for AVX-512
 - **Batch Size**: Upgraded SIMD_BATCH_SIZE from 8 to 16 elements
 - **Performance**: 2x theoretical speedup from f32x16 + additional 10-15% from loop optimizations
+
+**Note:** Phase 6 requires sub-phases 6.1-6.10 for complete migration and cleanup
+
+---
+
+## Phase 6.1: Remove Orphaned Functions
+**Status:** 🔴 NOT_STARTED
+**Goal:** Clean up unused code that causes compiler warnings
+
+### Tasks:
+- [ ] Remove `seed_random_simd_batch()` from math.rs (unused f32x8 function)
+- [ ] Keep other functions for now (they're still used)
+
+---
+
+## Phase 6.2: Remove Quality Mode Parameters
+**Status:** 🔴 NOT_STARTED
+**Goal:** Simplify function signatures by removing quality parameters
+
+### Tasks:
+- [ ] Update `calculate_lod_distribution()` - remove `quality_tier` parameter
+- [ ] Update `calculate_star_effects_by_lod()` - remove `quality_tier` parameter  
+- [ ] Update `process_star_group()` - remove `quality_mode` parameter
+- [ ] Update `process_star_group_simd()` - remove `quality_mode` parameter
+- [ ] Fix all callers of these functions
+
+---
+
+## Phase 6.3: Remove Quality Mode Logic
+**Status:** 🔴 NOT_STARTED
+**Goal:** Remove all quality-based branching logic
+
+### Tasks:
+- [ ] In `calculate_lod_distribution()` - remove match statement, always use (0.2, 0.4) ratios
+- [ ] In `calculate_star_effects_by_lod()` - remove match statement, always use full effects
+- [ ] In `process_star_group_simd()` - remove match statement, always call full effects
+- [ ] In `process_star_group()` - simplify to always use SIMD version
+
+---
+
+## Phase 6.4: Remove Quality-Specific Implementations
+**Status:** 🔴 NOT_STARTED
+**Goal:** Delete functions that were only used for lower quality modes
+
+### Tasks:
+- [ ] Delete `process_simple_effects_simd()` function
+- [ ] Delete `process_medium_effects_simd()` function
+- [ ] Rename `process_full_effects_simd()` to `process_star_effects_simd()`
+- [ ] Update all references to use the renamed function
+
+---
+
+## Phase 6.5: Remove Non-SIMD Duplicates
+**Status:** 🔴 NOT_STARTED
+**Goal:** Keep only SIMD versions where both exist
+
+### Tasks:
+- [ ] Remove `cull_stars_by_frustum()` (non-SIMD version)
+- [ ] Remove `calculate_star_effects_with_temporal_coherence()` (non-SIMD version)
+- [ ] Keep only SIMD versions of these functions
+- [ ] Update any callers if needed
+
+---
+
+## Phase 6.6: Upgrade Core Effects Functions to f32x16
+**Status:** 🔴 NOT_STARTED
+**Goal:** Complete f32x16 migration for main effect calculations
+
+### Tasks:
+- [ ] Upgrade `process_star_effects_simd()` from f32x8 to f32x16
+- [ ] Update loop to process 16 stars per iteration
+- [ ] Replace all f32x8 types with f32x16
+- [ ] Update `simd_sin_lookup_batch` calls to `simd_sin_lookup_batch_16`
+
+---
+
+## Phase 6.7: Upgrade Temporal Coherence to f32x16
+**Status:** 🔴 NOT_STARTED
+**Goal:** Complete f32x16 migration for temporal coherence
+
+### Tasks:
+- [ ] Upgrade `calculate_star_effects_temporal_simd()` from f32x8 to f32x16
+- [ ] Update loop to process 16 stars per iteration
+- [ ] Update all SIMD vector operations
+
+---
+
+## Phase 6.8: Upgrade Frustum Culling to f32x16
+**Status:** 🔴 NOT_STARTED
+**Goal:** Upgrade frustum culling from f32x4 to f32x16 (4x improvement!)
+
+### Tasks:
+- [ ] Upgrade `cull_stars_by_frustum_simd()` from f32x4 to f32x16
+- [ ] Process 16 stars per iteration instead of 4
+- [ ] Keep `cull_stars_by_frustum_bitpacked()` as-is (already uses f32x8 with bitpacking)
+
+---
+
+## Phase 6.9: Remove Legacy SIMD Helpers
+**Status:** 🔴 NOT_STARTED
+**Goal:** Clean up f32x8 helper functions
+
+### Tasks:
+- [ ] Delete `simd_sin_lookup_batch()` (f32x8 version)
+- [ ] Ensure all code uses `simd_sin_lookup_batch_16()` (f32x16 version)
+- [ ] Update any remaining references
+
+---
+
+## Phase 6.10: Final Documentation Update
+**Status:** 🔴 NOT_STARTED
+**Goal:** Update documentation to reflect all changes
+
+### Tasks:
+- [ ] Update optimization plan with all sub-phases completed
+- [ ] Document the removal of quality modes
+- [ ] Document consistent f32x16 usage
+- [ ] Mark Phase 6 as COMPLETED with all sub-phases
 
 ---
 
