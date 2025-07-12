@@ -7,7 +7,7 @@ import { getOptimizedFunctions, type WASMModule, StarFieldSharedMemory } from '@
 
 // SoA optimized shaders
 const VERTEX_SHADER = `
-  // Structure-of-Arrays attributes for optimal SIMD performance
+  // SoA attributes for SIMD
   attribute float positionX;
   attribute float positionY;
   attribute float positionZ;
@@ -24,7 +24,7 @@ const VERTEX_SHADER = `
   varying float vSparkle;
 
   void main() {
-    // Reconstruct position and color from SoA components
+    // Reconstruct from SoA
     vec3 position = vec3(positionX, positionY, positionZ);
     vec3 customColor = vec3(colorR, colorG, colorB);
 
@@ -55,10 +55,10 @@ const FRAGMENT_SHADER = `
     // Glow effect
     float glow = exp(-dist * 2.0) * 0.8 * (vSize / 10.0);
 
-    // Simplified spike effect (only when sparkling)
+    // Spike effect when sparkling
     float spike = 0.0;
     if (vSparkle > 0.1) {
-      // Use step functions instead of complex trig
+      // Use step functions
       vec2 coord = gl_PointCoord - 0.5;
       float cross = step(0.95, abs(coord.x)) + step(0.95, abs(coord.y));
       spike = cross * vSparkle * (1.0 - dist * 2.0);
@@ -76,29 +76,23 @@ function Stars() {
     height: typeof window !== 'undefined' ? window.innerHeight : 1080,
   })
 
-  // WASM module state - mandatory, no fallbacks
   const [wasmModule, setWasmModule] = useState<WASMModule | null>(null)
   const wasmLoadingRef = useRef(false)
 
-  // Shared memory state
   const sharedMemoryRef = useRef<StarFieldSharedMemory | null>(null)
 
-  // Mouse interaction state
   const speedMultiplierRef = useRef(1)
   const isMovingRef = useRef(false)
   const clickBoostRef = useRef(0)
   const mouseMoveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const shouldBoostFromClick = useRef(false)
 
-  // Rotation tracking
   const rotationXRef = useRef(0)
   const rotationYRef = useRef(0)
   const lastFrameTimeRef = useRef(0)
 
-  // Ref for star mesh
   const starMeshRef = useRef<THREE.Points>(null)
 
-  // Load WASM module - mandatory
   useEffect(() => {
     if (!wasmLoadingRef.current) {
       wasmLoadingRef.current = true
@@ -108,7 +102,6 @@ function Stars() {
         })
         .catch((error) => {
           console.error('WASM SIMD module failed to load:', error)
-          // No fallback - WASM is required
         })
     }
   }, [])
@@ -157,13 +150,11 @@ function Stars() {
   }, [])
 
   const starGroup = useMemo(() => {
-    // Calculate total star count for ultra tier - always in batches of 8 for SIMD
     const ultraStarDensity = 0.36 * 1.125 // Ultra tier multiplier
     const screenArea = screenDimensions.width * screenDimensions.height
     const rawCount = Math.floor((screenArea / 1000) * ultraStarDensity)
-    const totalCount = Math.ceil(rawCount / 8) * 8 // Round up to nearest multiple of 8
+    const totalCount = Math.ceil(rawCount / 8) * 8
 
-    // Create material (doesn't depend on WASM)
     const material = new THREE.ShaderMaterial({
       uniforms: {},
       vertexShader: VERTEX_SHADER,
@@ -180,20 +171,16 @@ function Stars() {
     }
   }, [screenDimensions])
 
-  // Initialize shared memory when WASM is available
   useEffect(() => {
     if (wasmModule && starGroup && !sharedMemoryRef.current) {
       const { count } = starGroup
 
-      // Create shared memory - all star data lives in WASM linear memory
       sharedMemoryRef.current = new StarFieldSharedMemory(wasmModule, count)
 
-      // Update geometry attributes to use shared memory views
       if (starMeshRef.current?.geometry) {
         const geometry = starMeshRef.current.geometry
         const sharedMem = sharedMemoryRef.current
 
-        // SoA layout: separate attributes for optimal SIMD performance (zero-copy!)
         geometry.setAttribute('positionX', new THREE.BufferAttribute(sharedMem.positions_x, 1))
         geometry.setAttribute('positionY', new THREE.BufferAttribute(sharedMem.positions_y, 1))
         geometry.setAttribute('positionZ', new THREE.BufferAttribute(sharedMem.positions_z, 1))
@@ -204,7 +191,7 @@ function Stars() {
         geometry.setAttribute('twinkle', new THREE.BufferAttribute(sharedMem.twinkles, 1))
         geometry.setAttribute('sparkle', new THREE.BufferAttribute(sharedMem.sparkles, 1))
 
-        // Manually compute bounding box for SoA layout - CRITICAL for rendering!
+        // CRITICAL: Compute bounding box for SoA layout
         const minX = Math.min(...sharedMem.positions_x.slice(0, count))
         const maxX = Math.max(...sharedMem.positions_x.slice(0, count))
         const minY = Math.min(...sharedMem.positions_y.slice(0, count))
@@ -217,56 +204,48 @@ function Stars() {
           new THREE.Vector3(maxX, maxY, maxZ)
         )
 
-        // CRITICAL: Tell Three.js how many vertices to render
-        // Required when using custom attributes without standard 'position' attribute
+        // CRITICAL: Set vertex count for custom attributes
         geometry.setDrawRange(0, count)
       }
     }
   }, [wasmModule, starGroup])
 
   useFrame((state) => {
-    if (!wasmModule || !sharedMemoryRef.current) return // Wait for WASM and shared memory
+    if (!wasmModule || !sharedMemoryRef.current) return
 
-    // Get camera view projection matrix for frustum culling
     const camera = state.camera as THREE.PerspectiveCamera
     const viewProjectionMatrix = new THREE.Matrix4()
     viewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
 
-    // Calculate delta time
     const currentFrameTime = state.clock.elapsedTime
     const deltaTime =
       lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
     lastFrameTimeRef.current = currentFrameTime
 
-    // Capture click time in Three.js clock time
     if (shouldBoostFromClick.current) {
       clickBoostRef.current = currentFrameTime
       shouldBoostFromClick.current = false
     }
 
-    // Calculate speed multiplier based on mouse/scroll interactions
     speedMultiplierRef.current = wasmModule.calculate_speed_multiplier(
       isMovingRef.current,
-      clickBoostRef.current, // Already in seconds (Three.js time)
+      clickBoostRef.current,
       currentFrameTime,
       speedMultiplierRef.current
     )
 
-    // Prepare camera matrix
     const vpMatrix = new Float32Array(viewProjectionMatrix.elements)
 
-    // Update frame using shared memory - all computation in WASM!
     const frameResult = sharedMemoryRef.current.updateFrame(
       wasmModule,
       state.clock.elapsedTime,
       deltaTime,
       vpMatrix,
       isMovingRef.current,
-      clickBoostRef.current, // Already in seconds (Three.js time)
+      clickBoostRef.current,
       speedMultiplierRef.current
     )
 
-    // Update rotation (still calculated in WASM)
     const baseRotationSpeedX = 0.02
     const baseRotationSpeedY = 0.01
     const rotationDelta = wasmModule.calculate_rotation_delta(
@@ -279,13 +258,11 @@ function Stars() {
     rotationXRef.current += rotationDelta[0]
     rotationYRef.current += rotationDelta[1]
 
-    // Apply rotation to star mesh
     if (starMeshRef.current) {
       starMeshRef.current.rotation.x = rotationXRef.current
       starMeshRef.current.rotation.y = rotationYRef.current
     }
 
-    // Update GPU attributes if needed
     if (starMeshRef.current?.geometry && frameResult.effects_dirty) {
       const geometry = starMeshRef.current.geometry
       const twinkleAttr = geometry.getAttribute('twinkle') as THREE.BufferAttribute

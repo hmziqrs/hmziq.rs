@@ -1,11 +1,10 @@
-// WASM SIMD module loader - mandatory WASM, no JavaScript fallbacks
+// WASM SIMD loader
 
 let wasmModule: WASMModule | null = null
 let loadPromise: Promise<WASMModule> | null = null
 
-// Structure-of-Arrays memory pointer structure
+// SoA memory pointers
 export interface StarMemoryPointers {
-  // Separate pointers for SoA layout
   positions_x_ptr: number
   positions_y_ptr: number
   positions_z_ptr: number
@@ -17,7 +16,6 @@ export interface StarMemoryPointers {
   sparkles_ptr: number
   visibility_ptr: number
   count: number
-  // Separate lengths for each SoA array
   positions_x_length: number
   positions_y_length: number
   positions_z_length: number
@@ -30,7 +28,6 @@ export interface StarMemoryPointers {
   visibility_length: number
 }
 
-// Frame update result structure
 export interface FrameUpdateResult {
   visible_count: number
   positions_dirty: boolean
@@ -66,17 +63,17 @@ export interface WASMModule {
 }
 
 export async function loadWASM(): Promise<WASMModule> {
-  // Return cached module if already loaded
+  // Return cached module
   if (wasmModule) {
     return wasmModule
   }
 
-  // Return existing load promise if loading is in progress
+  // Return load promise
   if (loadPromise) {
     return await loadPromise
   }
 
-  // Start mandatory WASM loading - fail if unavailable
+  // Load WASM module
   loadPromise = (async (): Promise<WASMModule> => {
     try {
       const wasmPath = '/wasm/pkg/hmziq_wasm_bg.wasm'
@@ -85,7 +82,7 @@ export async function loadWASM(): Promise<WASMModule> {
       const wasmImport = await import(/* webpackIgnore: true */ /* @ts-ignore */ wasmModulePath)
       await wasmImport.default(wasmPath)
 
-      // Create WASM module with essential functions only
+      // Create WASM module
       wasmModule = {
         // Shared memory management
         memory: wasmImport.get_wasm_memory(),
@@ -105,20 +102,18 @@ export async function loadWASM(): Promise<WASMModule> {
   return await loadPromise
 }
 
-// Direct export - WASM SIMD is mandatory
 export const getOptimizedFunctions = loadWASM
 
-// Simple status check
 export function isWASMLoaded(): boolean {
   return wasmModule !== null
 }
 
-// Zero-copy shared memory wrapper for star field
+// Shared memory wrapper
 export class StarFieldSharedMemory {
   private wasmMemory: WebAssembly.Memory
   private pointers: StarMemoryPointers
 
-  // Structure-of-Arrays for positions and colors (optimal for SIMD)
+  // SoA arrays
   public positions_x: Float32Array
   public positions_y: Float32Array
   public positions_z: Float32Array
@@ -126,7 +121,6 @@ export class StarFieldSharedMemory {
   public colors_g: Float32Array
   public colors_b: Float32Array
 
-  // Other attributes (already optimal)
   public sizes: Float32Array
   public twinkles: Float32Array
   public sparkles: Float32Array
@@ -136,7 +130,7 @@ export class StarFieldSharedMemory {
     this.wasmMemory = wasmModule.memory
     this.pointers = wasmModule.initialize_star_memory_pool(starCount)
 
-    // Create direct views into WASM memory for SoA layout (zero-copy!)
+    // Direct WASM memory views
     this.positions_x = new Float32Array(
       this.wasmMemory.buffer,
       this.pointers.positions_x_ptr,
@@ -198,8 +192,8 @@ export class StarFieldSharedMemory {
     return this.pointers.count
   }
 
-  // Phase 5: Bitpacked visibility utilities for JavaScript
-  // Check if a specific star is visible (star_index in 0..count)
+  // Bitpacked visibility utils
+  // Check star visibility
   isStarVisible(starIndex: number): boolean {
     const wordIndex = Math.floor(starIndex / 64)
     const bitIndex = starIndex % 64
@@ -229,19 +223,19 @@ export class StarFieldSharedMemory {
     }
   }
 
-  // Count total visible stars using efficient bit counting
+  // Count visible stars
   countVisibleStars(): number {
     let visibleCount = 0
     const completeWords = Math.floor(this.count / 64)
     
-    // Count bits in complete u64 words
+    // Count complete u64 words
     for (let i = 0; i < completeWords; i++) {
-      // Use built-in bit counting (fast on modern browsers)
+      // Use built-in bit counting
       const word = this.visibilityMask[i]
       visibleCount += this.popCount64(word)
     }
     
-    // Handle remaining bits in the last partial word
+    // Handle remaining bits
     const remainingBits = this.count % 64
     if (remainingBits > 0 && completeWords < this.visibilityMask.length) {
       const mask = (1n << BigInt(remainingBits)) - 1n
@@ -252,7 +246,7 @@ export class StarFieldSharedMemory {
     return visibleCount
   }
 
-  // Efficient 64-bit population count (count set bits)
+  // 64-bit population count
   private popCount64(n: bigint): number {
     let count = 0
     while (n !== 0n) {
@@ -262,7 +256,7 @@ export class StarFieldSharedMemory {
     return count
   }
 
-  // Zero-copy frame update
+  // Frame update
   updateFrame(
     wasmModule: WASMModule,
     time: number,
@@ -276,7 +270,7 @@ export class StarFieldSharedMemory {
     // TODO: Implement proper camera matrix handling in WASM
     const cameraPtr = 0
 
-    // All computation happens in WASM, modifies shared memory directly
+    // WASM computation, shared memory
     const result = wasmModule.update_frame_simd(
       time,
       deltaTime,
@@ -286,7 +280,7 @@ export class StarFieldSharedMemory {
       currentSpeedMultiplier
     )
 
-    // JavaScript arrays are automatically updated (shared memory!)
+    // Arrays auto-updated (shared memory)
     return result
   }
 }

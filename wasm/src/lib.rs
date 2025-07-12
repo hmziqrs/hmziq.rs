@@ -1,11 +1,10 @@
 #![feature(portable_simd)]
 use wasm_bindgen::prelude::*;
 
-// Module imports - active modules only
+// Module imports
 mod math;
 mod star_field;
 
-// Re-export public functions
 pub use math::*;
 pub use star_field::*;
 
@@ -22,7 +21,7 @@ macro_rules! console_log {
 
 
 
-// Export memory for JavaScript access
+// Export memory
 #[wasm_bindgen]
 pub fn get_wasm_memory() -> JsValue {
     wasm_bindgen::memory()
