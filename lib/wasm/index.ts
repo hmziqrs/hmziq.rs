@@ -87,6 +87,13 @@ export interface WASMModule {
     camera_matrix: Float32Array,
     margin: number
   ) => Uint8Array
+  // Phase 5: Bitpacked visibility culling (8x memory reduction)
+  cull_stars_by_frustum_bitpacked: (
+    positions: Float32Array,
+    count: number,
+    camera_matrix: Float32Array,
+    margin: number
+  ) => BigUint64Array
   // Animation functions
   calculate_speed_multiplier: (
     is_moving: boolean,
@@ -147,6 +154,7 @@ export async function loadWASM(): Promise<WASMModule> {
         // Camera frustum culling
         get_visible_star_indices: wasmImport.get_visible_star_indices,
         cull_stars_by_frustum_simd: wasmImport.cull_stars_by_frustum_simd,
+        cull_stars_by_frustum_bitpacked: wasmImport.cull_stars_by_frustum_bitpacked,
         // Animation functions
         calculate_speed_multiplier: wasmImport.calculate_speed_multiplier,
         calculate_rotation_delta: wasmImport.calculate_rotation_delta,
@@ -193,7 +201,7 @@ export class StarFieldSharedMemory {
   public sizes: Float32Array
   public twinkles: Float32Array
   public sparkles: Float32Array
-  public visibilityMask: Uint8Array
+  public visibilityMask: BigUint64Array
 
   constructor(wasmModule: WASMModule, starCount: number) {
     this.wasmMemory = wasmModule.memory
@@ -250,7 +258,7 @@ export class StarFieldSharedMemory {
       this.pointers.sparkles_length
     )
 
-    this.visibilityMask = new Uint8Array(
+    this.visibilityMask = new BigUint64Array(
       this.wasmMemory.buffer,
       this.pointers.visibility_ptr,
       this.pointers.visibility_length
@@ -259,6 +267,70 @@ export class StarFieldSharedMemory {
 
   get count(): number {
     return this.pointers.count
+  }
+
+  // Phase 5: Bitpacked visibility utilities for JavaScript
+  // Check if a specific star is visible (star_index in 0..count)
+  isStarVisible(starIndex: number): boolean {
+    const wordIndex = Math.floor(starIndex / 64)
+    const bitIndex = starIndex % 64
+    
+    if (wordIndex >= this.visibilityMask.length) {
+      return false
+    }
+    
+    const word = this.visibilityMask[wordIndex]
+    return (word & (1n << BigInt(bitIndex))) !== 0n
+  }
+
+  // Set visibility for a specific star
+  setStarVisible(starIndex: number, visible: boolean): void {
+    const wordIndex = Math.floor(starIndex / 64)
+    const bitIndex = starIndex % 64
+    
+    if (wordIndex >= this.visibilityMask.length) {
+      return
+    }
+    
+    const mask = 1n << BigInt(bitIndex)
+    if (visible) {
+      this.visibilityMask[wordIndex] |= mask
+    } else {
+      this.visibilityMask[wordIndex] &= ~mask
+    }
+  }
+
+  // Count total visible stars using efficient bit counting
+  countVisibleStars(): number {
+    let visibleCount = 0
+    const completeWords = Math.floor(this.count / 64)
+    
+    // Count bits in complete u64 words
+    for (let i = 0; i < completeWords; i++) {
+      // Use built-in bit counting (fast on modern browsers)
+      const word = this.visibilityMask[i]
+      visibleCount += this.popCount64(word)
+    }
+    
+    // Handle remaining bits in the last partial word
+    const remainingBits = this.count % 64
+    if (remainingBits > 0 && completeWords < this.visibilityMask.length) {
+      const mask = (1n << BigInt(remainingBits)) - 1n
+      const maskedWord = this.visibilityMask[completeWords] & mask
+      visibleCount += this.popCount64(maskedWord)
+    }
+    
+    return visibleCount
+  }
+
+  // Efficient 64-bit population count (count set bits)
+  private popCount64(n: bigint): number {
+    let count = 0
+    while (n !== 0n) {
+      count++
+      n &= n - 1n // Clear the lowest set bit
+    }
+    return count
   }
 
   // Zero-copy frame update

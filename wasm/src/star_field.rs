@@ -10,7 +10,7 @@ use crate::math::{fast_sin_lookup, seed_random, seed_random_simd_batch};
 // SIMD imports - now mandatory
 use std::simd::cmp::SimdPartialOrd;
 use std::simd::num::SimdFloat;
-use std::simd::{f32x4, f32x8};
+use std::simd::{f32x4, f32x8, mask32x8};
 
 // SIMD batch size constants
 const SIMD_BATCH_SIZE: usize = 8;
@@ -36,7 +36,7 @@ pub struct StarMemoryPool {
     sizes: Vec<f32>,          // [size1, size2, size3, ...] - already optimal
     twinkles: Vec<f32>,       // [twinkle1, twinkle2, ...] - computed values
     sparkles: Vec<f32>,       // [sparkle1, sparkle2, ...] - computed values
-    visibility_mask: Vec<u8>, // [visible1, visible2, ...] - culling results
+    visibility_mask: Vec<u64>, // Bitpacked visibility: 64 stars per u64 (8x memory reduction)
 
     // Metadata
     count: usize,
@@ -58,7 +58,7 @@ impl StarMemoryPool {
             sizes: Self::create_aligned_vec(aligned_count, 1.0),
             twinkles: Self::create_aligned_vec(aligned_count, 1.0),
             sparkles: Self::create_aligned_vec(aligned_count, 0.0),
-            visibility_mask: vec![1; aligned_count],
+            visibility_mask: vec![u64::MAX; (aligned_count + 63) / 64], // Bitpacked: all visible initially
             count, // Keep original count for indexing
         }
     }
@@ -671,6 +671,188 @@ pub fn calculate_star_effects_arrays(positions: &[f32], count: usize, time: f32)
     }
 
     effects
+}
+
+// Bitpacked visibility helper functions for Phase 5 optimization
+
+/// Set visibility bit for a single star (star_index in 0..count)
+#[inline]
+fn set_visibility_bit(visibility_mask: &mut [u64], star_index: usize, visible: bool) {
+    let word_index = star_index / 64;
+    let bit_index = star_index % 64;
+    
+    if word_index < visibility_mask.len() {
+        if visible {
+            visibility_mask[word_index] |= 1u64 << bit_index;
+        } else {
+            visibility_mask[word_index] &= !(1u64 << bit_index);
+        }
+    }
+}
+
+/// Get visibility bit for a single star (star_index in 0..count)
+#[inline]
+fn get_visibility_bit(visibility_mask: &[u64], star_index: usize) -> bool {
+    let word_index = star_index / 64;
+    let bit_index = star_index % 64;
+    
+    if word_index < visibility_mask.len() {
+        (visibility_mask[word_index] >> bit_index) & 1 != 0
+    } else {
+        false
+    }
+}
+
+/// SIMD bulk visibility operations - set 8 consecutive visibility bits
+/// Uses bit manipulation for 8x more efficient operations than byte arrays
+#[inline]
+fn set_visibility_bits_simd(visibility_mask: &mut [u64], start_index: usize, visibility_bits: u8) {
+    // Handle up to 8 stars starting at start_index
+    for i in 0..8 {
+        let star_index = start_index + i;
+        let visible = (visibility_bits >> i) & 1 != 0;
+        set_visibility_bit(visibility_mask, star_index, visible);
+    }
+}
+
+/// Count visible stars using SIMD population count (POPCNT)
+/// Much faster than iterating through individual bits
+fn count_visible_stars_simd(visibility_mask: &[u64], total_count: usize) -> usize {
+    let mut visible_count = 0;
+    
+    // Process complete u64 words using POPCNT
+    let complete_words = total_count / 64;
+    for i in 0..complete_words {
+        visible_count += visibility_mask[i].count_ones() as usize;
+    }
+    
+    // Handle remaining bits in the last partial word
+    let remaining_bits = total_count % 64;
+    if remaining_bits > 0 && complete_words < visibility_mask.len() {
+        let mask = (1u64 << remaining_bits) - 1; // Create mask for valid bits
+        let masked_word = visibility_mask[complete_words] & mask;
+        visible_count += masked_word.count_ones() as usize;
+    }
+    
+    visible_count
+}
+
+/// SIMD bitpacked frustum culling - 8x memory reduction
+/// Processes 8 stars at once and sets visibility bits directly
+#[wasm_bindgen]
+pub fn cull_stars_by_frustum_bitpacked(
+    positions: &[f32],
+    count: usize,
+    camera_matrix: &[f32],
+    margin: f32,
+) -> Vec<u64> {
+    if camera_matrix.len() != 16 {
+        // Return all visible for invalid matrix
+        return vec![u64::MAX; (count + 63) / 64];
+    }
+    
+    let mut visibility_mask = vec![0u64; (count + 63) / 64];
+    
+    // Extract and normalize frustum planes (same as SIMD version)
+    let m = camera_matrix;
+    let planes = [
+        [m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]],  // Left
+        [m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]],  // Right
+        [m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]],  // Bottom
+        [m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]],  // Top
+        [m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]], // Near
+        [m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]], // Far
+    ];
+    
+    let mut normalized_planes = [[0.0f32; 4]; 6];
+    for (i, plane) in planes.iter().enumerate() {
+        let length = (plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]).sqrt();
+        if length > 0.0 {
+            normalized_planes[i] = [
+                plane[0] / length,
+                plane[1] / length,
+                plane[2] / length,
+                plane[3] / length,
+            ];
+        }
+    }
+    
+    // SIMD processing with f32x8 - optimal for our SoA layout
+    let chunks = count / SIMD_BATCH_SIZE;
+    let neg_margin = f32x8::splat(-margin);
+    
+    for chunk in 0..chunks {
+        let base_idx = chunk * SIMD_BATCH_SIZE;
+        
+        // Load 8 star positions (taking advantage of SoA layout in calling code)
+        let mut x_arr = [0.0f32; 8];
+        let mut y_arr = [0.0f32; 8];
+        let mut z_arr = [0.0f32; 8];
+        
+        for i in 0..8 {
+            let i3 = (base_idx + i) * 3;
+            x_arr[i] = positions[i3];
+            y_arr[i] = positions[i3 + 1];
+            z_arr[i] = positions[i3 + 2];
+        }
+        
+        let x_vec = f32x8::from_array(x_arr);
+        let y_vec = f32x8::from_array(y_arr);
+        let z_vec = f32x8::from_array(z_arr);
+        
+        // Test against all 6 frustum planes
+        let mut inside_mask = mask32x8::splat(true); // Start with all visible
+        
+        for plane in &normalized_planes {
+            let plane_normal_x = f32x8::splat(plane[0]);
+            let plane_normal_y = f32x8::splat(plane[1]);
+            let plane_normal_z = f32x8::splat(plane[2]);
+            let plane_distance = f32x8::splat(plane[3]);
+            
+            // Calculate distance from each star to the plane
+            let distances = x_vec * plane_normal_x + y_vec * plane_normal_y + z_vec * plane_normal_z + plane_distance;
+            
+            // Star is inside if distance >= -margin
+            let plane_inside = distances.simd_ge(neg_margin);
+            
+            // AND with existing mask (star must be inside ALL planes)
+            inside_mask = inside_mask & plane_inside;
+        }
+        
+        // Convert SIMD mask to u8 for bitpacked storage
+        let inside_arr: [bool; 8] = inside_mask.to_array();
+        let mut visibility_bits = 0u8;
+        for i in 0..8 {
+            if inside_arr[i] {
+                visibility_bits |= 1u8 << i;
+            }
+        }
+        
+        // Set the 8 consecutive visibility bits
+        set_visibility_bits_simd(&mut visibility_mask, base_idx, visibility_bits);
+    }
+    
+    // Handle remaining stars (count % 8) using scalar fallback
+    let remaining_start = chunks * SIMD_BATCH_SIZE;
+    for i in remaining_start..count {
+        let i3 = i * 3;
+        let x = positions[i3];
+        let y = positions[i3 + 1];
+        let z = positions[i3 + 2];
+        
+        let mut inside = true;
+        for plane in &normalized_planes {
+            let distance = plane[0] * x + plane[1] * y + plane[2] * z + plane[3];
+            if distance < -margin {
+                inside = false;
+                break;
+            }
+        }
+        
+        set_visibility_bit(&mut visibility_mask, i, inside);
+    }
+    
+    visibility_mask
 }
 
 // Helper function to convert degrees to radians
