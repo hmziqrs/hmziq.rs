@@ -31,3 +31,13 @@ rustflags = [
     "-C",
     "target-feature=+simd128,+bulk-memory,+sign-ext,+mutable-globals",
 ]
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = [
+    "-O4",
+    "--one-caller-inline-max-function-size",
+    "-1",
+    "--inline-functions-with-loops",
+    "--fast-math",
+    "--converge",
+]
