@@ -13,17 +13,31 @@ bitflags = "2.4"
 
 [dependencies.web-sys]
 version = "0.3"
-features = [
-  "console",
-  "Performance",
-  "Window",
-]
+features = ["console", "Performance", "Window"]
 
 [profile.release]
-opt-level = 3
 lto = true
+opt-level = 3
 codegen-units = 1
+panic = "abort"
+overflow-checks = false
 
 [features]
 default = ["simd"]
 simd = []
+
+[target.wasm32-unknown-unknown]
+rustflags = [
+    "-C",
+    "target-feature=+simd128,+bulk-memory,+sign-ext,+mutable-globals",
+]
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = [
+    "-O4",
+    "--one-caller-inline-max-function-size",
+    "-1",
+    "--inline-functions-with-loops",
+    "--fast-math",
+    "--converge",
+]
