@@ -1,7 +1,11 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  output: 'export',
+  distDir: 'out',
   reactStrictMode: true,
+  trailingSlash: true, // Better for static hosting compatibility
+  poweredByHeader: false, // Security: Remove X-Powered-By header
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
@@ -10,6 +14,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ['image/avif', 'image/webp'],
+    unoptimized: true, // Required for static export
   },
   webpack: (config, { isServer }) => {
     // Add WASM support
@@ -35,44 +40,6 @@ const nextConfig: NextConfig = {
     }
 
     return config
-  },
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
-          },
-        ],
-      },
-      {
-        source: '/:path*.wasm',
-        headers: [
-          {
-            key: 'Content-Type',
-            value: 'application/wasm',
-          },
-        ],
-      },
-    ]
   },
 }
 

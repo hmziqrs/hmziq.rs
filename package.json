@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "bun run build:wasm && next build --turbopack",
+    "build:prod": "bun run build:wasm && next build",
     "build:wasm": "cd wasm && wasm-pack build --target web --out-dir pkg && node ../scripts/copy-wasm.js",
     "build:wasm:dev": "cd wasm && wasm-pack build --target web --out-dir pkg --dev && node ../scripts/copy-wasm.js",
     "start": "next start",
+    "preview": "bunx serve out",
+    "export": "bun run build:prod && echo 'Static files exported to ./out'",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",

@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -18,20 +22,26 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     },
     "target": "ES2020"
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
     "app/**/*",
     "components/**/*",
-    "lib/**/*",
     "hooks/**/*",
-    "types/**/*"
+    "lib/**/*",
+    "next-env.d.ts",
+    "types/**/*",
+    "out/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "legacy"]
+  "exclude": [
+    "node_modules",
+    "legacy"
+  ]
 }
