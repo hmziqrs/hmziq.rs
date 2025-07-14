@@ -2,33 +2,12 @@
 
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-
-interface SkillCategory {
-  title: string
-  skills: string[]
-  description: string
-}
-
-const skillCategories: SkillCategory[] = [
-  {
-    title: 'Frontend',
-    description: 'Crafting intuitive user experiences',
-    skills: ['TypeScript', 'React.js', 'Next.js', 'React Native'],
-  },
-  {
-    title: 'Backend',
-    description: 'Building robust server architectures',
-    skills: ['AdonisJS', 'Express.js', 'Rust (Axum)', 'Node.js'],
-  },
-  {
-    title: 'Cross-Platform',
-    description: 'Delivering seamless multi-platform solutions',
-    skills: ['Flutter', 'Dioxus', 'Electron', 'Tauri'],
-  },
-]
+import { userProfile } from '@/lib/content/UserProfile'
+import { siteContent } from '@/lib/content/SiteContent'
 
 const Skills: React.FC = () => {
   const prefersReducedMotion = useReducedMotion()
+  const skillCategories = userProfile.skills
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -91,7 +70,6 @@ const Skills: React.FC = () => {
                 {/* Category Header */}
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-white mb-2">{category.title}</h3>
-                  <p className="text-gray-400 text-sm">{category.description}</p>
                 </div>
 
                 {/* Skills Grid */}
@@ -116,14 +94,6 @@ const Skills: React.FC = () => {
             </motion.div>
           ))}
         </div>
-
-        {/* Additional Info */}
-        <motion.div className="text-center mt-16" variants={cardVariants}>
-          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            Continuously learning and adapting to new technologies. My focus is on delivering
-            high-quality solutions that make a real impact.
-          </p>
-        </motion.div>
       </motion.div>
     </section>
   )

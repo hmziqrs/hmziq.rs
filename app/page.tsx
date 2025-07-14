@@ -2,7 +2,6 @@
 
 import dynamic from 'next/dynamic'
 import Hero from '@/components/sections/Hero'
-import About from '@/components/sections/About'
 import Skills from '@/components/sections/Skills'
 import Contact from '@/components/sections/Contact'
 
@@ -24,7 +23,6 @@ export default function Home() {
       {/* Content sections */}
       <div className="relative" style={{ zIndex: 10 }}>
         <Hero />
-        <About />
         <Skills />
         <Contact />
       </div>

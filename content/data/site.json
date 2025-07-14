@@ -1,0 +1,83 @@
+{
+  "navigation": {
+    "sections": ["hero", "about", "skills", "contact"]
+  },
+  "skillCategories": {
+    "frontend": {
+      "title": "Frontend"
+    },
+    "backend": {
+      "title": "Backend"
+    },
+    "crossPlatform": {
+      "title": "Cross-Platform"
+    }
+  },
+  "socialPlatforms": {
+    "github": {
+      "name": "GitHub",
+      "baseUrl": "https://github.com/",
+      "description": "Open source contributions & projects",
+      "usernamePrefix": "@"
+    },
+    "linkedin": {
+      "name": "LinkedIn",
+      "baseUrl": "https://linkedin.com/in/",
+      "description": "Professional network & experience"
+    },
+    "twitter": {
+      "name": "Twitter",
+      "baseUrl": "https://twitter.com/",
+      "description": "Thoughts and updates",
+      "usernamePrefix": "@"
+    },
+    "instagram": {
+      "name": "Instagram",
+      "baseUrl": "https://instagram.com/",
+      "description": "Visual stories and moments",
+      "usernamePrefix": "@"
+    },
+    "youtube": {
+      "name": "YouTube",
+      "baseUrl": "https://youtube.com/@",
+      "description": "Video content and tutorials"
+    },
+    "medium": {
+      "name": "Medium",
+      "baseUrl": "https://medium.com/@",
+      "description": "Technical articles and insights",
+      "usernamePrefix": "@"
+    },
+    "dev": {
+      "name": "Dev.to",
+      "baseUrl": "https://dev.to/",
+      "description": "Developer community posts",
+      "usernamePrefix": "@"
+    },
+    "stackoverflow": {
+      "name": "Stack Overflow",
+      "baseUrl": "https://stackoverflow.com/users/",
+      "description": "Programming Q&A contributions"
+    }
+  },
+  "websiteTypes": {
+    "portfolio": {
+      "name": "Portfolio",
+      "description": "Personal website and projects"
+    },
+    "cv": {
+      "name": "CV/Resume",
+      "description": "Professional resume and experience"
+    }
+  },
+  "socialVisibility": {
+    "primary": ["github", "linkedin", "email"],
+    "hidden": ["twitter", "instagram", "youtube", "medium", "dev", "stackoverflow"]
+  },
+  "ui": {
+    "copyright": "© 2025 {name}. Crafted with passion and attention to detail.",
+    "scrollText": "SCROLL",
+    "backToTop": "↑ BACK TO TOP",
+    "connectMessage": "Always open to interesting conversations and collaboration opportunities."
+  }
+}

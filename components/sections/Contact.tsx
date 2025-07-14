@@ -2,37 +2,14 @@
 
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-
-interface SocialLink {
-  name: string
-  url: string
-  username: string
-  description: string
-}
-
-const socialLinks: SocialLink[] = [
-  {
-    name: 'GitHub',
-    url: 'https://github.com/hmziqrs',
-    username: '@hmziqrs',
-    description: 'Open source contributions & projects',
-  },
-  {
-    name: 'LinkedIn',
-    url: 'https://linkedin.com/in/hmziqrs',
-    username: 'hmziqrs',
-    description: 'Professional network & experience',
-  },
-  {
-    name: 'Email',
-    url: 'mailto:hello@hmziq.rs',
-    username: 'hello@hmziq.rs',
-    description: 'Direct communication',
-  },
-]
+import { userProfile } from '@/lib/content/UserProfile'
+import { siteContent } from '@/lib/content/SiteContent'
 
 const Contact: React.FC = () => {
   const prefersReducedMotion = useReducedMotion()
+  const primarySocialLinks = userProfile.getPrimarySocialLinks()
+  const allLinksForSEO = userProfile.getAllLinksForSEO()
+  const { connectMessage, copyright, backToTop } = siteContent.ui
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -87,12 +64,12 @@ const Contact: React.FC = () => {
           className="text-xl md:text-2xl text-gray-400 mb-16 max-w-2xl mx-auto leading-relaxed"
           variants={itemVariants}
         >
-          Always open to interesting conversations and collaboration opportunities.
+          {connectMessage}
         </motion.p>
 
-        {/* Social Links */}
+        {/* Primary Social Links */}
         <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16" variants={itemVariants}>
-          {socialLinks.map((link) => (
+          {primarySocialLinks.map((link) => (
             <motion.a
               key={link.name}
               href={link.url}
@@ -113,10 +90,20 @@ const Contact: React.FC = () => {
           ))}
         </motion.div>
 
+        {/* Hidden SEO Links */}
+        <div style={{ display: 'none' }} aria-hidden="true">
+          <h3>Additional Social Profiles and Links</h3>
+          {allLinksForSEO.map((link) => (
+            <a key={link.name} href={link.url} rel="noopener noreferrer">
+              {link.name}: {link.url}
+            </a>
+          ))}
+        </div>
+
         {/* Footer */}
         <motion.div className="border-t border-gray-800 pt-8" variants={itemVariants}>
           <p className="text-gray-600 text-sm">
-            © 2025 hmziqrs. Crafted with passion and attention to detail.
+            {copyright}
           </p>
 
           {/* Scroll to top */}
@@ -127,7 +114,7 @@ const Contact: React.FC = () => {
             className="mt-6 text-gray-500 hover:text-white transition-colors duration-300 text-sm tracking-widest"
             whileHover={{ scale: prefersReducedMotion ? 1 : 1.1 }}
           >
-            ↑ BACK TO TOP
+            {backToTop}
           </motion.button>
         </motion.div>
       </motion.div>
