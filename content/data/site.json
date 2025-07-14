@@ -75,9 +75,8 @@
     "hidden": ["twitter", "instagram", "youtube", "medium", "dev", "stackoverflow"]
   },
   "ui": {
-    "copyright": "© 2025 {name}. Crafted with passion and attention to detail.",
+    "copyright": "© 2025 {name}. Crafted with NextJS and Rust.",
     "scrollText": "SCROLL",
-    "backToTop": "↑ BACK TO TOP",
-    "connectMessage": "Always open to interesting conversations and collaboration opportunities."
+    "connectMessage": "Open to conversations and collaboration opportunities."
   }
 }

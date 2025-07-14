@@ -102,20 +102,7 @@ const Contact: React.FC = () => {
 
         {/* Footer */}
         <motion.div className="border-t border-gray-800 pt-8" variants={itemVariants}>
-          <p className="text-gray-600 text-sm">
-            {copyright}
-          </p>
-
-          {/* Scroll to top */}
-          <motion.button
-            onClick={() => {
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }}
-            className="mt-6 text-gray-500 hover:text-white transition-colors duration-300 text-sm tracking-widest"
-            whileHover={{ scale: prefersReducedMotion ? 1 : 1.1 }}
-          >
-            {backToTop}
-          </motion.button>
+          <p className="text-gray-600 text-sm">{copyright}</p>
         </motion.div>
       </motion.div>
     </section>

@@ -13,5 +13,10 @@
     "portfolio": "https://hmziq.rs",
     "cv": "https://cv.hmziq.rs"
   },
-  "socail": {}
+  "socail": {
+    "github": null,
+    "linkedin": null,
+    "twitter": null,
+    "instagram": null
+  }
 }
