@@ -1,9 +1,8 @@
 use std::cell::RefCell;
 use wasm_bindgen::prelude::*;
 
-use wasm_bindgen::prelude::*;
-
-use crate::math::fast_sin_lookup_simd_16;
+#[cfg(feature = "simd")]
+use core::arch::wasm32::*;
 
 const SIMD_BATCH_SIZE: usize = 16;
 const MAX_PARTICLES: usize = 10000;
@@ -64,7 +63,7 @@ pub fn initialize_scatter_text(max_particles: usize) -> ScatterTextPointers {
     let aligned_count = max_particles.div_ceil(SIMD_BATCH_SIZE) * SIMD_BATCH_SIZE;
     let flag_count = aligned_count.div_ceil(64);
 
-    let state = ScatterTextState {
+    let mut state = ScatterTextState {
         positions_x: vec![0.0; aligned_count],
         positions_y: vec![0.0; aligned_count],
         target_x: vec![0.0; aligned_count],
