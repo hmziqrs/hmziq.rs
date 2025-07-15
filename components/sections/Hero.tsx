@@ -2,9 +2,13 @@
 
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { userProfile } from '@/lib/content/UserProfile'
+import { siteContent } from '@/lib/content/SiteContent'
 
 const Hero: React.FC = () => {
   const prefersReducedMotion = useReducedMotion()
+  const { name, title } = userProfile.profile
+  const { scrollText } = siteContent.ui
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -29,18 +33,6 @@ const Hero: React.FC = () => {
     },
   }
 
-  const floatingVariants = {
-    initial: { y: 0 },
-    animate: {
-      y: prefersReducedMotion ? 0 : [-10, 10, -10],
-      transition: {
-        duration: 6,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      },
-    },
-  }
-
   return (
     <section id="hero" className="relative min-h-screen flex items-center justify-center px-6">
       <motion.div
@@ -50,33 +42,19 @@ const Hero: React.FC = () => {
         animate="visible"
       >
         {/* Name */}
-        <motion.div variants={floatingVariants} initial="initial" animate="animate">
-          <motion.h1
-            className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tight mb-4"
-            variants={itemVariants}
-          >
-            <span className="text-gradient">hmziqrs</span>
-          </motion.h1>
-        </motion.div>
+        <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tight">
+          <span className="text-gradient">{name}</span>
+        </h1>
+        <div className="h-6" />
 
         {/* Tagline */}
         <motion.p
-          className="text-xl md:text-2xl lg:text-3xl text-gray-400 mb-8 font-light tracking-wide"
+          className="text-xl md:text-2xl lg:text-3xl text-gray-400 mb-100 font-light tracking-wide "
           variants={itemVariants}
         >
-          Senior Software Engineer
+          {title}
         </motion.p>
 
-        {/* Subtitle */}
-        <motion.p
-          className="text-lg md:text-xl text-gray-500 mb-12 max-w-2xl mx-auto leading-relaxed"
-          variants={itemVariants}
-        >
-          Crafting exceptional digital experiences with{' '}
-          <span className="text-gray-300">9 years</span> of full-stack expertise
-        </motion.p>
-
-        {/* Scroll Indicator */}
         <motion.div
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
           variants={itemVariants}
@@ -105,7 +83,7 @@ const Hero: React.FC = () => {
               />
             </motion.div>
             <div className="h-2" />
-            <p className="text-gray-600 text-sm tracking-widest">SCROLL</p>
+            <p className="text-gray-600 text-sm tracking-widest">{scrollText}</p>
           </div>
         </motion.div>
       </motion.div>
