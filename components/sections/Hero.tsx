@@ -1,9 +1,15 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import dynamic from 'next/dynamic'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { userProfile } from '@/lib/content/UserProfile'
 import { siteContent } from '@/lib/content/SiteContent'
+
+// Dynamic import for Three.js component
+const ScatterText = dynamic(() => import('@/components/three/ScatterText'), {
+  ssr: false,
+})
 
 const Hero: React.FC = () => {
   const prefersReducedMotion = useReducedMotion()
@@ -34,18 +40,24 @@ const Hero: React.FC = () => {
   }
 
   return (
-    <section id="hero" className="relative min-h-screen flex items-center justify-center px-6">
+    <section id="hero" className="relative min-h-screen flex items-center  px-6 w-full">
       <motion.div
-        className="text-center max-w-4xl mx-auto"
+        className="text-center max-w-full mx-auto px-8   w-full"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Name */}
-        <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tight">
-          <span className="text-gradient">{name}</span>
-        </h1>
-        <div className="h-6" />
+        {/* Name with Scatter Text Effect */}
+        <div className="h-[160px] md:h-[200px] lg:h-[240px] w-full mx-auto">
+          <ScatterText
+            text={name}
+            fontFamily="Arial"
+            color="white"
+            skip={2}
+            autoAnimate={!prefersReducedMotion}
+            height="100%"
+          />
+        </div>
 
         {/* Tagline */}
         <motion.p

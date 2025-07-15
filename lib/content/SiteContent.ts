@@ -21,7 +21,9 @@ export class SiteContent {
     // Replace placeholders with actual data
     return {
       ...this.siteConfig.ui,
-      copyright: this.siteConfig.ui.copyright.replace('{name}', this.userData.name)
+      copyright: this.siteConfig.ui.copyright.replace('{name}', this.userData.name),
+      backToTop: 'Back to Top',
+      additionalSkillsInfo: 'Additional skills'
     }
   }
 

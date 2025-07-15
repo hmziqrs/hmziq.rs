@@ -57,17 +57,40 @@ colors: Vec<f32>
 
 ## SIMD Optimization
 
+**SIMD is enabled by default** in this project. Modern browsers support WebAssembly SIMD, so we implement SIMD-only solutions without fallbacks.
+
+### Modern SIMD API
+
+This project uses Rust's high-level `std::simd` API instead of low-level intrinsics:
+- **Import**: `use std::simd::{f32x16, num::SimdFloat};`
+- **No feature flags needed** - SIMD is always available
+- **Clean, readable code** with natural arithmetic operators
+- **Better type safety** compared to raw intrinsics
+
 ### 16-Element Batch Processing
 
-Process data in batches of 16 elements using `f32x16`:
+Process data in batches of 16 elements using SIMD instructions:
 
-**Reference**: `wasm/src/star_field.rs:369-414`
+**Reference**: `wasm/src/star_field.rs:369-414`  
+**Reference**: `wasm/src/scatter_text.rs:225-278`
 
 Key pattern:
 1. Define `const SIMD_BATCH_SIZE: usize = 16`
 2. Align data to SIMD boundaries
-3. Process complete chunks with SIMD
-4. Handle remaining elements with scalar fallback
+3. Process complete chunks with SIMD using f32x16
+4. Handle remaining elements with scalar operations (only for remainder after SIMD batches)
+
+Example SIMD processing:
+```rust
+// Load 16 elements at once
+let data = f32x16::from_slice(&array[base..base + SIMD_BATCH_SIZE]);
+
+// Apply operations using natural arithmetic
+let result = data * f32x16::splat(2.0) + f32x16::splat(1.0);
+
+// Store results back
+result.copy_to_slice(&mut array[base..base + SIMD_BATCH_SIZE]);
+```
 
 ### SIMD Helper Functions
 
@@ -214,20 +237,20 @@ Common patterns for vectorized random numbers and math operations.
 
 2. **Minimize Boundary Crossings**: Batch operations to reduce JS/WASM calls
 
-3. **Handle Partial Batches**: Always implement scalar fallback for remaining elements
+3. **SIMD-First Approach**: Write SIMD implementations directly without non-SIMD fallbacks. SIMD is enabled by default and supported by all modern browsers.
 
-4. **Console Logging**: Use the provided macro for debugging:
+4. **Handle Remainder Elements**: After processing complete SIMD batches, handle remaining elements with simple scalar operations (not full fallback implementations)
+
+5. **Console Logging**: Use the provided macro for debugging:
    ```rust
    console_log!("Debug info: {}", value);
    ```
 
-5. **Memory Efficiency**: Use bitpacking for boolean data, SoA for numerical data
+6. **Memory Efficiency**: Use bitpacking for boolean data, SoA for numerical data
 
-6. **Feature Flags**: Enable SIMD features in `Cargo.toml`:
-   ```toml
-   [features]
-   default = ["simd"]
-   simd = []
+7. **SIMD Imports**: Use the high-level SIMD API:
+   ```rust
+   use std::simd::{f32x16, num::SimdFloat};
    ```
 
 ## Example Module Template
@@ -235,6 +258,7 @@ Common patterns for vectorized random numbers and math operations.
 ```rust
 use wasm_bindgen::prelude::*;
 use std::cell::RefCell;
+use std::simd::{f32x16, num::SimdFloat};
 
 const SIMD_BATCH_SIZE: usize = 16;
 
@@ -261,7 +285,7 @@ pub struct ModulePointers {
 pub fn initialize_module(count: usize) -> ModulePointers {
     let aligned_count = count.div_ceil(SIMD_BATCH_SIZE) * SIMD_BATCH_SIZE;
     
-    let mut state = ModuleState {
+    let state = ModuleState {
         data_x: vec![0.0; aligned_count],
         data_y: vec![0.0; aligned_count],
         count,
@@ -279,6 +303,88 @@ pub fn initialize_module(count: usize) -> ModulePointers {
     
     pointers
 }
+
+#[wasm_bindgen]
+pub fn update_data() {
+    MODULE_STATE.with(|cell| {
+        let mut state_ref = cell.borrow_mut();
+        let state = state_ref.as_mut().expect("Module not initialized");
+        
+        let count = state.count;
+        if count == 0 {
+            return;
+        }
+        
+        // Process complete SIMD batches
+        let simd_chunks = count / SIMD_BATCH_SIZE;
+        for chunk in 0..simd_chunks {
+            let base = chunk * SIMD_BATCH_SIZE;
+            update_batch_simd(state, base);
+        }
+        
+        // Handle remaining elements with scalar operations
+        let remaining_start = simd_chunks * SIMD_BATCH_SIZE;
+        for i in remaining_start..count {
+            update_element_scalar(state, i);
+        }
+    });
+}
+
+fn update_batch_simd(state: &mut ModuleState, base: usize) {
+    // Load 16 elements at once
+    let x_vec = f32x16::from_slice(&state.data_x[base..base + SIMD_BATCH_SIZE]);
+    let y_vec = f32x16::from_slice(&state.data_y[base..base + SIMD_BATCH_SIZE]);
+    
+    // Apply SIMD operations
+    let multiplier = f32x16::splat(1.1);
+    let new_x = x_vec * multiplier;
+    let new_y = y_vec * multiplier;
+    
+    // Store results
+    new_x.copy_to_slice(&mut state.data_x[base..base + SIMD_BATCH_SIZE]);
+    new_y.copy_to_slice(&mut state.data_y[base..base + SIMD_BATCH_SIZE]);
+}
+
+fn update_element_scalar(state: &mut ModuleState, index: usize) {
+    // Simple scalar operation for remainder elements
+    state.data_x[index] *= 1.1;
+    state.data_y[index] *= 1.1;
+}
 ```
 
 This template demonstrates all the key patterns for high-performance WASM modules in this project.
+
+## SIMD-First Philosophy
+
+This project follows a **SIMD-first approach** for maximum performance:
+
+### ✅ **Do This:**
+- Write SIMD implementations using `std::simd::{f32x16, num::SimdFloat}`
+- Process data in batches of 16 elements with f32x16 vectors
+- Handle remainder elements with simple scalar operations
+- Assume SIMD support is available (it's enabled by default)
+
+### ❌ **Don't Do This:**
+- Create full non-SIMD fallback implementations
+- Use feature flags to conditionally compile SIMD code
+- Write JavaScript fallbacks for WASM functions
+- Implement dual code paths for SIMD vs non-SIMD
+
+### Why SIMD-First?
+- **Modern Browser Support**: All target browsers support WebAssembly SIMD
+- **Performance**: Up to 16x faster processing with f32x16 vectors
+- **Simplicity**: Single code path reduces complexity and maintenance
+- **Clean API**: High-level std::simd API is more readable than low-level intrinsics
+- **Future-Proof**: SIMD is the standard for high-performance web applications
+
+### Handling Non-SIMD Elements
+Only implement simple scalar operations for remainder elements that don't fit into complete SIMD batches:
+
+```rust
+// After processing complete SIMD batches of 16 elements
+let remaining_start = simd_chunks * SIMD_BATCH_SIZE;
+for i in remaining_start..count {
+    // Simple scalar operation - not a full fallback implementation
+    data[i] = data[i] * 2.0;
+}
+```

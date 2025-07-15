@@ -4,9 +4,11 @@ use wasm_bindgen::prelude::*;
 // Module imports
 mod math;
 mod star_field;
+mod scatter_text;
 
 pub use math::*;
 pub use star_field::*;
+pub use scatter_text::*;
 
 #[wasm_bindgen]
 extern "C" {
@@ -32,4 +34,5 @@ pub fn main() {
     console_log!("WASM module loaded successfully!");
     console_log!("Star field optimization ready!");
     console_log!("Spatial indexing ready!");
+    console_log!("Scatter text particle system ready!");
 }
