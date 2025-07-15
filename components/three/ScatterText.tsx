@@ -13,7 +13,6 @@ interface ScatterTextProps {
   color?: string
   skip?: number
   autoAnimate?: boolean
-  animationDelay?: number
   height?: string
 }
 
@@ -37,7 +36,6 @@ interface ScatterRendererProps {
   pixelData: PixelData
   wasmModule: any
   autoAnimate: boolean
-  animationDelay: number
 }
 
 // Vertex shader
@@ -138,12 +136,10 @@ function ScatterRenderer({
   pixelData,
   wasmModule,
   autoAnimate,
-  animationDelay,
 }: ScatterRendererProps) {
   const { size } = useThree()
   const meshRef = useRef<THREE.Points>(null)
   const [sharedMemory, setSharedMemory] = useState<ScatterTextSharedMemory | null>(null)
-  const animationTimerRef = useRef<number | null>(null)
 
   // Initialize shared memory and update particle positions
   useEffect(() => {
@@ -207,28 +203,13 @@ function ScatterRenderer({
     return { geometry, material }
   }, [sharedMemory])
 
-  // Auto-animation effect
+  // Auto-animation effect (form once and stay)
   useEffect(() => {
     if (!autoAnimate || !wasmModule) return
 
-    // Initial form
+    // Form the text and keep it formed
     wasmModule.start_forming()
-
-    // Set up animation cycle
-    animationTimerRef.current = window.setInterval(() => {
-      if (wasmModule.is_forming()) {
-        wasmModule.start_scattering()
-      } else {
-        wasmModule.start_forming()
-      }
-    }, animationDelay)
-
-    return () => {
-      if (animationTimerRef.current) {
-        clearInterval(animationTimerRef.current)
-      }
-    }
-  }, [autoAnimate, animationDelay, wasmModule])
+  }, [autoAnimate, wasmModule])
 
   // Update particles
   useFrame((_, delta) => {
@@ -294,7 +275,6 @@ export default function ScatterText({
   color = 'white',
   skip = 4,
   autoAnimate = true,
-  animationDelay = 3000,
   height = '200px',
 }: ScatterTextProps) {
   const [isGenerating, setIsGenerating] = useState(true)
@@ -340,7 +320,6 @@ export default function ScatterText({
               pixelData={pixelData}
               wasmModule={wasmModule}
               autoAnimate={autoAnimate}
-              animationDelay={animationDelay}
             />
           </Canvas>
         )

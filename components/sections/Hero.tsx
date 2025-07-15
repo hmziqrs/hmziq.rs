@@ -56,7 +56,6 @@ const Hero: React.FC = () => {
             color="white"
             skip={2}
             autoAnimate={!prefersReducedMotion}
-            animationDelay={4000}
             height="100%"
           />
         </div>
