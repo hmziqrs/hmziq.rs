@@ -1,8 +1,7 @@
 use std::cell::RefCell;
 use wasm_bindgen::prelude::*;
 
-#[cfg(feature = "simd")]
-use core::arch::wasm32::*;
+use std::simd::{f32x16, num::SimdFloat};
 
 const SIMD_BATCH_SIZE: usize = 16;
 const MAX_PARTICLES: usize = 10000;
@@ -63,7 +62,7 @@ pub fn initialize_scatter_text(max_particles: usize) -> ScatterTextPointers {
     let aligned_count = max_particles.div_ceil(SIMD_BATCH_SIZE) * SIMD_BATCH_SIZE;
     let flag_count = aligned_count.div_ceil(64);
 
-    let mut state = ScatterTextState {
+    let state = ScatterTextState {
         positions_x: vec![0.0; aligned_count],
         positions_y: vec![0.0; aligned_count],
         target_x: vec![0.0; aligned_count],
@@ -197,7 +196,7 @@ pub fn start_scattering() {
 }
 
 #[wasm_bindgen]
-pub fn update_particles(delta_time: f32) {
+pub fn update_particles(_delta_time: f32) {
     SCATTER_TEXT_STATE.with(|cell| {
         let mut state_ref = cell.borrow_mut();
         let state = state_ref.as_mut().expect("ScatterText not initialized");
@@ -207,248 +206,74 @@ pub fn update_particles(delta_time: f32) {
             return;
         }
 
-        #[cfg(feature = "simd")]
-        {
-            // Process particles in SIMD batches
-            let simd_chunks = count / SIMD_BATCH_SIZE;
+        // Process particles in SIMD batches
+        let simd_chunks = count / SIMD_BATCH_SIZE;
 
-            for chunk in 0..simd_chunks {
-                let base = chunk * SIMD_BATCH_SIZE;
-                update_particle_batch_simd(state, base);
-            }
-
-            // Handle remaining particles
-            let remaining_start = simd_chunks * SIMD_BATCH_SIZE;
-            for i in remaining_start..count {
-                update_particle_scalar(state, i);
-            }
+        for chunk in 0..simd_chunks {
+            let base = chunk * SIMD_BATCH_SIZE;
+            update_particle_batch_simd(state, base);
         }
 
-        #[cfg(not(feature = "simd"))]
-        {
-            for i in 0..count {
-                update_particle_scalar(state, i);
-            }
+        // Handle remaining particles
+        let remaining_start = simd_chunks * SIMD_BATCH_SIZE;
+        for i in remaining_start..count {
+            update_particle_scalar(state, i);
         }
     });
 }
 
-#[cfg(feature = "simd")]
 fn update_particle_batch_simd(state: &mut ScatterTextState, base: usize) {
-    unsafe {
-        // Load current positions
-        let pos_x = v128_load(&state.positions_x[base] as *const f32 as *const v128);
-        let pos_x2 = v128_load(&state.positions_x[base + 4] as *const f32 as *const v128);
-        let pos_x3 = v128_load(&state.positions_x[base + 8] as *const f32 as *const v128);
-        let pos_x4 = v128_load(&state.positions_x[base + 12] as *const f32 as *const v128);
+    // Load current positions
+    let pos_x = f32x16::from_slice(&state.positions_x[base..base + SIMD_BATCH_SIZE]);
+    let pos_y = f32x16::from_slice(&state.positions_y[base..base + SIMD_BATCH_SIZE]);
 
-        let pos_y = v128_load(&state.positions_y[base] as *const f32 as *const v128);
-        let pos_y2 = v128_load(&state.positions_y[base + 4] as *const f32 as *const v128);
-        let pos_y3 = v128_load(&state.positions_y[base + 8] as *const f32 as *const v128);
-        let pos_y4 = v128_load(&state.positions_y[base + 12] as *const f32 as *const v128);
+    if state.forming {
+        // Load target positions
+        let target_x = f32x16::from_slice(&state.target_x[base..base + SIMD_BATCH_SIZE]);
+        let target_y = f32x16::from_slice(&state.target_y[base..base + SIMD_BATCH_SIZE]);
 
-        if state.forming {
-            // Load target positions
-            let target_x = v128_load(&state.target_x[base] as *const f32 as *const v128);
-            let target_x2 = v128_load(&state.target_x[base + 4] as *const f32 as *const v128);
-            let target_x3 = v128_load(&state.target_x[base + 8] as *const f32 as *const v128);
-            let target_x4 = v128_load(&state.target_x[base + 12] as *const f32 as *const v128);
+        // Calculate deltas
+        let dx = target_x - pos_x;
+        let dy = target_y - pos_y;
 
-            let target_y = v128_load(&state.target_y[base] as *const f32 as *const v128);
-            let target_y2 = v128_load(&state.target_y[base + 4] as *const f32 as *const v128);
-            let target_y3 = v128_load(&state.target_y[base + 8] as *const f32 as *const v128);
-            let target_y4 = v128_load(&state.target_y[base + 12] as *const f32 as *const v128);
+        // Apply easing
+        let easing = f32x16::splat(state.easing_factor);
+        let new_x = pos_x + dx * easing;
+        let new_y = pos_y + dy * easing;
 
-            // Calculate deltas
-            let dx = f32x4_sub(target_x, pos_x);
-            let dx2 = f32x4_sub(target_x2, pos_x2);
-            let dx3 = f32x4_sub(target_x3, pos_x3);
-            let dx4 = f32x4_sub(target_x4, pos_x4);
+        // Store new positions
+        new_x.copy_to_slice(&mut state.positions_x[base..base + SIMD_BATCH_SIZE]);
+        new_y.copy_to_slice(&mut state.positions_y[base..base + SIMD_BATCH_SIZE]);
 
-            let dy = f32x4_sub(target_y, pos_y);
-            let dy2 = f32x4_sub(target_y2, pos_y2);
-            let dy3 = f32x4_sub(target_y3, pos_y3);
-            let dy4 = f32x4_sub(target_y4, pos_y4);
+        // Reset opacity when forming
+        let full_opacity = f32x16::splat(1.0);
+        full_opacity.copy_to_slice(&mut state.opacity[base..base + SIMD_BATCH_SIZE]);
+    } else {
+        // Scattering - load scatter velocities
+        let vx = f32x16::from_slice(&state.scatter_vx[base..base + SIMD_BATCH_SIZE]);
+        let vy = f32x16::from_slice(&state.scatter_vy[base..base + SIMD_BATCH_SIZE]);
 
-            // Apply easing
-            let easing = f32x4_splat(state.easing_factor);
-            let new_x = f32x4_add(pos_x, f32x4_mul(dx, easing));
-            let new_x2 = f32x4_add(pos_x2, f32x4_mul(dx2, easing));
-            let new_x3 = f32x4_add(pos_x3, f32x4_mul(dx3, easing));
-            let new_x4 = f32x4_add(pos_x4, f32x4_mul(dx4, easing));
+        // Update positions with scatter velocity
+        let new_x = pos_x + vx;
+        let new_y = pos_y + vy;
 
-            let new_y = f32x4_add(pos_y, f32x4_mul(dy, easing));
-            let new_y2 = f32x4_add(pos_y2, f32x4_mul(dy2, easing));
-            let new_y3 = f32x4_add(pos_y3, f32x4_mul(dy3, easing));
-            let new_y4 = f32x4_add(pos_y4, f32x4_mul(dy4, easing));
+        // Store new positions
+        new_x.copy_to_slice(&mut state.positions_x[base..base + SIMD_BATCH_SIZE]);
+        new_y.copy_to_slice(&mut state.positions_y[base..base + SIMD_BATCH_SIZE]);
 
-            // Store new positions
-            v128_store(state.positions_x[base..].as_mut_ptr() as *mut v128, new_x);
-            v128_store(
-                state.positions_x[base + 4..].as_mut_ptr() as *mut v128,
-                new_x2,
-            );
-            v128_store(
-                state.positions_x[base + 8..].as_mut_ptr() as *mut v128,
-                new_x3,
-            );
-            v128_store(
-                state.positions_x[base + 12..].as_mut_ptr() as *mut v128,
-                new_x4,
-            );
+        // Update opacity (fade out)
+        let opacity = f32x16::from_slice(&state.opacity[base..base + SIMD_BATCH_SIZE]);
+        let fade = f32x16::splat(state.fade_rate);
+        let zero = f32x16::splat(0.0);
+        let new_opacity = (opacity - fade).simd_max(zero);
+        new_opacity.copy_to_slice(&mut state.opacity[base..base + SIMD_BATCH_SIZE]);
 
-            v128_store(state.positions_y[base..].as_mut_ptr() as *mut v128, new_y);
-            v128_store(
-                state.positions_y[base + 4..].as_mut_ptr() as *mut v128,
-                new_y2,
-            );
-            v128_store(
-                state.positions_y[base + 8..].as_mut_ptr() as *mut v128,
-                new_y3,
-            );
-            v128_store(
-                state.positions_y[base + 12..].as_mut_ptr() as *mut v128,
-                new_y4,
-            );
-
-            // Reset opacity when forming
-            let full_opacity = f32x4_splat(1.0);
-            v128_store(
-                state.opacity[base..].as_mut_ptr() as *mut v128,
-                full_opacity,
-            );
-            v128_store(
-                state.opacity[base + 4..].as_mut_ptr() as *mut v128,
-                full_opacity,
-            );
-            v128_store(
-                state.opacity[base + 8..].as_mut_ptr() as *mut v128,
-                full_opacity,
-            );
-            v128_store(
-                state.opacity[base + 12..].as_mut_ptr() as *mut v128,
-                full_opacity,
-            );
-        } else {
-            // Scattering
-            // Update positions with scatter velocity
-            let vx = v128_load(&state.scatter_vx[base] as *const f32 as *const v128);
-            let vx2 = v128_load(&state.scatter_vx[base + 4] as *const f32 as *const v128);
-            let vx3 = v128_load(&state.scatter_vx[base + 8] as *const f32 as *const v128);
-            let vx4 = v128_load(&state.scatter_vx[base + 12] as *const f32 as *const v128);
-
-            let vy = v128_load(&state.scatter_vy[base] as *const f32 as *const v128);
-            let vy2 = v128_load(&state.scatter_vy[base + 4] as *const f32 as *const v128);
-            let vy3 = v128_load(&state.scatter_vy[base + 8] as *const f32 as *const v128);
-            let vy4 = v128_load(&state.scatter_vy[base + 12] as *const f32 as *const v128);
-
-            let new_x = f32x4_add(pos_x, vx);
-            let new_x2 = f32x4_add(pos_x2, vx2);
-            let new_x3 = f32x4_add(pos_x3, vx3);
-            let new_x4 = f32x4_add(pos_x4, vx4);
-
-            let new_y = f32x4_add(pos_y, vy);
-            let new_y2 = f32x4_add(pos_y2, vy2);
-            let new_y3 = f32x4_add(pos_y3, vy3);
-            let new_y4 = f32x4_add(pos_y4, vy4);
-
-            // Store new positions
-            v128_store(state.positions_x[base..].as_mut_ptr() as *mut v128, new_x);
-            v128_store(
-                state.positions_x[base + 4..].as_mut_ptr() as *mut v128,
-                new_x2,
-            );
-            v128_store(
-                state.positions_x[base + 8..].as_mut_ptr() as *mut v128,
-                new_x3,
-            );
-            v128_store(
-                state.positions_x[base + 12..].as_mut_ptr() as *mut v128,
-                new_x4,
-            );
-
-            v128_store(state.positions_y[base..].as_mut_ptr() as *mut v128, new_y);
-            v128_store(
-                state.positions_y[base + 4..].as_mut_ptr() as *mut v128,
-                new_y2,
-            );
-            v128_store(
-                state.positions_y[base + 8..].as_mut_ptr() as *mut v128,
-                new_y3,
-            );
-            v128_store(
-                state.positions_y[base + 12..].as_mut_ptr() as *mut v128,
-                new_y4,
-            );
-
-            // Update opacity (fade out)
-            let opacity = v128_load(&state.opacity[base] as *const f32 as *const v128);
-            let opacity2 = v128_load(&state.opacity[base + 4] as *const f32 as *const v128);
-            let opacity3 = v128_load(&state.opacity[base + 8] as *const f32 as *const v128);
-            let opacity4 = v128_load(&state.opacity[base + 12] as *const f32 as *const v128);
-
-            let fade = f32x4_splat(state.fade_rate);
-            let zero = f32x4_splat(0.0);
-
-            let new_opacity = f32x4_max(f32x4_sub(opacity, fade), zero);
-            let new_opacity2 = f32x4_max(f32x4_sub(opacity2, fade), zero);
-            let new_opacity3 = f32x4_max(f32x4_sub(opacity3, fade), zero);
-            let new_opacity4 = f32x4_max(f32x4_sub(opacity4, fade), zero);
-
-            v128_store(state.opacity[base..].as_mut_ptr() as *mut v128, new_opacity);
-            v128_store(
-                state.opacity[base + 4..].as_mut_ptr() as *mut v128,
-                new_opacity2,
-            );
-            v128_store(
-                state.opacity[base + 8..].as_mut_ptr() as *mut v128,
-                new_opacity3,
-            );
-            v128_store(
-                state.opacity[base + 12..].as_mut_ptr() as *mut v128,
-                new_opacity4,
-            );
-
-            // Slow down scatter velocity
-            let friction = f32x4_splat(0.98);
-            let new_vx = f32x4_mul(vx, friction);
-            let new_vx2 = f32x4_mul(vx2, friction);
-            let new_vx3 = f32x4_mul(vx3, friction);
-            let new_vx4 = f32x4_mul(vx4, friction);
-
-            let new_vy = f32x4_mul(vy, friction);
-            let new_vy2 = f32x4_mul(vy2, friction);
-            let new_vy3 = f32x4_mul(vy3, friction);
-            let new_vy4 = f32x4_mul(vy4, friction);
-
-            v128_store(state.scatter_vx[base..].as_mut_ptr() as *mut v128, new_vx);
-            v128_store(
-                state.scatter_vx[base + 4..].as_mut_ptr() as *mut v128,
-                new_vx2,
-            );
-            v128_store(
-                state.scatter_vx[base + 8..].as_mut_ptr() as *mut v128,
-                new_vx3,
-            );
-            v128_store(
-                state.scatter_vx[base + 12..].as_mut_ptr() as *mut v128,
-                new_vx4,
-            );
-
-            v128_store(state.scatter_vy[base..].as_mut_ptr() as *mut v128, new_vy);
-            v128_store(
-                state.scatter_vy[base + 4..].as_mut_ptr() as *mut v128,
-                new_vy2,
-            );
-            v128_store(
-                state.scatter_vy[base + 8..].as_mut_ptr() as *mut v128,
-                new_vy3,
-            );
-            v128_store(
-                state.scatter_vy[base + 12..].as_mut_ptr() as *mut v128,
-                new_vy4,
-            );
-        }
+        // Slow down scatter velocity
+        let friction = f32x16::splat(0.98);
+        let new_vx = vx * friction;
+        let new_vy = vy * friction;
+        new_vx.copy_to_slice(&mut state.scatter_vx[base..base + SIMD_BATCH_SIZE]);
+        new_vy.copy_to_slice(&mut state.scatter_vy[base..base + SIMD_BATCH_SIZE]);
     }
 }
 

@@ -22,10 +22,6 @@ codegen-units = 1
 panic = "abort"
 overflow-checks = false
 
-[features]
-default = ["simd"]
-simd = []
-
 [target.wasm32-unknown-unknown]
 rustflags = [
     "-C",
