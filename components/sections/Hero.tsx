@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { userProfile } from '@/lib/content/UserProfile'
 import { siteContent } from '@/lib/content/SiteContent'
-import { Canvas } from '@react-three/fiber'
 
 // Dynamic import for Three.js component
 const ScatterText = dynamic(() => import('@/components/three/ScatterText'), {
@@ -49,27 +48,17 @@ const Hero: React.FC = () => {
         animate="visible"
       >
         {/* Name with Scatter Text Effect */}
-        <div className="relative h-[120px] md:h-[160px] lg:h-[200px] mb-6">
-          <Canvas
-            camera={{ position: [0, 0, 600], fov: 50 }}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-            }}
-          >
-            <ScatterText
-              text={name}
-              fontSize={120}
-              fontFamily="Arial"
-              color="white"
-              skip={4}
-              autoAnimate={!prefersReducedMotion}
-              animationDelay={4000}
-            />
-          </Canvas>
+        <div className="mb-6">
+          <ScatterText
+            text={name}
+            fontSize={120}
+            fontFamily="Arial"
+            color="white"
+            skip={4}
+            autoAnimate={!prefersReducedMotion}
+            animationDelay={4000}
+            height="200px"
+          />
         </div>
 
         {/* Tagline */}

@@ -310,12 +310,21 @@ export default function ScatterTextDebug({
 
       // Validate memory before update
       const memorySize = wasmModule.memory.buffer.byteLength
+      let currentMemory = sharedMemory
+      
       if (sharedMemory.positions_x.buffer.byteLength !== memorySize) {
-        throw new Error('WASM memory has grown! SharedMemory views are invalid.')
+        debugLog('WASM memory has grown, refreshing shared memory views...')
+        
+        // Recreate shared memory views with the new memory buffer
+        currentMemory = new ScatterTextSharedMemory(wasmModule, MAX_PARTICLES)
+        setSharedMemory(currentMemory)
+        
+        // Use the refreshed memory for this update
+        currentMemory.updateFrame(wasmModule, delta)
+      } else {
+        // Normal update with existing memory
+        currentMemory.updateFrame(wasmModule, delta)
       }
-
-      // Update particles in WASM
-      sharedMemory.updateFrame(wasmModule, delta)
 
       // Get geometry attributes
       const geometry = geometryRef.current
@@ -340,23 +349,23 @@ export default function ScatterTextDebug({
       // Copy data from shared memory to Three.js buffers
       for (let i = 0; i < currentParticleCount; i++) {
         // Bounds check
-        if (i >= sharedMemory.positions_x.length) {
+        if (i >= currentMemory.positions_x.length) {
           console.warn(`Particle ${i} exceeds shared memory bounds`)
           break
         }
         
         // Position (convert from screen space to world space)
-        positions[i * 3] = sharedMemory.positions_x[i] - size.width / 2
-        positions[i * 3 + 1] = -sharedMemory.positions_y[i] + size.height / 2
+        positions[i * 3] = currentMemory.positions_x[i] - size.width / 2
+        positions[i * 3 + 1] = -currentMemory.positions_y[i] + size.height / 2
         positions[i * 3 + 2] = 0
         
         // Color
-        colors[i * 3] = sharedMemory.colors_r[i]
-        colors[i * 3 + 1] = sharedMemory.colors_g[i]
-        colors[i * 3 + 2] = sharedMemory.colors_b[i]
+        colors[i * 3] = currentMemory.colors_r[i]
+        colors[i * 3 + 1] = currentMemory.colors_g[i]
+        colors[i * 3 + 2] = currentMemory.colors_b[i]
         
         // Opacity
-        opacities[i] = sharedMemory.opacity[i]
+        opacities[i] = currentMemory.opacity[i]
       }
 
       // Mark attributes as needing update
