@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "bun build:wasm:dev && next dev --turbopack",
     "build": "bun run build:wasm && next build --turbopack",
     "build:prod": "bun run build:wasm && next build",
     "copy:wasm": "bun ./scripts/copy-wasm.js",

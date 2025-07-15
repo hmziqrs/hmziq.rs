@@ -92,20 +92,29 @@ function PixelGenerator({
         const memory = new ScatterTextSharedMemory(module, 10000)
 
         // Generate text pixels
-        const { pixelData, width, height } = memory.generateTextPixels(
-          text,
-          fontSize,
-          fontFamily,
-          color
-        )
-
-        // Set pixels in WASM
-        const particleCount = module.set_text_pixels(
-          pixelData,
+        const {
+          pixelData: rawPixelData,
           width,
           height,
-          800, // Initial width
-          600, // Initial height
+        } = memory.generateTextPixels(text, fontSize, fontFamily, color)
+
+        // Ensure we have a Uint8ClampedArray for PixelData
+        const pixelData =
+          rawPixelData instanceof Uint8ClampedArray
+            ? rawPixelData
+            : new Uint8ClampedArray(rawPixelData)
+
+        // Set pixels in WASM with proper centering
+        // Use window dimensions for initial setup
+        const initialWidth = typeof window !== 'undefined' ? window.innerWidth : 1200
+        const initialHeight = typeof window !== 'undefined' ? window.innerHeight : 800
+
+        const particleCount = module.set_text_pixels(
+          rawPixelData,
+          width,
+          height,
+          initialWidth,
+          initialHeight,
           skip
         )
 
@@ -136,14 +145,15 @@ function ScatterRenderer({
   const [sharedMemory, setSharedMemory] = useState<ScatterTextSharedMemory | null>(null)
   const animationTimerRef = useRef<number | null>(null)
 
-  // Initialize shared memory
+  // Initialize shared memory and update particle positions
   useEffect(() => {
     if (!wasmModule) return
 
     const memory = new ScatterTextSharedMemory(wasmModule, 10000)
     setSharedMemory(memory)
 
-    // Update with actual canvas size
+    // Update with actual canvas size to properly center particles
+    // This ensures particles are positioned correctly for the current viewport
     wasmModule.set_text_pixels(
       pixelData.pixelData,
       pixelData.width,
@@ -152,6 +162,8 @@ function ScatterRenderer({
       size.height,
       4 // skip
     )
+
+    console.log(`Recentered particles for canvas size: ${size.width}x${size.height}`)
   }, [wasmModule, pixelData, size.width, size.height])
 
   // Create geometry and material
@@ -281,7 +293,7 @@ export default function ScatterText({
   fontFamily = 'Arial',
   color = 'white',
   skip = 4,
-  autoAnimate = false,
+  autoAnimate = true,
   animationDelay = 3000,
   height = '200px',
 }: ScatterTextProps) {

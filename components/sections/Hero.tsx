@@ -40,24 +40,24 @@ const Hero: React.FC = () => {
   }
 
   return (
-    <section id="hero" className="relative min-h-screen flex items-center justify-center px-6">
+    <section id="hero" className="relative min-h-screen flex items-center  px-6 w-full">
       <motion.div
-        className="text-center max-w-4xl mx-auto"
+        className="text-center max-w-full mx-auto px-8   w-full"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         {/* Name with Scatter Text Effect */}
-        <div className="mb-6">
+        <div className="h-[160px] md:h-[200px] lg:h-[240px] w-full mx-auto">
           <ScatterText
             text={name}
-            fontSize={120}
+            fontSize={220}
             fontFamily="Arial"
             color="white"
-            skip={4}
+            skip={2}
             autoAnimate={!prefersReducedMotion}
             animationDelay={4000}
-            height="200px"
+            height="100%"
           />
         </div>
 

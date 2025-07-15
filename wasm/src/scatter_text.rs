@@ -123,6 +123,12 @@ pub fn set_text_pixels(
         for flag in state.scattered_flags.iter_mut() {
             *flag = 0;
         }
+        
+        // Calculate offsets to center the text in the canvas
+        let text_center_x = (width as f32) / 2.0;
+        let text_center_y = (height as f32) / 2.0;
+        let canvas_center_x = canvas_width / 2.0;
+        let canvas_center_y = canvas_height / 2.0;
 
         // Sample pixels from the image data
         for y in (0..height as usize).step_by(skip_size) {
@@ -134,9 +140,9 @@ pub fn set_text_pixels(
 
                     // If pixel is visible
                     if alpha > 128 && particle_index < MAX_PARTICLES {
-                        // Set target position
-                        state.target_x[particle_index] = x as f32;
-                        state.target_y[particle_index] = y as f32;
+                        // Set target position centered in canvas
+                        state.target_x[particle_index] = (x as f32 - text_center_x) + canvas_center_x;
+                        state.target_y[particle_index] = (y as f32 - text_center_y) + canvas_center_y;
 
                         // Set random starting position
                         state.positions_x[particle_index] =
