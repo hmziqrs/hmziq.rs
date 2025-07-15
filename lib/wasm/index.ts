@@ -93,6 +93,12 @@ export interface WASMModule {
   set_scatter_speed: (speed: number) => void
   get_particle_count: () => number
   is_forming: () => boolean
+  
+  // Skill system functions
+  initialize_skill_system: (count: number, particle_count: number, connection_count: number) => any
+  update_skill_system: (time: number, delta_time: number, mouse_x: number, mouse_y: number) => any
+  set_skill_hover_state: (skill_index: number, is_hovered: boolean) => void
+  get_skill_hover_state: (skill_index: number) => boolean
 }
 
 export async function loadWASM(): Promise<WASMModule> {
@@ -135,6 +141,12 @@ export async function loadWASM(): Promise<WASMModule> {
         set_scatter_speed: wasmImport.set_scatter_speed,
         get_particle_count: wasmImport.get_particle_count,
         is_forming: wasmImport.is_forming,
+        
+        // Skill system functions
+        initialize_skill_system: wasmImport.initialize_skill_system,
+        update_skill_system: wasmImport.update_skill_system,
+        set_skill_hover_state: wasmImport.set_skill_hover_state,
+        get_skill_hover_state: wasmImport.get_skill_hover_state,
       }
 
       return wasmModule

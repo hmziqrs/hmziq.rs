@@ -9,7 +9,7 @@ const Contact: React.FC = () => {
   const prefersReducedMotion = useReducedMotion()
   const primarySocialLinks = userProfile.getPrimarySocialLinks()
   const allLinksForSEO = userProfile.getAllLinksForSEO()
-  const { connectMessage, copyright, backToTop } = siteContent.ui
+  const { connectMessage, copyright } = siteContent.ui
 
   const containerVariants = {
     hidden: { opacity: 0 },

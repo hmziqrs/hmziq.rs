@@ -5,10 +5,12 @@ use wasm_bindgen::prelude::*;
 mod math;
 mod star_field;
 mod scatter_text;
+mod skill_system;
 
 pub use math::*;
 pub use star_field::*;
 pub use scatter_text::*;
+pub use skill_system::*;
 
 #[wasm_bindgen]
 extern "C" {
@@ -35,4 +37,5 @@ pub fn main() {
     console_log!("Star field optimization ready!");
     console_log!("Spatial indexing ready!");
     console_log!("Scatter text particle system ready!");
+    console_log!("Skill system with orbital mechanics ready!");
 }
