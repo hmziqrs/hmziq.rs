@@ -27,7 +27,7 @@ const vertexShader = `
     vOpacity = opacity;
     vColor = color;
     
-    vec4 mvPosition = modelViewMatrix * vec4(position, 0.0, 1.0);
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mvPosition;
     gl_PointSize = 2.0;
   }
@@ -126,27 +126,28 @@ export default function ScatterText({
 
     const geometry = new THREE.BufferGeometry()
     
-    // Set up attributes pointing to shared memory
-    geometry.setAttribute(
-      'position',
-      new THREE.BufferAttribute(
-        new Float32Array(sharedMemory.positions_x.length * 3),
-        3
-      )
-    )
+    // Use a fixed maximum particle count to avoid size changes
+    const MAX_PARTICLES = 10000
     
-    geometry.setAttribute(
-      'color',
-      new THREE.BufferAttribute(
-        new Float32Array(sharedMemory.colors_r.length * 3),
-        3
-      )
-    )
+    // Create buffer attributes with fixed sizes
+    const positions = new Float32Array(MAX_PARTICLES * 3)
+    const colors = new Float32Array(MAX_PARTICLES * 3)
+    const opacities = new Float32Array(MAX_PARTICLES)
     
-    geometry.setAttribute(
-      'opacity',
-      new THREE.BufferAttribute(sharedMemory.opacity, 1)
-    )
+    // Fill with default values
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      positions[i * 3] = 0
+      positions[i * 3 + 1] = 0
+      positions[i * 3 + 2] = 0
+      colors[i * 3] = 1
+      colors[i * 3 + 1] = 1
+      colors[i * 3 + 2] = 1
+      opacities[i] = 0
+    }
+    
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    geometry.setAttribute('opacity', new THREE.BufferAttribute(opacities, 1))
 
     // Create shader material
     const material = new THREE.ShaderMaterial({
@@ -195,14 +196,19 @@ export default function ScatterText({
     const colorAttribute = geometry.attributes.color as THREE.BufferAttribute
     const opacityAttribute = geometry.attributes.opacity as THREE.BufferAttribute
 
-    // Combine x, y into position vec3 (z = 0)
+    // Get arrays
     const positions = positionAttribute.array as Float32Array
     const colors = colorAttribute.array as Float32Array
+    const opacities = opacityAttribute.array as Float32Array
     
-    const particleCount = wasmModule.get_particle_count()
+    const particleCount = Math.min(wasmModule.get_particle_count(), 10000)
     
+    // Copy data from shared memory to Three.js buffers
     for (let i = 0; i < particleCount; i++) {
-      // Position
+      // Ensure we don't exceed buffer bounds
+      if (i >= sharedMemory.positions_x.length) break
+      
+      // Position (convert from screen space to world space)
       positions[i * 3] = sharedMemory.positions_x[i] - size.width / 2
       positions[i * 3 + 1] = -sharedMemory.positions_y[i] + size.height / 2
       positions[i * 3 + 2] = 0
@@ -211,6 +217,9 @@ export default function ScatterText({
       colors[i * 3] = sharedMemory.colors_r[i]
       colors[i * 3 + 1] = sharedMemory.colors_g[i]
       colors[i * 3 + 2] = sharedMemory.colors_b[i]
+      
+      // Opacity
+      opacities[i] = sharedMemory.opacity[i]
     }
 
     // Mark attributes as needing update
@@ -218,7 +227,7 @@ export default function ScatterText({
     colorAttribute.needsUpdate = true
     opacityAttribute.needsUpdate = true
 
-    // Update draw range
+    // Update draw range to only render active particles
     geometry.setDrawRange(0, particleCount)
   })
 
