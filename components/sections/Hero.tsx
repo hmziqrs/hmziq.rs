@@ -51,7 +51,6 @@ const Hero: React.FC = () => {
         <div className="h-[160px] md:h-[200px] lg:h-[240px] w-full mx-auto">
           <ScatterText
             text={name}
-            fontSize={220}
             fontFamily="Arial"
             color="white"
             skip={2}

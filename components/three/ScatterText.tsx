@@ -8,7 +8,6 @@ import { loadWASM, ScatterTextSharedMemory } from '@/lib/wasm'
 
 interface ScatterTextProps {
   text: string
-  fontSize?: number
   fontFamily?: string
   color?: string
   skip?: number
@@ -25,10 +24,11 @@ interface PixelData {
 
 interface PixelGeneratorProps {
   text: string
-  fontSize: number
   fontFamily: string
   color: string
   skip: number
+  containerWidth: number
+  containerHeight: number
   onPixelsGenerated: (data: PixelData, wasmModule: any) => void
 }
 
@@ -72,13 +72,32 @@ const fragmentShader = `
   }
 `
 
+// Calculate dynamic font size based on container dimensions and text length
+function calculateFontSize(text: string, containerWidth: number, containerHeight: number): number {
+  // Base font size calculation - use height as primary factor since text is horizontal
+  const baseSize = containerHeight * 0.85
+  
+  // Adjust for text length - longer text needs smaller font
+  const textLengthFactor = Math.max(0.35, 1 - (text.length - 4) * 0.075)
+  
+  // Width constraint - ensure text doesn't exceed container width
+  const widthConstraint = containerWidth / (text.length * 0.6)
+  
+  // Calculate final font size considering both height and width constraints
+  const fontSize = Math.min(baseSize * textLengthFactor, widthConstraint)
+  
+  // Ensure minimum and maximum bounds
+  return Math.max(40, Math.min(fontSize, 500))
+}
+
 // Component 1: Generate pixel data
 function PixelGenerator({
   text,
-  fontSize,
   fontFamily,
   color,
   skip,
+  containerWidth,
+  containerHeight,
   onPixelsGenerated,
 }: PixelGeneratorProps) {
   useEffect(() => {
@@ -88,6 +107,11 @@ function PixelGenerator({
 
         // Initialize scatter text with max particles
         const memory = new ScatterTextSharedMemory(module, 10000)
+
+        // Calculate dynamic font size
+        const fontSize = calculateFontSize(text, containerWidth, containerHeight)
+        
+        console.log(`Dynamic font size: ${fontSize}px for text: "${text}" (${containerWidth}x${containerHeight})`)
 
         // Generate text pixels
         const {
@@ -126,7 +150,7 @@ function PixelGenerator({
     }
 
     generatePixels()
-  }, [text, fontSize, fontFamily, color, skip, onPixelsGenerated])
+  }, [text, fontFamily, color, skip, containerWidth, containerHeight, onPixelsGenerated])
 
   return null
 }
@@ -270,7 +294,6 @@ function ScatterRenderer({
 // Main component
 export default function ScatterText({
   text,
-  fontSize = 100,
   fontFamily = 'Arial',
   color = 'white',
   skip = 4,
@@ -280,6 +303,20 @@ export default function ScatterText({
   const [isGenerating, setIsGenerating] = useState(true)
   const [pixelData, setPixelData] = useState<PixelData | null>(null)
   const [wasmModule, setWasmModule] = useState<any>(null)
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Track container size on mount (one time only)
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        setContainerSize({ width: rect.width, height: rect.height })
+      }
+    }
+
+    updateSize()
+  }, [])
 
   const handlePixelsGenerated = (data: PixelData, module: any) => {
     setPixelData(data)
@@ -288,17 +325,20 @@ export default function ScatterText({
   }
 
   return (
-    <div className="relative" style={{ height }}>
+    <div ref={containerRef} className="relative" style={{ height }}>
       {isGenerating ? (
         <>
-          <PixelGenerator
-            text={text}
-            fontSize={fontSize}
-            fontFamily={fontFamily}
-            color={color}
-            skip={skip}
-            onPixelsGenerated={handlePixelsGenerated}
-          />
+          {containerSize.width > 0 && containerSize.height > 0 && (
+            <PixelGenerator
+              text={text}
+              fontFamily={fontFamily}
+              color={color}
+              skip={skip}
+              containerWidth={containerSize.width}
+              containerHeight={containerSize.height}
+              onPixelsGenerated={handlePixelsGenerated}
+            />
+          )}
           <div className="absolute inset-0 flex items-center justify-center text-gray-500">
             Generating...
           </div>
