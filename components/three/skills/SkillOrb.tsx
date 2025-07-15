@@ -17,6 +17,8 @@ export default function SkillOrb({ skillIndex, skillData }: SkillOrbProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const glowRef = useRef<THREE.Mesh>(null)
   const particlesRef = useRef<THREE.Points>(null)
+  const textRef = useRef<any>(null)
+  const proficiencyRef = useRef<THREE.Mesh>(null)
   const [isHovered, setIsHovered] = useState(false)
   const prefersReducedMotion = useReducedMotion()
   
@@ -27,12 +29,11 @@ export default function SkillOrb({ skillIndex, skillData }: SkillOrbProps) {
   const orbMaterial = useMemo(() => {
     const baseColor = new THREE.Color(skillData.color.r, skillData.color.g, skillData.color.b)
     
-    return new THREE.MeshStandardMaterial({
+    // Use basic material for debugging to ensure visibility
+    return new THREE.MeshBasicMaterial({
       color: baseColor,
-      metalness: 0.8,
-      roughness: 0.2,
-      emissive: baseColor.clone().multiplyScalar(0.1),
-      emissiveIntensity: 0.5,
+      transparent: true,
+      opacity: 0.8,
     })
   }, [skillData.color])
   
@@ -106,17 +107,72 @@ export default function SkillOrb({ skillIndex, skillData }: SkillOrbProps) {
       if (particlesRef.current) {
         particlesRef.current.position.copy(meshRef.current.position)
       }
+      
+      // Update text and proficiency indicator positions
+      if (textRef.current) {
+        textRef.current.position.set(
+          meshRef.current.position.x,
+          meshRef.current.position.y - 4.5,
+          meshRef.current.position.z
+        )
+      }
+      
+      if (proficiencyRef.current) {
+        proficiencyRef.current.position.set(
+          meshRef.current.position.x,
+          meshRef.current.position.y - 5.8,
+          meshRef.current.position.z
+        )
+      }
+    } else {
+      // Debug: Set category-based orbital positions if WASM position is null
+      const categoryPositions = {
+        frontend: { center: [-8, 0, 0], radius: 6 },    // Left side - Blue
+        backend: { center: [8, 0, 0], radius: 6 },      // Right side - Purple  
+        crossPlatform: { center: [0, -8, 0], radius: 6 } // Bottom - Cyan
+      }
+      
+      const categoryData = categoryPositions[skillData.category]
+      if (categoryData && meshRef.current) {
+        // Calculate orbital position based on time and skill index
+        const time = Date.now() * 0.001
+        const angleOffset = (skillIndex * Math.PI * 2) / 4 // 4 skills per category max
+        const angle = time * 0.2 + angleOffset
+        
+        const x = categoryData.center[0] + Math.cos(angle) * categoryData.radius
+        const y = categoryData.center[1] + Math.sin(angle) * categoryData.radius * 0.5
+        const z = categoryData.center[2] + Math.sin(angle * 1.5) * 2
+        
+        meshRef.current.position.set(x, y, z)
+        
+        if (glowRef.current) {
+          glowRef.current.position.copy(meshRef.current.position)
+        }
+        
+        if (particlesRef.current) {
+          particlesRef.current.position.copy(meshRef.current.position)
+        }
+        
+        // Update text and proficiency indicator positions
+        if (textRef.current) {
+          textRef.current.position.set(x, y - 4.5, z)
+        }
+        
+        if (proficiencyRef.current) {
+          proficiencyRef.current.position.set(x, y - 5.8, z)
+        }
+      }
     }
     
     // Update glow intensity
     const glowIntensity = skillSystemMemory.getSkillGlowIntensity(skillIndex)
     if (glowRef.current && glowRef.current.material instanceof THREE.MeshBasicMaterial) {
-      glowRef.current.material.opacity = 0.3 * glowIntensity * (isHovered ? 2 : 1)
+      glowRef.current.material.opacity = 0.3 * Math.max(0.5, glowIntensity) * (isHovered ? 2 : 1)
     }
     
     // Update scale based on proficiency and hover state
     const baseScale = skillSystemMemory.getSkillScale(skillIndex)
-    const finalScale = baseScale * (isHovered ? 1.3 : 1)
+    const finalScale = Math.max(1, baseScale) * (isHovered ? 1.3 : 1)
     
     if (meshRef.current) {
       meshRef.current.scale.setScalar(finalScale)
@@ -127,6 +183,7 @@ export default function SkillOrb({ skillIndex, skillData }: SkillOrbProps) {
       particlesRef.current.rotation.y += 0.005
       particlesRef.current.rotation.x += 0.002
     }
+    
   })
   
   // Handle hover events
@@ -149,7 +206,7 @@ export default function SkillOrb({ skillIndex, skillData }: SkillOrbProps) {
   }
   
   return (
-    <group position={position}>
+    <group>
       {/* Main orb */}
       <mesh
         ref={meshRef}
@@ -158,7 +215,7 @@ export default function SkillOrb({ skillIndex, skillData }: SkillOrbProps) {
         onPointerOut={handlePointerOut}
         onClick={handleClick}
       >
-        <sphereGeometry args={[2, 32, 32]} />
+        <sphereGeometry args={[3, 32, 32]} />
       </mesh>
       
       {/* Glow effect */}
@@ -169,26 +226,27 @@ export default function SkillOrb({ skillIndex, skillData }: SkillOrbProps) {
       {/* Particle system */}
       <points ref={particlesRef} geometry={particleSystem.geometry} material={particleSystem.material} />
       
-      {/* Skill label */}
+      {/* Skill label - positioned relative to the orb */}
       <Text
-        position={[0, -3.5, 0]}
-        fontSize={0.6}
+        ref={textRef}
+        position={[0, -4.5, 0]}
+        fontSize={0.8}
         color="white"
         anchorX="center"
         anchorY="middle"
         font="/fonts/inter-medium.woff"
-        characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?. "
+        characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?.()"
       >
         {skillData.name}
       </Text>
       
-      {/* Proficiency indicator */}
-      <mesh position={[0, -4.2, 0]}>
-        <planeGeometry args={[4 * skillData.proficiency, 0.15]} />
+      {/* Proficiency indicator - positioned relative to the orb */}
+      <mesh ref={proficiencyRef} position={[0, -5.8, 0]}>
+        <planeGeometry args={[4 * skillData.proficiency, 0.2]} />
         <meshBasicMaterial 
           color={new THREE.Color(skillData.color.r, skillData.color.g, skillData.color.b)} 
           transparent
-          opacity={0.8}
+          opacity={0.6}
         />
       </mesh>
     </group>

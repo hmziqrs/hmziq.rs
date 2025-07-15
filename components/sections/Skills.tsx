@@ -117,12 +117,6 @@ const Skills: React.FC = () => {
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
       >
-        <motion.h2
-          className="text-4xl md:text-6xl font-bold text-center mb-16 text-gradient relative z-20 bg-black/20 backdrop-blur-sm rounded-lg py-4"
-          variants={cardVariants}
-        >
-          Expertise
-        </motion.h2>
 
         {/* Fallback traditional layout (when motion is reduced) */}
         {prefersReducedMotion && (

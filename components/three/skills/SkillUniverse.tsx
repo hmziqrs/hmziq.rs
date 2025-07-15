@@ -98,8 +98,8 @@ function SkillScene({ mousePosition, isVisible }: SkillUniverseProps) {
     <>
       {lights}
       
-      {/* Skill orbs - only render when WASM is initialized */}
-      {skillSystemMemory.isInitialized() && skillsData.map((skill, index) => (
+      {/* Skill orbs - render both with and without WASM for debugging */}
+      {skillsData.map((skill, index) => (
         <SkillOrb
           key={skill.name}
           skillIndex={index}
@@ -107,6 +107,7 @@ function SkillScene({ mousePosition, isVisible }: SkillUniverseProps) {
           time={timeRef.current}
         />
       ))}
+      
       
       {/* Constellation connections - only render when WASM is initialized */}
       {skillSystemMemory.isInitialized() && <SkillConstellation skillsData={skillsData} />}

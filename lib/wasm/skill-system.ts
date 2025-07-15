@@ -85,19 +85,30 @@ export class SkillSystemSharedMemory {
     this.pointers = null as any
     
     // Initialize will be called later
-    this.initializeAsync(skillCount, particleCount, connectionCount)
+    this.initializeAsync(skillCount, particleCount, connectionCount).catch(err => {
+      console.error('WASM skill system initialization failed:', err)
+    })
   }
   
   private async initializeAsync(skillCount: number, particleCount: number, connectionCount: number) {
-    const wasmFunctions = await getOptimizedFunctions()
-    this.wasmModule = wasmFunctions
-    this.memory = wasmFunctions.memory
-    
-    // Initialize skill system memory pool
-    this.pointers = this.wasmModule.initialize_skill_system(skillCount, particleCount, connectionCount)
-    
-    // Create memory views
-    this.createMemoryViews()
+    try {
+      console.log('Initializing WASM skill system...')
+      const wasmFunctions = await getOptimizedFunctions()
+      this.wasmModule = wasmFunctions
+      this.memory = wasmFunctions.memory
+      
+      console.log('WASM functions loaded, initializing skill system...')
+      // Initialize skill system memory pool
+      this.pointers = this.wasmModule.initialize_skill_system(skillCount, particleCount, connectionCount)
+      console.log('Skill system pointers:', this.pointers)
+      
+      // Create memory views
+      this.createMemoryViews()
+      console.log('WASM skill system initialized successfully')
+    } catch (error) {
+      console.error('Failed to initialize WASM skill system:', error)
+      throw error
+    }
   }
   
   private createMemoryViews() {
