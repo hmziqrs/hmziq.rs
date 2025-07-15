@@ -71,8 +71,8 @@
     }
   },
   "socialVisibility": {
-    "primary": ["github", "linkedin", "email"],
-    "hidden": ["twitter", "instagram", "youtube", "medium", "dev", "stackoverflow"]
+    "primary": ["github", "twitter", "email"],
+    "hidden": ["linkedin", "instagram", "youtube", "medium", "dev", "stackoverflow"]
   },
   "ui": {
     "copyright": "© 2025 {name}. Crafted with NextJS and Rust.",
