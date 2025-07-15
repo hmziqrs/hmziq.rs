@@ -59,17 +59,38 @@ colors: Vec<f32>
 
 **SIMD is enabled by default** in this project. Modern browsers support WebAssembly SIMD, so we implement SIMD-only solutions without fallbacks.
 
+### Modern SIMD API
+
+This project uses Rust's high-level `std::simd` API instead of low-level intrinsics:
+- **Import**: `use std::simd::{f32x16, num::SimdFloat};`
+- **No feature flags needed** - SIMD is always available
+- **Clean, readable code** with natural arithmetic operators
+- **Better type safety** compared to raw intrinsics
+
 ### 16-Element Batch Processing
 
 Process data in batches of 16 elements using SIMD instructions:
 
-**Reference**: `wasm/src/star_field.rs:369-414`
+**Reference**: `wasm/src/star_field.rs:369-414`  
+**Reference**: `wasm/src/scatter_text.rs:225-278`
 
 Key pattern:
 1. Define `const SIMD_BATCH_SIZE: usize = 16`
 2. Align data to SIMD boundaries
-3. Process complete chunks with SIMD
+3. Process complete chunks with SIMD using f32x16
 4. Handle remaining elements with scalar operations (only for remainder after SIMD batches)
+
+Example SIMD processing:
+```rust
+// Load 16 elements at once
+let data = f32x16::from_slice(&array[base..base + SIMD_BATCH_SIZE]);
+
+// Apply operations using natural arithmetic
+let result = data * f32x16::splat(2.0) + f32x16::splat(1.0);
+
+// Store results back
+result.copy_to_slice(&mut array[base..base + SIMD_BATCH_SIZE]);
+```
 
 ### SIMD Helper Functions
 
@@ -227,10 +248,9 @@ Common patterns for vectorized random numbers and math operations.
 
 6. **Memory Efficiency**: Use bitpacking for boolean data, SoA for numerical data
 
-7. **Import Pattern**: Use conditional imports for SIMD:
+7. **SIMD Imports**: Use the high-level SIMD API:
    ```rust
-   #[cfg(feature = "simd")]
-   use core::arch::wasm32::*;
+   use std::simd::{f32x16, num::SimdFloat};
    ```
 
 ## Example Module Template
@@ -238,9 +258,7 @@ Common patterns for vectorized random numbers and math operations.
 ```rust
 use wasm_bindgen::prelude::*;
 use std::cell::RefCell;
-
-#[cfg(feature = "simd")]
-use core::arch::wasm32::*;
+use std::simd::{f32x16, num::SimdFloat};
 
 const SIMD_BATCH_SIZE: usize = 16;
 
@@ -313,31 +331,24 @@ pub fn update_data() {
 }
 
 fn update_batch_simd(state: &mut ModuleState, base: usize) {
-    unsafe {
-        // Load 16 elements (4 vectors of 4 f32 each)
-        let x_vec1 = v128_load(&state.data_x[base] as *const f32 as *const v128);
-        let x_vec2 = v128_load(&state.data_x[base + 4] as *const f32 as *const v128);
-        let x_vec3 = v128_load(&state.data_x[base + 8] as *const f32 as *const v128);
-        let x_vec4 = v128_load(&state.data_x[base + 12] as *const f32 as *const v128);
-        
-        // Apply SIMD operations
-        let multiplier = f32x4_splat(1.1);
-        let new_x1 = f32x4_mul(x_vec1, multiplier);
-        let new_x2 = f32x4_mul(x_vec2, multiplier);
-        let new_x3 = f32x4_mul(x_vec3, multiplier);
-        let new_x4 = f32x4_mul(x_vec4, multiplier);
-        
-        // Store results
-        v128_store(state.data_x[base..].as_mut_ptr() as *mut v128, new_x1);
-        v128_store(state.data_x[base + 4..].as_mut_ptr() as *mut v128, new_x2);
-        v128_store(state.data_x[base + 8..].as_mut_ptr() as *mut v128, new_x3);
-        v128_store(state.data_x[base + 12..].as_mut_ptr() as *mut v128, new_x4);
-    }
+    // Load 16 elements at once
+    let x_vec = f32x16::from_slice(&state.data_x[base..base + SIMD_BATCH_SIZE]);
+    let y_vec = f32x16::from_slice(&state.data_y[base..base + SIMD_BATCH_SIZE]);
+    
+    // Apply SIMD operations
+    let multiplier = f32x16::splat(1.1);
+    let new_x = x_vec * multiplier;
+    let new_y = y_vec * multiplier;
+    
+    // Store results
+    new_x.copy_to_slice(&mut state.data_x[base..base + SIMD_BATCH_SIZE]);
+    new_y.copy_to_slice(&mut state.data_y[base..base + SIMD_BATCH_SIZE]);
 }
 
 fn update_element_scalar(state: &mut ModuleState, index: usize) {
     // Simple scalar operation for remainder elements
     state.data_x[index] *= 1.1;
+    state.data_y[index] *= 1.1;
 }
 ```
 
@@ -348,8 +359,8 @@ This template demonstrates all the key patterns for high-performance WASM module
 This project follows a **SIMD-first approach** for maximum performance:
 
 ### ✅ **Do This:**
-- Write SIMD implementations directly using `core::arch::wasm32::*`
-- Process data in batches of 16 elements (4 vectors × 4 f32 each)
+- Write SIMD implementations using `std::simd::{f32x16, num::SimdFloat}`
+- Process data in batches of 16 elements with f32x16 vectors
 - Handle remainder elements with simple scalar operations
 - Assume SIMD support is available (it's enabled by default)
 
@@ -361,8 +372,9 @@ This project follows a **SIMD-first approach** for maximum performance:
 
 ### Why SIMD-First?
 - **Modern Browser Support**: All target browsers support WebAssembly SIMD
-- **Performance**: 4x faster processing compared to scalar operations
+- **Performance**: Up to 16x faster processing with f32x16 vectors
 - **Simplicity**: Single code path reduces complexity and maintenance
+- **Clean API**: High-level std::simd API is more readable than low-level intrinsics
 - **Future-Proof**: SIMD is the standard for high-performance web applications
 
 ### Handling Non-SIMD Elements
