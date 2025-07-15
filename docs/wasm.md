@@ -57,9 +57,11 @@ colors: Vec<f32>
 
 ## SIMD Optimization
 
+**SIMD is enabled by default** in this project. Modern browsers support WebAssembly SIMD, so we implement SIMD-only solutions without fallbacks.
+
 ### 16-Element Batch Processing
 
-Process data in batches of 16 elements using `f32x16`:
+Process data in batches of 16 elements using SIMD instructions:
 
 **Reference**: `wasm/src/star_field.rs:369-414`
 
@@ -67,7 +69,7 @@ Key pattern:
 1. Define `const SIMD_BATCH_SIZE: usize = 16`
 2. Align data to SIMD boundaries
 3. Process complete chunks with SIMD
-4. Handle remaining elements with scalar fallback
+4. Handle remaining elements with scalar operations (only for remainder after SIMD batches)
 
 ### SIMD Helper Functions
 
@@ -214,20 +216,21 @@ Common patterns for vectorized random numbers and math operations.
 
 2. **Minimize Boundary Crossings**: Batch operations to reduce JS/WASM calls
 
-3. **Handle Partial Batches**: Always implement scalar fallback for remaining elements
+3. **SIMD-First Approach**: Write SIMD implementations directly without non-SIMD fallbacks. SIMD is enabled by default and supported by all modern browsers.
 
-4. **Console Logging**: Use the provided macro for debugging:
+4. **Handle Remainder Elements**: After processing complete SIMD batches, handle remaining elements with simple scalar operations (not full fallback implementations)
+
+5. **Console Logging**: Use the provided macro for debugging:
    ```rust
    console_log!("Debug info: {}", value);
    ```
 
-5. **Memory Efficiency**: Use bitpacking for boolean data, SoA for numerical data
+6. **Memory Efficiency**: Use bitpacking for boolean data, SoA for numerical data
 
-6. **Feature Flags**: Enable SIMD features in `Cargo.toml`:
-   ```toml
-   [features]
-   default = ["simd"]
-   simd = []
+7. **Import Pattern**: Use conditional imports for SIMD:
+   ```rust
+   #[cfg(feature = "simd")]
+   use core::arch::wasm32::*;
    ```
 
 ## Example Module Template
@@ -235,6 +238,9 @@ Common patterns for vectorized random numbers and math operations.
 ```rust
 use wasm_bindgen::prelude::*;
 use std::cell::RefCell;
+
+#[cfg(feature = "simd")]
+use core::arch::wasm32::*;
 
 const SIMD_BATCH_SIZE: usize = 16;
 
@@ -261,7 +267,7 @@ pub struct ModulePointers {
 pub fn initialize_module(count: usize) -> ModulePointers {
     let aligned_count = count.div_ceil(SIMD_BATCH_SIZE) * SIMD_BATCH_SIZE;
     
-    let mut state = ModuleState {
+    let state = ModuleState {
         data_x: vec![0.0; aligned_count],
         data_y: vec![0.0; aligned_count],
         count,
@@ -279,6 +285,94 @@ pub fn initialize_module(count: usize) -> ModulePointers {
     
     pointers
 }
+
+#[wasm_bindgen]
+pub fn update_data() {
+    MODULE_STATE.with(|cell| {
+        let mut state_ref = cell.borrow_mut();
+        let state = state_ref.as_mut().expect("Module not initialized");
+        
+        let count = state.count;
+        if count == 0 {
+            return;
+        }
+        
+        // Process complete SIMD batches
+        let simd_chunks = count / SIMD_BATCH_SIZE;
+        for chunk in 0..simd_chunks {
+            let base = chunk * SIMD_BATCH_SIZE;
+            update_batch_simd(state, base);
+        }
+        
+        // Handle remaining elements with scalar operations
+        let remaining_start = simd_chunks * SIMD_BATCH_SIZE;
+        for i in remaining_start..count {
+            update_element_scalar(state, i);
+        }
+    });
+}
+
+fn update_batch_simd(state: &mut ModuleState, base: usize) {
+    unsafe {
+        // Load 16 elements (4 vectors of 4 f32 each)
+        let x_vec1 = v128_load(&state.data_x[base] as *const f32 as *const v128);
+        let x_vec2 = v128_load(&state.data_x[base + 4] as *const f32 as *const v128);
+        let x_vec3 = v128_load(&state.data_x[base + 8] as *const f32 as *const v128);
+        let x_vec4 = v128_load(&state.data_x[base + 12] as *const f32 as *const v128);
+        
+        // Apply SIMD operations
+        let multiplier = f32x4_splat(1.1);
+        let new_x1 = f32x4_mul(x_vec1, multiplier);
+        let new_x2 = f32x4_mul(x_vec2, multiplier);
+        let new_x3 = f32x4_mul(x_vec3, multiplier);
+        let new_x4 = f32x4_mul(x_vec4, multiplier);
+        
+        // Store results
+        v128_store(state.data_x[base..].as_mut_ptr() as *mut v128, new_x1);
+        v128_store(state.data_x[base + 4..].as_mut_ptr() as *mut v128, new_x2);
+        v128_store(state.data_x[base + 8..].as_mut_ptr() as *mut v128, new_x3);
+        v128_store(state.data_x[base + 12..].as_mut_ptr() as *mut v128, new_x4);
+    }
+}
+
+fn update_element_scalar(state: &mut ModuleState, index: usize) {
+    // Simple scalar operation for remainder elements
+    state.data_x[index] *= 1.1;
+}
 ```
 
 This template demonstrates all the key patterns for high-performance WASM modules in this project.
+
+## SIMD-First Philosophy
+
+This project follows a **SIMD-first approach** for maximum performance:
+
+### ✅ **Do This:**
+- Write SIMD implementations directly using `core::arch::wasm32::*`
+- Process data in batches of 16 elements (4 vectors × 4 f32 each)
+- Handle remainder elements with simple scalar operations
+- Assume SIMD support is available (it's enabled by default)
+
+### ❌ **Don't Do This:**
+- Create full non-SIMD fallback implementations
+- Use feature flags to conditionally compile SIMD code
+- Write JavaScript fallbacks for WASM functions
+- Implement dual code paths for SIMD vs non-SIMD
+
+### Why SIMD-First?
+- **Modern Browser Support**: All target browsers support WebAssembly SIMD
+- **Performance**: 4x faster processing compared to scalar operations
+- **Simplicity**: Single code path reduces complexity and maintenance
+- **Future-Proof**: SIMD is the standard for high-performance web applications
+
+### Handling Non-SIMD Elements
+Only implement simple scalar operations for remainder elements that don't fit into complete SIMD batches:
+
+```rust
+// After processing complete SIMD batches of 16 elements
+let remaining_start = simd_chunks * SIMD_BATCH_SIZE;
+for i in remaining_start..count {
+    // Simple scalar operation - not a full fallback implementation
+    data[i] = data[i] * 2.0;
+}
+```
