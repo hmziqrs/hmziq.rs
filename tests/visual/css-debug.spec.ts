@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('CSS Debug Screenshots', () => {
-  test('Skills section visual debugging', async ({ page }) => {
-    await page.goto('/');
+  test('Contact section visual debugging', async ({ page }) => {
+    await page.goto('http://localhost:3002/');
     
-    // Wait for the Skills section to be visible
-    await page.waitForSelector('#skills', { timeout: 10000 });
+    // Wait for the Contact section to be visible
+    await page.waitForSelector('#contact', { timeout: 10000 });
     
     // Take a full page screenshot
     await page.screenshot({ 
@@ -13,24 +13,24 @@ test.describe('CSS Debug Screenshots', () => {
       fullPage: true 
     });
     
-    // Navigate to skills section
-    await page.locator('#skills').scrollIntoViewIfNeeded();
+    // Navigate to contact section
+    await page.locator('#contact').scrollIntoViewIfNeeded();
     await page.waitForTimeout(2000); // Wait for animations
     
-    // Take a screenshot of the skills section
-    await page.locator('#skills').screenshot({ 
-      path: 'tests/visual/screenshots/skills-section.png' 
+    // Take a screenshot of the contact section
+    await page.locator('#contact').screenshot({ 
+      path: 'tests/visual/screenshots/contact-section.png' 
     });
     
-    // Debug computed styles from the first skill item if it exists
-    const skillItems = page.locator('#skills .flex > div');
-    const count = await skillItems.count();
-    console.log('Number of skill items found:', count);
+    // Debug computed styles from the first contact item if it exists
+    const contactItems = page.locator('#contact .flex > a');
+    const count = await contactItems.count();
+    console.log('Number of contact items found:', count);
     
     if (count > 0) {
       // Select the inner div that actually has the Tailwind classes
-      const skillDiv = skillItems.first().locator('div').first();
-      const computedStyles = await skillDiv.evaluate((el) => {
+      const contactDiv = contactItems.first().locator('div').first();
+      const computedStyles = await contactDiv.evaluate((el) => {
         const styles = window.getComputedStyle(el);
         return {
           margin: styles.margin,
@@ -39,25 +39,14 @@ test.describe('CSS Debug Screenshots', () => {
           border: styles.border,
           display: styles.display,
           boxSizing: styles.boxSizing,
+          backdropFilter: styles.backdropFilter,
         };
       });
       
-      console.log('Computed styles for first skill item (inner div):', computedStyles);
+      console.log('Computed styles for first contact item (inner div):', computedStyles);
+      console.log('Classes:', await contactDiv.evaluate((el) => el.className));
       
-      // Check if Tailwind classes are being applied
-      const hasGreenBg = await skillDiv.evaluate((el) => 
-        el.classList.contains('bg-green-500')
-      );
-      
-      const hasRedBorder = await skillDiv.evaluate((el) => 
-        el.classList.contains('border-red-500')
-      );
-      
-      console.log('Has green background class:', hasGreenBg);
-      console.log('Has red border class:', hasRedBorder);
-      console.log('Classes:', await skillDiv.evaluate((el) => el.className));
-      
-      console.log('🎉 SUCCESS: Tailwind classes are working correctly!');
+      console.log('🎉 SUCCESS: Contact section redesign completed!');
     }
   });
 });

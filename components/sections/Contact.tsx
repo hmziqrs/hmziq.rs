@@ -5,11 +5,29 @@ import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { userProfile } from '@/lib/content/UserProfile'
 import { siteContent } from '@/lib/content/SiteContent'
 
+// Icon imports
+import { SiGithub, SiX } from '@icons-pack/react-simple-icons'
+import { Mail } from 'lucide-react'
+
+// Social platform to icon mapping
+const socialIconMap: Record<string, React.ComponentType<any>> = {
+  GitHub: SiGithub,
+  Twitter: SiX,
+  Email: Mail,
+}
+
+// Social platform color mapping for brand consistency
+const socialColorMap: Record<string, string> = {
+  GitHub: '#FFFFFF',
+  Twitter: '#FFFFFF',
+  Email: '#FFFFFF',
+}
+
 const Contact: React.FC = () => {
   const prefersReducedMotion = useReducedMotion()
   const primarySocialLinks = userProfile.getPrimarySocialLinks()
   const allLinksForSEO = userProfile.getAllLinksForSEO()
-  const { connectMessage, copyright } = siteContent.ui
+  const { copyright } = siteContent.ui
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -41,6 +59,20 @@ const Contact: React.FC = () => {
     },
   }
 
+  const renderSocialIcon = (platform: string) => {
+    const IconComponent = socialIconMap[platform]
+    if (!IconComponent) return null
+
+    const iconColor = socialColorMap[platform] || '#9CA3AF'
+    const isLucideIcon = platform === 'Email'
+
+    if (isLucideIcon) {
+      return <IconComponent size={24} color={iconColor} strokeWidth={2} />
+    }
+
+    return <IconComponent size={24} color={iconColor} title={platform} />
+  }
+
   return (
     <section
       id="contact"
@@ -57,34 +89,54 @@ const Contact: React.FC = () => {
           className="text-4xl md:text-6xl font-bold mb-12 text-gradient"
           variants={itemVariants}
         >
-          Let&apos;s Connect
+          Contact
         </motion.h2>
 
-        <motion.p
-          className="text-xl md:text-2xl text-gray-400 mb-16 max-w-2xl mx-auto leading-relaxed"
+        <motion.div
+          className="flex flex-row flex-wrap justify-center gap-6 mb-16 max-w-4xl mx-auto"
           variants={itemVariants}
         >
-          {connectMessage}
-        </motion.p>
-
-        {/* Primary Social Links */}
-        <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16" variants={itemVariants}>
           {primarySocialLinks.map((link) => (
             <motion.a
               key={link.name}
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="block bg-dark-200 border border-gray-800 rounded-lg p-6 transition-all duration-300 hover:border-gray-600 hover:bg-dark-100 group"
+              className="cosmic-contact-tile"
               variants={linkVariants}
-              whileHover="hover"
+              whileHover={
+                prefersReducedMotion
+                  ? {}
+                  : {
+                      scale: 1.15,
+                      rotate: 3,
+                      transition: { type: 'spring', stiffness: 400, damping: 25 },
+                    }
+              }
             >
-              <div className="text-center">
-                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-gradient transition-all duration-300">
-                  {link.name}
-                </h3>
-                <p className="text-gray-300 font-mono text-sm mb-2">{link.username}</p>
-                <p className="text-gray-500 text-sm">{link.description}</p>
+              <div className="px-6 py-4 relative rounded-lg backdrop-blur-sm shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)] transition-all duration-500 group cursor-pointer flex flex-col items-center gap-3 overflow-hidden bg-gradient-radial from-transparent via-transparent to-white/[0.05] hover:to-white/[0.08]">
+                {/* Social Icon */}
+                <div className="transition-transform duration-300 group-hover:scale-110 z-10">
+                  {renderSocialIcon(link.name)}
+                </div>
+
+                {/* Username */}
+                <span className="relative z-10 text-white font-mono text-sm tracking-wide text-center bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
+                  {link.username}
+                </span>
+
+                {/* White shine effect on hover */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-1000 pointer-events-none">
+                  <div
+                    className="absolute inset-0 -translate-x-full -translate-y-full group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-1000"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',
+                      width: '200%',
+                      height: '200%',
+                    }}
+                  />
+                </div>
               </div>
             </motion.a>
           ))}
@@ -101,8 +153,8 @@ const Contact: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <motion.div className="border-t border-gray-800 pt-8" variants={itemVariants}>
-          <p className="text-gray-600 text-sm">{copyright}</p>
+        <motion.div variants={itemVariants}>
+          <p className="text-sm font-medium text-white/80">{copyright}</p>
         </motion.div>
       </motion.div>
     </section>

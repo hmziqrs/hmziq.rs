@@ -3,11 +3,20 @@
   "name": "hmziqrs",
   "title": "Senior Software Engineer",
   "yearsOfExperience": 9,
-  "email": "hello@hmziq.rs",
+  "email": "hmziqrs@gmail.com",
   "skills": [
-    "Flutter", "Dioxus", "React", "React Native",
-    "Next.JS", "HonoJS", "AdonisJS", "Axum",
-    "Docker", "CI/CD", "Architecture", "Animations"
+    "Flutter",
+    "Dioxus",
+    "React",
+    "React Native",
+    "Next.JS",
+    "HonoJS",
+    "AdonisJS",
+    "Axum",
+    "Docker",
+    "CI/CD",
+    "Architecture",
+    "Animations"
   ],
   "websites": {
     "portfolio": "https://hmziq.rs",
