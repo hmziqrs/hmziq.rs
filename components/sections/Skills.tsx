@@ -5,6 +5,54 @@ import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { userProfile } from '@/lib/content/UserProfile'
 
+// Icon imports
+import { 
+  SiFlutter, 
+  SiRust, 
+  SiReact, 
+  SiNextdotjs, 
+  SiJavascript, 
+  SiAdonisjs, 
+  SiDocker 
+} from '@icons-pack/react-simple-icons'
+import { 
+  Workflow, 
+  Building2, 
+  Zap 
+} from 'lucide-react'
+
+// Skill to icon mapping
+const skillIconMap: Record<string, React.ComponentType<any>> = {
+  'Flutter': SiFlutter,
+  'Dioxus': SiRust,
+  'React': SiReact,
+  'React Native': SiReact,
+  'Next.JS': SiNextdotjs,
+  'HonoJS': SiJavascript,
+  'AdonisJS': SiAdonisjs,
+  'Axum': SiRust,
+  'Docker': SiDocker,
+  'CI/CD': Workflow,
+  'Architecture': Building2,
+  'Animations': Zap,
+}
+
+// Skill color mapping for brand consistency
+const skillColorMap: Record<string, string> = {
+  'Flutter': '#02569B',
+  'Dioxus': '#CE422B',
+  'React': '#61DAFB',
+  'React Native': '#61DAFB',
+  'Next.JS': '#000000',
+  'HonoJS': '#F7DF1E',
+  'AdonisJS': '#5A45FF',
+  'Axum': '#CE422B',
+  'Docker': '#2496ED',
+  'CI/CD': '#10B981',
+  'Architecture': '#8B5CF6',
+  'Animations': '#F59E0B',
+}
+
 const Skills: React.FC = () => {
   const prefersReducedMotion = useReducedMotion()
   const skills = userProfile.skills
@@ -54,6 +102,32 @@ const Skills: React.FC = () => {
     },
   }), [prefersReducedMotion])
 
+  const renderSkillIcon = (skill: string) => {
+    const IconComponent = skillIconMap[skill]
+    if (!IconComponent) return null
+
+    const iconColor = skillColorMap[skill] || '#9CA3AF'
+    const isLucideIcon = ['CI/CD', 'Architecture', 'Animations'].includes(skill)
+
+    if (isLucideIcon) {
+      return (
+        <IconComponent 
+          size={20} 
+          color={iconColor}
+          strokeWidth={2}
+        />
+      )
+    }
+
+    return (
+      <IconComponent 
+        size={20} 
+        color={iconColor}
+        title={skill}
+      />
+    )
+  }
+
   return (
     <section
       ref={sectionRef}
@@ -97,8 +171,15 @@ const Skills: React.FC = () => {
                 transition-all duration-300
                 hover:shadow-lg hover:shadow-black/10
                 group
+                flex flex-col items-center gap-2
               `}>
-                <span className="relative z-10 text-white font-medium text-sm tracking-wide">
+                {/* Skill Icon */}
+                <div className="flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
+                  {renderSkillIcon(skill)}
+                </div>
+                
+                {/* Skill Name */}
+                <span className="relative z-10 text-white font-medium text-xs md:text-sm tracking-wide leading-tight">
                   {skill}
                 </span>
                 

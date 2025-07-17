@@ -5,9 +5,9 @@
   "yearsOfExperience": 9,
   "email": "hello@hmziq.rs",
   "skills": [
-    "TypeScript", "React.js", "Next.js", "React Native",
-    "AdonisJS", "Express.js", "Rust (Axum)", "Node.js", 
-    "Flutter", "Dioxus", "Electron", "Tauri"
+    "Flutter", "Dioxus", "React", "React Native",
+    "Next.JS", "HonoJS", "AdonisJS", "Axum",
+    "Docker", "CI/CD", "Architecture", "Animations"
   ],
   "websites": {
     "portfolio": "https://hmziq.rs",
