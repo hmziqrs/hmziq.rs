@@ -10,6 +10,40 @@ const Skills: React.FC = () => {
   const skillCategories = userProfile.skills
   const sectionRef = useRef<HTMLElement>(null)
 
+  // Category-specific styling
+  const getCategoryStyles = (title: string) => {
+    const lowercaseTitle = title.toLowerCase()
+    
+    if (lowercaseTitle.includes('frontend')) {
+      return {
+        gradient: 'from-blue-500/10 via-cyan-500/5 to-transparent',
+        border: 'border-blue-500/20 hover:border-blue-400/40',
+        accent: 'bg-blue-500/10',
+        skillBg: 'bg-blue-500/10 hover:bg-blue-500/20',
+        skillBorder: 'border-blue-500/20',
+        icon: '🎨'
+      }
+    } else if (lowercaseTitle.includes('backend')) {
+      return {
+        gradient: 'from-purple-500/10 via-violet-500/5 to-transparent',
+        border: 'border-purple-500/20 hover:border-purple-400/40',
+        accent: 'bg-purple-500/10',
+        skillBg: 'bg-purple-500/10 hover:bg-purple-500/20',
+        skillBorder: 'border-purple-500/20',
+        icon: '⚡'
+      }
+    } else {
+      return {
+        gradient: 'from-emerald-500/10 via-teal-500/5 to-transparent',
+        border: 'border-emerald-500/20 hover:border-emerald-400/40',
+        accent: 'bg-emerald-500/10',
+        skillBg: 'bg-emerald-500/10 hover:bg-emerald-500/20',
+        skillBorder: 'border-emerald-500/20',
+        icon: '🚀'
+      }
+    }
+  }
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -67,36 +101,88 @@ const Skills: React.FC = () => {
         </motion.h2>
 
         {/* Skills Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {skillCategories.map((category) => (
-            <motion.div key={category.title} className="relative group" variants={cardVariants}>
-              <div className="bg-dark-200 border border-gray-800 rounded-lg p-8 h-full transition-all duration-300 hover:border-gray-600 hover:bg-dark-100">
-                {/* Category Header */}
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-white mb-2">{category.title}</h3>
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
+          {skillCategories.map((category) => {
+            const styles = getCategoryStyles(category.title)
+            return (
+              <motion.div 
+                key={category.title} 
+                className="relative group" 
+                variants={cardVariants}
+                whileHover={prefersReducedMotion ? {} : { y: -8 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                {/* Card Background with Gradient */}
+                <div className={`
+                  relative overflow-hidden rounded-xl border backdrop-blur-sm
+                  bg-gradient-to-br ${styles.gradient}
+                  ${styles.border}
+                  transition-all duration-500 ease-out
+                  hover:shadow-2xl hover:shadow-black/20
+                  p-8 h-full
+                `}>
+                  {/* Category Header */}
+                  <div className="text-center mb-8">
+                    <div className={`
+                      inline-flex items-center justify-center w-16 h-16 rounded-full mb-4
+                      ${styles.accent} border ${styles.skillBorder}
+                      transition-transform duration-300 group-hover:scale-110
+                    `}>
+                      <span className="text-2xl">{styles.icon}</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">
+                      {category.title}
+                    </h3>
+                    <div className={`w-16 h-0.5 mx-auto ${styles.accent} rounded-full`} />
+                  </div>
 
-                {/* Skills Grid */}
-                <div className="space-y-3">
-                  {category.skills.map((skill, skillIndex) => (
-                    <motion.div
-                      key={skill}
-                      className="flex items-center justify-center"
-                      variants={skillVariants}
-                      custom={skillIndex}
-                    >
-                      <div className="bg-gray-800 text-gray-300 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-700 transition-colors duration-200 w-full text-center">
-                        {skill}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                  {/* Skills List */}
+                  <div className="space-y-3">
+                    {category.skills.map((skill, skillIndex) => (
+                      <motion.div
+                        key={skill}
+                        className="relative"
+                        variants={skillVariants}
+                        custom={skillIndex}
+                        whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      >
+                        <div className={`
+                          relative overflow-hidden rounded-lg border backdrop-blur-sm
+                          ${styles.skillBg} ${styles.skillBorder}
+                          px-4 py-3 text-center
+                          transition-all duration-300
+                          hover:shadow-lg hover:shadow-black/10
+                          group/skill
+                        `}>
+                          <span className="relative z-10 text-white font-medium text-sm tracking-wide">
+                            {skill}
+                          </span>
+                          
+                          {/* Hover shine effect */}
+                          <div className="absolute inset-0 -translate-x-full group-hover/skill:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
 
-                {/* Subtle glow effect */}
-                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-transparent via-transparent to-star-blue opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
-              </div>
-            </motion.div>
-          ))}
+                  {/* Background Pattern */}
+                  <div className="absolute top-0 right-0 w-32 h-32 opacity-5">
+                    <div className={`w-full h-full rounded-full ${styles.accent} blur-xl`} />
+                  </div>
+                  
+                  {/* Subtle animated border */}
+                  <div className={`
+                    absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100
+                    transition-opacity duration-500 pointer-events-none
+                    bg-gradient-to-r ${styles.border} p-px
+                  `}>
+                    <div className="w-full h-full rounded-xl bg-black/80" />
+                  </div>
+                </div>
+              </motion.div>
+            )
+          })}
         </div>
       </motion.div>
     </section>
