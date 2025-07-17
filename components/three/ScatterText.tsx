@@ -103,10 +103,10 @@ function PixelGenerator({
   useEffect(() => {
     const generatePixels = async () => {
       try {
-        const module = await loadWASM()
+        const wasmModule = await loadWASM()
 
         // Initialize scatter text with max particles
-        const memory = new ScatterTextSharedMemory(module, 10000)
+        const memory = new ScatterTextSharedMemory(wasmModule, 10000)
 
         // Calculate dynamic font size
         const fontSize = calculateFontSize(text, containerWidth, containerHeight)
@@ -131,7 +131,7 @@ function PixelGenerator({
         const initialWidth = typeof window !== 'undefined' ? window.innerWidth : 1200
         const initialHeight = typeof window !== 'undefined' ? window.innerHeight : 800
 
-        const particleCount = module.set_text_pixels(
+        const particleCount = wasmModule.set_text_pixels(
           rawPixelData,
           width,
           height,
@@ -143,7 +143,7 @@ function PixelGenerator({
         console.log(`Generated ${particleCount} particles for text: ${text}`)
 
         // Pass data to parent
-        onPixelsGenerated({ pixelData, width, height, particleCount }, module)
+        onPixelsGenerated({ pixelData, width, height, particleCount }, wasmModule)
       } catch (error) {
         console.error('Failed to generate pixels:', error)
       }

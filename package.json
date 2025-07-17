@@ -32,6 +32,7 @@
   },
   "homepage": "https://github.com/hmziqrs/hmziq.rs#readme",
   "dependencies": {
+    "@icons-pack/react-simple-icons": "^13.5.0",
     "@react-three/drei": "^10.1.2",
     "@react-three/fiber": "^9.1.2",
     "@types/node": "^22.15.30",
@@ -39,6 +40,7 @@
     "@types/react-dom": "^19.1.6",
     "clsx": "^2.1.1",
     "framer-motion": "^12.16.0",
+    "lucide-react": "^0.525.0",
     "next": "^15.3.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
