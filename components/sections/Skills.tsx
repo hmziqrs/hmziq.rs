@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { userProfile } from '@/lib/content/UserProfile'
@@ -44,46 +44,49 @@ const Skills: React.FC = () => {
     }
   }
 
-  const containerVariants = {
+  const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
         duration: prefersReducedMotion ? 0 : 0.8,
-        staggerChildren: prefersReducedMotion ? 0 : 0.2,
+        staggerChildren: prefersReducedMotion ? 0 : 0.15,
+        ease: [0.25, 0.1, 0.25, 1.0],
       },
     },
-  }
+  }), [prefersReducedMotion])
 
-  const cardVariants = {
-    hidden: { y: prefersReducedMotion ? 0 : 50, opacity: 0 },
+  const cardVariants = useMemo(() => ({
+    hidden: { y: prefersReducedMotion ? 0 : 40, opacity: 0 },
     visible: {
       y: 0,
       opacity: 1,
       transition: {
-        duration: prefersReducedMotion ? 0 : 0.6,
-        ease: 'easeOut',
+        duration: prefersReducedMotion ? 0 : 0.5,
+        ease: [0.25, 0.1, 0.25, 1.0],
       },
     },
-  }
+  }), [prefersReducedMotion])
 
-  const skillVariants = {
-    hidden: { scale: prefersReducedMotion ? 1 : 0.8, opacity: 0 },
+  const skillVariants = useMemo(() => ({
+    hidden: { scale: prefersReducedMotion ? 1 : 0.9, opacity: 0 },
     visible: {
       scale: 1,
       opacity: 1,
       transition: {
-        duration: prefersReducedMotion ? 0 : 0.4,
-        ease: 'easeOut',
+        duration: prefersReducedMotion ? 0 : 0.3,
+        ease: [0.25, 0.1, 0.25, 1.0],
+        delay: 0.1,
       },
     },
-  }
+  }), [prefersReducedMotion])
 
   return (
     <section
       ref={sectionRef}
       id="skills"
       className="relative min-h-screen flex items-center justify-center px-6 py-20"
+      aria-labelledby="skills-heading"
     >
       <motion.div
         className="max-w-6xl mx-auto"
@@ -94,14 +97,15 @@ const Skills: React.FC = () => {
       >
         {/* Section Title */}
         <motion.h2
-          className="text-4xl md:text-6xl font-bold text-center mb-16 text-white"
+          id="skills-heading"
+          className="text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-12 md:mb-16 text-white"
           variants={cardVariants}
         >
           Skills
         </motion.h2>
 
         {/* Skills Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 lg:gap-10">
           {skillCategories.map((category) => {
             const styles = getCategoryStyles(category.title)
             return (
@@ -109,8 +113,13 @@ const Skills: React.FC = () => {
                 key={category.title} 
                 className="relative group" 
                 variants={cardVariants}
-                whileHover={prefersReducedMotion ? {} : { y: -8 }}
+                whileHover={prefersReducedMotion ? {} : { 
+                  y: -8, 
+                  transition: { type: "spring", stiffness: 400, damping: 25 }
+                }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                role="region"
+                aria-labelledby={`${category.title.toLowerCase().replace(/\s+/g, '-')}-heading`}
               >
                 {/* Card Background with Gradient */}
                 <div className={`
@@ -119,25 +128,28 @@ const Skills: React.FC = () => {
                   ${styles.border}
                   transition-all duration-500 ease-out
                   hover:shadow-2xl hover:shadow-black/20
-                  p-8 h-full
+                  p-6 md:p-8 h-full
                 `}>
                   {/* Category Header */}
-                  <div className="text-center mb-8">
+                  <div className="text-center mb-6 md:mb-8">
                     <div className={`
-                      inline-flex items-center justify-center w-16 h-16 rounded-full mb-4
+                      inline-flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full mb-3 md:mb-4
                       ${styles.accent} border ${styles.skillBorder}
-                      transition-transform duration-300 group-hover:scale-110
+                      transition-all duration-300 group-hover:scale-110 group-hover:rotate-12
                     `}>
-                      <span className="text-2xl">{styles.icon}</span>
+                      <span className="text-xl md:text-2xl">{styles.icon}</span>
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">
+                    <h3 
+                      id={`${category.title.toLowerCase().replace(/\s+/g, '-')}-heading`}
+                      className="text-xl md:text-2xl font-bold text-white mb-2 tracking-tight"
+                    >
                       {category.title}
                     </h3>
-                    <div className={`w-16 h-0.5 mx-auto ${styles.accent} rounded-full`} />
+                    <div className={`w-12 md:w-16 h-0.5 mx-auto ${styles.accent} rounded-full transition-all duration-300 group-hover:w-20`} />
                   </div>
 
                   {/* Skills List */}
-                  <div className="space-y-3">
+                  <div className="space-y-2 md:space-y-3">
                     {category.skills.map((skill, skillIndex) => (
                       <motion.div
                         key={skill}
