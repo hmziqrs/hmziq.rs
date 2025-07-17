@@ -2,17 +2,6 @@
   "navigation": {
     "sections": ["hero", "about", "skills", "contact"]
   },
-  "skillCategories": {
-    "frontend": {
-      "title": "Frontend"
-    },
-    "backend": {
-      "title": "Backend"
-    },
-    "crossPlatform": {
-      "title": "Cross-Platform"
-    }
-  },
   "socialPlatforms": {
     "github": {
       "name": "GitHub",

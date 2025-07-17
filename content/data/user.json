@@ -4,11 +4,11 @@
   "title": "Senior Software Engineer",
   "yearsOfExperience": 9,
   "email": "hello@hmziq.rs",
-  "skills": {
-    "frontend": ["TypeScript", "React.js", "Next.js", "React Native"],
-    "backend": ["AdonisJS", "Express.js", "Rust (Axum)", "Node.js"],
-    "crossPlatform": ["Flutter", "Dioxus", "Electron", "Tauri"]
-  },
+  "skills": [
+    "TypeScript", "React.js", "Next.js", "React Native",
+    "AdonisJS", "Express.js", "Rust (Axum)", "Node.js", 
+    "Flutter", "Dioxus", "Electron", "Tauri"
+  ],
   "websites": {
     "portfolio": "https://hmziq.rs",
     "cv": "https://cv.hmziq.rs"

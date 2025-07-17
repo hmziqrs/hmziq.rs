@@ -45,11 +45,8 @@ export class UserProfile {
     }
   }
 
-  get skills(): SkillCategory[] {
-    return Object.entries(this.data.skills).map(([key, skills]) => ({
-      ...this.siteConfig.skillCategories[key as keyof typeof this.siteConfig.skillCategories],
-      skills,
-    }))
+  get skills(): string[] {
+    return this.data.skills as string[]
   }
 
   getSocialLinks(): SocialLink[] {
