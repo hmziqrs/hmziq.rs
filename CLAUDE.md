@@ -32,3 +32,4 @@ Bun, Next.js 15+ (App Router), shadcn/ui, Tailwind CSS v4, Three.js + React Thre
 3D: `const StarField = dynamic(() => import('@/components/three/StarField'), { ssr: false })`
 Parallax: Intersection Observer + CSS transforms for performance
 WASM: `import { initWasm } from '@/lib/wasm'` then `await initWasm()`
+Dev server: `nohup bun run dev > dev.log 2>&1 &` for background with logs

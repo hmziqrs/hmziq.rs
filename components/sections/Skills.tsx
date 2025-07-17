@@ -118,11 +118,10 @@ const Skills: React.FC = () => {
         viewport={{ once: true, margin: '-100px' }}
       >
         {/* Skills Grid */}
-        <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+        <div className="flex">
           {skills.map((skill, index) => (
             <motion.div
               key={skill}
-              className="relative"
               variants={skillVariants}
               whileHover={
                 prefersReducedMotion
@@ -134,17 +133,19 @@ const Skills: React.FC = () => {
               }
             >
               <div
-                className="
-                relative rounded-lg 
-                bg-green-500 border-8 border-red-500
-                px-16 py-12
+                className={`
+                px-4 py-3
+                relative rounded-lg
+                ${skillStyles.background}
+                border border-gray-700
                 transition-all duration-300
                 group cursor-pointer
-                flex items-center gap-6
-              "
+                flex items-center gap-2
+              `}
               >
+                <div className="w-1" />
                 {/* Skill Icon */}
-                <div className="flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
+                <div className="transition-transform duration-300 group-hover:scale-110">
                   {renderSkillIcon(skill)}
                 </div>
 
@@ -155,6 +156,7 @@ const Skills: React.FC = () => {
 
                 {/* Hover shine effect */}
                 <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+                <div className="w-1" />
               </div>
             </motion.div>
           ))}
