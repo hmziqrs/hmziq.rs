@@ -54,9 +54,10 @@ const Skills: React.FC = () => {
   const skills = userProfile.skills
   const sectionRef = useRef<HTMLElement>(null)
 
-  // Uniform styling for all skills
+  // Cosmic tile styling inspired by the provided design
   const skillStyles = {
-    background: 'bg-white/5 hover:bg-white/8',
+    background: 'bg-gradient-radial from-transparent via-transparent to-white/[0.03]',
+    hoverBackground: 'hover:to-white/[0.05]',
   }
 
   const containerVariants = useMemo(
@@ -118,7 +119,7 @@ const Skills: React.FC = () => {
         viewport={{ once: true, margin: '-100px' }}
       >
         {/* Skills Grid */}
-        <div className="flex">
+        <div className="flex flex-row flex-wrap justify-center gap-4 max-w-6xl">
           {skills.map((skill, index) => (
             <motion.div
               key={skill}
@@ -127,36 +128,61 @@ const Skills: React.FC = () => {
                 prefersReducedMotion
                   ? {}
                   : {
-                      scale: 1.05,
+                      scale: 1.15,
+                      rotate: 3,
                       transition: { type: 'spring', stiffness: 400, damping: 25 },
                     }
               }
+              className="cosmic-skill-tile"
             >
               <div
                 className={`
                 px-4 py-3
                 relative rounded-lg
-                ${skillStyles.background}
-                border border-gray-700
-                transition-all duration-300
+                backdrop-blur-sm
+                transition-all duration-500
                 group cursor-pointer
-                flex items-center gap-2
+                flex flex-row items-center gap-2
+                overflow-hidden
+                ${skillStyles.background}
+                ${skillStyles.hoverBackground}
               `}
               >
-                <div className="w-1" />
+                {/* Nebula hint - varies by index */}
+                <div
+                  className="absolute inset-0 opacity-40"
+                  style={{
+                    background:
+                      index % 2 === 0
+                        ? 'radial-gradient(circle at 30% 30%, rgba(0, 128, 255, 0.05), transparent 80%)'
+                        : index % 3 === 0
+                          ? 'radial-gradient(circle at 50% 50%, rgba(255, 165, 0, 0.05), transparent 80%)'
+                          : 'radial-gradient(circle at 70% 70%, rgba(255, 0, 128, 0.05), transparent 80%)',
+                  }}
+                />
+
                 {/* Skill Icon */}
-                <div className="transition-transform duration-300 group-hover:scale-110">
+                <div className="transition-transform duration-300 group-hover:scale-110 z-10">
                   {renderSkillIcon(skill)}
                 </div>
 
                 {/* Skill Name */}
-                <span className="relative z-10 text-white font-medium text-sm tracking-wide whitespace-nowrap">
+                <span className="relative z-10 text-white font-bold text-sm tracking-wide whitespace-nowrap bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
                   {skill}
                 </span>
 
-                {/* Hover shine effect */}
-                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-                <div className="w-1" />
+                {/* White shine effect on hover */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-1000 pointer-events-none">
+                  <div
+                    className="absolute inset-0 -translate-x-full -translate-y-full group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-1000"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',
+                      width: '200%',
+                      height: '200%',
+                    }}
+                  />
+                </div>
               </div>
             </motion.div>
           ))}
