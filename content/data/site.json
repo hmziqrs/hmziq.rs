@@ -64,8 +64,6 @@
     "hidden": ["linkedin", "instagram", "youtube", "medium", "dev", "stackoverflow"]
   },
   "ui": {
-    "copyright": "© 2025 {name}. Crafted with NextJS and Rust.",
-    "scrollText": "SCROLL",
-    "connectMessage": "Open to conversations and collaboration opportunities."
+    "copyright": "© 2025 {name}. Crafted with NextJS and Rust."
   }
 }

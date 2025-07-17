@@ -18,7 +18,8 @@
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "kill-dev": "kill -9 $(lsof -ti:3000) 2>/dev/null || true"
   },
   "repository": {
     "type": "git",
