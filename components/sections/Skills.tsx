@@ -56,8 +56,7 @@ const Skills: React.FC = () => {
 
   // Uniform styling for all skills
   const skillStyles = {
-    gradient: 'from-white/10 via-white/5 to-transparent',
-    background: 'bg-white/10 hover:bg-white/15',
+    background: 'bg-white/5 hover:bg-white/8',
   }
 
   const containerVariants = useMemo(
@@ -123,7 +122,7 @@ const Skills: React.FC = () => {
           {skills.map((skill, index) => (
             <motion.div
               key={skill}
-              className="relative w-32 md:w-36"
+              className="relative"
               variants={skillVariants}
               whileHover={
                 prefersReducedMotion
@@ -137,12 +136,12 @@ const Skills: React.FC = () => {
               <div
                 className={`
                 relative overflow-hidden rounded-lg backdrop-blur-[0.5px]
-                bg-gradient-to-br ${skillStyles.gradient}
-                p-6 text-center aspect-square
+                ${skillStyles.background}
+                px-8 py-6
                 transition-all duration-300
                 hover:shadow-lg hover:shadow-black/10
                 group cursor-pointer
-                flex flex-col items-center justify-center gap-3
+                flex items-center gap-3
               `}
               >
                 {/* Skill Icon */}
@@ -151,7 +150,7 @@ const Skills: React.FC = () => {
                 </div>
 
                 {/* Skill Name */}
-                <span className="relative z-10 text-white font-medium text-xs md:text-sm tracking-wide leading-tight">
+                <span className="relative z-10 text-white font-medium text-sm tracking-wide whitespace-nowrap">
                   {skill}
                 </span>
 
