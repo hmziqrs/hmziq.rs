@@ -1,0 +1,52 @@
+{
+  "theme": {
+    "themeColor": "#000000",
+    "backgroundColor": "#000000",
+    "textColor": "#ffffff"
+  },
+  "viewport": {
+    "width": "device-width",
+    "initialScale": 1,
+    "maximumScale": 5,
+    "userScalable": true
+  },
+  "seo": {
+    "additionalKeywords": [
+      "Software Engineer",
+      "Frontend Developer",
+      "Backend Developer",
+      "Full-stack Developer",
+      "Web Developer",
+      "JavaScript Developer",
+      "TypeScript Developer",
+      "React Developer",
+      "Node.js Developer",
+      "Modern Web Development",
+      "Software Architecture",
+      "Web Performance",
+      "User Experience",
+      "Technical Leadership"
+    ]
+  },
+  "robots": {
+    "index": true,
+    "follow": true,
+    "googleBot": {
+      "index": true,
+      "follow": true,
+      "maxVideoPreview": -1,
+      "maxImagePreview": "large",
+      "maxSnippet": -1
+    }
+  },
+  "openGraph": {
+    "type": "website",
+    "locale": "en_US",
+    "imageWidth": 1200,
+    "imageHeight": 630,
+    "imageType": "image/png"
+  },
+  "twitter": {
+    "card": "summary_large_image"
+  }
+}
