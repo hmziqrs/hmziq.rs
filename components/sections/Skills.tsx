@@ -139,6 +139,7 @@ const Skills: React.FC = () => {
                 className={`
                 px-4 py-3
                 relative rounded-lg
+                bg-white/5
                 backdrop-blur-sm
                 transition-all duration-500
                 group cursor-pointer
@@ -148,19 +149,6 @@ const Skills: React.FC = () => {
                 ${skillStyles.hoverBackground}
               `}
               >
-                {/* Nebula hint - varies by index */}
-                <div
-                  className="absolute inset-0 opacity-40"
-                  style={{
-                    background:
-                      index % 2 === 0
-                        ? 'radial-gradient(circle at 30% 30%, rgba(0, 128, 255, 0.05), transparent 80%)'
-                        : index % 3 === 0
-                          ? 'radial-gradient(circle at 50% 50%, rgba(255, 165, 0, 0.05), transparent 80%)'
-                          : 'radial-gradient(circle at 70% 70%, rgba(255, 0, 128, 0.05), transparent 80%)',
-                  }}
-                />
-
                 {/* Skill Icon */}
                 <div className="transition-transform duration-300 group-hover:scale-110 z-10">
                   {renderSkillIcon(skill)}
