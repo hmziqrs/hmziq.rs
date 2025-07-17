@@ -135,15 +135,15 @@ const Skills: React.FC = () => {
               }
             >
               <div
-                className="
-                relative overflow-hidden rounded-lg 
-                bg-red-500/50 border-2 border-yellow-400
-                px-6 py-8 text-center 
+                className={`
+                relative overflow-hidden rounded-lg backdrop-blur-[0.5px]
+                bg-gradient-to-br ${skillStyles.gradient}
+                p-6 text-center aspect-square
                 transition-all duration-300
                 hover:shadow-lg hover:shadow-black/10
                 group cursor-pointer
-                flex flex-col items-center gap-4
-              "
+                flex flex-col items-center justify-center gap-3
+              `}
               >
                 {/* Skill Icon */}
                 <div className="flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
