@@ -139,8 +139,8 @@ const Skills: React.FC = () => {
                 className={`
                 px-4 py-3
                 relative rounded-lg
-                bg-white/5
                 backdrop-blur-sm
+                shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)]
                 transition-all duration-500
                 group cursor-pointer
                 flex flex-row items-center gap-2
