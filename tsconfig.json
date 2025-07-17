@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "target": "ES2017",
     "lib": [
       "dom",
       "dom.iterable",
@@ -23,21 +24,16 @@
     ],
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ]
-    },
-    "target": "ES2020"
+    }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    "./scripts/*.ts",
     ".next/types/**/*.ts",
-    "app/**/*",
-    "components/**/*",
-    "hooks/**/*",
-    "lib/**/*",
     "next-env.d.ts",
-    "types/**/*",
     "out/types/**/*.ts"
   ],
   "exclude": [
