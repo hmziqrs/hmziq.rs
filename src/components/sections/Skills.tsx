@@ -155,7 +155,7 @@ const Skills: React.FC = () => {
                 </div>
 
                 {/* Skill Name */}
-                <span className="relative z-10 text-white font-bold text-sm tracking-wide whitespace-nowrap bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
+                <span className="relative z-10 text-white font-mono font-medium text-sm">
                   {skill}
                 </span>
 
