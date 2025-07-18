@@ -22,7 +22,9 @@ export class SiteContent {
     return {
       ...this.siteConfig.ui,
       copyright: this.siteConfig.ui.copyright.replace('{name}', this.userData.name),
+      scrollText: 'Scroll to explore',
       backToTop: 'Back to Top',
+      connectMessage: 'Let\'s connect and build something amazing together',
       additionalSkillsInfo: 'Additional skills'
     }
   }
@@ -31,9 +33,6 @@ export class SiteContent {
     return this.siteConfig.navigation
   }
 
-  get skillCategoryDescriptions() {
-    return this.siteConfig.skillCategories
-  }
 
   get socialPlatforms() {
     return this.siteConfig.socialPlatforms

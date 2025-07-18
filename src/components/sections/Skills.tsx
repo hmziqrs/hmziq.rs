@@ -120,7 +120,7 @@ const Skills: React.FC = () => {
       >
         {/* Skills Grid */}
         <div className="flex flex-row flex-wrap justify-center gap-4 max-w-6xl">
-          {skills.map((skill, index) => (
+          {skills.map((skill) => (
             <motion.div
               key={skill}
               variants={skillVariants}
