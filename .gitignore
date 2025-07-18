@@ -42,3 +42,4 @@ next-env.d.ts
 /public/wasm/
 *.wasm
 Cargo.lock
+.env
