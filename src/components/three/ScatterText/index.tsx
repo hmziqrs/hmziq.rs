@@ -5,88 +5,15 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
 import { loadWASM, ScatterTextSharedMemory } from '@/lib/wasm'
+import { fragmentShader, vertexShader } from './shaders'
+import { ScatterTextProps, PixelData, PixelGeneratorProps, ScatterRendererProps } from './types'
 
-interface ScatterTextProps {
-  text: string
-  fontFamily?: string
-  color?: string
-  skip?: number
-  autoAnimate?: boolean
-  height?: string
-}
-
-interface PixelData {
-  pixelData: Uint8ClampedArray
-  width: number
-  height: number
-  particleCount: number
-}
-
-interface PixelGeneratorProps {
-  text: string
-  fontFamily: string
-  color: string
-  skip: number
-  containerWidth: number
-  containerHeight: number
-  onPixelsGenerated: (data: PixelData, wasmModule: any) => void
-}
-
-interface ScatterRendererProps {
-  pixelData: PixelData
-  wasmModule: any
-  autoAnimate: boolean
-}
-
-// Vertex shader
-const vertexShader = `
-  attribute float opacity;
-  attribute vec3 color;
-
-  varying float vOpacity;
-  varying vec3 vColor;
-
-  void main() {
-    vOpacity = opacity;
-    vColor = color;
-
-    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_Position = projectionMatrix * mvPosition;
-    gl_PointSize = 2.0;
-  }
-`
-
-// Fragment shader
-const fragmentShader = `
-  varying float vOpacity;
-  varying vec3 vColor;
-
-  void main() {
-    if (vOpacity <= 0.0) discard;
-
-    vec2 cxy = 2.0 * gl_PointCoord - 1.0;
-    float r = dot(cxy, cxy);
-    if (r > 1.0) discard;
-
-    gl_FragColor = vec4(vColor, vOpacity);
-  }
-`
-
-// Calculate dynamic font size based on container dimensions and text length
 function calculateFontSize(text: string, containerWidth: number, containerHeight: number): number {
-  // Base font size calculation - use height as primary factor since text is horizontal
   const baseSize = containerHeight * 0.85
-  
-  // Adjust for text length - longer text needs smaller font
   const textLengthFactor = Math.max(0.35, 1 - (text.length - 4) * 0.075)
-  
-  // Width constraint - ensure text doesn't exceed container width
   const widthConstraint = containerWidth / (text.length * 0.6)
-  
-  // Calculate final font size considering both height and width constraints
   const fontSize = Math.min(baseSize * textLengthFactor, widthConstraint)
-  
-  // Ensure minimum and maximum bounds
+
   return Math.max(40, Math.min(fontSize, 500))
 }
 
@@ -105,36 +32,32 @@ function PixelGenerator({
       try {
         const wasmModule = await loadWASM()
 
-        // Initialize scatter text with max particles
         const memory = new ScatterTextSharedMemory(wasmModule, 10000)
 
-        // Calculate dynamic font size
         const fontSize = calculateFontSize(text, containerWidth, containerHeight)
-        
-        console.log(`Dynamic font size: ${fontSize}px for text: "${text}" (${containerWidth}x${containerHeight})`)
+
+        console.log(
+          `Dynamic font size: ${fontSize}px for text: "${text}" (${containerWidth}x${containerHeight})`
+        )
 
         // Generate text pixels
-        const {
-          pixelData: rawPixelData,
-          width,
-          height,
-        } = memory.generateTextPixels(text, fontSize, fontFamily, color)
+        const generated = memory.generateTextPixels(text, fontSize, fontFamily, color)
 
         // Ensure we have a Uint8ClampedArray for PixelData
         const pixelData =
-          rawPixelData instanceof Uint8ClampedArray
-            ? rawPixelData
-            : new Uint8ClampedArray(rawPixelData)
+          generated.pixelData instanceof Uint8ClampedArray
+            ? generated.pixelData
+            : new Uint8ClampedArray(generated.pixelData)
 
         // Set pixels in WASM with proper centering
         // Use window dimensions for initial setup
-        const initialWidth = typeof window !== 'undefined' ? window.innerWidth : 1200
-        const initialHeight = typeof window !== 'undefined' ? window.innerHeight : 800
+        const initialWidth = window.innerWidth
+        const initialHeight = window.innerHeight
 
         const particleCount = wasmModule.set_text_pixels(
-          rawPixelData,
-          width,
-          height,
+          generated.pixelData,
+          generated.width,
+          generated.height,
           initialWidth,
           initialHeight,
           skip
@@ -143,7 +66,10 @@ function PixelGenerator({
         console.log(`Generated ${particleCount} particles for text: ${text}`)
 
         // Pass data to parent
-        onPixelsGenerated({ pixelData, width, height, particleCount }, wasmModule)
+        onPixelsGenerated(
+          { pixelData, width: generated.width, height: generated.height, particleCount },
+          wasmModule
+        )
       } catch (error) {
         console.error('Failed to generate pixels:', error)
       }
@@ -156,17 +82,13 @@ function PixelGenerator({
 }
 
 // Component 2: Render scatter text
-function ScatterRenderer({
-  pixelData,
-  wasmModule,
-  autoAnimate,
-}: ScatterRendererProps) {
+function ScatterRenderer({ pixelData, wasmModule, autoAnimate }: ScatterRendererProps) {
   const { size } = useThree()
   const meshRef = useRef<THREE.Points>(null)
   const [sharedMemory, setSharedMemory] = useState<ScatterTextSharedMemory | null>(null)
 
-  // Initialize shared memory and update particle positions
   useEffect(() => {
+    console.log('FIRST EFFECT')
     if (!wasmModule) return
 
     const memory = new ScatterTextSharedMemory(wasmModule, 10000)
@@ -188,9 +110,11 @@ function ScatterRenderer({
 
   // Create geometry and material
   const { geometry, material } = useMemo(() => {
+    console.log('MEMOIZING geometry')
     if (!sharedMemory) {
       return { geometry: null, material: null }
     }
+    console.log('Creating geometry')
 
     const geometry = new THREE.BufferGeometry()
     const MAX_PARTICLES = 10000
@@ -306,7 +230,6 @@ export default function ScatterText({
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Track container size on mount (one time only)
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
@@ -344,25 +267,22 @@ export default function ScatterText({
           </div>
         </>
       ) : (
-        pixelData &&
-        wasmModule && (
-          <Canvas
-            camera={{ position: [0, 0, 600], fov: 50 }}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-            }}
-          >
-            <ScatterRenderer
-              pixelData={pixelData}
-              wasmModule={wasmModule}
-              autoAnimate={autoAnimate}
-            />
-          </Canvas>
-        )
+        <Canvas
+          camera={{ position: [0, 0, 600], fov: 50 }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          <ScatterRenderer
+            pixelData={pixelData!}
+            wasmModule={wasmModule}
+            autoAnimate={autoAnimate}
+          />
+        </Canvas>
       )}
     </div>
   )
