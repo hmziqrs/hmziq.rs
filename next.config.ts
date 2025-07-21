@@ -6,9 +6,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   trailingSlash: true, // Better for static hosting compatibility
   poweredByHeader: false, // Security: Remove X-Powered-By header
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
-  },
   experimental: {
     optimizeCss: true,
   },

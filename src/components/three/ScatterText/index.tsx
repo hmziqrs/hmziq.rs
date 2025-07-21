@@ -50,16 +50,13 @@ function PixelGenerator({
             : new Uint8ClampedArray(generated.pixelData)
 
         // Set pixels in WASM with proper centering
-        // Use window dimensions for initial setup
-        const initialWidth = window.innerWidth
-        const initialHeight = window.innerHeight
-
+        // Use container dimensions for proper centering
         const particleCount = wasmModule.set_text_pixels(
           generated.pixelData,
           generated.width,
           generated.height,
-          initialWidth,
-          initialHeight,
+          containerWidth,
+          containerHeight,
           skip
         )
 
@@ -94,8 +91,8 @@ function ScatterRenderer({ pixelData, wasmModule, autoAnimate }: ScatterRenderer
     const memory = new ScatterTextSharedMemory(wasmModule, 10000)
     setSharedMemory(memory)
 
-    // Update with actual canvas size to properly center particles
-    // This ensures particles are positioned correctly for the current viewport
+    // Update particle positions for the actual canvas size
+    // Canvas size might differ from container size
     wasmModule.set_text_pixels(
       pixelData.pixelData,
       pixelData.width,
@@ -105,10 +102,11 @@ function ScatterRenderer({ pixelData, wasmModule, autoAnimate }: ScatterRenderer
       4 // skip
     )
 
-    console.log(`Recentered particles for canvas size: ${size.width}x${size.height}`)
+    console.log(`Updated particles for canvas size: ${size.width}x${size.height}`)
   }, [wasmModule, pixelData, size.width, size.height])
 
   // Create geometry and material
+  // Note: In development, React Strict Mode will cause this to run twice to detect side effects
   const { geometry, material } = useMemo(() => {
     console.log('MEMOIZING geometry')
     if (!sharedMemory) {
