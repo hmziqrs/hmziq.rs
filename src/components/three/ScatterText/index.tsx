@@ -125,30 +125,24 @@ function ScatterRenderer({ pixelData, autoAnimate }: ScatterRendererProps) {
     console.log('Creating geometry')
 
     const geometry = new THREE.BufferGeometry()
+
+    // Set SoA attributes directly from shared memory
+    geometry.setAttribute('positionX', new THREE.BufferAttribute(sharedMemory.positions_x, 1))
+    geometry.setAttribute('positionY', new THREE.BufferAttribute(sharedMemory.positions_y, 1))
+    geometry.setAttribute('colorR', new THREE.BufferAttribute(sharedMemory.colors_r, 1))
+    geometry.setAttribute('colorG', new THREE.BufferAttribute(sharedMemory.colors_g, 1))
+    geometry.setAttribute('colorB', new THREE.BufferAttribute(sharedMemory.colors_b, 1))
+    geometry.setAttribute('opacity', new THREE.BufferAttribute(sharedMemory.opacity, 1))
+
+    // Set draw range to max particles
     const MAX_PARTICLES = 10000
-
-    // Create buffer attributes with fixed sizes
-    const positions = new Float32Array(MAX_PARTICLES * 3)
-    const colors = new Float32Array(MAX_PARTICLES * 3)
-    const opacities = new Float32Array(MAX_PARTICLES)
-
-    // Fill with default values
-    for (let i = 0; i < MAX_PARTICLES; i++) {
-      positions[i * 3] = 0
-      positions[i * 3 + 1] = 0
-      positions[i * 3 + 2] = 0
-      colors[i * 3] = 1
-      colors[i * 3 + 1] = 1
-      colors[i * 3 + 2] = 1
-      opacities[i] = 0
-    }
-
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-    geometry.setAttribute('opacity', new THREE.BufferAttribute(opacities, 1))
+    geometry.setDrawRange(0, MAX_PARTICLES)
 
     // Create shader material
     const material = new THREE.ShaderMaterial({
+      uniforms: {
+        screenSize: { value: new THREE.Vector2(1, 1) }, // Will be updated in useFrame
+      },
       vertexShader,
       fragmentShader,
       transparent: true,
@@ -168,51 +162,28 @@ function ScatterRenderer({ pixelData, autoAnimate }: ScatterRendererProps) {
   }, [autoAnimate, wasmModule.start_forming])
 
   // Update particles
-  useFrame((_, delta) => {
-    if (
-      !sharedMemory || !geometry || !material) return
+  useFrame((state, delta) => {
+    if (!sharedMemory || !geometry || !material) return
 
     try {
       // Update particles in WASM
       sharedMemory.updateFrame(wasmModule, delta)
 
-      // Update Three.js geometry from shared memory
-      const positionAttribute = geometry.attributes.position as THREE.BufferAttribute
-      const colorAttribute = geometry.attributes.color as THREE.BufferAttribute
+      // Update screen size uniform
+      material.uniforms.screenSize.value.set(size.width, size.height)
+
+      // Update attributes that change during animation
+      // Position updates during scatter/form animation
+      const positionXAttribute = geometry.attributes.positionX as THREE.BufferAttribute
+      const positionYAttribute = geometry.attributes.positionY as THREE.BufferAttribute
       const opacityAttribute = geometry.attributes.opacity as THREE.BufferAttribute
 
-      // Get arrays
-      const positions = positionAttribute.array as Float32Array
-      const colors = colorAttribute.array as Float32Array
-      const opacities = opacityAttribute.array as Float32Array
-
-      const particleCount = Math.min(wasmModule.get_particle_count(), 10000)
-
-      // Copy data from shared memory to Three.js buffers
-      for (let i = 0; i < particleCount; i++) {
-        // Ensure we don't exceed buffer bounds
-        if (i >= sharedMemory.positions_x.length) break
-
-        // Position (convert from screen space to world space)
-        positions[i * 3] = sharedMemory.positions_x[i] - size.width / 2
-        positions[i * 3 + 1] = -sharedMemory.positions_y[i] + size.height / 2
-        positions[i * 3 + 2] = 0
-
-        // Color
-        colors[i * 3] = sharedMemory.colors_r[i]
-        colors[i * 3 + 1] = sharedMemory.colors_g[i]
-        colors[i * 3 + 2] = sharedMemory.colors_b[i]
-
-        // Opacity
-        opacities[i] = sharedMemory.opacity[i]
-      }
-
-      // Mark attributes as needing update
-      positionAttribute.needsUpdate = true
-      colorAttribute.needsUpdate = true
+      positionXAttribute.needsUpdate = true
+      positionYAttribute.needsUpdate = true
       opacityAttribute.needsUpdate = true
 
       // Update draw range to only render active particles
+      const particleCount = Math.min(wasmModule.get_particle_count(), 10000)
       geometry.setDrawRange(0, particleCount)
     } catch (error) {
       console.error('Error updating ScatterText:', error)

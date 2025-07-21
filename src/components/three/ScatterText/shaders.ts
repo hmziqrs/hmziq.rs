@@ -1,12 +1,27 @@
 // Vertex shader
 export const vertexShader = `
+  // SoA attributes for SIMD optimization
+  attribute float positionX;
+  attribute float positionY;
+  attribute float colorR;
+  attribute float colorG;
+  attribute float colorB;
   attribute float opacity;
-  attribute vec3 color;
 
   varying float vOpacity;
   varying vec3 vColor;
 
+  uniform vec2 screenSize;
+
   void main() {
+    // Reconstruct from SoA
+    // Transform from screen space to world space
+    float worldX = positionX - screenSize.x / 2.0;
+    float worldY = -positionY + screenSize.y / 2.0;
+    vec3 position = vec3(worldX, worldY, 0.0);
+    
+    vec3 color = vec3(colorR, colorG, colorB);
+    
     vOpacity = opacity;
     vColor = color;
 
