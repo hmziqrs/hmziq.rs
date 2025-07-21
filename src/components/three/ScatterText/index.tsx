@@ -27,51 +27,51 @@ function PixelGenerator({
   containerHeight,
   onPixelsGenerated,
 }: PixelGeneratorProps) {
-  useEffect(() => {
-    const generatePixels = async () => {
-      try {
-        const wasmModule = await loadWASM()
+  const generatePixels = async () => {
+    try {
+      const wasmModule = await loadWASM()
 
-        const memory = new ScatterTextSharedMemory(wasmModule, 10000)
+      const memory = new ScatterTextSharedMemory(wasmModule, 10000)
 
-        const fontSize = calculateFontSize(text, containerWidth, containerHeight)
+      const fontSize = calculateFontSize(text, containerWidth, containerHeight)
 
-        console.log(
-          `Dynamic font size: ${fontSize}px for text: "${text}" (${containerWidth}x${containerHeight})`
-        )
+      console.log(
+        `Dynamic font size: ${fontSize}px for text: "${text}" (${containerWidth}x${containerHeight})`
+      )
 
-        // Generate text pixels
-        const generated = memory.generateTextPixels(text, fontSize, fontFamily, color)
+      // Generate text pixels
+      const generated = memory.generateTextPixels(text, fontSize, fontFamily, color)
 
-        // Ensure we have a Uint8ClampedArray for PixelData
-        const pixelData =
-          generated.pixelData instanceof Uint8ClampedArray
-            ? generated.pixelData
-            : new Uint8ClampedArray(generated.pixelData)
+      // Ensure we have a Uint8ClampedArray for PixelData
+      const pixelData =
+        generated.pixelData instanceof Uint8ClampedArray
+          ? generated.pixelData
+          : new Uint8ClampedArray(generated.pixelData)
 
-        // Set pixels in WASM with proper centering
-        // Use container dimensions for proper centering
-        const particleCount = wasmModule.set_text_pixels(
-          generated.pixelData,
-          generated.width,
-          generated.height,
-          containerWidth,
-          containerHeight,
-          skip
-        )
+      // Set pixels in WASM with proper centering
+      // Use container dimensions for proper centering
+      const particleCount = wasmModule.set_text_pixels(
+        generated.pixelData,
+        generated.width,
+        generated.height,
+        containerWidth,
+        containerHeight,
+        skip
+      )
 
-        console.log(`Generated ${particleCount} particles for text: ${text}`)
+      console.log(`Generated ${particleCount} particles for text: ${text}`)
 
-        // Pass data to parent
-        onPixelsGenerated(
-          { pixelData, width: generated.width, height: generated.height, particleCount },
-          wasmModule
-        )
-      } catch (error) {
-        console.error('Failed to generate pixels:', error)
-      }
+      // Pass data to parent
+      onPixelsGenerated(
+        { pixelData, width: generated.width, height: generated.height, particleCount },
+        wasmModule
+      )
+    } catch (error) {
+      console.error('Failed to generate pixels:', error)
     }
+  }
 
+  useEffect(() => {
     generatePixels()
   }, [text, fontFamily, color, skip, containerWidth, containerHeight, onPixelsGenerated])
 
