@@ -14,11 +14,12 @@ import {
   SiJavascript,
   SiAdonisjs,
   SiDocker,
+  IconType,
 } from '@icons-pack/react-simple-icons'
 import { Workflow, Building2, Zap } from 'lucide-react'
 
 // Skill to icon mapping
-const skillIconMap: Record<string, React.ComponentType<any>> = {
+const skillIconMap: Record<string, IconType> = {
   Flutter: SiFlutter,
   Dioxus: SiRust,
   React: SiReact,

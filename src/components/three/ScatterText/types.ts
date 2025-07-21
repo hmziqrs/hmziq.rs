@@ -1,5 +1,3 @@
-import { WASMModule } from '@/lib/wasm'
-
 export interface ScatterTextProps {
   text: string
   fontFamily?: string
@@ -23,7 +21,7 @@ export interface PixelGeneratorProps {
   skip: number
   containerWidth: number
   containerHeight: number
-  onPixelsGenerated: (data: PixelData, wasmModule: any) => void
+  onPixelsGenerated: (data: PixelData) => void
 }
 
 export interface ScatterRendererProps {

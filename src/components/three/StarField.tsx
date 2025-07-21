@@ -3,7 +3,7 @@
 import { useRef, useMemo, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { StarFieldSharedMemory, type WASMModule } from '@/lib/wasm/starfield'
+import { StarFieldSharedMemory } from '@/lib/wasm/starfield'
 import { useWASM } from '@/contexts/WASMContext'
 
 // SoA optimized shaders

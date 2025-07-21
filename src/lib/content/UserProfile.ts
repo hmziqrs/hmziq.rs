@@ -50,7 +50,7 @@ export class UserProfile {
   }
 
   getSocialLinks(): SocialLink[] {
-    const social = (this.data as any).social || {}
+    const social = this.data.social || {}
     return Object.entries(social)
       .map(([platform, username]) => {
         const platformConfig =
@@ -63,7 +63,7 @@ export class UserProfile {
         return {
           name: platformConfig.name,
           url: `${platformConfig.baseUrl}${actualUsername}`,
-          username: `${(platformConfig as any).usernamePrefix || ''}${actualUsername}`,
+          username: `${'usernamePrefix' in platformConfig ? platformConfig.usernamePrefix || '' : ''}${actualUsername}`,
           description: platformConfig.description,
         }
       })

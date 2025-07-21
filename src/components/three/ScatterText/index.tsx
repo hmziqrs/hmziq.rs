@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useMemo, useState } from 'react'
+import { useRef, useEffect, useMemo, useState, useCallback } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
@@ -30,7 +30,7 @@ function PixelGenerator({
 }: PixelGeneratorProps) {
   const wasmModule = useWASM().wasmModule!
 
-  const generatePixels = () => {
+  const generatePixels = useCallback(() => {
     try {
       const memory = new ScatterTextSharedMemory(wasmModule, 10000)
 
@@ -63,17 +63,15 @@ function PixelGenerator({
       console.log(`Generated ${particleCount} particles for text: ${text}`)
 
       // Pass data to parent
-      onPixelsGenerated(
-        { pixelData, width: generated.width, height: generated.height, particleCount },
-        wasmModule
-      )
+      onPixelsGenerated({
+        pixelData,
+        width: generated.width,
+        height: generated.height,
+        particleCount,
+      })
     } catch (error) {
       console.error('Failed to generate pixels:', error)
     }
-  }
-
-  useEffect(() => {
-    generatePixels()
   }, [
     text,
     fontFamily,
@@ -84,6 +82,10 @@ function PixelGenerator({
     onPixelsGenerated,
     wasmModule,
   ])
+
+  useEffect(() => {
+    generatePixels()
+  }, [generatePixels])
 
   return null
 }
@@ -113,7 +115,7 @@ function ScatterRenderer({ pixelData, autoAnimate }: ScatterRendererProps) {
     )
 
     console.log(`Updated particles for canvas size: ${size.width}x${size.height}`)
-  }, [wasmModule.set_text_pixels, pixelData, size.width, size.height])
+  }, [wasmModule, pixelData, size.width, size.height])
 
   // Create geometry and material
   // Note: In development, React Strict Mode will cause this to run twice to detect side effects
@@ -159,7 +161,7 @@ function ScatterRenderer({ pixelData, autoAnimate }: ScatterRendererProps) {
 
     // Form the text and keep it formed
     wasmModule.start_forming()
-  }, [autoAnimate, wasmModule.start_forming])
+  }, [autoAnimate, wasmModule])
 
   // Update particles
   useFrame((state, delta) => {
@@ -220,7 +222,7 @@ export default function ScatterText({
     updateSize()
   }, [])
 
-  const handlePixelsGenerated = (data: PixelData, module: any) => {
+  const handlePixelsGenerated = (data: PixelData) => {
     setPixelData(data)
     setIsGenerating(false) // Switch to render mode
   }

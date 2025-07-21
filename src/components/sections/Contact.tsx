@@ -6,11 +6,11 @@ import { userProfile } from '@/lib/content/UserProfile'
 import { siteContent } from '@/lib/content/SiteContent'
 
 // Icon imports
-import { SiGithub, SiX } from '@icons-pack/react-simple-icons'
+import { IconType, SiGithub, SiX } from '@icons-pack/react-simple-icons'
 import { Mail } from 'lucide-react'
 
 // Social platform to icon mapping
-const socialIconMap: Record<string, React.ComponentType<any>> = {
+const socialIconMap: Record<string, IconType> = {
   GitHub: SiGithub,
   Twitter: SiX,
   Email: Mail,
@@ -121,7 +121,7 @@ const Contact: React.FC = () => {
                 </div>
 
                 {/* Username */}
-                <span className="relative z-10 text-white font-mono text-sm tracking-wide text-center bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
+                <span className="relative z-10 text-white font-mono text-sm tracking-wide text-center bg-gradient-to-r from-white to-purple-100 bg-clip-text ">
                   {link.username}
                 </span>
 
