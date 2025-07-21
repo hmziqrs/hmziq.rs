@@ -3,8 +3,8 @@
 import { useRef, useMemo, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { getOptimizedFunctions } from '@/lib/wasm/core'
 import { StarFieldSharedMemory, type WASMModule } from '@/lib/wasm/starfield'
+import { useWASM } from '@/contexts/WASMContext'
 
 // SoA optimized shaders
 const VERTEX_SHADER = `
@@ -77,8 +77,7 @@ function Stars() {
     height: typeof window !== 'undefined' ? window.innerHeight : 1080,
   })
 
-  const [wasmModule, setWasmModule] = useState<WASMModule | null>(null)
-  const wasmLoadingRef = useRef(false)
+  const { wasmModule } = useWASM()
 
   const sharedMemoryRef = useRef<StarFieldSharedMemory | null>(null)
 
@@ -94,18 +93,6 @@ function Stars() {
 
   const starMeshRef = useRef<THREE.Points>(null)
 
-  useEffect(() => {
-    if (!wasmLoadingRef.current) {
-      wasmLoadingRef.current = true
-      getOptimizedFunctions()
-        .then((module) => {
-          setWasmModule(module as WASMModule)
-        })
-        .catch((error) => {
-          console.error('WASM SIMD module failed to load:', error)
-        })
-    }
-  }, [])
 
   useEffect(() => {
     const handleResize = () => {

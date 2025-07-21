@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import Hero from '@/components/sections/Hero'
 import Skills from '@/components/sections/Skills'
 import Contact from '@/components/sections/Contact'
+import WASMLoader from '@/components/WASMLoader'
 
 // Dynamically import Three.js components to avoid SSR issues
 // Use WASM-optimized version if available
@@ -18,7 +19,13 @@ export default function Home() {
   return (
     <main className="relative min-h-screen">
       {/* 2D Background star field */}
-      <StarField3D />
+      <WASMLoader
+        loadingFallback={
+          <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
+        }
+      >
+        <StarField3D />
+      </WASMLoader>
 
       {/* Content sections */}
       <div className="relative" style={{ zIndex: 10 }}>

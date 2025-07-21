@@ -3,6 +3,7 @@ import localFont from 'next/font/local'
 import './globals.css'
 import { metadataConfig } from '@/lib/content/MetadataConfig'
 import { AnalyticsProvider } from '@/providers/analytics'
+import { WASMProvider } from '@/contexts/WASMContext'
 import userData from '@/content/data/user.json'
 
 const geistSans = localFont({
@@ -68,9 +69,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         style={{ backgroundColor: '#000000', color: '#ffffff', minHeight: '100vh' }}
         suppressHydrationWarning
       >
-        <AnalyticsProvider>
-          <div id="root">{children}</div>
-        </AnalyticsProvider>
+        <WASMProvider>
+          <AnalyticsProvider>
+            <div id="root">{children}</div>
+          </AnalyticsProvider>
+        </WASMProvider>
       </body>
     </html>
   )

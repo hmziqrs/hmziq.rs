@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { userProfile } from '@/lib/content/UserProfile'
 import { siteContent } from '@/lib/content/SiteContent'
+import WASMLoader from '@/components/WASMLoader'
 
 // Dynamic import for Three.js component
 const ScatterText = dynamic(() => import('@/components/three/ScatterText'), {
@@ -49,14 +50,22 @@ const Hero: React.FC = () => {
       >
         {/* Name with Scatter Text Effect */}
         <div className="h-[160px] md:h-[200px] lg:h-[240px] w-full mx-auto">
-          <ScatterText
-            text={name}
-            fontFamily="Arial"
-            color="white"
-            skip={2}
-            autoAnimate={!prefersReducedMotion}
-            height="100%"
-          />
+          <WASMLoader
+            loadingFallback={
+              <div className="flex items-center justify-center h-full">
+                <div className="text-6xl md:text-7xl lg:text-8xl font-bold text-white">{name}</div>
+              </div>
+            }
+          >
+            <ScatterText
+              text={name}
+              fontFamily="geistMono"
+              color="white"
+              skip={8}
+              autoAnimate={!prefersReducedMotion}
+              height="100%"
+            />
+          </WASMLoader>
         </div>
 
         {/* Tagline */}

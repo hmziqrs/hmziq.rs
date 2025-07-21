@@ -4,8 +4,8 @@ import { useRef, useEffect, useMemo, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
-import { loadWASM } from '@/lib/wasm/core'
 import { ScatterTextSharedMemory } from '@/lib/wasm/scatter-text'
+import { useWASM } from '@/contexts/WASMContext'
 import { fragmentShader, vertexShader } from './shaders'
 import { ScatterTextProps, PixelData, PixelGeneratorProps, ScatterRendererProps } from './types'
 
@@ -28,9 +28,11 @@ function PixelGenerator({
   containerHeight,
   onPixelsGenerated,
 }: PixelGeneratorProps) {
-  const generatePixels = async () => {
+  const { wasmModule } = useWASM()
+
+  const generatePixels = () => {
     try {
-      const wasmModule = await loadWASM()
+      if (!wasmModule) return
 
       const memory = new ScatterTextSharedMemory(wasmModule, 10000)
 
@@ -74,7 +76,7 @@ function PixelGenerator({
 
   useEffect(() => {
     generatePixels()
-  }, [text, fontFamily, color, skip, containerWidth, containerHeight, onPixelsGenerated])
+  }, [text, fontFamily, color, skip, containerWidth, containerHeight, onPixelsGenerated, wasmModule])
 
   return null
 }
