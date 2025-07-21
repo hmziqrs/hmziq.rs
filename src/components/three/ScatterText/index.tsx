@@ -28,12 +28,10 @@ function PixelGenerator({
   containerHeight,
   onPixelsGenerated,
 }: PixelGeneratorProps) {
-  const { wasmModule } = useWASM()
+  const wasmModule = useWASM().wasmModule!
 
   const generatePixels = () => {
     try {
-      if (!wasmModule) return
-
       const memory = new ScatterTextSharedMemory(wasmModule, 10000)
 
       const fontSize = calculateFontSize(text, containerWidth, containerHeight)
@@ -76,20 +74,29 @@ function PixelGenerator({
 
   useEffect(() => {
     generatePixels()
-  }, [text, fontFamily, color, skip, containerWidth, containerHeight, onPixelsGenerated, wasmModule])
+  }, [
+    text,
+    fontFamily,
+    color,
+    skip,
+    containerWidth,
+    containerHeight,
+    onPixelsGenerated,
+    wasmModule,
+  ])
 
   return null
 }
 
 // Component 2: Render scatter text
-function ScatterRenderer({ pixelData, wasmModule, autoAnimate }: ScatterRendererProps) {
+function ScatterRenderer({ pixelData, autoAnimate }: ScatterRendererProps) {
   const { size } = useThree()
   const meshRef = useRef<THREE.Points>(null)
   const [sharedMemory, setSharedMemory] = useState<ScatterTextSharedMemory | null>(null)
+  const wasmModule = useWASM().wasmModule!
 
   useEffect(() => {
     console.log('FIRST EFFECT')
-    if (!wasmModule) return
 
     const memory = new ScatterTextSharedMemory(wasmModule, 10000)
     setSharedMemory(memory)
@@ -106,7 +113,7 @@ function ScatterRenderer({ pixelData, wasmModule, autoAnimate }: ScatterRenderer
     )
 
     console.log(`Updated particles for canvas size: ${size.width}x${size.height}`)
-  }, [wasmModule, pixelData, size.width, size.height])
+  }, [wasmModule.set_text_pixels, pixelData, size.width, size.height])
 
   // Create geometry and material
   // Note: In development, React Strict Mode will cause this to run twice to detect side effects
@@ -154,15 +161,16 @@ function ScatterRenderer({ pixelData, wasmModule, autoAnimate }: ScatterRenderer
 
   // Auto-animation effect (form once and stay)
   useEffect(() => {
-    if (!autoAnimate || !wasmModule) return
+    if (!autoAnimate) return
 
     // Form the text and keep it formed
     wasmModule.start_forming()
-  }, [autoAnimate, wasmModule])
+  }, [autoAnimate, wasmModule.start_forming])
 
   // Update particles
   useFrame((_, delta) => {
-    if (!wasmModule || !sharedMemory || !geometry || !material) return
+    if (
+      !sharedMemory || !geometry || !material) return
 
     try {
       // Update particles in WASM
@@ -227,7 +235,6 @@ export default function ScatterText({
 }: ScatterTextProps) {
   const [isGenerating, setIsGenerating] = useState(true)
   const [pixelData, setPixelData] = useState<PixelData | null>(null)
-  const [wasmModule, setWasmModule] = useState<any>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -244,7 +251,6 @@ export default function ScatterText({
 
   const handlePixelsGenerated = (data: PixelData, module: any) => {
     setPixelData(data)
-    setWasmModule(module)
     setIsGenerating(false) // Switch to render mode
   }
 
@@ -278,11 +284,7 @@ export default function ScatterText({
             height: '100%',
           }}
         >
-          <ScatterRenderer
-            pixelData={pixelData!}
-            wasmModule={wasmModule}
-            autoAnimate={autoAnimate}
-          />
+          <ScatterRenderer pixelData={pixelData!} autoAnimate={autoAnimate} />
         </Canvas>
       )}
     </div>

@@ -1,3 +1,5 @@
+import { WASMModule } from '@/lib/wasm'
+
 export interface ScatterTextProps {
   text: string
   fontFamily?: string
@@ -26,6 +28,5 @@ export interface PixelGeneratorProps {
 
 export interface ScatterRendererProps {
   pixelData: PixelData
-  wasmModule: any
   autoAnimate: boolean
 }

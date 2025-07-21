@@ -35,9 +35,7 @@ export function WASMProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <WASMContext.Provider value={{ wasmModule, isLoading, error }}>
-      {children}
-    </WASMContext.Provider>
+    <WASMContext.Provider value={{ wasmModule, isLoading, error }}>{children}</WASMContext.Provider>
   )
 }
 
@@ -46,5 +44,5 @@ export function useWASM() {
   if (!context) {
     throw new Error('useWASM must be used within a WASMProvider')
   }
-  return context
+  return context!
 }
