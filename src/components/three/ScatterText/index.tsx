@@ -61,8 +61,6 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
       const pixelData = new Uint8Array(imageData.data)
 
-      ScatterTextSharedMemory.setInstance(wasmModule, pixelData.length)
-
       const particleCount = wasmModule.set_text_pixels(
         pixelData,
         canvas.width,
@@ -72,12 +70,12 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
         SKIP
       )
 
+      ScatterTextSharedMemory.setInstance(wasmModule)
+
       console.log(`Generated ${particleCount} particles for text: ${text}`)
 
       onPixelsGenerated({
         pixelData,
-        width: canvas.width,
-        height: canvas.height,
         particleCount,
       })
     } catch (error) {

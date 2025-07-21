@@ -9,8 +9,6 @@ export interface ScatterTextProps {
 
 export interface PixelData {
   pixelData: Uint8Array
-  width: number
-  height: number
   particleCount: number
 }
 

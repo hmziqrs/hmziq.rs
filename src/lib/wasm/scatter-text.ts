@@ -36,13 +36,13 @@ export class ScatterTextSharedMemory {
   public opacity: Float32Array
   public scattered_flags: BigUint64Array
 
-  private constructor(wasmModule: WASMModule, maxParticles: number) {
+  private constructor(wasmModule: WASMModule, pointers: ScatterTextPointers) {
     this.wasmMemory = wasmModule.memory
-    this.pointers = wasmModule.initialize_scatter_text(maxParticles)
+    this.pointers = pointers
 
-    // Calculate aligned sizes
+    // Calculate aligned sizes based on actual particle count
     const SIMD_BATCH_SIZE = 16
-    const alignedCount = Math.ceil(maxParticles / SIMD_BATCH_SIZE) * SIMD_BATCH_SIZE
+    const alignedCount = Math.ceil(pointers.particle_count / SIMD_BATCH_SIZE) * SIMD_BATCH_SIZE
     const flagCount = Math.ceil(alignedCount / 64)
 
     // Direct WASM memory views
@@ -108,8 +108,9 @@ export class ScatterTextSharedMemory {
     return ScatterTextSharedMemory.instance!
   }
 
-  static setInstance(wasmModule: WASMModule, maxParticles: number): void {
-    ScatterTextSharedMemory.instance = new ScatterTextSharedMemory(wasmModule, maxParticles)
+  static setInstance(wasmModule: WASMModule): void {
+    const pointers = wasmModule.get_scatter_text_pointers()
+    ScatterTextSharedMemory.instance = new ScatterTextSharedMemory(wasmModule, pointers)
   }
 
   // Reset singleton instance (useful for cleanup or testing)

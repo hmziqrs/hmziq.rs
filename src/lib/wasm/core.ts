@@ -32,7 +32,6 @@ export interface WASMModule {
     delta_time: number
   ) => Float32Array
   // Scatter text functions
-  initialize_scatter_text: (max_particles: number) => ScatterTextPointers
   set_text_pixels: (
     pixel_data: Uint8Array,
     width: number,
@@ -41,6 +40,7 @@ export interface WASMModule {
     canvas_height: number,
     skip: number
   ) => number
+  get_scatter_text_pointers: () => ScatterTextPointers
   start_forming: () => void
   start_scattering: () => void
   update_particles: (delta_time: number) => void
@@ -81,8 +81,8 @@ export async function loadWASM(): Promise<WASMModule> {
         calculate_speed_multiplier: wasmImport.calculate_speed_multiplier,
         calculate_rotation_delta: wasmImport.calculate_rotation_delta,
         // Scatter text functions
-        initialize_scatter_text: wasmImport.initialize_scatter_text,
         set_text_pixels: wasmImport.set_text_pixels,
+        get_scatter_text_pointers: wasmImport.get_scatter_text_pointers,
         start_forming: wasmImport.start_forming,
         start_scattering: wasmImport.start_scattering,
         update_particles: wasmImport.update_particles,

@@ -57,9 +57,9 @@ pub struct ScatterTextPointers {
     pub particle_count: usize,
 }
 
-#[wasm_bindgen]
-pub fn initialize_scatter_text(max_particles: usize) -> ScatterTextPointers {
-    let aligned_count = max_particles.div_ceil(SIMD_BATCH_SIZE) * SIMD_BATCH_SIZE;
+// Internal initialization - no longer exported
+fn initialize_scatter_text_internal(particle_count: usize) -> ScatterTextPointers {
+    let aligned_count = particle_count.div_ceil(SIMD_BATCH_SIZE) * SIMD_BATCH_SIZE;
     let flag_count = aligned_count.div_ceil(64);
 
     let state = ScatterTextState {
@@ -74,7 +74,7 @@ pub fn initialize_scatter_text(max_particles: usize) -> ScatterTextPointers {
         colors_b: vec![1.0; aligned_count],
         opacity: vec![1.0; aligned_count],
         scattered_flags: vec![0u64; flag_count],
-        particle_count: 0,
+        particle_count,
         forming: false,
         easing_factor: 0.08,
         fade_rate: 0.02,
@@ -93,7 +93,7 @@ pub fn initialize_scatter_text(max_particles: usize) -> ScatterTextPointers {
         colors_b_ptr: state.colors_b.as_ptr() as u32,
         opacity_ptr: state.opacity.as_ptr() as u32,
         scattered_flags_ptr: state.scattered_flags.as_ptr() as u32,
-        particle_count: state.particle_count,
+        particle_count,
     };
 
     SCATTER_TEXT_STATE.with(|cell| {
@@ -112,18 +112,40 @@ pub fn set_text_pixels(
     canvas_height: f32,
     skip: u32,
 ) -> usize {
+    // First pass: count visible pixels to determine particle count
+    let mut particle_count = 0;
+    let skip_size = skip as usize;
+
+    for y in (0..height as usize).step_by(skip_size) {
+        for x in (0..width as usize).step_by(skip_size) {
+            let index = (y * width as usize + x) * 4;
+
+            if index + 3 < pixel_data.len() {
+                let alpha = pixel_data[index + 3];
+                if alpha > 128 && particle_count < MAX_PARTICLES {
+                    particle_count += 1;
+                }
+            }
+        }
+    }
+
+    // Initialize memory with exact particle count
+    initialize_scatter_text_internal(particle_count);
+
+    // Second pass: set particle data
     SCATTER_TEXT_STATE.with(|cell| {
         let mut state_ref = cell.borrow_mut();
-        let state = state_ref.as_mut().expect("ScatterText not initialized");
+        let state = state_ref
+            .as_mut()
+            .expect("ScatterText state should be initialized");
 
         let mut particle_index = 0;
-        let skip_size = skip as usize;
 
         // Clear scattered flags
         for flag in state.scattered_flags.iter_mut() {
             *flag = 0;
         }
-        
+
         // Calculate offsets to center the text in the canvas
         let text_center_x = (width as f32) / 2.0;
         let text_center_y = (height as f32) / 2.0;
@@ -139,10 +161,12 @@ pub fn set_text_pixels(
                     let alpha = pixel_data[index + 3];
 
                     // If pixel is visible
-                    if alpha > 128 && particle_index < MAX_PARTICLES {
+                    if alpha > 128 && particle_index < particle_count {
                         // Set target position centered in canvas
-                        state.target_x[particle_index] = (x as f32 - text_center_x) + canvas_center_x;
-                        state.target_y[particle_index] = (y as f32 - text_center_y) + canvas_center_y;
+                        state.target_x[particle_index] =
+                            (x as f32 - text_center_x) + canvas_center_x;
+                        state.target_y[particle_index] =
+                            (y as f32 - text_center_y) + canvas_center_y;
 
                         // Set random starting position
                         state.positions_x[particle_index] =
@@ -172,8 +196,31 @@ pub fn set_text_pixels(
 
         state.particle_count = particle_index;
         state.forming = true;
+    });
 
-        particle_index
+    particle_count
+}
+
+#[wasm_bindgen]
+pub fn get_scatter_text_pointers() -> ScatterTextPointers {
+    SCATTER_TEXT_STATE.with(|cell| {
+        let state_ref = cell.borrow();
+        let state = state_ref.as_ref().expect("ScatterText not initialized");
+
+        ScatterTextPointers {
+            positions_x_ptr: state.positions_x.as_ptr() as u32,
+            positions_y_ptr: state.positions_y.as_ptr() as u32,
+            target_x_ptr: state.target_x.as_ptr() as u32,
+            target_y_ptr: state.target_y.as_ptr() as u32,
+            scatter_vx_ptr: state.scatter_vx.as_ptr() as u32,
+            scatter_vy_ptr: state.scatter_vy.as_ptr() as u32,
+            colors_r_ptr: state.colors_r.as_ptr() as u32,
+            colors_g_ptr: state.colors_g.as_ptr() as u32,
+            colors_b_ptr: state.colors_b.as_ptr() as u32,
+            opacity_ptr: state.opacity.as_ptr() as u32,
+            scattered_flags_ptr: state.scattered_flags.as_ptr() as u32,
+            particle_count: state.particle_count,
+        }
     })
 }
 
