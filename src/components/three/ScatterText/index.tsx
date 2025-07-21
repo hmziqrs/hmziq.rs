@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useMemo, useState, useCallback } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
@@ -74,7 +74,6 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
 
       console.log(`Generated ${particleCount} particles for text: ${text}`)
 
-      // Pass data to parent
       onPixelsGenerated({
         pixelData,
         width: canvas.width,
@@ -84,7 +83,7 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
     } catch (error) {
       console.error('Failed to generate pixels:', error)
     }
-  }, [text, width, height, wasmModule])
+  }, [text, width, height, wasmModule, onPixelsGenerated])
 
   return (
     <canvas
@@ -102,7 +101,6 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
   const { size } = useThree()
   const meshRef = useRef<THREE.Points>(null)
   const wasmModule = useWASM().wasmModule!
-  const runOnce = useRef(false)
   const [threeData, setThreeData] = useState<{
     geometry: THREE.BufferGeometry
     material: THREE.ShaderMaterial
@@ -144,7 +142,7 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
   useEffect(() => {
     if (!threeData) return
     wasmModule.start_forming()
-  }, [threeData])
+  }, [wasmModule, threeData])
 
   // Update particles
   useFrame((state, delta) => {
