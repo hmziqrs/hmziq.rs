@@ -8,7 +8,7 @@ export interface ScatterTextProps {
 }
 
 export interface PixelData {
-  pixelData: Uint8ClampedArray
+  pixelData: Uint8Array
   width: number
   height: number
   particleCount: number
@@ -16,12 +16,11 @@ export interface PixelData {
 
 export interface PixelGeneratorProps {
   text: string
-  containerWidth: number
-  containerHeight: number
+  width: number
+  height: number
   onPixelsGenerated: (data: PixelData) => void
 }
 
 export interface ScatterRendererProps {
   pixelData: PixelData
-  autoAnimate: boolean
 }

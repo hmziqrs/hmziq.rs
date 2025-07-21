@@ -8,6 +8,7 @@ import { ScatterTextSharedMemory } from '@/lib/wasm/scatter-text'
 import { useWASM } from '@/contexts/WASMContext'
 import { fragmentShader, vertexShader } from './shaders'
 import { ScatterTextProps, PixelData, PixelGeneratorProps, ScatterRendererProps } from './types'
+import { useDidMount } from '@/hooks'
 
 function calculateFontSize(text: string, containerWidth: number, containerHeight: number): number {
   const baseSize = containerHeight * 0.85
@@ -19,49 +20,56 @@ function calculateFontSize(text: string, containerWidth: number, containerHeight
 }
 
 const MAX_PARTICLES = 1000
-const SKIP = 4
+const SKIP = 20
 
-function PixelGenerator({
-  text,
-  containerWidth,
-  containerHeight,
-  onPixelsGenerated,
-}: PixelGeneratorProps) {
+function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGeneratorProps) {
   const wasmModule = useWASM().wasmModule!
-  const generating = useRef<boolean>(false)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const runOnce = useRef(false)
 
   useEffect(() => {
-    console.log('GENERATE PIXELS pre')
+    if (runOnce.current) return
+    runOnce.current = true
 
-    if (generating.current) return
-    generating.current = true
-    console.log('GENERATE PIXELS post')
+    if (!canvasRef.current) return
+
     try {
-      const memory = new ScatterTextSharedMemory(wasmModule, MAX_PARTICLES)
+      const fontSize = calculateFontSize(text, width, height)
 
-      const fontSize = calculateFontSize(text, containerWidth, containerHeight)
+      console.log(`Dynamic font size: ${fontSize}px for text: "${text}" (${width}x${height})`)
 
-      console.log(
-        `Dynamic font size: ${fontSize}px for text: "${text}" (${containerWidth}x${containerHeight})`
-      )
+      // Use the mounted canvas for text rendering
+      const canvas = canvasRef.current
+      const ctx = canvas.getContext('2d')!
 
-      // Generate text pixels
-      const generated = memory.generateTextPixels(text, fontSize, 'giestMono', '#ffffff')
+      // Set canvas size
+      canvas.width = width
+      canvas.height = height
 
-      // Ensure we have a Uint8ClampedArray for PixelData
-      const pixelData =
-        generated.pixelData instanceof Uint8ClampedArray
-          ? generated.pixelData
-          : new Uint8ClampedArray(generated.pixelData)
+      // Configure text rendering
+      ctx.font = `bold 100px GeistMono`
+      ctx.fillStyle = '#ffffff'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
 
-      // Set pixels in WASM with proper centering
-      // Use container dimensions for proper centering
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      // Draw text in white
+      ctx.fillStyle = '#ffffff'
+      ctx.fillText(text, canvas.width / 2, canvas.height / 2)
+
+      // Get image data
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const pixelData = new Uint8Array(imageData.data)
+
+      const _ = new ScatterTextSharedMemory(wasmModule, pixelData.length)
+
       const particleCount = wasmModule.set_text_pixels(
-        new Uint8Array(generated.pixelData),
-        generated.width,
-        generated.height,
-        containerWidth,
-        containerHeight,
+        pixelData,
+        canvas.width,
+        canvas.height,
+        width,
+        height,
         SKIP
       )
 
@@ -70,20 +78,32 @@ function PixelGenerator({
       // Pass data to parent
       onPixelsGenerated({
         pixelData,
-        width: generated.width,
-        height: generated.height,
+        width: canvas.width,
+        height: canvas.height,
         particleCount,
       })
     } catch (error) {
       console.error('Failed to generate pixels:', error)
     }
-  }, [text, containerWidth, containerHeight, onPixelsGenerated, wasmModule])
+  }, [text, width, height, wasmModule])
 
-  return null
+  // Render the debug canvas in the DOM
+  return (
+    <div className="absolute inset-0 pointer-events-none">
+      <canvas
+        ref={canvasRef}
+        className="absolute top-0 left-0 border border-blue-500"
+        style={{
+          width: `${width}px`,
+          height: `${height}px`,
+        }}
+      />
+    </div>
+  )
 }
 
 // Component 2: Render scatter text
-function ScatterRenderer({ pixelData, autoAnimate }: ScatterRendererProps) {
+function ScatterRenderer({ pixelData }: ScatterRendererProps) {
   const { size } = useThree()
   const meshRef = useRef<THREE.Points>(null)
   const [sharedMemory, setSharedMemory] = useState<ScatterTextSharedMemory | null>(null)
@@ -148,11 +168,9 @@ function ScatterRenderer({ pixelData, autoAnimate }: ScatterRendererProps) {
 
   // Auto-animation effect (form once and stay)
   useEffect(() => {
-    if (!autoAnimate) return
-
     // Form the text and keep it formed
     wasmModule.start_forming()
-  }, [autoAnimate, wasmModule])
+  }, [wasmModule])
 
   // Update particles
   useFrame((state, delta) => {
@@ -194,56 +212,48 @@ export default function ScatterText({ text }: ScatterTextProps) {
   const [pixelData, setPixelData] = useState<PixelData | null>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
-  console.log('ROOT', pixelData)
 
   useEffect(() => {
-    const updateSize = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect()
-        setContainerSize({ width: rect.width, height: rect.height })
-      }
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect()
+      setContainerSize({ width: rect.width, height: rect.height })
     }
-
-    updateSize()
   }, [])
 
   const handlePixelsGenerated = (data: PixelData) => {
     setPixelData(data)
-    setIsGenerating(false) // Switch to render mode
+    setIsGenerating(false)
   }
 
   return (
-    <div ref={containerRef} className="relative h-32">
+    <div ref={containerRef} className="relative h-32 w-xl mx-auto">
       {isGenerating ? (
         <>
           {!!containerSize.width && (
             <PixelGenerator
               text={text}
-              containerWidth={containerSize.width}
-              containerHeight={containerSize.height}
+              width={containerSize.width}
+              height={containerSize.height}
               onPixelsGenerated={handlePixelsGenerated}
             />
           )}
-          <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-            Generating...
-          </div>
         </>
       ) : (
         <>
-          <div />
+          {/* <div /> */}
+          <Canvas
+            camera={{ position: [0, 0, 600], fov: 50 }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: containerSize.width,
+              height: containerSize.height,
+            }}
+          >
+            <ScatterRenderer pixelData={pixelData!} />
+          </Canvas>
         </>
-        // <Canvas
-        //   camera={{ position: [0, 0, 600], fov: 50 }}
-        //   style={{
-        //     position: 'absolute',
-        //     top: 0,
-        //     left: 0,
-        //     width: '100%',
-        //     height: '100%',
-        //   }}
-        // >
-        //   <ScatterRenderer pixelData={pixelData!} autoAnimate={autoAnimate} />
-        // </Canvas>
       )}
     </div>
   )
