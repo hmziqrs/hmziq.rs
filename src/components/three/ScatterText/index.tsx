@@ -198,7 +198,7 @@ export default function ScatterText({ text }: ScatterTextProps) {
   }
 
   return (
-    <div ref={containerRef} className="relative h-32 w-xl mx-auto">
+    <div ref={containerRef} className="absolute min-w-full min-h-full">
       {isGenerating ? (
         <>
           {!!containerSize.width && (

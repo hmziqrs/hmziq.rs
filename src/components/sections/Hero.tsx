@@ -41,18 +41,18 @@ const Hero: React.FC = () => {
   }
 
   return (
-    <section id="hero" className="relative min-h-screen flex items-center  px-6 w-full">
+    <section id="hero" className="relative min-h-screen block px-6 w-full ">
       <motion.div
-        className="text-center max-w-full mx-auto px-8   w-full"
+        className="flex flex-col justify-center items-center text-center min-h-screen w-full"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         {/* Name with Scatter Text Effect */}
-        <div className="h-[160px] md:h-[200px] lg:h-[240px] w-full mx-auto">
+        <div className="relative h-32 w-xl">
           <WASMLoader
             loadingFallback={
-              <div className="flex items-center justify-center h-full">
+              <div className="h-32 w-xl">
                 <div className="text-6xl md:text-7xl lg:text-8xl font-bold text-white">{name}</div>
               </div>
             }
@@ -61,14 +61,13 @@ const Hero: React.FC = () => {
           </WASMLoader>
         </div>
 
-        {/* Tagline */}
         <motion.p
-          className="text-xl md:text-2xl lg:text-3xl text-gray-400 mb-100 font-light tracking-wide "
+          className="text-xl md:text-2xl lg:text-3xl text-gray-400  font-light"
           variants={itemVariants}
         >
           {title}
         </motion.p>
-
+        <div className="h-8" />
         <motion.div
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
           variants={itemVariants}
