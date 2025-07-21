@@ -8,7 +8,6 @@ import { ScatterTextSharedMemory } from '@/lib/wasm/scatter-text'
 import { useWASM } from '@/contexts/WASMContext'
 import { fragmentShader, vertexShader } from './shaders'
 import { ScatterTextProps, PixelData, PixelGeneratorProps, ScatterRendererProps } from './types'
-import { useDidMount } from '@/hooks'
 
 function calculateFontSize(text: string, containerWidth: number, containerHeight: number): number {
   const baseSize = containerHeight * 0.85
@@ -20,7 +19,7 @@ function calculateFontSize(text: string, containerWidth: number, containerHeight
 }
 
 const MAX_PARTICLES = 1000
-const SKIP = 20
+const SKIP = 2
 
 function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGeneratorProps) {
   const wasmModule = useWASM().wasmModule!
@@ -242,7 +241,7 @@ export default function ScatterText({ text }: ScatterTextProps) {
         <>
           {/* <div /> */}
           <Canvas
-            camera={{ position: [0, 0, 600], fov: 50 }}
+            camera={{ position: [0, 0, 100], fov: 50 }}
             style={{
               position: 'absolute',
               top: 0,

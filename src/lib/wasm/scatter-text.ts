@@ -102,37 +102,6 @@ export class ScatterTextSharedMemory {
     return this.pointers.particle_count
   }
 
-  // // Note: generateTextPixels method has been moved to the component {
-  //   // Create offscreen canvas
-  //   const canvas = document.createElement('canvas')
-  //   const ctx = canvas.getContext('2d')!
-
-  //   // Set canvas size
-  //   canvas.width = window.innerWidth
-  //   canvas.height = window.innerHeight
-
-  //   // Configure text rendering
-  //   ctx.font = `bold ${fontSize}px ${fontFamily}`
-  //   ctx.fillStyle = color
-  //   ctx.textAlign = 'center'
-  //   ctx.textBaseline = 'middle'
-
-  //   // Clear canvas
-  //   ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-  //   // Draw text in the center
-  //   ctx.fillText(text, canvas.width / 2, canvas.height / 2)
-
-  //   // Get image data
-  //   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-
-  //   return {
-  //     pixelData: new Uint8Array(imageData.data),
-  //     width: canvas.width,
-  //     height: canvas.height
-  //   }
-  // }
-
   // Update particles using WASM
   updateFrame(wasmModule: WASMModule, deltaTime: number): void {
     wasmModule.update_particles(deltaTime)
