@@ -64,6 +64,6 @@
     "hidden": ["linkedin", "instagram", "youtube", "medium", "dev", "stackoverflow"]
   },
   "ui": {
-    "copyright": "© 2025 {name}. Crafted with NextJS and Rust."
+    "copyright": "© 2025 {name}. Crafted with NextJS and Rust (WebAssembly)."
   }
 }
