@@ -18,8 +18,8 @@ function calculateFontSize(text: string, containerWidth: number, containerHeight
   return Math.max(40, Math.min(fontSize, 500))
 }
 
-const MAX_PARTICLES = 1000
-const SKIP = 2
+// const MAX_PARTICLES = 1000
+const SKIP = 3
 
 function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGeneratorProps) {
   const wasmModule = useWASM().wasmModule!
@@ -61,7 +61,7 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
       const pixelData = new Uint8Array(imageData.data)
 
-      const _ = new ScatterTextSharedMemory(wasmModule, pixelData.length)
+      ScatterTextSharedMemory.setInstance(wasmModule, pixelData.length)
 
       const particleCount = wasmModule.set_text_pixels(
         pixelData,
@@ -86,56 +86,32 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
     }
   }, [text, width, height, wasmModule])
 
-  // Render the debug canvas in the DOM
   return (
-    <div className="absolute inset-0 pointer-events-none">
-      <canvas
-        ref={canvasRef}
-        className="absolute top-0 left-0 border border-blue-500"
-        style={{
-          width: `${width}px`,
-          height: `${height}px`,
-        }}
-      />
-    </div>
+    <canvas
+      ref={canvasRef}
+      className="opacity-0"
+      style={{
+        width: `${width}px`,
+        height: `${height}px`,
+      }}
+    />
   )
 }
 
-// Component 2: Render scatter text
 function ScatterRenderer({ pixelData }: ScatterRendererProps) {
   const { size } = useThree()
   const meshRef = useRef<THREE.Points>(null)
-  const [sharedMemory, setSharedMemory] = useState<ScatterTextSharedMemory | null>(null)
   const wasmModule = useWASM().wasmModule!
+  const runOnce = useRef(false)
+  const [threeData, setThreeData] = useState<{
+    geometry: THREE.BufferGeometry
+    material: THREE.ShaderMaterial
+  } | null>()
 
   useEffect(() => {
-    console.log('FIRST EFFECT')
-
-    const memory = new ScatterTextSharedMemory(wasmModule, MAX_PARTICLES)
-    setSharedMemory(memory)
-
-    // Update particle positions for the actual canvas size
-    // Canvas size might differ from container size
-    wasmModule.set_text_pixels(
-      new Uint8Array(pixelData.pixelData),
-      pixelData.width,
-      pixelData.height,
-      size.width,
-      size.height,
-      4 // skip
-    )
-
-    console.log(`Updated particles for canvas size: ${size.width}x${size.height}`)
-  }, [wasmModule, pixelData, size.width, size.height])
-
-  // Create geometry and material
-  // Note: In development, React Strict Mode will cause this to run twice to detect side effects
-  const { geometry, material } = useMemo(() => {
-    console.log('MEMOIZING geometry')
-    if (!sharedMemory) {
-      return { geometry: null, material: null }
-    }
     console.log('Creating geometry')
+
+    const sharedMemory = ScatterTextSharedMemory.getInstance()
 
     const geometry = new THREE.BufferGeometry()
 
@@ -148,7 +124,7 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
     geometry.setAttribute('opacity', new THREE.BufferAttribute(sharedMemory.opacity, 1))
 
     // Set draw range to max particles
-    geometry.setDrawRange(0, MAX_PARTICLES)
+    geometry.setDrawRange(0, pixelData.particleCount)
 
     // Create shader material
     const material = new THREE.ShaderMaterial({
@@ -162,18 +138,19 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
       blending: THREE.AdditiveBlending,
     })
 
-    return { geometry, material }
-  }, [sharedMemory])
+    setThreeData({ geometry, material })
+  }, [])
 
-  // Auto-animation effect (form once and stay)
   useEffect(() => {
-    // Form the text and keep it formed
+    if (!threeData) return
     wasmModule.start_forming()
-  }, [wasmModule])
+  }, [threeData])
 
   // Update particles
   useFrame((state, delta) => {
-    if (!sharedMemory || !geometry || !material) return
+    const sharedMemory = ScatterTextSharedMemory.getInstance()
+    if (!threeData) return
+    const { geometry, material } = threeData
 
     try {
       // Update particles in WASM
@@ -193,16 +170,16 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
       opacityAttribute.needsUpdate = true
 
       // Update draw range to only render active particles
-      const particleCount = Math.min(wasmModule.get_particle_count(), MAX_PARTICLES)
-      geometry.setDrawRange(0, particleCount)
+      // const particleCount = Math.min(wasmModule.get_particle_count(), MAX_PARTICLES)
+      geometry.setDrawRange(0, pixelData.particleCount)
     } catch (error) {
       console.error('Error updating ScatterText:', error)
     }
   })
 
-  if (!geometry || !material) return null
+  if (!threeData) return null
 
-  return <points ref={meshRef} geometry={geometry} material={material} />
+  return <points ref={meshRef} geometry={threeData.geometry} material={threeData.material} />
 }
 
 // Main component
@@ -241,13 +218,14 @@ export default function ScatterText({ text }: ScatterTextProps) {
         <>
           {/* <div /> */}
           <Canvas
-            camera={{ position: [0, 0, 100], fov: 50 }}
+            camera={{ position: [0, 0, 150], fov: 50 }}
             style={{
               position: 'absolute',
               top: 0,
               left: 0,
               width: containerSize.width,
               height: containerSize.height,
+              // backgroundColor: 'red',
             }}
           >
             <ScatterRenderer pixelData={pixelData!} />

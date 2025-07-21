@@ -19,6 +19,7 @@ export interface ScatterTextPointers {
 
 // Scatter text shared memory wrapper
 export class ScatterTextSharedMemory {
+  private static instance: ScatterTextSharedMemory | null = null
   private wasmMemory: WebAssembly.Memory
   private pointers: ScatterTextPointers
 
@@ -35,7 +36,7 @@ export class ScatterTextSharedMemory {
   public opacity: Float32Array
   public scattered_flags: BigUint64Array
 
-  constructor(wasmModule: WASMModule, maxParticles: number) {
+  private constructor(wasmModule: WASMModule, maxParticles: number) {
     this.wasmMemory = wasmModule.memory
     this.pointers = wasmModule.initialize_scatter_text(maxParticles)
 
@@ -100,6 +101,20 @@ export class ScatterTextSharedMemory {
 
   get particleCount(): number {
     return this.pointers.particle_count
+  }
+
+  // Get singleton instance
+  static getInstance(): ScatterTextSharedMemory {
+    return ScatterTextSharedMemory.instance!
+  }
+
+  static setInstance(wasmModule: WASMModule, maxParticles: number): void {
+    ScatterTextSharedMemory.instance = new ScatterTextSharedMemory(wasmModule, maxParticles)
+  }
+
+  // Reset singleton instance (useful for cleanup or testing)
+  static resetInstance(): void {
+    ScatterTextSharedMemory.instance = null
   }
 
   // Update particles using WASM
