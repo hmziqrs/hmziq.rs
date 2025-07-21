@@ -57,14 +57,7 @@ const Hero: React.FC = () => {
               </div>
             }
           >
-            <ScatterText
-              text={name}
-              fontFamily="geistMono"
-              color="white"
-              skip={8}
-              autoAnimate={!prefersReducedMotion}
-              height="100%"
-            />
+            <ScatterText text={name} />
           </WASMLoader>
         </div>
 

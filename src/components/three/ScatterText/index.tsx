@@ -18,21 +18,26 @@ function calculateFontSize(text: string, containerWidth: number, containerHeight
   return Math.max(40, Math.min(fontSize, 500))
 }
 
-// Component 1: Generate pixel data
+const MAX_PARTICLES = 1000
+const SKIP = 4
+
 function PixelGenerator({
   text,
-  fontFamily,
-  color,
-  skip,
   containerWidth,
   containerHeight,
   onPixelsGenerated,
 }: PixelGeneratorProps) {
   const wasmModule = useWASM().wasmModule!
+  const generating = useRef<boolean>(false)
 
-  const generatePixels = useCallback(() => {
+  useEffect(() => {
+    console.log('GENERATE PIXELS pre')
+
+    if (generating.current) return
+    generating.current = true
+    console.log('GENERATE PIXELS post')
     try {
-      const memory = new ScatterTextSharedMemory(wasmModule, 10000)
+      const memory = new ScatterTextSharedMemory(wasmModule, MAX_PARTICLES)
 
       const fontSize = calculateFontSize(text, containerWidth, containerHeight)
 
@@ -41,7 +46,7 @@ function PixelGenerator({
       )
 
       // Generate text pixels
-      const generated = memory.generateTextPixels(text, fontSize, fontFamily, color)
+      const generated = memory.generateTextPixels(text, fontSize, 'giestMono', '#ffffff')
 
       // Ensure we have a Uint8ClampedArray for PixelData
       const pixelData =
@@ -57,7 +62,7 @@ function PixelGenerator({
         generated.height,
         containerWidth,
         containerHeight,
-        skip
+        SKIP
       )
 
       console.log(`Generated ${particleCount} particles for text: ${text}`)
@@ -72,20 +77,7 @@ function PixelGenerator({
     } catch (error) {
       console.error('Failed to generate pixels:', error)
     }
-  }, [
-    text,
-    fontFamily,
-    color,
-    skip,
-    containerWidth,
-    containerHeight,
-    onPixelsGenerated,
-    wasmModule,
-  ])
-
-  useEffect(() => {
-    generatePixels()
-  }, [generatePixels])
+  }, [text, containerWidth, containerHeight, onPixelsGenerated, wasmModule])
 
   return null
 }
@@ -100,7 +92,7 @@ function ScatterRenderer({ pixelData, autoAnimate }: ScatterRendererProps) {
   useEffect(() => {
     console.log('FIRST EFFECT')
 
-    const memory = new ScatterTextSharedMemory(wasmModule, 10000)
+    const memory = new ScatterTextSharedMemory(wasmModule, MAX_PARTICLES)
     setSharedMemory(memory)
 
     // Update particle positions for the actual canvas size
@@ -137,7 +129,6 @@ function ScatterRenderer({ pixelData, autoAnimate }: ScatterRendererProps) {
     geometry.setAttribute('opacity', new THREE.BufferAttribute(sharedMemory.opacity, 1))
 
     // Set draw range to max particles
-    const MAX_PARTICLES = 10000
     geometry.setDrawRange(0, MAX_PARTICLES)
 
     // Create shader material
@@ -185,7 +176,7 @@ function ScatterRenderer({ pixelData, autoAnimate }: ScatterRendererProps) {
       opacityAttribute.needsUpdate = true
 
       // Update draw range to only render active particles
-      const particleCount = Math.min(wasmModule.get_particle_count(), 10000)
+      const particleCount = Math.min(wasmModule.get_particle_count(), MAX_PARTICLES)
       geometry.setDrawRange(0, particleCount)
     } catch (error) {
       console.error('Error updating ScatterText:', error)
@@ -198,18 +189,12 @@ function ScatterRenderer({ pixelData, autoAnimate }: ScatterRendererProps) {
 }
 
 // Main component
-export default function ScatterText({
-  text,
-  fontFamily = 'Arial',
-  color = 'white',
-  skip = 4,
-  autoAnimate = true,
-  height = '200px',
-}: ScatterTextProps) {
+export default function ScatterText({ text }: ScatterTextProps) {
   const [isGenerating, setIsGenerating] = useState(true)
   const [pixelData, setPixelData] = useState<PixelData | null>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
+  console.log('ROOT', pixelData)
 
   useEffect(() => {
     const updateSize = () => {
@@ -228,15 +213,12 @@ export default function ScatterText({
   }
 
   return (
-    <div ref={containerRef} className="relative" style={{ height }}>
+    <div ref={containerRef} className="relative h-32">
       {isGenerating ? (
         <>
-          {containerSize.width > 0 && containerSize.height > 0 && (
+          {!!containerSize.width && (
             <PixelGenerator
               text={text}
-              fontFamily={fontFamily}
-              color={color}
-              skip={skip}
               containerWidth={containerSize.width}
               containerHeight={containerSize.height}
               onPixelsGenerated={handlePixelsGenerated}
@@ -247,18 +229,21 @@ export default function ScatterText({
           </div>
         </>
       ) : (
-        <Canvas
-          camera={{ position: [0, 0, 600], fov: 50 }}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-          }}
-        >
-          <ScatterRenderer pixelData={pixelData!} autoAnimate={autoAnimate} />
-        </Canvas>
+        <>
+          <div />
+        </>
+        // <Canvas
+        //   camera={{ position: [0, 0, 600], fov: 50 }}
+        //   style={{
+        //     position: 'absolute',
+        //     top: 0,
+        //     left: 0,
+        //     width: '100%',
+        //     height: '100%',
+        //   }}
+        // >
+        //   <ScatterRenderer pixelData={pixelData!} autoAnimate={autoAnimate} />
+        // </Canvas>
       )}
     </div>
   )

@@ -16,9 +16,6 @@ export interface PixelData {
 
 export interface PixelGeneratorProps {
   text: string
-  fontFamily: string
-  color: string
-  skip: number
   containerWidth: number
   containerHeight: number
   onPixelsGenerated: (data: PixelData) => void
