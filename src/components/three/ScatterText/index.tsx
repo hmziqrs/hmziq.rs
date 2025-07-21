@@ -52,7 +52,7 @@ function PixelGenerator({
       // Set pixels in WASM with proper centering
       // Use container dimensions for proper centering
       const particleCount = wasmModule.set_text_pixels(
-        generated.pixelData,
+        new Uint8Array(generated.pixelData),
         generated.width,
         generated.height,
         containerWidth,
@@ -104,7 +104,7 @@ function ScatterRenderer({ pixelData, autoAnimate }: ScatterRendererProps) {
     // Update particle positions for the actual canvas size
     // Canvas size might differ from container size
     wasmModule.set_text_pixels(
-      pixelData.pixelData,
+      new Uint8Array(pixelData.pixelData),
       pixelData.width,
       pixelData.height,
       size.width,
