@@ -86,7 +86,7 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
   return (
     <canvas
       ref={canvasRef}
-      className="opacity-0"
+      className="opacity-0 invisible"
       style={{
         width: `${width}px`,
         height: `${height}px`,
