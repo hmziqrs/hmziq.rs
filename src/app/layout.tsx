@@ -58,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="/fav/favicon-16x16.png"
         />
         <link rel="manifest" href="/fav/site.webmanifest" />
+        <meta name="yandex-verification" content="2c30efbb908a334d" />
 
         <script
           type="application/ld+json"
