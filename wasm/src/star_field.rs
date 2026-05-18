@@ -6,6 +6,7 @@ use crate::math::{fast_sin_lookup_simd_16, seed_random, seed_random_simd_batch_1
 
 use std::simd::cmp::SimdPartialOrd;
 use std::simd::f32x16;
+use std::simd::Select;
 
 const SIMD_BATCH_SIZE: usize = 16;
 
