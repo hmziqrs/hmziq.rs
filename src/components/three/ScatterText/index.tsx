@@ -44,7 +44,7 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
       canvas.height = height
 
       // Configure text rendering
-      ctx.font = `bold 100px GeistMono`
+      ctx.font = `bold 100px "Geist Mono"`
       ctx.fillStyle = '#ffffff'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'

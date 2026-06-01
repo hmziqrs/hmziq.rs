@@ -74,6 +74,7 @@ export default defineConfig({
     ignorePatterns: ["dist", ".output", "scripts/", "wasm/", "legacy/"],
   },
   resolve: { tsconfigPaths: true },
+  envPrefix: ['NEXT_PUBLIC_'],
   server: { port: 3000 },
   plugins: [
     devtools(),
