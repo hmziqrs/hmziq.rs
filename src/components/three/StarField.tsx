@@ -1,10 +1,8 @@
-'use client'
-
 import { useRef, useMemo, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { StarFieldSharedMemory } from '@/lib/wasm/starfield'
-import { useWASM } from '@/contexts/WASMContext'
+import { StarFieldSharedMemory } from '~/lib/wasm/starfield'
+import { useWASM } from '~/contexts/WASMContext'
 
 // SoA optimized shaders
 const VERTEX_SHADER = `

@@ -1,16 +1,12 @@
-'use client'
-
+import { lazy, Suspense } from "react"
 import { motion } from 'framer-motion'
-import dynamic from 'next/dynamic'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { userProfile } from '@/lib/content/UserProfile'
-import { siteContent } from '@/lib/content/SiteContent'
-import WASMLoader from '@/components/WASMLoader'
+import { useReducedMotion } from '~/hooks/useReducedMotion'
+import { userProfile } from '~/lib/content/UserProfile'
+import { siteContent } from '~/lib/content/SiteContent'
+import WASMLoader from '~/components/WASMLoader'
 
-// Dynamic import for Three.js component
-const ScatterText = dynamic(() => import('@/components/three/ScatterText'), {
-  ssr: false,
-})
+// Lazy import for Three.js component
+const ScatterText = lazy(() => import('~/components/three/ScatterText'))
 
 const Hero: React.FC = () => {
   const prefersReducedMotion = useReducedMotion()
@@ -57,7 +53,9 @@ const Hero: React.FC = () => {
               </div>
             }
           >
-            <ScatterText text={name} />
+            <Suspense fallback={null}>
+              <ScatterText text={name} />
+            </Suspense>
           </WASMLoader>
         </div>
 

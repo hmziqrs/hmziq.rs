@@ -1,7 +1,5 @@
-'use client'
-
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
-import { loadWASM, type WASMModule } from '@/lib/wasm'
+import { loadWASM, type WASMModule } from '~/lib/wasm'
 
 interface WASMContextType {
   wasmModule: WASMModule | null
@@ -27,9 +25,8 @@ export function WASMProvider({ children }: { children: React.ReactNode }) {
         setWasmModule(module)
         setIsLoading(false)
       })
-      .catch((err) => {
-        console.error('Failed to load WASM module:', err)
-        setError(err instanceof Error ? err : new Error('Failed to load WASM'))
+      .catch(() => {
+        // WASM not available (files not built) — degrade gracefully
         setIsLoading(false)
       })
   }, [])

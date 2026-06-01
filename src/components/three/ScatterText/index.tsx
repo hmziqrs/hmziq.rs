@@ -1,11 +1,9 @@
-'use client'
-
 import { useRef, useEffect, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
-import { ScatterTextSharedMemory } from '@/lib/wasm/scatter-text'
-import { useWASM } from '@/contexts/WASMContext'
+import { ScatterTextSharedMemory } from '~/lib/wasm/scatter-text'
+import { useWASM } from '~/contexts/WASMContext'
 import { fragmentShader, vertexShader } from './shaders'
 import { ScatterTextProps, PixelData, PixelGeneratorProps, ScatterRendererProps } from './types'
 
@@ -22,7 +20,7 @@ function calculateFontSize(text: string, containerWidth: number, containerHeight
 const SKIP = 3
 
 function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGeneratorProps) {
-  const wasmModule = useWASM().wasmModule!
+  const wasmModule = useWASM().wasmModule
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const runOnce = useRef(false)
 
@@ -30,7 +28,7 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
     if (runOnce.current) return
     runOnce.current = true
 
-    if (!canvasRef.current) return
+    if (!canvasRef.current || !wasmModule) return
 
     try {
       const fontSize = calculateFontSize(text, width, height)
@@ -98,7 +96,7 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
 function ScatterRenderer({ pixelData }: ScatterRendererProps) {
   const { size } = useThree()
   const meshRef = useRef<THREE.Points>(null)
-  const wasmModule = useWASM().wasmModule!
+  const wasmModule = useWASM().wasmModule
   const [threeData, setThreeData] = useState<{
     geometry: THREE.BufferGeometry
     material: THREE.ShaderMaterial
@@ -138,7 +136,7 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
   }, [])
 
   useEffect(() => {
-    if (!threeData) return
+    if (!threeData || !wasmModule) return
     wasmModule.start_forming()
   }, [wasmModule, threeData])
 
@@ -150,6 +148,7 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
 
     try {
       // Update particles in WASM
+      if (!wasmModule) return
       sharedMemory.updateFrame(wasmModule, delta)
 
       // Update screen size uniform

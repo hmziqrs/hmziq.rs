@@ -68,7 +68,7 @@ export async function loadWASM(): Promise<WASMModule> {
       const wasmPath = '/wasm/pkg/hmziq_wasm_bg.wasm'
       const wasmModulePath = '/wasm/pkg/hmziq_wasm.js'
 
-      const wasmImport = await import(/* webpackIgnore: true */ /* @ts-ignore */ wasmModulePath)
+      const wasmImport = await import(/* @vite-ignore */ /* @ts-ignore */ wasmModulePath)
       await wasmImport.default(wasmPath)
 
       // Create WASM module
@@ -95,7 +95,8 @@ export async function loadWASM(): Promise<WASMModule> {
 
       return wasmModule
     } catch (error) {
-      throw new Error(`WASM SIMD module failed to load: ${error}`)
+      console.warn('WASM module not available:', error instanceof Error ? error.message : error)
+      throw error
     }
   })()
 

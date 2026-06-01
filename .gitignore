@@ -6,12 +6,15 @@
 playwright-report/
 test-results/
 
-# next.js
-/.next/
-/out/
+# tanstack start
+/.output/
+/.tanstack/
+/.tanstack-start/
+routeTree.gen.ts
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
@@ -28,7 +31,6 @@ test-results/
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # bun
 .bun/

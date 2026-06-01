@@ -1,6 +1,4 @@
-'use client'
-
-import { useWASM } from '@/contexts/WASMContext'
+import { useWASM } from '~/contexts/WASMContext'
 
 interface WASMLoaderProps {
   children: React.ReactNode

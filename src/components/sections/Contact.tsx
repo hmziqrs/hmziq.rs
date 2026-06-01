@@ -1,9 +1,7 @@
-'use client'
-
 import { motion } from 'framer-motion'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { userProfile } from '@/lib/content/UserProfile'
-import { siteContent } from '@/lib/content/SiteContent'
+import { useReducedMotion } from '~/hooks/useReducedMotion'
+import { userProfile } from '~/lib/content/UserProfile'
+import { siteContent } from '~/lib/content/SiteContent'
 
 // Icon imports
 import { IconType, SiGithub, SiX } from '@icons-pack/react-simple-icons'

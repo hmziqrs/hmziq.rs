@@ -1,14 +1,13 @@
-import type { Metadata, Viewport } from 'next'
-import userData from '@/content/data/user.json'
-import siteData from '@/content/data/site.json'
-import metadataData from '@/content/data/metadata.json'
+import userData from '~/content/data/user.json'
+import siteData from '~/content/data/site.json'
+import metadataData from '~/content/data/metadata.json'
 
 export class MetadataConfig {
   private userData = userData
   private siteData = siteData
   private metadataData = metadataData
 
-  getMetadata(): Metadata {
+  getMetadata() {
     const title = `${this.userData.name} - ${this.userData.title}`
     const description = `Personal landing page of ${this.userData.name} - ${this.userData.title} with ${this.userData.yearsOfExperience} years of experience in full-stack development, TypeScript, React, and modern web technologies.`
     const siteUrl = this.userData.websites.portfolio
@@ -55,7 +54,7 @@ export class MetadataConfig {
     }
   }
 
-  getViewport(): Viewport {
+  getViewport() {
     return {
       width: this.metadataData.viewport.width,
       initialScale: this.metadataData.viewport.initialScale,

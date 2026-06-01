@@ -1,5 +1,5 @@
-import siteData from '@/content/data/site.json'
-import userData from '@/content/data/user.json'
+import siteData from '~/content/data/site.json'
+import userData from '~/content/data/user.json'
 
 export interface UIConfig {
   copyright: string

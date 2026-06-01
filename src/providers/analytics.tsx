@@ -1,26 +1,23 @@
-'use client'
-import { usePathname, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
-import { logEvent } from 'firebase/analytics'
-import { Suspense } from 'react'
-import { useFirebase } from '@/hooks/use-firebase'
+import { useRouter } from "@tanstack/react-router"
+import { useEffect } from "react"
+import { logEvent } from "firebase/analytics"
+import { Suspense } from "react"
+import { useFirebase } from "~/hooks/use-firebase"
 
-// Separate component that uses useSearchParams
 function AnalyticsTracker() {
   const { analytics } = useFirebase()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const router = useRouter()
+  const { pathname } = router.state.location
 
   useEffect(() => {
     if (analytics) {
-      console.log('Logging page view', pathname, searchParams.toString())
-      logEvent(analytics, 'page_view', {
+      logEvent(analytics, "page_view", {
         page_path: pathname,
-        page_search: searchParams.toString(),
+        page_search: window.location.search,
         page_location: window.location.href,
       })
     }
-  }, [analytics, pathname, searchParams])
+  }, [analytics, pathname])
 
   return null
 }
