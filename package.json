@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "bun build:wasm:dev && vite dev",
     "build": "bun run build:wasm && vite build",
-    "copy:wasm": "bun ./scripts/copy-wasm.js",
+    "copy:wasm": "bun ./scripts/copy-wasm.ts",
     "build:wasm": "cd wasm && wasm-pack build --release --target web --out-dir pkg && bun copy:wasm",
-    "build:wasm:dev": "cd wasm && wasm-pack build --target web --out-dir pkg --dev && node ../scripts/copy-wasm.js",
+    "build:wasm:dev": "cd wasm && wasm-pack build --target web --out-dir pkg --dev && bun ../scripts/copy-wasm.ts",
     "prod": "bun run build && bun preview",
     "preview": "vite preview",
     "firebase:serve": "firebase emulators:start --only hosting",
