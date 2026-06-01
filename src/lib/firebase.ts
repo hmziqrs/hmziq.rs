@@ -1,6 +1,6 @@
+import { getAnalytics, isSupported } from 'firebase/analytics'
 // src/lib/firebase.ts
 import { initializeApp } from 'firebase/app'
-import { getAnalytics, isSupported } from 'firebase/analytics'
 import { getPerformance } from 'firebase/performance'
 
 const firebaseConfig = {

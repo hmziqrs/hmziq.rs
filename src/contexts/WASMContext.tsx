@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
+
 import { loadWASM, type WASMModule } from '~/lib/wasm'
 
 interface WASMContextType {
   wasmModule: WASMModule | null
   isLoading: boolean
-  error: Error | null
 }
 
 const WASMContext = createContext<WASMContextType | null>(null)
@@ -12,7 +12,6 @@ const WASMContext = createContext<WASMContextType | null>(null)
 export function WASMProvider({ children }: { children: React.ReactNode }) {
   const [wasmModule, setWasmModule] = useState<WASMModule | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
   const loadingRef = useRef(false)
 
   useEffect(() => {
@@ -31,9 +30,7 @@ export function WASMProvider({ children }: { children: React.ReactNode }) {
       })
   }, [])
 
-  return (
-    <WASMContext.Provider value={{ wasmModule, isLoading, error }}>{children}</WASMContext.Provider>
-  )
+  return <WASMContext.Provider value={{ wasmModule, isLoading }}>{children}</WASMContext.Provider>
 }
 
 export function useWASM() {

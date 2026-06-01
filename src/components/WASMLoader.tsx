@@ -3,15 +3,10 @@ import { useWASM } from '~/contexts/WASMContext'
 interface WASMLoaderProps {
   children: React.ReactNode
   loadingFallback?: React.ReactNode
-  errorFallback?: (error: Error) => React.ReactNode
 }
 
-export default function WASMLoader({ 
-  children, 
-  loadingFallback,
-  errorFallback 
-}: WASMLoaderProps) {
-  const { isLoading, error } = useWASM()
+export default function WASMLoader({ children, loadingFallback }: WASMLoaderProps) {
+  const { isLoading } = useWASM()
 
   if (isLoading) {
     return (
@@ -19,20 +14,6 @@ export default function WASMLoader({
         {loadingFallback || (
           <div className="flex items-center justify-center">
             <div className="text-gray-500">Loading WASM module...</div>
-          </div>
-        )}
-      </>
-    )
-  }
-
-  if (error) {
-    return (
-      <>
-        {errorFallback ? (
-          errorFallback(error)
-        ) : (
-          <div className="flex items-center justify-center">
-            <div className="text-red-500">Failed to load WASM module</div>
           </div>
         )}
       </>

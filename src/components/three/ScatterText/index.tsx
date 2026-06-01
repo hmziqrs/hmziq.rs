@@ -1,9 +1,11 @@
-import { useRef, useEffect, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Canvas } from '@react-three/fiber'
+import { useRef, useEffect, useState } from 'react'
 import * as THREE from 'three'
-import { ScatterTextSharedMemory } from '~/lib/wasm/scatter-text'
+
 import { useWASM } from '~/contexts/WASMContext'
+import { ScatterTextSharedMemory } from '~/lib/wasm/scatter-text'
+
 import { fragmentShader, vertexShader } from './shaders'
 import { ScatterTextProps, PixelData, PixelGeneratorProps, ScatterRendererProps } from './types'
 
@@ -84,7 +86,8 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
   return (
     <canvas
       ref={canvasRef}
-      className="opacity-0 invisible"
+      aria-hidden="true"
+      className="invisible opacity-0"
       style={{
         width: `${width}px`,
         height: `${height}px`,
@@ -132,8 +135,9 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
       blending: THREE.AdditiveBlending,
     })
 
+    // eslint-disable-next-line react-hooks-js/set-state-in-effect
     setThreeData({ geometry, material })
-  }, [])
+  }, [pixelData.particleCount])
 
   useEffect(() => {
     if (!threeData || !wasmModule) return
@@ -160,6 +164,7 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
       const positionYAttribute = geometry.attributes.positionY as THREE.BufferAttribute
       const opacityAttribute = geometry.attributes.opacity as THREE.BufferAttribute
 
+      // eslint-disable-next-line react-hooks-js/immutability
       positionXAttribute.needsUpdate = true
       positionYAttribute.needsUpdate = true
       opacityAttribute.needsUpdate = true
@@ -197,7 +202,7 @@ export default function ScatterText({ text }: ScatterTextProps) {
   }
 
   return (
-    <div ref={containerRef} className="absolute min-w-full min-h-full">
+    <div ref={containerRef} className="absolute min-h-full min-w-full">
       {isGenerating ? (
         <>
           {!!containerSize.width && (

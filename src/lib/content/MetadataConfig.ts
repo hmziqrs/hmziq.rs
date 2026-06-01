@@ -1,6 +1,6 @@
-import userData from '~/content/data/user.json'
-import siteData from '~/content/data/site.json'
 import metadataData from '~/content/data/metadata.json'
+import siteData from '~/content/data/site.json'
+import userData from '~/content/data/user.json'
 
 export class MetadataConfig {
   private userData = userData
@@ -47,7 +47,10 @@ export class MetadataConfig {
           index: this.metadataData.robots.googleBot.index,
           follow: this.metadataData.robots.googleBot.follow,
           'max-video-preview': this.metadataData.robots.googleBot.maxVideoPreview,
-          'max-image-preview': this.metadataData.robots.googleBot.maxImagePreview as 'large' | 'none' | 'standard',
+          'max-image-preview': this.metadataData.robots.googleBot.maxImagePreview as
+            | 'large'
+            | 'none'
+            | 'standard',
           'max-snippet': this.metadataData.robots.googleBot.maxSnippet,
         },
       },

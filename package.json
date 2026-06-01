@@ -1,8 +1,19 @@
 {
   "name": "hmziq.rs",
   "version": "1.0.0",
-  "type": "module",
   "description": "",
+  "keywords": [],
+  "homepage": "https://github.com/hmziqrs/hmziq.rs#readme",
+  "bugs": {
+    "url": "https://github.com/hmziqrs/hmziq.rs/issues"
+  },
+  "license": "ISC",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hmziqrs/hmziq.rs.git"
+  },
+  "type": "module",
   "scripts": {
     "dev": "bun build:wasm:dev && vite dev",
     "build": "bun run build:wasm && vite build",
@@ -23,17 +34,6 @@
     "type-check": "tsc --noEmit",
     "kill-dev": "kill -9 $(lsof -ti:3000) 2>/dev/null || true"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/hmziqrs/hmziq.rs.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/hmziqrs/hmziq.rs/issues"
-  },
-  "homepage": "https://github.com/hmziqrs/hmziq.rs#readme",
   "dependencies": {
     "@icons-pack/react-simple-icons": "^13.5.0",
     "@react-three/drei": "^10.1.2",
@@ -63,8 +63,10 @@
     "@tanstack/eslint-plugin-query": "^5.100.14",
     "@tanstack/eslint-plugin-router": "^1.162.0",
     "@tanstack/react-devtools": "^0.10.5",
+    "@tanstack/react-query": "^5.100.14",
     "@tanstack/react-query-devtools": "^5.100.14",
     "@tanstack/react-router-devtools": "^1.167.0",
+    "@tanstack/react-router-ssr-query": "^1.167.1",
     "@types/three": "^0.177.0",
     "@vitejs/plugin-react": "^6.0.2",
     "babel-plugin-react-compiler": "^1.0.0",
@@ -75,8 +77,6 @@
     "playwright": "^1.53.2",
     "puppeteer": "^24.10.0",
     "tailwindcss": "^4.0.0",
-    "@tanstack/react-query": "^5.100.14",
-    "@tanstack/react-router-ssr-query": "^1.167.1",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",
     "vite-plus": "^0.1.24"
   },

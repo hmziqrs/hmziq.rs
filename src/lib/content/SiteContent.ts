@@ -24,15 +24,14 @@ export class SiteContent {
       copyright: this.siteConfig.ui.copyright.replace('{name}', this.userData.name),
       scrollText: 'Scroll to explore',
       backToTop: 'Back to Top',
-      connectMessage: 'Let\'s connect and build something amazing together',
-      additionalSkillsInfo: 'Additional skills'
+      connectMessage: "Let's connect and build something amazing together",
+      additionalSkillsInfo: 'Additional skills',
     }
   }
 
   get navigation(): Navigation {
     return this.siteConfig.navigation
   }
-
 
   get socialPlatforms() {
     return this.siteConfig.socialPlatforms

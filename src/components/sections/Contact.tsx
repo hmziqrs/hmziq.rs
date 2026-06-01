@@ -1,11 +1,11 @@
-import { motion } from 'framer-motion'
-import { useReducedMotion } from '~/hooks/useReducedMotion'
-import { userProfile } from '~/lib/content/UserProfile'
-import { siteContent } from '~/lib/content/SiteContent'
-
 // Icon imports
 import { IconType, SiGithub, SiX } from '@icons-pack/react-simple-icons'
+import { motion, type Variants } from 'framer-motion'
 import { Mail } from 'lucide-react'
+
+import { useReducedMotion } from '~/hooks/useReducedMotion'
+import { siteContent } from '~/lib/content/SiteContent'
+import { userProfile } from '~/lib/content/UserProfile'
 
 // Social platform to icon mapping
 const socialIconMap: Record<string, IconType> = {
@@ -27,7 +27,7 @@ const Contact: React.FC = () => {
   const allLinksForSEO = userProfile.getAllLinksForSEO()
   const { copyright } = siteContent.ui
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -38,7 +38,7 @@ const Contact: React.FC = () => {
     },
   }
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { y: prefersReducedMotion ? 0 : 30, opacity: 0 },
     visible: {
       y: 0,
@@ -50,7 +50,7 @@ const Contact: React.FC = () => {
     },
   }
 
-  const linkVariants = {
+  const linkVariants: Variants = {
     hover: {
       scale: prefersReducedMotion ? 1 : 1.05,
       transition: { duration: 0.2 },
@@ -74,24 +74,24 @@ const Contact: React.FC = () => {
   return (
     <section
       id="contact"
-      className="relative min-h-screen flex items-center justify-center px-6 py-20"
+      className="relative flex min-h-screen items-center justify-center px-6 py-20"
     >
       <motion.div
-        className="max-w-4xl mx-auto text-center"
+        className="mx-auto max-w-4xl text-center"
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
       >
         <motion.h2
-          className="text-4xl md:text-6xl font-bold mb-12 text-gradient"
+          className="text-gradient mb-12 text-4xl font-bold md:text-6xl"
           variants={itemVariants}
         >
           Contact
         </motion.h2>
 
         <motion.div
-          className="flex flex-row flex-wrap justify-center gap-6 mb-16 max-w-4xl mx-auto"
+          className="mx-auto mb-16 flex max-w-4xl flex-row flex-wrap justify-center gap-6"
           variants={itemVariants}
         >
           {primarySocialLinks.map((link) => (
@@ -112,21 +112,21 @@ const Contact: React.FC = () => {
                     }
               }
             >
-              <div className="px-6 py-4 relative rounded-lg backdrop-blur-sm shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)] transition-all duration-500 group cursor-pointer flex flex-col items-center gap-3 overflow-hidden bg-gradient-radial from-transparent via-transparent to-white/[0.05] hover:to-white/[0.08]">
+              <div className="group bg-gradient-radial relative flex cursor-pointer flex-col items-center gap-3 overflow-hidden rounded-lg from-transparent via-transparent to-white/[0.05] px-6 py-4 shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)] backdrop-blur-sm transition-all duration-500 hover:to-white/[0.08]">
                 {/* Social Icon */}
-                <div className="transition-transform duration-300 group-hover:scale-110 z-10">
+                <div className="z-10 transition-transform duration-300 group-hover:scale-110">
                   {renderSocialIcon(link.name)}
                 </div>
 
                 {/* Username */}
-                <span className="relative z-10 text-white font-mono text-sm tracking-wide text-center bg-gradient-to-r from-white to-purple-100 bg-clip-text ">
+                <span className="relative z-10 bg-gradient-to-r from-white to-purple-100 bg-clip-text text-center font-mono text-sm tracking-wide text-white">
                   {link.username}
                 </span>
 
                 {/* White shine effect on hover */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-1000 pointer-events-none">
+                <div className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100">
                   <div
-                    className="absolute inset-0 -translate-x-full -translate-y-full group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-1000"
+                    className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0"
                     style={{
                       background:
                         'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',

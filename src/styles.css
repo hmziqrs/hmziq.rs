@@ -1,18 +1,18 @@
-@import "tailwindcss";
-@source "./";
+@import 'tailwindcss';
+@source './';
 
 /* Geist font faces */
 @font-face {
-  font-family: "Geist";
-  src: url("/fonts/GeistVF.woff") format("woff");
+  font-family: 'Geist';
+  src: url('/fonts/GeistVF.woff') format('woff');
   font-weight: 100 900;
   font-display: swap;
   font-style: normal;
 }
 
 @font-face {
-  font-family: "Geist Mono";
-  src: url("/fonts/GeistMonoVF.woff") format("woff");
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMonoVF.woff') format('woff');
   font-weight: 100 900;
   font-display: swap;
   font-style: normal;
@@ -20,10 +20,10 @@
 
 /* Tailwind v4 theme config (replaces tailwind.config.ts) */
 @theme inline {
-  --font-sans: "Geist", sans-serif;
-  --font-mono: "Geist Mono", monospace;
-  --font-geist-sans: "Geist", sans-serif;
-  --font-geist-mono: "Geist Mono", monospace;
+  --font-sans: 'Geist', sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+  --font-geist-sans: 'Geist', sans-serif;
+  --font-geist-mono: 'Geist Mono', monospace;
   --breakpoint-xs: 410px;
 }
 

@@ -1,8 +1,9 @@
-import { useRouter } from "@tanstack/react-router"
-import { useEffect } from "react"
-import { logEvent } from "firebase/analytics"
-import { Suspense } from "react"
-import { useFirebase } from "~/hooks/use-firebase"
+import { useRouter } from '@tanstack/react-router'
+import { logEvent } from 'firebase/analytics'
+import { useEffect } from 'react'
+import { Suspense } from 'react'
+
+import { useFirebase } from '~/hooks/use-firebase'
 
 function AnalyticsTracker() {
   const { analytics } = useFirebase()
@@ -11,7 +12,7 @@ function AnalyticsTracker() {
 
   useEffect(() => {
     if (analytics) {
-      logEvent(analytics, "page_view", {
+      logEvent(analytics, 'page_view', {
         page_path: pathname,
         page_search: window.location.search,
         page_location: window.location.href,

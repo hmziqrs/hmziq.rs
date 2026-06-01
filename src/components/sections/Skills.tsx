@@ -1,8 +1,3 @@
-import { useRef, useMemo } from 'react'
-import { motion } from 'framer-motion'
-import { useReducedMotion } from '~/hooks/useReducedMotion'
-import { userProfile } from '~/lib/content/UserProfile'
-
 // Icon imports
 import {
   SiFlutter,
@@ -14,7 +9,12 @@ import {
   SiDocker,
   IconType,
 } from '@icons-pack/react-simple-icons'
+import { motion, type Variants } from 'framer-motion'
 import { Workflow, Building2, Zap } from 'lucide-react'
+import { useRef, useMemo } from 'react'
+
+import { useReducedMotion } from '~/hooks/useReducedMotion'
+import { userProfile } from '~/lib/content/UserProfile'
 
 // Skill to icon mapping
 const skillIconMap: Record<string, IconType> = {
@@ -59,7 +59,7 @@ const Skills: React.FC = () => {
     hoverBackground: 'hover:to-white/[0.05]',
   }
 
-  const containerVariants = useMemo(
+  const containerVariants: Variants = useMemo(
     () => ({
       hidden: { opacity: 0 },
       visible: {
@@ -74,7 +74,7 @@ const Skills: React.FC = () => {
     [prefersReducedMotion]
   )
 
-  const skillVariants = useMemo(
+  const skillVariants: Variants = useMemo(
     () => ({
       hidden: { scale: prefersReducedMotion ? 1 : 0.9, opacity: 0 },
       visible: {
@@ -107,18 +107,18 @@ const Skills: React.FC = () => {
     <section
       ref={sectionRef}
       id="skills"
-      className="relative min-h-screen flex items-center justify-center px-6 py-20"
+      className="relative flex min-h-screen items-center justify-center px-6 py-20"
       aria-label="Skills"
     >
       <motion.div
-        className="max-w-6xl mx-auto"
+        className="mx-auto max-w-6xl"
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
       >
         {/* Skills Grid */}
-        <div className="flex flex-row flex-wrap justify-center gap-4 max-w-6xl">
+        <div className="flex max-w-6xl flex-row flex-wrap justify-center gap-4">
           {skills.map((skill) => (
             <motion.div
               key={skill}
@@ -135,33 +135,22 @@ const Skills: React.FC = () => {
               className="cosmic-skill-tile"
             >
               <div
-                className={`
-                px-4 py-3
-                relative rounded-lg
-                backdrop-blur-xl
-                shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)]
-                transition-all duration-500
-                group cursor-pointer
-                flex flex-row items-center gap-2
-                overflow-hidden
-                ${skillStyles.background}
-                ${skillStyles.hoverBackground}
-              `}
+                className={`group relative flex cursor-pointer flex-row items-center gap-2 overflow-hidden rounded-lg px-4 py-3 shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all duration-500 ${skillStyles.background} ${skillStyles.hoverBackground} `}
               >
                 {/* Skill Icon */}
-                <div className="transition-transform duration-300 group-hover:scale-110 z-10">
+                <div className="z-10 transition-transform duration-300 group-hover:scale-110">
                   {renderSkillIcon(skill)}
                 </div>
 
                 {/* Skill Name */}
-                <span className="relative z-10 text-white font-mono font-medium text-sm">
+                <span className="relative z-10 font-mono text-sm font-medium text-white">
                   {skill}
                 </span>
 
                 {/* White shine effect on hover */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-1000 pointer-events-none">
+                <div className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100">
                   <div
-                    className="absolute inset-0 -translate-x-full -translate-y-full group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-1000"
+                    className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0"
                     style={{
                       background:
                         'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',

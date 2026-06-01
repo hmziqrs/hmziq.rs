@@ -1,8 +1,9 @@
-import { useRef, useMemo, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
+import { useRef, useMemo, useState, useEffect } from 'react'
 import * as THREE from 'three'
-import { StarFieldSharedMemory } from '~/lib/wasm/starfield'
+
 import { useWASM } from '~/contexts/WASMContext'
+import { StarFieldSharedMemory } from '~/lib/wasm/starfield'
 
 // SoA optimized shaders
 const VERTEX_SHADER = `
@@ -90,7 +91,6 @@ function Stars() {
   const lastFrameTimeRef = useRef(0)
 
   const starMeshRef = useRef<THREE.Points>(null)
-
 
   useEffect(() => {
     const handleResize = () => {
@@ -260,6 +260,7 @@ function Stars() {
   })
 
   return (
+    // eslint-disable-next-line react-hooks-js/refs -- ref passed to Three.js element, not read during render
     <points ref={starMeshRef} material={starGroup.material}>
       <bufferGeometry />
     </points>

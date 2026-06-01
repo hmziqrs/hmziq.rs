@@ -17,10 +17,6 @@
       "~/*": ["./src/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "./scripts/*.ts"
-  ],
+  "include": ["**/*.ts", "**/*.tsx", "./scripts/*.ts"],
   "exclude": ["node_modules", "legacy", ".output", "dist"]
 }

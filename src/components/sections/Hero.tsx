@@ -1,9 +1,10 @@
-import { lazy, Suspense } from "react"
-import { motion } from 'framer-motion'
-import { useReducedMotion } from '~/hooks/useReducedMotion'
-import { userProfile } from '~/lib/content/UserProfile'
-import { siteContent } from '~/lib/content/SiteContent'
+import { motion, type Variants } from 'framer-motion'
+import { lazy, Suspense } from 'react'
+
 import WASMLoader from '~/components/WASMLoader'
+import { useReducedMotion } from '~/hooks/useReducedMotion'
+import { siteContent } from '~/lib/content/SiteContent'
+import { userProfile } from '~/lib/content/UserProfile'
 
 // Lazy import for Three.js component
 const ScatterText = lazy(() => import('~/components/three/ScatterText'))
@@ -13,7 +14,7 @@ const Hero: React.FC = () => {
   const { name, title } = userProfile.profile
   const { scrollText } = siteContent.ui
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -24,7 +25,7 @@ const Hero: React.FC = () => {
     },
   }
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { y: prefersReducedMotion ? 0 : 50, opacity: 0 },
     visible: {
       y: 0,
@@ -37,9 +38,9 @@ const Hero: React.FC = () => {
   }
 
   return (
-    <section id="hero" className="relative min-h-screen block px-6 w-full ">
+    <section id="hero" className="relative block min-h-screen w-full px-6">
       <motion.div
-        className="flex flex-col justify-center items-center text-center min-h-screen w-full"
+        className="flex min-h-screen w-full flex-col items-center justify-center text-center"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -49,7 +50,7 @@ const Hero: React.FC = () => {
           <WASMLoader
             loadingFallback={
               <div className="h-32 w-xl">
-                <div className="text-6xl md:text-7xl lg:text-8xl font-bold text-white">{name}</div>
+                <div className="text-6xl font-bold text-white md:text-7xl lg:text-8xl">{name}</div>
               </div>
             }
           >
@@ -60,24 +61,24 @@ const Hero: React.FC = () => {
         </div>
 
         <motion.p
-          className="text-xl md:text-2xl lg:text-3xl text-gray-400  font-light"
+          className="text-xl font-light text-gray-400 md:text-2xl lg:text-3xl"
           variants={itemVariants}
         >
           {title}
         </motion.p>
         <div className="h-8" />
         <motion.div
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 transform"
           variants={itemVariants}
         >
           <div className="flex flex-col items-center">
             <motion.div
-              className="w-6 h-10 border-2 -right-1 border-gray-600 rounded-full flex justify-center"
+              className="-right-1 flex h-10 w-6 justify-center rounded-full border-2 border-gray-600"
               whileHover={{ borderColor: '#ffffff', scale: 1.2 }}
               transition={{ duration: 0.2 }}
             >
               <motion.div
-                className="w-1 h-3 bg-gray-400 rounded-full mt-2"
+                className="mt-2 h-3 w-1 rounded-full bg-gray-400"
                 animate={
                   prefersReducedMotion
                     ? {}
@@ -94,7 +95,7 @@ const Hero: React.FC = () => {
               />
             </motion.div>
             <div className="h-2" />
-            <p className="text-gray-600 text-sm tracking-widest">{scrollText}</p>
+            <p className="text-sm tracking-widest text-gray-600">{scrollText}</p>
           </div>
         </motion.div>
       </motion.div>
