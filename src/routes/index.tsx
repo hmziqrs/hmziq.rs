@@ -6,7 +6,6 @@ import Hero from '~/components/sections/Hero'
 import Skills from '~/components/sections/Skills'
 import WASMLoader from '~/components/WASMLoader'
 
-// Lazy load Three.js component to avoid SSR issues
 const StarField3D = lazy(() => import('~/components/three/StarField'))
 
 export const Route = createFileRoute('/')({
@@ -30,7 +29,6 @@ function HomePage() {
         </Suspense>
       </WASMLoader>
 
-      {/* Content sections */}
       <div className="relative" style={{ zIndex: 10 }}>
         <Hero />
         <Skills />

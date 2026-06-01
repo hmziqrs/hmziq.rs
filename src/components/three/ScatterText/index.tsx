@@ -18,7 +18,6 @@ function calculateFontSize(text: string, containerWidth: number, containerHeight
   return Math.max(40, Math.min(fontSize, 500))
 }
 
-// const MAX_PARTICLES = 1000
 const SKIP = 3
 
 function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGeneratorProps) {
@@ -37,15 +36,12 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
 
       console.log(`Dynamic font size: ${fontSize}px for text: "${text}" (${width}x${height})`)
 
-      // Use the mounted canvas for text rendering
       const canvas = canvasRef.current
       const ctx = canvas.getContext('2d')!
 
-      // Set canvas size
       canvas.width = width
       canvas.height = height
 
-      // Configure text rendering
       ctx.font = `bold 100px "Geist Mono"`
       ctx.fillStyle = '#ffffff'
       ctx.textAlign = 'center'
@@ -53,11 +49,9 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      // Draw text in white
       ctx.fillStyle = '#ffffff'
       ctx.fillText(text, canvas.width / 2, canvas.height / 2)
 
-      // Get image data
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
       const pixelData = new Uint8Array(imageData.data)
 
@@ -120,10 +114,8 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
     geometry.setAttribute('colorB', new THREE.BufferAttribute(sharedMemory.colors_b, 1))
     geometry.setAttribute('opacity', new THREE.BufferAttribute(sharedMemory.opacity, 1))
 
-    // Set draw range to max particles
     geometry.setDrawRange(0, pixelData.particleCount)
 
-    // Create shader material
     const material = new THREE.ShaderMaterial({
       uniforms: {
         screenSize: { value: new THREE.Vector2(1, 1) }, // Will be updated in useFrame
@@ -144,22 +136,17 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
     wasmModule.start_forming()
   }, [wasmModule, threeData])
 
-  // Update particles
   useFrame((state, delta) => {
     const sharedMemory = ScatterTextSharedMemory.getInstance()
     if (!threeData) return
     const { geometry, material } = threeData
 
     try {
-      // Update particles in WASM
       if (!wasmModule) return
       sharedMemory.updateFrame(wasmModule, delta)
 
-      // Update screen size uniform
       material.uniforms.screenSize.value.set(size.width, size.height)
 
-      // Update attributes that change during animation
-      // Position updates during scatter/form animation
       const positionXAttribute = geometry.attributes.positionX as THREE.BufferAttribute
       const positionYAttribute = geometry.attributes.positionY as THREE.BufferAttribute
       const opacityAttribute = geometry.attributes.opacity as THREE.BufferAttribute
@@ -169,8 +156,6 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
       positionYAttribute.needsUpdate = true
       opacityAttribute.needsUpdate = true
 
-      // Update draw range to only render active particles
-      // const particleCount = Math.min(wasmModule.get_particle_count(), MAX_PARTICLES)
       geometry.setDrawRange(0, pixelData.particleCount)
     } catch (error) {
       console.error('Error updating ScatterText:', error)
@@ -182,7 +167,6 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
   return <points ref={meshRef} geometry={threeData.geometry} material={threeData.material} />
 }
 
-// Main component
 export default function ScatterText({ text }: ScatterTextProps) {
   const [isGenerating, setIsGenerating] = useState(true)
   const [pixelData, setPixelData] = useState<PixelData | null>(null)
@@ -216,7 +200,6 @@ export default function ScatterText({ text }: ScatterTextProps) {
         </>
       ) : (
         <>
-          {/* <div /> */}
           <Canvas
             camera={{ position: [0, 0, 150], fov: 50 }}
             style={{
@@ -225,7 +208,6 @@ export default function ScatterText({ text }: ScatterTextProps) {
               left: 0,
               width: containerSize.width,
               height: containerSize.height,
-              // backgroundColor: 'red',
             }}
           >
             <ScatterRenderer pixelData={pixelData!} />

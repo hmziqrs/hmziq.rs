@@ -44,14 +44,12 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { name: 'theme-color', content: metadataData.theme.themeColor },
       { name: 'robots', content: 'index, follow' },
       { name: 'yandex-verification', content: '2c30efbb908a334d' },
-      // OpenGraph
       { property: 'og:type', content: metadataData.openGraph.type },
       { property: 'og:locale', content: metadataData.openGraph.locale },
       { property: 'og:url', content: siteUrl },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
       { property: 'og:site_name', content: new URL(siteUrl).hostname },
-      // Twitter
       { name: 'twitter:card', content: metadataData.twitter.card },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },

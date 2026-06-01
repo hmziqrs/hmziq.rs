@@ -18,7 +18,6 @@ export class SiteContent {
   private userData = userData
 
   get ui(): UIConfig {
-    // Replace placeholders with actual data
     return {
       ...this.siteConfig.ui,
       copyright: this.siteConfig.ui.copyright.replace('{name}', this.userData.name),
@@ -38,5 +37,4 @@ export class SiteContent {
   }
 }
 
-// Export singleton instance
 export const siteContent = new SiteContent()

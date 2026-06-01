@@ -11,7 +11,7 @@ export class MetadataConfig {
     const title = `${this.userData.name} - ${this.userData.title}`
     const description = `Personal landing page of ${this.userData.name} - ${this.userData.title} with ${this.userData.yearsOfExperience} years of experience in full-stack development, TypeScript, React, and modern web technologies.`
     const siteUrl = this.userData.websites.portfolio
-    const twitterUsername = this.userData.username // Using username for Twitter handle
+    const twitterUsername = this.userData.username
 
     return {
       title,
@@ -83,5 +83,4 @@ export class MetadataConfig {
   }
 }
 
-// Export singleton instance
 export const metadataConfig = new MetadataConfig()

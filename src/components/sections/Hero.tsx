@@ -6,7 +6,6 @@ import { useReducedMotion } from '~/hooks/useReducedMotion'
 import { siteContent } from '~/lib/content/SiteContent'
 import { userProfile } from '~/lib/content/UserProfile'
 
-// Lazy import for Three.js component
 const ScatterText = lazy(() => import('~/components/three/ScatterText'))
 
 const Hero: React.FC = () => {
@@ -45,7 +44,6 @@ const Hero: React.FC = () => {
         initial="hidden"
         animate="visible"
       >
-        {/* Name with Scatter Text Effect */}
         <div className="relative h-32 w-xl">
           <WASMLoader
             loadingFallback={

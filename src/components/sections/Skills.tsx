@@ -1,4 +1,3 @@
-// Icon imports
 import {
   SiFlutter,
   SiRust,
@@ -16,7 +15,6 @@ import { useRef, useMemo } from 'react'
 import { useReducedMotion } from '~/hooks/useReducedMotion'
 import { userProfile } from '~/lib/content/UserProfile'
 
-// Skill to icon mapping
 const skillIconMap: Record<string, IconType> = {
   Flutter: SiFlutter,
   Dioxus: SiRust,
@@ -117,7 +115,6 @@ const Skills: React.FC = () => {
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
       >
-        {/* Skills Grid */}
         <div className="flex max-w-6xl flex-row flex-wrap justify-center gap-4">
           {skills.map((skill) => (
             <motion.div
@@ -137,12 +134,10 @@ const Skills: React.FC = () => {
               <div
                 className={`group relative flex cursor-pointer flex-row items-center gap-2 overflow-hidden rounded-lg px-4 py-3 shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all duration-500 ${skillStyles.background} ${skillStyles.hoverBackground} `}
               >
-                {/* Skill Icon */}
                 <div className="z-10 transition-transform duration-300 group-hover:scale-110">
                   {renderSkillIcon(skill)}
                 </div>
 
-                {/* Skill Name */}
                 <span className="relative z-10 font-mono text-sm font-medium text-white">
                   {skill}
                 </span>

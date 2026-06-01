@@ -5,7 +5,6 @@ import * as THREE from 'three'
 import { useWASM } from '~/contexts/WASMContext'
 import { StarFieldSharedMemory } from '~/lib/wasm/starfield'
 
-// SoA optimized shaders
 const VERTEX_SHADER = `
   // SoA attributes for SIMD
   attribute float positionX;

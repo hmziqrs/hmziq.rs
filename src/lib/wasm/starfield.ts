@@ -1,8 +1,5 @@
-// StarField WASM memory management
-
 import type { WASMModule } from './core'
 
-// SoA memory pointers for StarField
 export interface StarMemoryPointers {
   positions_x_ptr: number
   positions_y_ptr: number
@@ -34,12 +31,10 @@ export interface FrameUpdateResult {
   culling_dirty: boolean
 }
 
-// Shared memory wrapper for StarField
 export class StarFieldSharedMemory {
   private wasmMemory: WebAssembly.Memory
   private pointers: StarMemoryPointers
 
-  // SoA arrays
   public positions_x: Float32Array
   public positions_y: Float32Array
   public positions_z: Float32Array
@@ -56,7 +51,6 @@ export class StarFieldSharedMemory {
     this.wasmMemory = wasmModule.memory
     this.pointers = wasmModule.initialize_star_memory_pool(starCount)
 
-    // Direct WASM memory views
     this.positions_x = new Float32Array(
       this.wasmMemory.buffer,
       this.pointers.positions_x_ptr,
@@ -118,8 +112,6 @@ export class StarFieldSharedMemory {
     return this.pointers.count
   }
 
-  // Bitpacked visibility utils
-  // Check star visibility
   isStarVisible(starIndex: number): boolean {
     const wordIndex = Math.floor(starIndex / 64)
     const bitIndex = starIndex % 64
@@ -132,7 +124,6 @@ export class StarFieldSharedMemory {
     return (word & (1n << BigInt(bitIndex))) !== 0n
   }
 
-  // Set visibility for a specific star
   setStarVisible(starIndex: number, visible: boolean): void {
     const wordIndex = Math.floor(starIndex / 64)
     const bitIndex = starIndex % 64
@@ -149,19 +140,15 @@ export class StarFieldSharedMemory {
     }
   }
 
-  // Count visible stars
   countVisibleStars(): number {
     let visibleCount = 0
     const completeWords = Math.floor(this.count / 64)
-    
-    // Count complete u64 words
+
     for (let i = 0; i < completeWords; i++) {
-      // Use built-in bit counting
       const word = this.visibilityMask[i]
       visibleCount += this.popCount64(word)
     }
-    
-    // Handle remaining bits
+
     const remainingBits = this.count % 64
     if (remainingBits > 0 && completeWords < this.visibilityMask.length) {
       const mask = (1n << BigInt(remainingBits)) - 1n
@@ -172,7 +159,6 @@ export class StarFieldSharedMemory {
     return visibleCount
   }
 
-  // 64-bit population count
   private popCount64(n: bigint): number {
     let count = 0
     while (n !== 0n) {
@@ -182,7 +168,6 @@ export class StarFieldSharedMemory {
     return count
   }
 
-  // Frame update
   updateFrame(
     wasmModule: WASMModule,
     time: number,
@@ -192,11 +177,9 @@ export class StarFieldSharedMemory {
     clickTime: number,
     currentSpeedMultiplier: number
   ): FrameUpdateResult {
-    // For now, pass 0 for camera matrix pointer
     // TODO: Implement proper camera matrix handling in WASM
     const cameraPtr = 0
 
-    // WASM computation, shared memory
     const result = wasmModule.update_frame_simd(
       time,
       deltaTime,
@@ -206,10 +189,8 @@ export class StarFieldSharedMemory {
       currentSpeedMultiplier
     )
 
-    // Arrays auto-updated (shared memory)
     return result
   }
 }
 
-// Re-export WASMModule type that StarField components need
 export type { WASMModule } from './core'

@@ -1,4 +1,3 @@
-// Vertex shader
 export const vertexShader = `
   // SoA attributes for SIMD optimization
   attribute float positionX;
@@ -31,7 +30,6 @@ export const vertexShader = `
   }
 `
 
-// Fragment shader
 export const fragmentShader = `
   varying float vOpacity;
   varying vec3 vColor;

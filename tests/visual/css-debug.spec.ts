@@ -4,20 +4,16 @@ test.describe('CSS Debug Screenshots', () => {
   test('Contact section visual debugging', async ({ page }) => {
     await page.goto('http://localhost:3002/')
 
-    // Wait for the Contact section to be visible
     await page.waitForSelector('#contact', { timeout: 10000 })
 
-    // Take a full page screenshot
     await page.screenshot({
       path: 'tests/visual/screenshots/full-page.png',
       fullPage: true,
     })
 
-    // Navigate to contact section
     await page.locator('#contact').scrollIntoViewIfNeeded()
     await page.waitForTimeout(2000) // Wait for animations
 
-    // Take a screenshot of the contact section
     await page.locator('#contact').screenshot({
       path: 'tests/visual/screenshots/contact-section.png',
     })

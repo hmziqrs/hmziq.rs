@@ -1,5 +1,3 @@
-// ScatterText WASM memory management
-
 import type { WASMModule } from './core'
 
 export interface ScatterTextPointers {
@@ -17,13 +15,11 @@ export interface ScatterTextPointers {
   particle_count: number
 }
 
-// Scatter text shared memory wrapper
 export class ScatterTextSharedMemory {
   private static instance: ScatterTextSharedMemory | null = null
   private wasmMemory: WebAssembly.Memory
   private pointers: ScatterTextPointers
 
-  // SoA arrays for particles
   public positions_x: Float32Array
   public positions_y: Float32Array
   public target_x: Float32Array
@@ -40,12 +36,10 @@ export class ScatterTextSharedMemory {
     this.wasmMemory = wasmModule.memory
     this.pointers = pointers
 
-    // Calculate aligned sizes based on actual particle count
     const SIMD_BATCH_SIZE = 16
     const alignedCount = Math.ceil(pointers.particle_count / SIMD_BATCH_SIZE) * SIMD_BATCH_SIZE
     const flagCount = Math.ceil(alignedCount / 64)
 
-    // Direct WASM memory views
     this.positions_x = new Float32Array(
       this.wasmMemory.buffer,
       this.pointers.positions_x_ptr,
@@ -103,7 +97,6 @@ export class ScatterTextSharedMemory {
     return this.pointers.particle_count
   }
 
-  // Get singleton instance
   static getInstance(): ScatterTextSharedMemory {
     return ScatterTextSharedMemory.instance!
   }
@@ -113,17 +106,13 @@ export class ScatterTextSharedMemory {
     ScatterTextSharedMemory.instance = new ScatterTextSharedMemory(wasmModule, pointers)
   }
 
-  // Reset singleton instance (useful for cleanup or testing)
   static resetInstance(): void {
     ScatterTextSharedMemory.instance = null
   }
 
-  // Update particles using WASM
   updateFrame(wasmModule: WASMModule, deltaTime: number): void {
     wasmModule.update_particles(deltaTime)
-    // Arrays auto-updated (shared memory)
   }
 }
 
-// Re-export WASMModule type that ScatterText components need
 export type { WASMModule } from './core'

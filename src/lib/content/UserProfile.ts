@@ -57,7 +57,6 @@ export class UserProfile {
           this.siteConfig.socialPlatforms[platform as keyof typeof this.siteConfig.socialPlatforms]
         if (!platformConfig) return null
 
-        // Use default username if null, otherwise use provided username
         const actualUsername = username || this.data.username
 
         return {
@@ -113,5 +112,4 @@ export class UserProfile {
   }
 }
 
-// Export singleton instance
 export const userProfile = new UserProfile()

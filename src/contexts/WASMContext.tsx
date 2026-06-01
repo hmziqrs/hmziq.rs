@@ -15,7 +15,6 @@ export function WASMProvider({ children }: { children: React.ReactNode }) {
   const loadingRef = useRef(false)
 
   useEffect(() => {
-    // Prevent multiple loads
     if (loadingRef.current) return
     loadingRef.current = true
 

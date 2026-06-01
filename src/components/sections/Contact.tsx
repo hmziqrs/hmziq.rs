@@ -1,4 +1,3 @@
-// Icon imports
 import { IconType, SiGithub, SiX } from '@icons-pack/react-simple-icons'
 import { motion, type Variants } from 'framer-motion'
 import { Mail } from 'lucide-react'
@@ -7,7 +6,6 @@ import { useReducedMotion } from '~/hooks/useReducedMotion'
 import { siteContent } from '~/lib/content/SiteContent'
 import { userProfile } from '~/lib/content/UserProfile'
 
-// Social platform to icon mapping
 const socialIconMap: Record<string, IconType> = {
   GitHub: SiGithub,
   Twitter: SiX,
@@ -113,12 +111,10 @@ const Contact: React.FC = () => {
               }
             >
               <div className="group bg-gradient-radial relative flex cursor-pointer flex-col items-center gap-3 overflow-hidden rounded-lg from-transparent via-transparent to-white/[0.05] px-6 py-4 shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)] backdrop-blur-sm transition-all duration-500 hover:to-white/[0.08]">
-                {/* Social Icon */}
                 <div className="z-10 transition-transform duration-300 group-hover:scale-110">
                   {renderSocialIcon(link.name)}
                 </div>
 
-                {/* Username */}
                 <span className="relative z-10 bg-gradient-to-r from-white to-purple-100 bg-clip-text text-center font-mono text-sm tracking-wide text-white">
                   {link.username}
                 </span>
@@ -150,7 +146,6 @@ const Contact: React.FC = () => {
           ))}
         </div>
 
-        {/* Footer */}
         <motion.div variants={itemVariants}>
           <p className="text-sm font-medium text-white/80">{copyright}</p>
         </motion.div>

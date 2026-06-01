@@ -1,5 +1,4 @@
 import { getAnalytics, isSupported } from 'firebase/analytics'
-// src/lib/firebase.ts
 import { initializeApp } from 'firebase/app'
 import { getPerformance } from 'firebase/performance'
 
@@ -14,7 +13,6 @@ const firebaseConfig = {
 }
 
 export const initFirebase = async () => {
-  // Skip initialization if required config is missing
   if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
     return { app: null, analytics: null, perf: null }
   }

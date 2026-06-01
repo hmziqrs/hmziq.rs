@@ -1,5 +1,3 @@
-// WASM SIMD loader core
-
 import type { StarMemoryPointers, FrameUpdateResult } from './starfield'
 import type { ScatterTextPointers } from './scatter-text'
 
@@ -7,7 +5,6 @@ let wasmModule: WASMModule | null = null
 let loadPromise: Promise<WASMModule> | null = null
 
 export interface WASMModule {
-  // Shared memory management
   memory: WebAssembly.Memory
   initialize_star_memory_pool: (count: number) => StarMemoryPointers
   update_frame_simd: (
@@ -18,7 +15,6 @@ export interface WASMModule {
     click_time: number,
     current_speed_multiplier: number
   ) => FrameUpdateResult
-  // Animation functions
   calculate_speed_multiplier: (
     is_moving: boolean,
     click_time: number,
@@ -31,7 +27,6 @@ export interface WASMModule {
     speed_multiplier: number,
     delta_time: number
   ) => Float32Array
-  // Scatter text functions
   set_text_pixels: (
     pixel_data: Uint8Array,
     width: number,
@@ -52,17 +47,14 @@ export interface WASMModule {
 }
 
 export async function loadWASM(): Promise<WASMModule> {
-  // Return cached module
   if (wasmModule) {
     return wasmModule
   }
 
-  // Return load promise
   if (loadPromise) {
     return await loadPromise
   }
 
-  // Load WASM module
   loadPromise = (async (): Promise<WASMModule> => {
     try {
       const wasmPath = '/wasm/pkg/hmziq_wasm_bg.wasm'
@@ -71,16 +63,12 @@ export async function loadWASM(): Promise<WASMModule> {
       const wasmImport = await import(/* @vite-ignore */ /* @ts-ignore */ wasmModulePath)
       await wasmImport.default(wasmPath)
 
-      // Create WASM module
       wasmModule = {
-        // Shared memory management
         memory: wasmImport.get_wasm_memory(),
         initialize_star_memory_pool: wasmImport.initialize_star_memory_pool,
         update_frame_simd: wasmImport.update_frame_simd,
-        // Animation functions
         calculate_speed_multiplier: wasmImport.calculate_speed_multiplier,
         calculate_rotation_delta: wasmImport.calculate_rotation_delta,
-        // Scatter text functions
         set_text_pixels: wasmImport.set_text_pixels,
         get_scatter_text_pointers: wasmImport.get_scatter_text_pointers,
         start_forming: wasmImport.start_forming,
