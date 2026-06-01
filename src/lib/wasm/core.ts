@@ -91,8 +91,3 @@ export async function loadWASM(): Promise<WASMModule> {
   return await loadPromise
 }
 
-export const getOptimizedFunctions = loadWASM
-
-export function isWASMLoaded(): boolean {
-  return wasmModule !== null
-}

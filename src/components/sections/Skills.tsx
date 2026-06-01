@@ -10,7 +10,7 @@ import {
 } from '@icons-pack/react-simple-icons'
 import { motion, type Variants } from 'framer-motion'
 import { Workflow, Building2, Zap } from 'lucide-react'
-import { useRef, useMemo } from 'react'
+import { useRef } from 'react'
 
 import { useReducedMotion } from '~/hooks/useReducedMotion'
 import { userProfile } from '~/lib/content/UserProfile'
@@ -46,59 +46,53 @@ const skillColorMap: Record<string, string> = {
   Animations: '#F59E0B',
 }
 
+const skillStyles = {
+  background: 'bg-gradient-radial from-transparent via-transparent to-white/[0.03]',
+  hoverBackground: 'hover:to-white/[0.05]',
+}
+
+const LUCIDE_SKILLS = ['CI/CD', 'Architecture', 'Animations']
+
+function SkillIcon({ skill }: { skill: string }) {
+  const IconComponent = skillIconMap[skill]
+  if (!IconComponent) return null
+
+  const iconColor = skillColorMap[skill] || '#9CA3AF'
+
+  if (LUCIDE_SKILLS.includes(skill)) {
+    return <IconComponent size={20} color={iconColor} strokeWidth={2} />
+  }
+
+  return <IconComponent size={20} color={iconColor} title={skill} />
+}
+
 const Skills: React.FC = () => {
   const prefersReducedMotion = useReducedMotion()
   const skills = userProfile.skills
   const sectionRef = useRef<HTMLElement>(null)
 
-  // Cosmic tile styling inspired by the provided design
-  const skillStyles = {
-    background: 'bg-gradient-radial from-transparent via-transparent to-white/[0.03]',
-    hoverBackground: 'hover:to-white/[0.05]',
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: prefersReducedMotion ? 0 : 0.8,
+        staggerChildren: prefersReducedMotion ? 0 : 0.1,
+        ease: [0.25, 0.1, 0.25, 1.0],
+      },
+    },
   }
 
-  const containerVariants: Variants = useMemo(
-    () => ({
-      hidden: { opacity: 0 },
-      visible: {
-        opacity: 1,
-        transition: {
-          duration: prefersReducedMotion ? 0 : 0.8,
-          staggerChildren: prefersReducedMotion ? 0 : 0.1,
-          ease: [0.25, 0.1, 0.25, 1.0],
-        },
+  const skillVariants: Variants = {
+    hidden: { scale: prefersReducedMotion ? 1 : 0.9, opacity: 0 },
+    visible: {
+      scale: 1,
+      opacity: 1,
+      transition: {
+        duration: prefersReducedMotion ? 0 : 0.4,
+        ease: [0.25, 0.1, 0.25, 1.0],
       },
-    }),
-    [prefersReducedMotion]
-  )
-
-  const skillVariants: Variants = useMemo(
-    () => ({
-      hidden: { scale: prefersReducedMotion ? 1 : 0.9, opacity: 0 },
-      visible: {
-        scale: 1,
-        opacity: 1,
-        transition: {
-          duration: prefersReducedMotion ? 0 : 0.4,
-          ease: [0.25, 0.1, 0.25, 1.0],
-        },
-      },
-    }),
-    [prefersReducedMotion]
-  )
-
-  const renderSkillIcon = (skill: string) => {
-    const IconComponent = skillIconMap[skill]
-    if (!IconComponent) return null
-
-    const iconColor = skillColorMap[skill] || '#9CA3AF'
-    const isLucideIcon = ['CI/CD', 'Architecture', 'Animations'].includes(skill)
-
-    if (isLucideIcon) {
-      return <IconComponent size={20} color={iconColor} strokeWidth={2} />
-    }
-
-    return <IconComponent size={20} color={iconColor} title={skill} />
+    },
   }
 
   return (
@@ -135,7 +129,7 @@ const Skills: React.FC = () => {
                 className={`group relative flex cursor-pointer flex-row items-center gap-2 overflow-hidden rounded-lg px-4 py-3 shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all duration-500 ${skillStyles.background} ${skillStyles.hoverBackground} `}
               >
                 <div className="z-10 transition-transform duration-300 group-hover:scale-110">
-                  {renderSkillIcon(skill)}
+                  <SkillIcon skill={skill} />
                 </div>
 
                 <span className="relative z-10 font-mono text-sm font-medium text-white">

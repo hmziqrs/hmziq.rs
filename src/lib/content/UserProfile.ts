@@ -1,13 +1,13 @@
 import siteData from '~/content/data/site.json'
 import userData from '~/content/data/user.json'
 
-export interface Profile {
+interface Profile {
   name: string
   title: string
   yearsOfExperience: number
 }
 
-export interface About {
+interface About {
   paragraphs: string[]
   stats: Array<{
     value: string
@@ -15,25 +15,25 @@ export interface About {
   }>
 }
 
-export interface SkillCategory {
+interface SkillCategory {
   title: string
   skills: string[]
 }
 
-export interface SocialLink {
+interface SocialLink {
   name: string
   url: string
   username: string
   description: string
 }
 
-export interface WebsiteLink {
+interface WebsiteLink {
   name: string
   url: string
   description: string
 }
 
-export class UserProfile {
+class UserProfile {
   private data = userData
   private siteConfig = siteData
 

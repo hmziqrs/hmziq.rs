@@ -94,19 +94,10 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
   const { size } = useThree()
   const meshRef = useRef<THREE.Points>(null)
   const wasmModule = useWASM().wasmModule
-  const [threeData, setThreeData] = useState<{
-    geometry: THREE.BufferGeometry
-    material: THREE.ShaderMaterial
-  } | null>()
-
-  useEffect(() => {
-    console.log('Creating geometry')
-
+  const [threeData] = useState(() => {
     const sharedMemory = ScatterTextSharedMemory.getInstance()
 
     const geometry = new THREE.BufferGeometry()
-
-    // Set SoA attributes directly from shared memory
     geometry.setAttribute('positionX', new THREE.BufferAttribute(sharedMemory.positions_x, 1))
     geometry.setAttribute('positionY', new THREE.BufferAttribute(sharedMemory.positions_y, 1))
     geometry.setAttribute('colorR', new THREE.BufferAttribute(sharedMemory.colors_r, 1))
@@ -118,7 +109,7 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
 
     const material = new THREE.ShaderMaterial({
       uniforms: {
-        screenSize: { value: new THREE.Vector2(1, 1) }, // Will be updated in useFrame
+        screenSize: { value: new THREE.Vector2(1, 1) },
       },
       vertexShader,
       fragmentShader,
@@ -127,14 +118,14 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
       blending: THREE.AdditiveBlending,
     })
 
-    // eslint-disable-next-line react-hooks-js/set-state-in-effect
-    setThreeData({ geometry, material })
-  }, [pixelData.particleCount])
+    return { geometry, material }
+  })
 
   useEffect(() => {
-    if (!threeData || !wasmModule) return
+    if (!wasmModule) return
+    threeData.geometry.setDrawRange(0, pixelData.particleCount)
     wasmModule.start_forming()
-  }, [wasmModule, threeData])
+  }, [wasmModule, threeData, pixelData.particleCount])
 
   useFrame((state, delta) => {
     const sharedMemory = ScatterTextSharedMemory.getInstance()

@@ -36,7 +36,6 @@
   },
   "dependencies": {
     "@icons-pack/react-simple-icons": "^13.5.0",
-    "@react-three/drei": "^10.1.2",
     "@react-three/fiber": "^9.1.2",
     "@tanstack/react-router": "^1.170.10",
     "@tanstack/react-start": "^1.168.18",
@@ -49,12 +48,10 @@
     "lucide-react": "^0.525.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "tailwind-merge": "^3.3.0",
     "three": "^0.177.0",
     "typescript": "^5.8.3"
   },
   "devDependencies": {
-    "@axe-core/puppeteer": "^4.10.2",
     "@playwright/test": "^1.53.2",
     "@rolldown/plugin-babel": "^0.2.3",
     "@tailwindcss/vite": "^4.1.8",
@@ -70,12 +67,9 @@
     "@types/three": "^0.177.0",
     "@vitejs/plugin-react": "^6.0.2",
     "babel-plugin-react-compiler": "^1.0.0",
-    "chrome-launcher": "^1.2.0",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "lighthouse": "^12.6.1",
     "nitro": "^3.0.260522-beta",
     "playwright": "^1.53.2",
-    "puppeteer": "^24.10.0",
     "tailwindcss": "^4.0.0",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",
     "vite-plus": "^0.1.24"

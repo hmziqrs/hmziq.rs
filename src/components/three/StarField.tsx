@@ -101,8 +101,9 @@ function Stars() {
         isMovingRef.current = true
       }
 
-      if (mouseMoveTimeoutRef.current) {
-        clearTimeout(mouseMoveTimeoutRef.current)
+      const currentTimeout = mouseMoveTimeoutRef.current
+      if (currentTimeout) {
+        clearTimeout(currentTimeout)
       }
 
       mouseMoveTimeoutRef.current = setTimeout(() => {
@@ -121,7 +122,7 @@ function Stars() {
     window.addEventListener('resize', handleResize)
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('click', handleClick)
-    window.addEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
 
     return () => {
       window.removeEventListener('resize', handleResize)
@@ -135,7 +136,7 @@ function Stars() {
   }, [])
 
   const starGroup = useMemo(() => {
-    const ultraStarDensity = 0.36 * 1.125 // Ultra tier multiplier
+    const ultraStarDensity = 0.36 * 1.125
     const screenArea = screenDimensions.width * screenDimensions.height
     const rawCount = Math.floor((screenArea / 1000) * ultraStarDensity)
     const totalCount = Math.ceil(rawCount / 8) * 8

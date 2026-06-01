@@ -19,6 +19,19 @@ const socialColorMap: Record<string, string> = {
   Email: '#FFFFFF',
 }
 
+function SocialIcon({ platform }: { platform: string }) {
+  const IconComponent = socialIconMap[platform]
+  if (!IconComponent) return null
+
+  const iconColor = socialColorMap[platform] || '#9CA3AF'
+
+  if (platform === 'Email') {
+    return <IconComponent size={24} color={iconColor} strokeWidth={2} />
+  }
+
+  return <IconComponent size={24} color={iconColor} title={platform} />
+}
+
 const Contact: React.FC = () => {
   const prefersReducedMotion = useReducedMotion()
   const primarySocialLinks = userProfile.getPrimarySocialLinks()
@@ -53,20 +66,6 @@ const Contact: React.FC = () => {
       scale: prefersReducedMotion ? 1 : 1.05,
       transition: { duration: 0.2 },
     },
-  }
-
-  const renderSocialIcon = (platform: string) => {
-    const IconComponent = socialIconMap[platform]
-    if (!IconComponent) return null
-
-    const iconColor = socialColorMap[platform] || '#9CA3AF'
-    const isLucideIcon = platform === 'Email'
-
-    if (isLucideIcon) {
-      return <IconComponent size={24} color={iconColor} strokeWidth={2} />
-    }
-
-    return <IconComponent size={24} color={iconColor} title={platform} />
   }
 
   return (
@@ -112,10 +111,10 @@ const Contact: React.FC = () => {
             >
               <div className="group bg-gradient-radial relative flex cursor-pointer flex-col items-center gap-3 overflow-hidden rounded-lg from-transparent via-transparent to-white/[0.05] px-6 py-4 shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)] backdrop-blur-sm transition-all duration-500 hover:to-white/[0.08]">
                 <div className="z-10 transition-transform duration-300 group-hover:scale-110">
-                  {renderSocialIcon(link.name)}
+                  <SocialIcon platform={link.name} />
                 </div>
 
-                <span className="relative z-10 bg-gradient-to-r from-white to-purple-100 bg-clip-text text-center font-mono text-sm tracking-wide text-white">
+                <span className="relative z-10 text-center font-mono text-sm font-medium tracking-wide text-white">
                   {link.username}
                 </span>
 

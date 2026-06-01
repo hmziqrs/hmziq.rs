@@ -1,7 +1,7 @@
 import siteData from '~/content/data/site.json'
 import userData from '~/content/data/user.json'
 
-export interface UIConfig {
+interface UIConfig {
   copyright: string
   scrollText: string
   backToTop: string
@@ -9,11 +9,11 @@ export interface UIConfig {
   additionalSkillsInfo: string
 }
 
-export interface Navigation {
+interface Navigation {
   sections: string[]
 }
 
-export class SiteContent {
+class SiteContent {
   private siteConfig = siteData
   private userData = userData
 

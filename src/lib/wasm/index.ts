@@ -1,7 +1,5 @@
 export {
   loadWASM,
-  getOptimizedFunctions,
-  isWASMLoaded,
   type WASMModule
 } from './core'
 
