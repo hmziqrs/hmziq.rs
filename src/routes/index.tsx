@@ -9,6 +9,10 @@ import WASMLoader from '~/components/WASMLoader'
 
 const StarField3D = lazy(() => import('~/components/three/StarField'))
 
+const blackFallback = (
+  <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
+)
+
 export const Route = createFileRoute('/')({
   component: HomePage,
 })
@@ -16,21 +20,9 @@ export const Route = createFileRoute('/')({
 function HomePage() {
   return (
     <main className="relative min-h-screen">
-      <WASMLoader
-        loadingFallback={
-          <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
-        }
-      >
-        <ErrorBoundary
-          fallback={
-            <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
-          }
-        >
-          <Suspense
-            fallback={
-              <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
-            }
-          >
+      <WASMLoader loadingFallback={blackFallback}>
+        <ErrorBoundary fallback={blackFallback}>
+          <Suspense fallback={blackFallback}>
             <StarField3D />
           </Suspense>
         </ErrorBoundary>
