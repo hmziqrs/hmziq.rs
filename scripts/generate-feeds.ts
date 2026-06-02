@@ -1,9 +1,11 @@
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { rmSync, writeFileSync } from 'node:fs'
+import { pipeline } from 'node:stream/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { Writable } from 'node:stream'
 
 import { Feed } from 'feed'
-import { EnumChangefreq, simpleSitemapAndIndex } from 'sitemap'
+import { EnumChangefreq, SitemapStream } from 'sitemap'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const publicDir = join(__dirname, '..', 'public')
@@ -50,11 +52,12 @@ console.log('Generated public/rss.xml')
 writeFileSync(join(publicDir, 'atom.xml'), feed.atom1())
 console.log('Generated public/atom.xml')
 
-// --- Write sitemap (index + sharded) ---
-const sitemapRelDir = 'public/sitemaps'
-const sitemapAbsDir = join(__dirname, '..', sitemapRelDir)
-rmSync(sitemapAbsDir, { recursive: true, force: true })
-mkdirSync(sitemapAbsDir, { recursive: true })
+// --- Write sitemap ---
+// Remove legacy sitemap artifacts
+rmSync(join(publicDir, 'sitemaps'), { recursive: true, force: true })
+for (const f of ['sitemap-index.xml', 'sitemap-0.xml']) {
+  try { rmSync(join(publicDir, f)) } catch {}
+}
 
 const pages = [
   { url: '/', changefreq: EnumChangefreq.DAILY, priority: 1.0 },
@@ -63,13 +66,21 @@ const pages = [
   // { url: '/projects', changefreq: 'weekly', priority: 0.8 },
 ]
 
-await simpleSitemapAndIndex({
-  hostname: siteUrl,
-  destinationDir: sitemapRelDir,
-  publicBasePath: '/sitemaps/',
-  limit: 5000,
-  gzip: false,
-  sourceData: pages,
+const chunks: Buffer[] = []
+const smStream = new SitemapStream({ hostname: siteUrl })
+const collect = new Writable({
+  write(chunk, _encoding, callback) {
+    chunks.push(chunk)
+    callback()
+  },
 })
 
-console.log('Generated sitemap index + sharded sitemaps in public/sitemaps/')
+const done = pipeline(smStream, collect)
+for (const page of pages) {
+  smStream.write({ url: page.url, changefreq: page.changefreq, priority: page.priority })
+}
+smStream.end()
+await done
+
+writeFileSync(join(publicDir, 'sitemap.xml'), Buffer.concat(chunks).toString())
+console.log('Generated public/sitemap.xml')
