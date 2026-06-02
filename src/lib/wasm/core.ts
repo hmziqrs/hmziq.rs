@@ -61,7 +61,7 @@ export async function loadWASM(): Promise<WASMModule> {
       const wasmModulePath = '/wasm/pkg/hmziq_wasm.js'
 
       const wasmImport = await import(/* @vite-ignore */ /* @ts-ignore */ wasmModulePath)
-      await wasmImport.default(wasmPath)
+      await wasmImport.default({ module_or_path: wasmPath })
 
       wasmModule = {
         memory: wasmImport.get_wasm_memory(),
