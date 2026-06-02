@@ -7,7 +7,7 @@ Disallow: /_build/
 Disallow: /_serverFn/
 
 # Feeds
-Allow: /feed.xml
+Allow: /rss.xml
 Allow: /atom.xml
 
 # AI Agents (autonomous browsing)
@@ -187,4 +187,4 @@ User-agent: Bravebot
 Allow: /
 
 # Sitemap
-Sitemap: https://hmziq.rs/sitemap.xml
+Sitemap: https://hmziq.rs/sitemaps/sitemap-index.xml

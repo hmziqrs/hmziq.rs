@@ -1,8 +1,9 @@
-import { writeFileSync } from 'node:fs'
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { Feed } from 'feed'
+import { simpleSitemapAndIndex } from 'sitemap'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const publicDir = join(__dirname, '..', 'public')
@@ -20,7 +21,7 @@ const feed = new Feed({
   copyright: `All rights reserved ${new Date().getFullYear()}, hmziqrs`,
   updated: new Date('2026-06-02T00:00:00Z'),
   feedLinks: {
-    rss: `${siteUrl}/feed.xml`,
+    rss: `${siteUrl}/rss.xml`,
     atom: `${siteUrl}/atom.xml`,
   },
   author,
@@ -42,37 +43,33 @@ feed.addItem({
 })
 
 // --- Write RSS 2.0 ---
-writeFileSync(join(publicDir, 'feed.xml'), feed.rss2())
-console.log('Generated public/feed.xml')
+writeFileSync(join(publicDir, 'rss.xml'), feed.rss2())
+console.log('Generated public/rss.xml')
 
 // --- Write Atom 1.0 ---
 writeFileSync(join(publicDir, 'atom.xml'), feed.atom1())
 console.log('Generated public/atom.xml')
 
-// --- Write sitemap.xml ---
-const today = new Date().toISOString().split('T')[0]
+// --- Write sitemap (index + sharded) ---
+const sitemapRelDir = 'public/sitemaps'
+const sitemapAbsDir = join(__dirname, '..', sitemapRelDir)
+rmSync(sitemapAbsDir, { recursive: true, force: true })
+mkdirSync(sitemapAbsDir, { recursive: true })
 
 const pages = [
-  { loc: siteUrl, priority: '1.0', changefreq: 'daily' },
+  { url: '/', changefreq: 'daily', priority: 1.0 },
   // Add new pages here as the site grows, e.g.:
-  // { loc: `${siteUrl}/about`, priority: '0.8', changefreq: 'monthly' },
-  // { loc: `${siteUrl}/projects`, priority: '0.8', changefreq: 'weekly' },
+  // { url: '/about', changefreq: 'monthly', priority: 0.8 },
+  // { url: '/projects', changefreq: 'weekly', priority: 0.8 },
 ]
 
-const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${pages
-  .map(
-    (page) => `  <url>
-    <loc>${page.loc}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
-  </url>`
-  )
-  .join('\n')}
-</urlset>
-`
+await simpleSitemapAndIndex({
+  hostname: siteUrl,
+  destinationDir: sitemapRelDir,
+  publicBasePath: '/sitemaps/',
+  limit: 5000,
+  gzip: false,
+  sourceData: pages,
+})
 
-writeFileSync(join(publicDir, 'sitemap.xml'), sitemap)
-console.log('Generated public/sitemap.xml')
+console.log('Generated sitemap index + sharded sitemaps in public/sitemaps/')

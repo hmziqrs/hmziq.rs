@@ -50,6 +50,7 @@
     "lucide-react": "^0.525.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "sitemap": "^9.0.1",
     "three": "^0.177.0",
     "typescript": "^5.8.3"
   },
