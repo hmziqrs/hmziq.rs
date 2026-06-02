@@ -1,6 +1,6 @@
 import { useFrame, useThree } from '@react-three/fiber'
 import { Canvas } from '@react-three/fiber'
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import * as THREE from 'three'
 
 import { useWASM } from '~/contexts/WASMContext'
@@ -34,10 +34,9 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
     try {
       const fontSize = calculateFontSize(text, width, height)
 
-      console.log(`Dynamic font size: ${fontSize}px for text: "${text}" (${width}x${height})`)
-
       const canvas = canvasRef.current
-      const ctx = canvas.getContext('2d')!
+      const ctx = canvas.getContext('2d')
+      if (!ctx) throw new Error('Failed to get 2D canvas context')
 
       canvas.width = width
       canvas.height = height
@@ -65,8 +64,6 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
       )
 
       ScatterTextSharedMemory.setInstance(wasmModule)
-
-      console.log(`Generated ${particleCount} particles for text: ${text}`)
 
       onPixelsGenerated({
         pixelData,
@@ -122,6 +119,14 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
   })
 
   useEffect(() => {
+    return () => {
+      threeData.geometry.dispose()
+      threeData.material.dispose()
+      ScatterTextSharedMemory.resetInstance()
+    }
+  }, [threeData])
+
+  useEffect(() => {
     if (!wasmModule) return
     threeData.geometry.setDrawRange(0, pixelData.particleCount)
     wasmModule.start_forming()
@@ -171,10 +176,12 @@ export default function ScatterText({ text }: ScatterTextProps) {
     }
   }, [])
 
-  const handlePixelsGenerated = (data: PixelData) => {
+  const handlePixelsGenerated = useCallback((data: PixelData) => {
     setPixelData(data)
     setIsGenerating(false)
-  }
+  }, [])
+
+  if (typeof window === 'undefined') return null
 
   return (
     <div ref={containerRef} className="absolute min-h-full min-w-full">

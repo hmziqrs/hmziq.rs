@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
 
+import { ErrorBoundary } from '~/components/ErrorBoundary'
 import Contact from '~/components/sections/Contact'
 import Hero from '~/components/sections/Hero'
 import Skills from '~/components/sections/Skills'
@@ -20,13 +21,17 @@ function HomePage() {
           <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
         }
       >
-        <Suspense
-          fallback={
-            <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
-          }
+        <ErrorBoundary
+          fallback={<div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />}
         >
-          <StarField3D />
-        </Suspense>
+          <Suspense
+            fallback={
+              <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
+            }
+          >
+            <StarField3D />
+          </Suspense>
+        </ErrorBoundary>
       </WASMLoader>
 
       <div className="relative" style={{ zIndex: 10 }}>

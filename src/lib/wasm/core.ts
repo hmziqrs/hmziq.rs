@@ -83,6 +83,7 @@ export async function loadWASM(): Promise<WASMModule> {
 
       return wasmModule
     } catch (error) {
+      loadPromise = null
       console.warn('WASM module not available:', error instanceof Error ? error.message : error)
       throw error
     }

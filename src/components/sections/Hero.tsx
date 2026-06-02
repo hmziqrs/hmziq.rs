@@ -1,6 +1,7 @@
 import { motion, type Variants } from 'framer-motion'
 import { lazy, Suspense } from 'react'
 
+import { ErrorBoundary } from '~/components/ErrorBoundary'
 import WASMLoader from '~/components/WASMLoader'
 import { useReducedMotion } from '~/hooks/useReducedMotion'
 import { siteContent } from '~/lib/content/SiteContent'
@@ -37,7 +38,7 @@ const Hero: React.FC = () => {
   }
 
   return (
-    <section id="hero" className="relative block min-h-screen w-full px-6">
+    <section id="hero" aria-label="Introduction" className="relative block min-h-screen w-full px-6">
       <motion.div
         className="flex min-h-screen w-full flex-col items-center justify-center text-center"
         variants={containerVariants}
@@ -52,9 +53,11 @@ const Hero: React.FC = () => {
               </div>
             }
           >
-            <Suspense fallback={null}>
-              <ScatterText text={name} />
-            </Suspense>
+            <ErrorBoundary>
+              <Suspense fallback={null}>
+                <ScatterText text={name} />
+              </Suspense>
+            </ErrorBoundary>
           </WASMLoader>
         </div>
 
@@ -69,7 +72,7 @@ const Hero: React.FC = () => {
           className="absolute bottom-8 left-1/2 -translate-x-1/2 transform"
           variants={itemVariants}
         >
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center" aria-hidden="true">
             <motion.div
               className="-right-1 flex h-10 w-6 justify-center rounded-full border-2 border-gray-600"
               whileHover={{ borderColor: '#ffffff', scale: 1.2 }}

@@ -71,6 +71,7 @@ const Contact: React.FC = () => {
   return (
     <section
       id="contact"
+      aria-label="Contact"
       className="relative flex min-h-screen items-center justify-center px-6 py-20"
     >
       <motion.div
@@ -97,6 +98,7 @@ const Contact: React.FC = () => {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label={`${link.name}: ${link.username}`}
               className="cosmic-contact-tile"
               variants={linkVariants}
               whileHover={

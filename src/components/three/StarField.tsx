@@ -90,6 +90,8 @@ function Stars() {
   const lastFrameTimeRef = useRef(0)
 
   const starMeshRef = useRef<THREE.Points>(null)
+  const viewProjectionMatrixRef = useRef<THREE.Matrix4 | null>(null)
+  const vpMatrixBufferRef = useRef<Float32Array | null>(null)
 
   useEffect(() => {
     const handleResize = () => {
@@ -158,7 +160,15 @@ function Stars() {
   }, [screenDimensions])
 
   useEffect(() => {
-    if (wasmModule && starGroup && !sharedMemoryRef.current) {
+    return () => {
+      starGroup.material.dispose()
+    }
+  }, [starGroup])
+
+  useEffect(() => {
+    sharedMemoryRef.current = null
+
+    if (wasmModule && starGroup) {
       const { count } = starGroup
 
       sharedMemoryRef.current = new StarFieldSharedMemory(wasmModule, count)
@@ -177,13 +187,17 @@ function Stars() {
         geometry.setAttribute('twinkle', new THREE.BufferAttribute(sharedMem.twinkles, 1))
         geometry.setAttribute('sparkle', new THREE.BufferAttribute(sharedMem.sparkles, 1))
 
-        // CRITICAL: Compute bounding box for SoA layout
-        const minX = Math.min(...sharedMem.positions_x.slice(0, count))
-        const maxX = Math.max(...sharedMem.positions_x.slice(0, count))
-        const minY = Math.min(...sharedMem.positions_y.slice(0, count))
-        const maxY = Math.max(...sharedMem.positions_y.slice(0, count))
-        const minZ = Math.min(...sharedMem.positions_z.slice(0, count))
-        const maxZ = Math.max(...sharedMem.positions_z.slice(0, count))
+        let minX = Infinity, maxX = -Infinity
+        let minY = Infinity, maxY = -Infinity
+        let minZ = Infinity, maxZ = -Infinity
+        for (let i = 0; i < count; i++) {
+          if (sharedMem.positions_x[i] < minX) minX = sharedMem.positions_x[i]
+          if (sharedMem.positions_x[i] > maxX) maxX = sharedMem.positions_x[i]
+          if (sharedMem.positions_y[i] < minY) minY = sharedMem.positions_y[i]
+          if (sharedMem.positions_y[i] > maxY) maxY = sharedMem.positions_y[i]
+          if (sharedMem.positions_z[i] < minZ) minZ = sharedMem.positions_z[i]
+          if (sharedMem.positions_z[i] > maxZ) maxZ = sharedMem.positions_z[i]
+        }
 
         geometry.boundingBox = new THREE.Box3(
           new THREE.Vector3(minX, minY, minZ),
@@ -200,7 +214,9 @@ function Stars() {
     if (!wasmModule || !sharedMemoryRef.current) return
 
     const camera = state.camera as THREE.PerspectiveCamera
-    const viewProjectionMatrix = new THREE.Matrix4()
+    if (!viewProjectionMatrixRef.current) viewProjectionMatrixRef.current = new THREE.Matrix4()
+    if (!vpMatrixBufferRef.current) vpMatrixBufferRef.current = new Float32Array(16)
+    const viewProjectionMatrix = viewProjectionMatrixRef.current
     viewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
 
     const currentFrameTime = state.clock.elapsedTime
@@ -220,7 +236,8 @@ function Stars() {
       speedMultiplierRef.current
     )
 
-    const vpMatrix = new Float32Array(viewProjectionMatrix.elements)
+    const vpMatrix = vpMatrixBufferRef.current!
+    vpMatrix.set(viewProjectionMatrix.elements)
 
     const frameResult = sharedMemoryRef.current.updateFrame(
       wasmModule,

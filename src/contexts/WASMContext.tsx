@@ -37,5 +37,5 @@ export function useWASM() {
   if (!context) {
     throw new Error('useWASM must be used within a WASMProvider')
   }
-  return context!
+  return context
 }

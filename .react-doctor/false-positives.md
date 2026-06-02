@@ -3,7 +3,7 @@
 ## no-pure-black-background
 - `src/components/three/StarField.tsx` — Intentional: project uses pure black (#000000) per design system in CLAUDE.md
 - `src/routes/__root.tsx` — Intentional: project uses pure black (#000000) per design system in CLAUDE.md
-- `src/routes/index.tsx` — Intentional: project uses pure black (#000000) per design system in CLAUDE.md
+- `src/routes/index.tsx` — Intentional: project uses pure black (#000000) per design system in CLAUDE.md (including ErrorBoundary fallback)
 
 ## no-unknown-property
 - `src/components/three/ScatterText/index.tsx` — Three.js/R3F component props (geometry, material) are valid
@@ -14,6 +14,9 @@
 
 ## no-react19-deprecated-apis
 - `src/contexts/WASMContext.tsx` — useContext is standard in React 19 client components; use() is for server components
+
+## jsx-no-constructed-context-values
+- `src/contexts/WASMContext.tsx` — React Compiler handles memoization; useMemo was flagged as dead weight by react-compiler rule
 
 ## no-aria-hidden-on-focusable
 - `src/components/three/ScatterText/index.tsx` — Canvas is not focusable (no tabindex/role), invisible utility class, aria-hidden is correct
@@ -32,6 +35,15 @@
 
 ## refs
 - `src/components/three/ScatterText/index.tsx` — Container size measurement requires reading ref after mount; ref callback pattern is worse for React Compiler
+
+## no-event-handler
+- `src/components/three/StarField.tsx` — useEffect for material cleanup and shared memory initialization is legitimate side-effect synchronization, not a fake event handler
+
+## react-compiler-no-manual-memoization
+- `src/components/three/StarField.tsx` — useMemo for starGroup is required because removing it causes no-effect-with-fresh-deps regression; React Compiler cannot stabilize the object identity here
+
+## todo
+- `src/components/three/ScatterText/index.tsx` — React Compiler limitation: cannot optimize throw statements inside try/catch (BuildHIR::lowerStatement). The throw is a null guard for canvas.getContext('2d') which is correct defensive code
 
 ## unused-file
 - `public/wasm/pkg/hmziq_wasm.js` — WASM build artifact loaded dynamically at runtime, not statically importable

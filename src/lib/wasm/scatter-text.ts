@@ -98,7 +98,10 @@ export class ScatterTextSharedMemory {
   }
 
   static getInstance(): ScatterTextSharedMemory {
-    return ScatterTextSharedMemory.instance!
+    if (!ScatterTextSharedMemory.instance) {
+      throw new Error('ScatterTextSharedMemory not initialized. Call setInstance() first.')
+    }
+    return ScatterTextSharedMemory.instance
   }
 
   static setInstance(wasmModule: WASMModule): void {
