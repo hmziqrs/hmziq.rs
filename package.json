@@ -16,7 +16,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun build:wasm:dev && vite dev",
-    "build": "bun run build:wasm && vite build",
+    "build": "bun run build:wasm && bun generate:feeds && vite build",
+    "generate:feeds": "bun ./scripts/generate-feeds.ts",
     "copy:wasm": "bun ./scripts/copy-wasm.ts",
     "build:wasm": "cd wasm && wasm-pack build --release --target web --out-dir pkg && bun copy:wasm",
     "build:wasm:dev": "cd wasm && wasm-pack build --target web --out-dir pkg --dev && bun ../scripts/copy-wasm.ts",
@@ -43,6 +44,7 @@
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.6",
     "clsx": "^2.1.1",
+    "feed": "^5.2.1",
     "firebase": "^12.0.0",
     "framer-motion": "^12.16.0",
     "lucide-react": "^0.525.0",

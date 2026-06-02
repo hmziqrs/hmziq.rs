@@ -22,7 +22,9 @@ function HomePage() {
         }
       >
         <ErrorBoundary
-          fallback={<div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />}
+          fallback={
+            <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
+          }
         >
           <Suspense
             fallback={

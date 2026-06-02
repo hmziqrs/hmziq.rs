@@ -45,3 +45,8 @@ routeTree.gen.ts
 *.wasm
 Cargo.lock
 .env
+
+# Generated static assets (run `bun generate:feeds`)
+/public/feed.xml
+/public/atom.xml
+/public/sitemap.xml

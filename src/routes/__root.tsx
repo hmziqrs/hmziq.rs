@@ -61,6 +61,18 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/fav/favicon-16x16.png' },
       { rel: 'manifest', href: '/fav/site.webmanifest' },
       { rel: 'stylesheet', href: appCss },
+      {
+        rel: 'alternate',
+        type: 'application/rss+xml',
+        title: 'hmziq.rs RSS Feed',
+        href: `${siteUrl}/feed.xml`,
+      },
+      {
+        rel: 'alternate',
+        type: 'application/atom+xml',
+        title: 'hmziq.rs Atom Feed',
+        href: `${siteUrl}/atom.xml`,
+      },
     ],
     scripts: [
       {

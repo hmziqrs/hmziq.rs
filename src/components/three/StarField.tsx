@@ -187,9 +187,12 @@ function Stars() {
         geometry.setAttribute('twinkle', new THREE.BufferAttribute(sharedMem.twinkles, 1))
         geometry.setAttribute('sparkle', new THREE.BufferAttribute(sharedMem.sparkles, 1))
 
-        let minX = Infinity, maxX = -Infinity
-        let minY = Infinity, maxY = -Infinity
-        let minZ = Infinity, maxZ = -Infinity
+        let minX = Infinity,
+          maxX = -Infinity
+        let minY = Infinity,
+          maxY = -Infinity
+        let minZ = Infinity,
+          maxZ = -Infinity
         for (let i = 0; i < count; i++) {
           if (sharedMem.positions_x[i] < minX) minX = sharedMem.positions_x[i]
           if (sharedMem.positions_x[i] > maxX) maxX = sharedMem.positions_x[i]

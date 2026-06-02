@@ -38,7 +38,11 @@ const Hero: React.FC = () => {
   }
 
   return (
-    <section id="hero" aria-label="Introduction" className="relative block min-h-screen w-full px-6">
+    <section
+      id="hero"
+      aria-label="Introduction"
+      className="relative block min-h-screen w-full px-6"
+    >
       <motion.div
         className="flex min-h-screen w-full flex-col items-center justify-center text-center"
         variants={containerVariants}
