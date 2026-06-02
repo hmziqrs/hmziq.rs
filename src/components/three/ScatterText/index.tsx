@@ -26,10 +26,9 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
   const runOnce = useRef(false)
 
   useEffect(() => {
+    if (!canvasRef.current || !wasmModule) return
     if (runOnce.current) return
     runOnce.current = true
-
-    if (!canvasRef.current || !wasmModule) return
 
     try {
       const fontSize = calculateFontSize(text, width, height)
@@ -132,7 +131,7 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
     wasmModule.start_forming()
   }, [wasmModule, threeData, pixelData.particleCount])
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     const sharedMemory = ScatterTextSharedMemory.getInstance()
     if (!threeData) return
     const { geometry, material } = threeData
@@ -143,14 +142,14 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
 
       material.uniforms.screenSize.value.set(size.width, size.height)
 
-      const positionXAttribute = geometry.attributes.positionX as THREE.BufferAttribute
-      const positionYAttribute = geometry.attributes.positionY as THREE.BufferAttribute
-      const opacityAttribute = geometry.attributes.opacity as THREE.BufferAttribute
+      const positionXAttr = geometry.attributes.positionX
+      const positionYAttr = geometry.attributes.positionY
+      const opacityAttr = geometry.attributes.opacity
 
       // eslint-disable-next-line react-hooks-js/immutability
-      positionXAttribute.needsUpdate = true
-      positionYAttribute.needsUpdate = true
-      opacityAttribute.needsUpdate = true
+      if (positionXAttr instanceof THREE.BufferAttribute) positionXAttr.needsUpdate = true
+      if (positionYAttr instanceof THREE.BufferAttribute) positionYAttr.needsUpdate = true
+      if (opacityAttr instanceof THREE.BufferAttribute) opacityAttr.needsUpdate = true
 
       geometry.setDrawRange(0, pixelData.particleCount)
     } catch (error) {
@@ -196,22 +195,20 @@ export default function ScatterText({ text }: ScatterTextProps) {
             />
           )}
         </>
-      ) : (
-        <>
-          <Canvas
-            camera={{ position: [0, 0, 150], fov: 50 }}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: containerSize.width,
-              height: containerSize.height,
-            }}
-          >
-            <ScatterRenderer pixelData={pixelData!} />
-          </Canvas>
-        </>
-      )}
+      ) : pixelData ? (
+        <Canvas
+          camera={{ position: [0, 0, 150], fov: 50 }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: containerSize.width,
+            height: containerSize.height,
+          }}
+        >
+          <ScatterRenderer pixelData={pixelData} />
+        </Canvas>
+      ) : null}
     </div>
   )
 }

@@ -1,6 +1,8 @@
 import siteData from '~/content/data/site.json'
 import userData from '~/content/data/user.json'
 
+import type { UserData, SiteData, SocialPlatform } from './types'
+
 interface Profile {
   name: string
   title: string
@@ -21,8 +23,8 @@ interface WebsiteLink {
 }
 
 class UserProfile {
-  private data = userData
-  private siteConfig = siteData
+  private data: UserData = userData
+  private siteConfig: SiteData = siteData
 
   get profile(): Profile {
     return {
@@ -33,15 +35,14 @@ class UserProfile {
   }
 
   get skills(): string[] {
-    return this.data.skills as string[]
+    return this.data.skills
   }
 
   getSocialLinks(): SocialLink[] {
     const social = this.data.social || {}
     return Object.entries(social)
       .map(([platform, username]) => {
-        const platformConfig =
-          this.siteConfig.socialPlatforms[platform as keyof typeof this.siteConfig.socialPlatforms]
+        const platformConfig: SocialPlatform | undefined = this.siteConfig.socialPlatforms[platform]
         if (!platformConfig) return null
 
         const actualUsername = username || this.data.username
@@ -49,7 +50,7 @@ class UserProfile {
         return {
           name: platformConfig.name,
           url: `${platformConfig.baseUrl}${actualUsername}`,
-          username: `${'usernamePrefix' in platformConfig ? platformConfig.usernamePrefix || '' : ''}${actualUsername}`,
+          username: `${platformConfig.usernamePrefix || ''}${actualUsername}`,
           description: platformConfig.description,
         }
       })
@@ -64,15 +65,9 @@ class UserProfile {
     return [...socialLinks, this.getEmail()]
   }
 
-  getHiddenSocialLinks(): SocialLink[] {
-    const hiddenPlatforms = this.siteConfig.socialVisibility.hidden
-    return this.getSocialLinks().filter((link) => hiddenPlatforms.includes(link.name.toLowerCase()))
-  }
-
   getWebsiteLinks(): WebsiteLink[] {
     return Object.entries(this.data.websites).map(([type, url]) => {
-      const websiteConfig =
-        this.siteConfig.websiteTypes[type as keyof typeof this.siteConfig.websiteTypes]
+      const websiteConfig = this.siteConfig.websiteTypes[type]
       return {
         name: websiteConfig?.name || type,
         url,

@@ -17,16 +17,23 @@ export function WASMProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loadingRef.current) return
     loadingRef.current = true
+    let cancelled = false
 
     loadWASM()
       .then((module) => {
+        if (cancelled) return
         setWasmModule(module)
         setIsLoading(false)
       })
       .catch(() => {
+        if (cancelled) return
         // WASM not available (files not built) — degrade gracefully
         setIsLoading(false)
       })
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   return <WASMContext.Provider value={{ wasmModule, isLoading }}>{children}</WASMContext.Provider>

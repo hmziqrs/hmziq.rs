@@ -139,31 +139,3 @@ a {
 .bg-space {
   background-color: #000000;
 }
-
-.text-gray-300 {
-  color: #d4d4d4;
-}
-
-.text-gray-400 {
-  color: #a3a3a3;
-}
-
-.text-gray-500 {
-  color: #737373;
-}
-
-.text-gray-600 {
-  color: #525252;
-}
-
-.text-white {
-  color: #ffffff;
-}
-
-.border-gray-600 {
-  border-color: #525252;
-}
-
-.bg-gray-400 {
-  background-color: #a3a3a3;
-}

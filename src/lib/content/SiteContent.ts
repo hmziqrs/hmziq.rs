@@ -1,6 +1,8 @@
 import siteData from '~/content/data/site.json'
 import userData from '~/content/data/user.json'
 
+import type { SiteData, UserData } from './types'
+
 interface UIConfig {
   copyright: string
   scrollText: string
@@ -9,13 +11,9 @@ interface UIConfig {
   additionalSkillsInfo: string
 }
 
-interface Navigation {
-  sections: string[]
-}
-
 class SiteContent {
-  private siteConfig = siteData
-  private userData = userData
+  private siteConfig: SiteData = siteData
+  private userData: UserData = userData
 
   get ui(): UIConfig {
     return {
@@ -26,14 +24,6 @@ class SiteContent {
       connectMessage: "Let's connect and build something amazing together",
       additionalSkillsInfo: 'Additional skills',
     }
-  }
-
-  get navigation(): Navigation {
-    return this.siteConfig.navigation
-  }
-
-  get socialPlatforms() {
-    return this.siteConfig.socialPlatforms
   }
 }
 

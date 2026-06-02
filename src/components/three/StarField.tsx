@@ -166,6 +166,9 @@ function Stars() {
   }, [starGroup])
 
   useEffect(() => {
+    if (sharedMemoryRef.current) {
+      sharedMemoryRef.current.dispose()
+    }
     sharedMemoryRef.current = null
 
     if (wasmModule && starGroup) {
@@ -211,15 +214,22 @@ function Stars() {
         geometry.setDrawRange(0, count)
       }
     }
+
+    return () => {
+      sharedMemoryRef.current?.dispose()
+      sharedMemoryRef.current = null
+    }
   }, [wasmModule, starGroup])
 
   useFrame((state) => {
     if (!wasmModule || !sharedMemoryRef.current) return
 
-    const camera = state.camera as THREE.PerspectiveCamera
+    if (!(state.camera instanceof THREE.PerspectiveCamera)) return
+    const camera = state.camera
     if (!viewProjectionMatrixRef.current) viewProjectionMatrixRef.current = new THREE.Matrix4()
     if (!vpMatrixBufferRef.current) vpMatrixBufferRef.current = new Float32Array(16)
     const viewProjectionMatrix = viewProjectionMatrixRef.current
+    const vpMatrix = vpMatrixBufferRef.current
     viewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
 
     const currentFrameTime = state.clock.elapsedTime
@@ -239,7 +249,6 @@ function Stars() {
       speedMultiplierRef.current
     )
 
-    const vpMatrix = vpMatrixBufferRef.current!
     vpMatrix.set(viewProjectionMatrix.elements)
 
     const frameResult = sharedMemoryRef.current.updateFrame(
@@ -271,11 +280,11 @@ function Stars() {
 
     if (starMeshRef.current?.geometry && frameResult.effects_dirty) {
       const geometry = starMeshRef.current.geometry
-      const twinkleAttr = geometry.getAttribute('twinkle') as THREE.BufferAttribute
-      const sparkleAttr = geometry.getAttribute('sparkle') as THREE.BufferAttribute
+      const twinkleAttr = geometry.getAttribute('twinkle')
+      const sparkleAttr = geometry.getAttribute('sparkle')
 
-      if (twinkleAttr) twinkleAttr.needsUpdate = true
-      if (sparkleAttr) sparkleAttr.needsUpdate = true
+      if (twinkleAttr instanceof THREE.BufferAttribute) twinkleAttr.needsUpdate = true
+      if (sparkleAttr instanceof THREE.BufferAttribute) sparkleAttr.needsUpdate = true
     }
   })
 
@@ -293,7 +302,7 @@ export default function OptimizedStarField() {
   }
 
   return (
-    <div className="fixed inset-0" style={{ zIndex: 1 }}>
+    <div className="fixed inset-0" style={{ zIndex: 1 }} aria-hidden="true">
       <Canvas camera={{ position: [0, 0, 50], fov: 75 }} style={{ background: '#000000' }}>
         <ambientLight intensity={0.3} />
         <pointLight position={[10, 10, 10]} intensity={0.5} />

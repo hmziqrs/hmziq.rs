@@ -10,7 +10,6 @@ import {
 } from '@icons-pack/react-simple-icons'
 import { motion, type Variants } from 'framer-motion'
 import { Workflow, Building2, Zap } from 'lucide-react'
-import { useRef } from 'react'
 
 import { useReducedMotion } from '~/hooks/useReducedMotion'
 import { userProfile } from '~/lib/content/UserProfile'
@@ -69,7 +68,6 @@ function SkillIcon({ skill }: { skill: string }) {
 const Skills: React.FC = () => {
   const prefersReducedMotion = useReducedMotion()
   const skills = userProfile.skills
-  const sectionRef = useRef<HTMLElement>(null)
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -97,7 +95,6 @@ const Skills: React.FC = () => {
 
   return (
     <section
-      ref={sectionRef}
       id="skills"
       className="relative flex min-h-screen items-center justify-center px-6 py-20"
       aria-label="Skills"
@@ -126,7 +123,7 @@ const Skills: React.FC = () => {
               className="cosmic-skill-tile"
             >
               <div
-                className={`group relative flex cursor-pointer flex-row items-center gap-2 overflow-hidden rounded-lg px-4 py-3 shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all duration-500 ${skillStyles.background} ${skillStyles.hoverBackground} `}
+                className={`group relative flex flex-row items-center gap-2 overflow-hidden rounded-lg px-4 py-3 shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all duration-500 ${skillStyles.background} ${skillStyles.hoverBackground} `}
               >
                 <div className="z-10 transition-transform duration-300 group-hover:scale-110">
                   <SkillIcon skill={skill} />

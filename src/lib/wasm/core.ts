@@ -37,13 +37,20 @@ export interface WASMModule {
   ) => number
   get_scatter_text_pointers: () => ScatterTextPointers
   start_forming: () => void
-  start_scattering: () => void
   update_particles: (delta_time: number) => void
-  set_easing_factor: (factor: number) => void
-  set_fade_rate: (rate: number) => void
-  set_scatter_speed: (speed: number) => void
-  get_particle_count: () => number
-  is_forming: () => boolean
+}
+
+interface WasmGlueModule {
+  default: (opts: { module_or_path: string }) => Promise<void>
+  get_wasm_memory: () => WebAssembly.Memory
+  initialize_star_memory_pool: (count: number) => StarMemoryPointers
+  update_frame_simd: WASMModule['update_frame_simd']
+  calculate_speed_multiplier: WASMModule['calculate_speed_multiplier']
+  calculate_rotation_delta: WASMModule['calculate_rotation_delta']
+  set_text_pixels: WASMModule['set_text_pixels']
+  get_scatter_text_pointers: () => ScatterTextPointers
+  start_forming: () => void
+  update_particles: (delta_time: number) => void
 }
 
 export async function loadWASM(): Promise<WASMModule> {
@@ -60,7 +67,9 @@ export async function loadWASM(): Promise<WASMModule> {
       const wasmPath = '/wasm/pkg/hmziq_wasm_bg.wasm'
       const wasmModulePath = '/wasm/pkg/hmziq_wasm.js'
 
-      const wasmImport = await import(/* @vite-ignore */ /* @ts-ignore */ wasmModulePath)
+      const wasmImport: WasmGlueModule = await import(
+        /* @vite-ignore */ wasmModulePath
+      )
       await wasmImport.default({ module_or_path: wasmPath })
 
       wasmModule = {
@@ -72,13 +81,7 @@ export async function loadWASM(): Promise<WASMModule> {
         set_text_pixels: wasmImport.set_text_pixels,
         get_scatter_text_pointers: wasmImport.get_scatter_text_pointers,
         start_forming: wasmImport.start_forming,
-        start_scattering: wasmImport.start_scattering,
         update_particles: wasmImport.update_particles,
-        set_easing_factor: wasmImport.set_easing_factor,
-        set_fade_rate: wasmImport.set_fade_rate,
-        set_scatter_speed: wasmImport.set_scatter_speed,
-        get_particle_count: wasmImport.get_particle_count,
-        is_forming: wasmImport.is_forming,
       }
 
       return wasmModule
@@ -91,4 +94,3 @@ export async function loadWASM(): Promise<WASMModule> {
 
   return await loadPromise
 }
-

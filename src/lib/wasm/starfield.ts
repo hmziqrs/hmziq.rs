@@ -45,7 +45,6 @@ export class StarFieldSharedMemory {
   public sizes: Float32Array
   public twinkles: Float32Array
   public sparkles: Float32Array
-  public visibilityMask: BigUint64Array
 
   constructor(wasmModule: WASMModule, starCount: number) {
     this.wasmMemory = wasmModule.memory
@@ -100,72 +99,27 @@ export class StarFieldSharedMemory {
       this.pointers.sparkles_ptr,
       this.pointers.sparkles_length
     )
-
-    this.visibilityMask = new BigUint64Array(
-      this.wasmMemory.buffer,
-      this.pointers.visibility_ptr,
-      this.pointers.visibility_length
-    )
   }
 
   get count(): number {
     return this.pointers.count
   }
 
-  isStarVisible(starIndex: number): boolean {
-    const wordIndex = Math.floor(starIndex / 64)
-    const bitIndex = starIndex % 64
-    
-    if (wordIndex >= this.visibilityMask.length) {
-      return false
-    }
-    
-    const word = this.visibilityMask[wordIndex]
-    return (word & (1n << BigInt(bitIndex))) !== 0n
-  }
-
-  setStarVisible(starIndex: number, visible: boolean): void {
-    const wordIndex = Math.floor(starIndex / 64)
-    const bitIndex = starIndex % 64
-    
-    if (wordIndex >= this.visibilityMask.length) {
-      return
-    }
-    
-    const mask = 1n << BigInt(bitIndex)
-    if (visible) {
-      this.visibilityMask[wordIndex] |= mask
-    } else {
-      this.visibilityMask[wordIndex] &= ~mask
-    }
-  }
-
-  countVisibleStars(): number {
-    let visibleCount = 0
-    const completeWords = Math.floor(this.count / 64)
-
-    for (let i = 0; i < completeWords; i++) {
-      const word = this.visibilityMask[i]
-      visibleCount += this.popCount64(word)
-    }
-
-    const remainingBits = this.count % 64
-    if (remainingBits > 0 && completeWords < this.visibilityMask.length) {
-      const mask = (1n << BigInt(remainingBits)) - 1n
-      const maskedWord = this.visibilityMask[completeWords] & mask
-      visibleCount += this.popCount64(maskedWord)
-    }
-    
-    return visibleCount
-  }
-
-  private popCount64(n: bigint): number {
-    let count = 0
-    while (n !== 0n) {
-      count++
-      n &= n - 1n // Clear the lowest set bit
-    }
-    return count
+  dispose(): void {
+    // Drop JS-side TypedArray views.
+    // NOTE: The underlying WASM linear memory allocated by
+    // initialize_star_memory_pool is not freed — no deallocation
+    // function is exposed by the WASM module.
+    ;(this as any).positions_x = null
+    ;(this as any).positions_y = null
+    ;(this as any).positions_z = null
+    ;(this as any).colors_r = null
+    ;(this as any).colors_g = null
+    ;(this as any).colors_b = null
+    ;(this as any).sizes = null
+    ;(this as any).twinkles = null
+    ;(this as any).sparkles = null
+    ;(this as any).visibilityMask = null
   }
 
   updateFrame(
@@ -192,5 +146,3 @@ export class StarFieldSharedMemory {
     return result
   }
 }
-
-export type { WASMModule } from './core'

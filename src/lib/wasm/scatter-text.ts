@@ -22,15 +22,10 @@ export class ScatterTextSharedMemory {
 
   public positions_x: Float32Array
   public positions_y: Float32Array
-  public target_x: Float32Array
-  public target_y: Float32Array
-  public scatter_vx: Float32Array
-  public scatter_vy: Float32Array
   public colors_r: Float32Array
   public colors_g: Float32Array
   public colors_b: Float32Array
   public opacity: Float32Array
-  public scattered_flags: BigUint64Array
 
   private constructor(wasmModule: WASMModule, pointers: ScatterTextPointers) {
     this.wasmMemory = wasmModule.memory
@@ -38,7 +33,6 @@ export class ScatterTextSharedMemory {
 
     const SIMD_BATCH_SIZE = 16
     const alignedCount = Math.ceil(pointers.particle_count / SIMD_BATCH_SIZE) * SIMD_BATCH_SIZE
-    const flagCount = Math.ceil(alignedCount / 64)
 
     this.positions_x = new Float32Array(
       this.wasmMemory.buffer,
@@ -48,26 +42,6 @@ export class ScatterTextSharedMemory {
     this.positions_y = new Float32Array(
       this.wasmMemory.buffer,
       this.pointers.positions_y_ptr,
-      alignedCount
-    )
-    this.target_x = new Float32Array(
-      this.wasmMemory.buffer,
-      this.pointers.target_x_ptr,
-      alignedCount
-    )
-    this.target_y = new Float32Array(
-      this.wasmMemory.buffer,
-      this.pointers.target_y_ptr,
-      alignedCount
-    )
-    this.scatter_vx = new Float32Array(
-      this.wasmMemory.buffer,
-      this.pointers.scatter_vx_ptr,
-      alignedCount
-    )
-    this.scatter_vy = new Float32Array(
-      this.wasmMemory.buffer,
-      this.pointers.scatter_vy_ptr,
       alignedCount
     )
     this.colors_r = new Float32Array(
@@ -86,11 +60,6 @@ export class ScatterTextSharedMemory {
       alignedCount
     )
     this.opacity = new Float32Array(this.wasmMemory.buffer, this.pointers.opacity_ptr, alignedCount)
-    this.scattered_flags = new BigUint64Array(
-      this.wasmMemory.buffer,
-      this.pointers.scattered_flags_ptr,
-      flagCount
-    )
   }
 
   get particleCount(): number {
@@ -117,5 +86,3 @@ export class ScatterTextSharedMemory {
     wasmModule.update_particles(deltaTime)
   }
 }
-
-export type { WASMModule } from './core'
