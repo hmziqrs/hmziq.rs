@@ -22,9 +22,6 @@ export interface WebsiteType {
 }
 
 export interface SiteData {
-  navigation: {
-    sections: string[]
-  }
   socialPlatforms: Record<string, SocialPlatform>
   websiteTypes: Record<string, WebsiteType>
   socialVisibility: {

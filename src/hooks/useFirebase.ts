@@ -8,11 +8,16 @@ export const useFirebase = () => {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      let cancelled = false
       initFirebase().then(({ analytics }) => {
+        if (cancelled) return
         if (analytics) {
           setAnalytics(analytics)
         }
       })
+      return () => {
+        cancelled = true
+      }
     }
   }, [])
 

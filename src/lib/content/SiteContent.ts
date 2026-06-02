@@ -6,9 +6,6 @@ import type { SiteData, UserData } from './types'
 interface UIConfig {
   copyright: string
   scrollText: string
-  backToTop: string
-  connectMessage: string
-  additionalSkillsInfo: string
 }
 
 class SiteContent {
@@ -20,9 +17,6 @@ class SiteContent {
       ...this.siteConfig.ui,
       copyright: this.siteConfig.ui.copyright.replace('{name}', this.userData.name),
       scrollText: 'Scroll to explore',
-      backToTop: 'Back to Top',
-      connectMessage: "Let's connect and build something amazing together",
-      additionalSkillsInfo: 'Additional skills',
     }
   }
 }

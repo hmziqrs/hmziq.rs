@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react'
 
 import { loadWASM, type WASMModule } from '~/lib/wasm'
 
@@ -9,7 +9,7 @@ interface WASMContextType {
 
 const WASMContext = createContext<WASMContextType | null>(null)
 
-export function WASMProvider({ children }: { children: React.ReactNode }) {
+export function WASMProvider({ children }: { children: ReactNode }) {
   const [wasmModule, setWasmModule] = useState<WASMModule | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const loadingRef = useRef(false)

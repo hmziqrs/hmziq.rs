@@ -10,7 +10,6 @@ export interface StarMemoryPointers {
   sizes_ptr: number
   twinkles_ptr: number
   sparkles_ptr: number
-  visibility_ptr: number
   count: number
   positions_x_length: number
   positions_y_length: number
@@ -21,7 +20,6 @@ export interface StarMemoryPointers {
   sizes_length: number
   twinkles_length: number
   sparkles_length: number
-  visibility_length: number
 }
 
 export interface FrameUpdateResult {
@@ -35,16 +33,16 @@ export class StarFieldSharedMemory {
   private wasmMemory: WebAssembly.Memory
   private pointers: StarMemoryPointers
 
-  public positions_x: Float32Array
-  public positions_y: Float32Array
-  public positions_z: Float32Array
-  public colors_r: Float32Array
-  public colors_g: Float32Array
-  public colors_b: Float32Array
+  public positions_x: Float32Array | null
+  public positions_y: Float32Array | null
+  public positions_z: Float32Array | null
+  public colors_r: Float32Array | null
+  public colors_g: Float32Array | null
+  public colors_b: Float32Array | null
 
-  public sizes: Float32Array
-  public twinkles: Float32Array
-  public sparkles: Float32Array
+  public sizes: Float32Array | null
+  public twinkles: Float32Array | null
+  public sparkles: Float32Array | null
 
   constructor(wasmModule: WASMModule, starCount: number) {
     this.wasmMemory = wasmModule.memory
@@ -110,16 +108,15 @@ export class StarFieldSharedMemory {
     // NOTE: The underlying WASM linear memory allocated by
     // initialize_star_memory_pool is not freed — no deallocation
     // function is exposed by the WASM module.
-    ;(this as any).positions_x = null
-    ;(this as any).positions_y = null
-    ;(this as any).positions_z = null
-    ;(this as any).colors_r = null
-    ;(this as any).colors_g = null
-    ;(this as any).colors_b = null
-    ;(this as any).sizes = null
-    ;(this as any).twinkles = null
-    ;(this as any).sparkles = null
-    ;(this as any).visibilityMask = null
+    this.positions_x = null
+    this.positions_y = null
+    this.positions_z = null
+    this.colors_r = null
+    this.colors_g = null
+    this.colors_b = null
+    this.sizes = null
+    this.twinkles = null
+    this.sparkles = null
   }
 
   updateFrame(

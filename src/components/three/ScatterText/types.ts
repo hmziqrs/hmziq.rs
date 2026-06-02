@@ -1,10 +1,5 @@
 export interface ScatterTextProps {
   text: string
-  fontFamily?: string
-  color?: string
-  skip?: number
-  autoAnimate?: boolean
-  height?: string
 }
 
 export interface PixelData {

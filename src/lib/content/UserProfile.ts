@@ -85,7 +85,7 @@ class UserProfile {
     }
   }
 
-  getAllSocialLinks(): SocialLink[] {
+  private getAllSocialLinks(): SocialLink[] {
     return [...this.getSocialLinks(), this.getEmail()]
   }
 

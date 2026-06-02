@@ -1,5 +1,4 @@
-import { useFrame, useThree } from '@react-three/fiber'
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import * as THREE from 'three'
 
@@ -17,6 +16,8 @@ function calculateFontSize(text: string, containerWidth: number, containerHeight
 
   return Math.max(40, Math.min(fontSize, 500))
 }
+
+const SCATTER_CAMERA = { position: [0, 0, 150] as [number, number, number], fov: 50 } as const
 
 const SKIP = 3
 
@@ -133,7 +134,6 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
 
   useFrame((_, delta) => {
     const sharedMemory = ScatterTextSharedMemory.getInstance()
-    if (!threeData) return
     const { geometry, material } = threeData
 
     try {
@@ -157,8 +157,6 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
     }
   })
 
-  if (!threeData) return null
-
   return <points ref={meshRef} geometry={threeData.geometry} material={threeData.material} />
 }
 
@@ -169,10 +167,18 @@ export default function ScatterText({ text }: ScatterTextProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect()
-      setContainerSize({ width: rect.width, height: rect.height })
-    }
+    if (!containerRef.current) return
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (entry) {
+        setContainerSize({
+          width: Math.floor(entry.contentRect.width),
+          height: Math.floor(entry.contentRect.height),
+        })
+      }
+    })
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
   }, [])
 
   const handlePixelsGenerated = useCallback((data: PixelData) => {
@@ -197,7 +203,7 @@ export default function ScatterText({ text }: ScatterTextProps) {
         </>
       ) : pixelData ? (
         <Canvas
-          camera={{ position: [0, 0, 150], fov: 50 }}
+          camera={SCATTER_CAMERA}
           style={{
             position: 'absolute',
             top: 0,

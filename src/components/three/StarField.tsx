@@ -5,6 +5,8 @@ import * as THREE from 'three'
 import { useWASM } from '~/contexts/WASMContext'
 import { StarFieldSharedMemory } from '~/lib/wasm/starfield'
 
+const STARFIELD_CAMERA = { position: [0, 0, 50] as [number, number, number], fov: 75 } as const
+
 const VERTEX_SHADER = `
   // SoA attributes for SIMD
   attribute float positionX;
@@ -63,7 +65,7 @@ const FRAGMENT_SHADER = `
       spike = cross * vSparkle * (1.0 - dist * 2.0);
     }
 
-    vec3 finalColor = vColor + glow;
+    vec3 finalColor = min(vColor + glow, vec3(1.0));
     float finalAlpha = alpha + spike * 0.5;
 
     gl_FragColor = vec4(finalColor * vTwinkle, finalAlpha);
@@ -137,39 +139,50 @@ function Stars() {
     }
   }, [])
 
+  const material = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        uniforms: {},
+        vertexShader: VERTEX_SHADER,
+        fragmentShader: FRAGMENT_SHADER,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    []
+  )
+
   const starGroup = useMemo(() => {
     const ultraStarDensity = 0.36 * 1.125
     const screenArea = screenDimensions.width * screenDimensions.height
     const rawCount = Math.floor((screenArea / 1000) * ultraStarDensity)
     const totalCount = Math.ceil(rawCount / 8) * 8
 
-    const material = new THREE.ShaderMaterial({
-      uniforms: {},
-      vertexShader: VERTEX_SHADER,
-      fragmentShader: FRAGMENT_SHADER,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    })
-
     return {
       count: totalCount,
       material,
-      mesh: starMeshRef as React.RefObject<THREE.Points>,
+      mesh: starMeshRef,
     }
-  }, [screenDimensions])
+  }, [screenDimensions, material])
 
   useEffect(() => {
     return () => {
-      starGroup.material.dispose()
+      material.dispose()
     }
-  }, [starGroup])
+  }, [material])
 
   useEffect(() => {
     if (sharedMemoryRef.current) {
       sharedMemoryRef.current.dispose()
     }
     sharedMemoryRef.current = null
+
+    if (starMeshRef.current?.geometry) {
+      const geometry = starMeshRef.current.geometry
+      for (const key of Object.keys(geometry.attributes)) {
+        geometry.deleteAttribute(key)
+      }
+    }
 
     if (wasmModule && starGroup) {
       const { count } = starGroup
@@ -180,15 +193,15 @@ function Stars() {
         const geometry = starMeshRef.current.geometry
         const sharedMem = sharedMemoryRef.current
 
-        geometry.setAttribute('positionX', new THREE.BufferAttribute(sharedMem.positions_x, 1))
-        geometry.setAttribute('positionY', new THREE.BufferAttribute(sharedMem.positions_y, 1))
-        geometry.setAttribute('positionZ', new THREE.BufferAttribute(sharedMem.positions_z, 1))
-        geometry.setAttribute('colorR', new THREE.BufferAttribute(sharedMem.colors_r, 1))
-        geometry.setAttribute('colorG', new THREE.BufferAttribute(sharedMem.colors_g, 1))
-        geometry.setAttribute('colorB', new THREE.BufferAttribute(sharedMem.colors_b, 1))
-        geometry.setAttribute('size', new THREE.BufferAttribute(sharedMem.sizes, 1))
-        geometry.setAttribute('twinkle', new THREE.BufferAttribute(sharedMem.twinkles, 1))
-        geometry.setAttribute('sparkle', new THREE.BufferAttribute(sharedMem.sparkles, 1))
+        geometry.setAttribute('positionX', new THREE.BufferAttribute(sharedMem.positions_x!, 1))
+        geometry.setAttribute('positionY', new THREE.BufferAttribute(sharedMem.positions_y!, 1))
+        geometry.setAttribute('positionZ', new THREE.BufferAttribute(sharedMem.positions_z!, 1))
+        geometry.setAttribute('colorR', new THREE.BufferAttribute(sharedMem.colors_r!, 1))
+        geometry.setAttribute('colorG', new THREE.BufferAttribute(sharedMem.colors_g!, 1))
+        geometry.setAttribute('colorB', new THREE.BufferAttribute(sharedMem.colors_b!, 1))
+        geometry.setAttribute('size', new THREE.BufferAttribute(sharedMem.sizes!, 1))
+        geometry.setAttribute('twinkle', new THREE.BufferAttribute(sharedMem.twinkles!, 1))
+        geometry.setAttribute('sparkle', new THREE.BufferAttribute(sharedMem.sparkles!, 1))
 
         let minX = Infinity,
           maxX = -Infinity
@@ -196,19 +209,25 @@ function Stars() {
           maxY = -Infinity
         let minZ = Infinity,
           maxZ = -Infinity
+        const px = sharedMem.positions_x!
+        const py = sharedMem.positions_y!
+        const pz = sharedMem.positions_z!
         for (let i = 0; i < count; i++) {
-          if (sharedMem.positions_x[i] < minX) minX = sharedMem.positions_x[i]
-          if (sharedMem.positions_x[i] > maxX) maxX = sharedMem.positions_x[i]
-          if (sharedMem.positions_y[i] < minY) minY = sharedMem.positions_y[i]
-          if (sharedMem.positions_y[i] > maxY) maxY = sharedMem.positions_y[i]
-          if (sharedMem.positions_z[i] < minZ) minZ = sharedMem.positions_z[i]
-          if (sharedMem.positions_z[i] > maxZ) maxZ = sharedMem.positions_z[i]
+          if (px[i] < minX) minX = px[i]
+          if (px[i] > maxX) maxX = px[i]
+          if (py[i] < minY) minY = py[i]
+          if (py[i] > maxY) maxY = py[i]
+          if (pz[i] < minZ) minZ = pz[i]
+          if (pz[i] > maxZ) maxZ = pz[i]
         }
 
         geometry.boundingBox = new THREE.Box3(
           new THREE.Vector3(minX, minY, minZ),
           new THREE.Vector3(maxX, maxY, maxZ)
         )
+
+        geometry.boundingSphere = new THREE.Sphere()
+        geometry.boundingBox.getBoundingSphere(geometry.boundingSphere)
 
         // CRITICAL: Set vertex count for custom attributes
         geometry.setDrawRange(0, count)
@@ -224,67 +243,72 @@ function Stars() {
   useFrame((state) => {
     if (!wasmModule || !sharedMemoryRef.current) return
 
-    if (!(state.camera instanceof THREE.PerspectiveCamera)) return
-    const camera = state.camera
-    if (!viewProjectionMatrixRef.current) viewProjectionMatrixRef.current = new THREE.Matrix4()
-    if (!vpMatrixBufferRef.current) vpMatrixBufferRef.current = new Float32Array(16)
-    const viewProjectionMatrix = viewProjectionMatrixRef.current
-    const vpMatrix = vpMatrixBufferRef.current
-    viewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+    try {
+      if (!(state.camera instanceof THREE.PerspectiveCamera)) return
+      const camera = state.camera
+      if (!viewProjectionMatrixRef.current) viewProjectionMatrixRef.current = new THREE.Matrix4()
+      if (!vpMatrixBufferRef.current) vpMatrixBufferRef.current = new Float32Array(16)
+      const viewProjectionMatrix = viewProjectionMatrixRef.current
+      const vpMatrix = vpMatrixBufferRef.current
+      viewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
 
-    const currentFrameTime = state.clock.elapsedTime
-    const deltaTime =
-      lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
-    lastFrameTimeRef.current = currentFrameTime
+      const currentFrameTime = state.clock.elapsedTime
+      const deltaTime =
+        lastFrameTimeRef.current === 0 ? 0.016 : currentFrameTime - lastFrameTimeRef.current
+      lastFrameTimeRef.current = currentFrameTime
 
-    if (shouldBoostFromClick.current) {
-      clickBoostRef.current = currentFrameTime
-      shouldBoostFromClick.current = false
-    }
+      if (shouldBoostFromClick.current) {
+        clickBoostRef.current = currentFrameTime
+        shouldBoostFromClick.current = false
+      }
 
-    speedMultiplierRef.current = wasmModule.calculate_speed_multiplier(
-      isMovingRef.current,
-      clickBoostRef.current,
-      currentFrameTime,
-      speedMultiplierRef.current
-    )
+      speedMultiplierRef.current = wasmModule.calculate_speed_multiplier(
+        isMovingRef.current,
+        clickBoostRef.current,
+        currentFrameTime,
+        speedMultiplierRef.current
+      )
 
-    vpMatrix.set(viewProjectionMatrix.elements)
+      vpMatrix.set(viewProjectionMatrix.elements)
 
-    const frameResult = sharedMemoryRef.current.updateFrame(
-      wasmModule,
-      state.clock.elapsedTime,
-      deltaTime,
-      vpMatrix,
-      isMovingRef.current,
-      clickBoostRef.current,
-      speedMultiplierRef.current
-    )
+      const frameResult = sharedMemoryRef.current.updateFrame(
+        wasmModule,
+        state.clock.elapsedTime,
+        deltaTime,
+        vpMatrix,
+        isMovingRef.current,
+        clickBoostRef.current,
+        speedMultiplierRef.current
+      )
 
-    const baseRotationSpeedX = 0.02
-    const baseRotationSpeedY = 0.01
-    const rotationDelta = wasmModule.calculate_rotation_delta(
-      baseRotationSpeedX,
-      baseRotationSpeedY,
-      speedMultiplierRef.current,
-      deltaTime
-    )
+      const baseRotationSpeedX = 0.02
+      const baseRotationSpeedY = 0.01
+      const rotationDelta = wasmModule.calculate_rotation_delta(
+        baseRotationSpeedX,
+        baseRotationSpeedY,
+        speedMultiplierRef.current,
+        deltaTime
+      )
 
-    rotationXRef.current += rotationDelta[0]
-    rotationYRef.current += rotationDelta[1]
+      rotationXRef.current += rotationDelta[0]
+      rotationYRef.current += rotationDelta[1]
 
-    if (starMeshRef.current) {
-      starMeshRef.current.rotation.x = rotationXRef.current
-      starMeshRef.current.rotation.y = rotationYRef.current
-    }
+      if (starMeshRef.current) {
+        starMeshRef.current.rotation.x = rotationXRef.current
+        starMeshRef.current.rotation.y = rotationYRef.current
+      }
 
-    if (starMeshRef.current?.geometry && frameResult.effects_dirty) {
-      const geometry = starMeshRef.current.geometry
-      const twinkleAttr = geometry.getAttribute('twinkle')
-      const sparkleAttr = geometry.getAttribute('sparkle')
+      if (starMeshRef.current?.geometry && frameResult.effects_dirty) {
+        const geometry = starMeshRef.current.geometry
+        const twinkleAttr = geometry.getAttribute('twinkle')
+        const sparkleAttr = geometry.getAttribute('sparkle')
 
-      if (twinkleAttr instanceof THREE.BufferAttribute) twinkleAttr.needsUpdate = true
-      if (sparkleAttr instanceof THREE.BufferAttribute) sparkleAttr.needsUpdate = true
+        if (twinkleAttr instanceof THREE.BufferAttribute) twinkleAttr.needsUpdate = true
+        if (sparkleAttr instanceof THREE.BufferAttribute) sparkleAttr.needsUpdate = true
+      }
+    } catch (error) {
+      console.error('StarField frame error:', error)
+      return
     }
   })
 
@@ -303,9 +327,7 @@ export default function OptimizedStarField() {
 
   return (
     <div className="fixed inset-0" style={{ zIndex: 1 }} aria-hidden="true">
-      <Canvas camera={{ position: [0, 0, 50], fov: 75 }} style={{ background: '#000000' }}>
-        <ambientLight intensity={0.3} />
-        <pointLight position={[10, 10, 10]} intensity={0.5} />
+      <Canvas camera={STARFIELD_CAMERA} style={{ background: '#000000' }}>
         <Stars />
       </Canvas>
     </div>

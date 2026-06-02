@@ -9,7 +9,7 @@ import { userProfile } from '~/lib/content/UserProfile'
 
 const ScatterText = lazy(() => import('~/components/three/ScatterText'))
 
-const Hero: React.FC = () => {
+export default function Hero() {
   const prefersReducedMotion = useReducedMotion()
   const { name, title } = userProfile.profile
   const { scrollText } = siteContent.ui
@@ -49,10 +49,10 @@ const Hero: React.FC = () => {
         initial="hidden"
         animate="visible"
       >
-        <div className="relative h-32 w-xl">
+        <div className="relative h-32 w-full">
           <WASMLoader
             loadingFallback={
-              <div className="h-32 w-xl">
+              <div className="h-32 w-full">
                 <div className="text-6xl font-bold text-white md:text-7xl lg:text-8xl">{name}</div>
               </div>
             }
@@ -107,5 +107,3 @@ const Hero: React.FC = () => {
     </section>
   )
 }
-
-export default Hero

@@ -1,6 +1,6 @@
-import { getAnalytics, isSupported } from 'firebase/analytics'
-import { initializeApp } from 'firebase/app'
-import { getPerformance } from 'firebase/performance'
+import { getAnalytics, isSupported, type Analytics } from 'firebase/analytics'
+import { initializeApp, type FirebaseApp } from 'firebase/app'
+import { getPerformance, type FirebasePerformance } from 'firebase/performance'
 
 const firebaseConfig = {
   apiKey: import.meta.env.NEXT_PUBLIC_API_KEY,
@@ -12,24 +12,36 @@ const firebaseConfig = {
   measurementId: import.meta.env.NEXT_PUBLIC_MEASUREMENT_ID,
 }
 
+let initPromise: Promise<{
+  app: FirebaseApp | null
+  analytics: Analytics | null
+  perf: FirebasePerformance | null
+}> | null = null
+
 export const initFirebase = async () => {
-  if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-    return { app: null, analytics: null, perf: null }
-  }
+  if (initPromise) return initPromise
 
-  try {
-    const app = initializeApp(firebaseConfig)
-    const analyticsSupported = await isSupported()
-
-    if (analyticsSupported) {
-      const perf = getPerformance(app)
-      const analytics = getAnalytics(app)
-      return { app, analytics, perf }
+  initPromise = (async () => {
+    if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+      return { app: null, analytics: null, perf: null }
     }
 
-    return { app, analytics: null, perf: null }
-  } catch (error) {
-    console.error('Firebase initialization error:', error)
-    return { app: null, analytics: null, perf: null }
-  }
+    try {
+      const app = initializeApp(firebaseConfig)
+      const analyticsSupported = await isSupported()
+
+      if (analyticsSupported) {
+        const perf = getPerformance(app)
+        const analytics = getAnalytics(app)
+        return { app, analytics, perf }
+      }
+
+      return { app, analytics: null, perf: null }
+    } catch (error) {
+      console.error('Firebase initialization error:', error)
+      return { app: null, analytics: null, perf: null }
+    }
+  })()
+
+  return initPromise
 }

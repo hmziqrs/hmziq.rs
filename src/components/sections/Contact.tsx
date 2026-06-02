@@ -12,27 +12,20 @@ const socialIconMap: Record<string, IconType> = {
   Email: Mail,
 }
 
-// Social platform color mapping for brand consistency
-const socialColorMap: Record<string, string> = {
-  GitHub: '#FFFFFF',
-  Twitter: '#FFFFFF',
-  Email: '#FFFFFF',
-}
+const SOCIAL_ICON_COLOR = '#FFFFFF'
 
 function SocialIcon({ platform }: { platform: string }) {
   const IconComponent = socialIconMap[platform]
   if (!IconComponent) return null
 
-  const iconColor = socialColorMap[platform] || '#9CA3AF'
-
   if (platform === 'Email') {
-    return <IconComponent size={24} color={iconColor} strokeWidth={2} />
+    return <IconComponent size={24} color={SOCIAL_ICON_COLOR} strokeWidth={2} />
   }
 
-  return <IconComponent size={24} color={iconColor} title={platform} />
+  return <IconComponent size={24} color={SOCIAL_ICON_COLOR} title={platform} />
 }
 
-const Contact: React.FC = () => {
+export default function Contact() {
   const prefersReducedMotion = useReducedMotion()
   const primarySocialLinks = userProfile.getPrimarySocialLinks()
   const allLinksForSEO = userProfile.getAllLinksForSEO()
@@ -154,5 +147,3 @@ const Contact: React.FC = () => {
     </section>
   )
 }
-
-export default Contact

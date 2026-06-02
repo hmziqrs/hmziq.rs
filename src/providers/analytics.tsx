@@ -1,9 +1,8 @@
 import { useRouter } from '@tanstack/react-router'
 import { logEvent } from 'firebase/analytics'
 import { useEffect } from 'react'
-import { Suspense } from 'react'
 
-import { useFirebase } from '~/hooks/use-firebase'
+import { useFirebase } from '~/hooks/useFirebase'
 
 function AnalyticsTracker() {
   const { analytics } = useFirebase()
@@ -26,9 +25,7 @@ function AnalyticsTracker() {
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Suspense>
-        <AnalyticsTracker />
-      </Suspense>
+      <AnalyticsTracker />
       {children}
     </>
   )

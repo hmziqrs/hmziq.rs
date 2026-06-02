@@ -65,7 +65,7 @@ function SkillIcon({ skill }: { skill: string }) {
   return <IconComponent size={20} color={iconColor} title={skill} />
 }
 
-const Skills: React.FC = () => {
+export default function Skills() {
   const prefersReducedMotion = useReducedMotion()
   const skills = userProfile.skills
 
@@ -153,5 +153,3 @@ const Skills: React.FC = () => {
     </section>
   )
 }
-
-export default Skills
