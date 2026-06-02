@@ -3,7 +3,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { Feed } from 'feed'
-import { simpleSitemapAndIndex } from 'sitemap'
+import { EnumChangefreq, simpleSitemapAndIndex } from 'sitemap'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const publicDir = join(__dirname, '..', 'public')
@@ -57,7 +57,7 @@ rmSync(sitemapAbsDir, { recursive: true, force: true })
 mkdirSync(sitemapAbsDir, { recursive: true })
 
 const pages = [
-  { url: '/', changefreq: 'daily', priority: 1.0 },
+  { url: '/', changefreq: EnumChangefreq.DAILY, priority: 1.0 },
   // Add new pages here as the site grows, e.g.:
   // { url: '/about', changefreq: 'monthly', priority: 0.8 },
   // { url: '/projects', changefreq: 'weekly', priority: 0.8 },

@@ -7,19 +7,6 @@ interface Profile {
   yearsOfExperience: number
 }
 
-interface About {
-  paragraphs: string[]
-  stats: Array<{
-    value: string
-    label: string
-  }>
-}
-
-interface SkillCategory {
-  title: string
-  skills: string[]
-}
-
 interface SocialLink {
   name: string
   url: string
