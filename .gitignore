@@ -50,3 +50,5 @@ Cargo.lock
 /public/rss.xml
 /public/atom.xml
 /public/sitemaps/
+
+.react-doctor
