@@ -4,6 +4,7 @@ import { ArrowLeft, X } from 'lucide-react'
 import { useMemo, useState, useCallback } from 'react'
 
 import { ErrorBoundary } from '~/components/ErrorBoundary'
+import { PageContainer } from '~/components/PageContainer'
 import { ProjectCard } from '~/components/ProjectCard'
 import { useSectionVariants } from '~/hooks/useSectionVariants'
 import { projects, type Project } from '~/lib/content/Projects'
@@ -18,17 +19,15 @@ function ProjectsPage() {
 
   if (!isIndex) {
     return (
-      <main className="relative min-h-screen">
-        <ErrorBoundary
-          fallback={
-            <div className="flex min-h-screen items-center justify-center text-white">
-              Something went wrong
-            </div>
-          }
-        >
-          <Outlet />
-        </ErrorBoundary>
-      </main>
+      <ErrorBoundary
+        fallback={
+          <PageContainer contentClassName="flex min-h-screen items-center justify-center">
+            <div className="text-white">Something went wrong</div>
+          </PageContainer>
+        }
+      >
+        <Outlet />
+      </ErrorBoundary>
     )
   }
 
@@ -73,7 +72,7 @@ function ProjectsListing() {
   const hasFilters = selectedSkills.length > 0 || selectedType != null
 
   return (
-    <main className="relative min-h-screen">
+    <PageContainer contentClassName="px-6 py-20">
       <ErrorBoundary
         fallback={
           <div className="flex min-h-screen items-center justify-center text-white">
@@ -81,144 +80,142 @@ function ProjectsListing() {
           </div>
         }
       >
-        <div className="relative px-6 py-20" style={{ zIndex: 10 }}>
-          <div className="mx-auto max-w-6xl">
-            {/* Header */}
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="mb-12"
-            >
-              <motion.div variants={itemVariants} className="mb-6">
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-2 font-mono text-sm text-white/40 transition-colors hover:text-white/70"
-                >
-                  <ArrowLeft size={14} />
-                  Back home
-                </Link>
-              </motion.div>
-
-              <motion.h1
-                variants={itemVariants}
-                className="font-mono text-2xl font-bold tracking-wider text-white md:text-3xl"
+        <div className="mx-auto max-w-6xl">
+          {/* Header */}
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-12"
+          >
+            <motion.div variants={itemVariants} className="mb-6">
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2 font-mono text-sm text-white/40 transition-colors hover:text-white/70"
               >
-                Projects
-              </motion.h1>
-              <motion.p variants={itemVariants} className="mt-2 font-mono text-sm text-white/40">
-                {filtered.length} of {projects.all.length} projects
-                {hasFilters && ' (filtered)'}
-              </motion.p>
+                <ArrowLeft size={14} />
+                Back home
+              </Link>
             </motion.div>
 
-            {/* Filters */}
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="mb-10 space-y-4"
+            <motion.h1
+              variants={itemVariants}
+              className="font-mono text-2xl font-bold tracking-wider text-white md:text-3xl"
             >
-              {/* Type filter */}
-              <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-xs text-white/30">Type:</span>
-                {allTypes.map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => toggleType(type)}
-                    className={`rounded-lg px-3 py-1.5 font-mono text-xs transition-all duration-200 ${
-                      selectedType === type
-                        ? 'bg-white/15 text-white'
-                        : 'bg-white/[0.05] text-white/40 hover:bg-white/[0.08] hover:text-white/60'
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </motion.div>
+              Projects
+            </motion.h1>
+            <motion.p variants={itemVariants} className="mt-2 font-mono text-sm text-white/40">
+              {filtered.length} of {projects.all.length} projects
+              {hasFilters && ' (filtered)'}
+            </motion.p>
+          </motion.div>
 
-              {/* Skill filter */}
-              <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-xs text-white/30">Skills:</span>
-                {allSkills.map((skill) => (
-                  <button
-                    key={skill}
-                    onClick={() => toggleSkill(skill)}
-                    className={`rounded-lg px-3 py-1.5 font-mono text-xs transition-all duration-200 ${
-                      selectedSkills.includes(skill)
-                        ? 'bg-white/15 text-white'
-                        : 'bg-white/[0.05] text-white/40 hover:bg-white/[0.08] hover:text-white/60'
-                    }`}
-                  >
-                    {skill}
-                  </button>
-                ))}
-              </motion.div>
-
-              {/* Clear filters */}
-              {hasFilters && (
-                <motion.div
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-2"
+          {/* Filters */}
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-10 space-y-4"
+          >
+            {/* Type filter */}
+            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-xs text-white/30">Type:</span>
+              {allTypes.map((type) => (
+                <button
+                  key={type}
+                  onClick={() => toggleType(type)}
+                  className={`rounded-lg px-3 py-1.5 font-mono text-xs transition-all duration-200 ${
+                    selectedType === type
+                      ? 'bg-white/15 text-white'
+                      : 'bg-white/[0.05] text-white/40 hover:bg-white/[0.08] hover:text-white/60'
+                  }`}
                 >
-                  <button
-                    onClick={clearFilters}
-                    className="inline-flex items-center gap-1 rounded-lg bg-white/[0.06] px-3 py-1.5 font-mono text-xs text-white/50 transition-all hover:bg-white/[0.1] hover:text-white/70"
-                  >
-                    <X size={12} />
-                    Clear filters
-                  </button>
-                  {selectedSkills.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {selectedSkills.map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => toggleSkill(s)}
-                          className="rounded-md bg-white/10 px-2 py-0.5 font-mono text-[10px] text-white/60 transition-colors hover:bg-white/15"
-                        >
-                          {s} ×
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </motion.div>
-
-            {/* Project grid */}
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            >
-              {filtered.map((project) => (
-                <ProjectCard key={project.slug} project={project} variants={itemVariants} />
+                  {type}
+                </button>
               ))}
             </motion.div>
 
-            {/* Empty state */}
-            {filtered.length === 0 && (
+            {/* Skill filter */}
+            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-xs text-white/30">Skills:</span>
+              {allSkills.map((skill) => (
+                <button
+                  key={skill}
+                  onClick={() => toggleSkill(skill)}
+                  className={`rounded-lg px-3 py-1.5 font-mono text-xs transition-all duration-200 ${
+                    selectedSkills.includes(skill)
+                      ? 'bg-white/15 text-white'
+                      : 'bg-white/[0.05] text-white/40 hover:bg-white/[0.08] hover:text-white/60'
+                  }`}
+                >
+                  {skill}
+                </button>
+              ))}
+            </motion.div>
+
+            {/* Clear filters */}
+            {hasFilters && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="py-20 text-center"
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2"
               >
-                <p className="font-mono text-sm text-white/30">
-                  No projects match the selected filters.
-                </p>
                 <button
                   onClick={clearFilters}
-                  className="mt-4 font-mono text-sm text-white/50 underline underline-offset-4 transition-colors hover:text-white/70"
+                  className="inline-flex items-center gap-1 rounded-lg bg-white/[0.06] px-3 py-1.5 font-mono text-xs text-white/50 transition-all hover:bg-white/[0.1] hover:text-white/70"
                 >
-                  Clear all filters
+                  <X size={12} />
+                  Clear filters
                 </button>
+                {selectedSkills.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {selectedSkills.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => toggleSkill(s)}
+                        className="rounded-md bg-white/10 px-2 py-0.5 font-mono text-[10px] text-white/60 transition-colors hover:bg-white/15"
+                      >
+                        {s} ×
+                      </button>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             )}
-          </div>
+          </motion.div>
+
+          {/* Project grid */}
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {filtered.map((project) => (
+              <ProjectCard key={project.slug} project={project} variants={itemVariants} />
+            ))}
+          </motion.div>
+
+          {/* Empty state */}
+          {filtered.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="py-20 text-center"
+            >
+              <p className="font-mono text-sm text-white/30">
+                No projects match the selected filters.
+              </p>
+              <button
+                onClick={clearFilters}
+                className="mt-4 font-mono text-sm text-white/50 underline underline-offset-4 transition-colors hover:text-white/70"
+              >
+                Clear all filters
+              </button>
+            </motion.div>
+          )}
         </div>
       </ErrorBoundary>
-    </main>
+    </PageContainer>
   )
 }

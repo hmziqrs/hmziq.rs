@@ -5,6 +5,7 @@ import { ArrowLeft, Star, ExternalLink, Globe, Smartphone } from 'lucide-react'
 
 import { ErrorBoundary } from '~/components/ErrorBoundary'
 import { MarkdownRenderer } from '~/components/MarkdownRenderer'
+import { PageContainer } from '~/components/PageContainer'
 import { useSectionVariants } from '~/hooks/useSectionVariants'
 import { projects, type Project } from '~/lib/content/Projects'
 
@@ -18,28 +19,23 @@ function ProjectDetailPage() {
 
   if (!project) {
     return (
-      <main className="relative min-h-screen">
-        <div
-          className="relative flex min-h-screen items-center justify-center"
-          style={{ zIndex: 10 }}
-        >
-          <div className="text-center">
-            <h1 className="font-mono text-2xl font-bold text-white">Project not found</h1>
-            <Link
-              to="/projects"
-              className="mt-4 inline-flex items-center gap-2 font-mono text-sm text-white/50 hover:text-white/70"
-            >
-              <ArrowLeft size={14} />
-              Back to projects
-            </Link>
-          </div>
+      <PageContainer contentClassName="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="font-mono text-2xl font-bold text-white">Project not found</h1>
+          <Link
+            to="/projects"
+            className="mt-4 inline-flex items-center gap-2 font-mono text-sm text-white/50 hover:text-white/70"
+          >
+            <ArrowLeft size={14} />
+            Back to projects
+          </Link>
         </div>
-      </main>
+      </PageContainer>
     )
   }
 
   return (
-    <main className="relative min-h-screen">
+    <PageContainer contentClassName="px-6 py-20">
       <ErrorBoundary
         fallback={
           <div className="flex min-h-screen items-center justify-center text-white">
@@ -47,13 +43,11 @@ function ProjectDetailPage() {
           </div>
         }
       >
-        <div className="relative px-6 py-20" style={{ zIndex: 10 }}>
-          <div className="mx-auto max-w-3xl">
-            <ProjectDetail project={project} />
-          </div>
+        <div className="mx-auto max-w-3xl">
+          <ProjectDetail project={project} />
         </div>
       </ErrorBoundary>
-    </main>
+    </PageContainer>
   )
 }
 

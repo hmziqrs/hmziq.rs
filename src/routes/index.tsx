@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 
+import { PageContainer } from '~/components/PageContainer'
 import Contact from '~/components/sections/Contact'
 import Hero from '~/components/sections/Hero'
 import Projects from '~/components/sections/Projects'
@@ -11,13 +12,11 @@ export const Route = createFileRoute('/')({
 
 function HomePage() {
   return (
-    <main className="relative min-h-screen">
-      <div className="relative" style={{ zIndex: 10 }}>
-        <Hero />
-        <Skills />
-        <Projects />
-        <Contact />
-      </div>
-    </main>
+    <PageContainer>
+      <Hero />
+      <Skills />
+      <Projects />
+      <Contact />
+    </PageContainer>
   )
 }
