@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "sections": ["hero", "about", "skills", "contact"]
+    "sections": ["hero", "about", "skills", "projects", "contact"]
   },
   "socialPlatforms": {
     "github": {

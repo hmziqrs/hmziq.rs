@@ -1,0 +1,433 @@
+[
+  {
+    "title": "Analytics Dashboard",
+    "slug": "analytics-dashboard",
+    "description": "Server-side rendered analytics dashboard with PDF reporting capabilities.",
+    "type": "freelance",
+    "tech": ["AngularJS", "Node.js", "Puppeteer"],
+    "links": {},
+    "context": "Fetch Sky"
+  },
+  {
+    "title": "Background Video Processing",
+    "slug": "background-video-processing",
+    "description": "React Native app with background video processing using Node.js and Dropbox integration.",
+    "type": "freelance",
+    "tech": ["React Native", "Node.js", "Dropbox API"],
+    "links": {},
+    "context": "Upwork / Fiverr"
+  },
+  {
+    "title": "BasedApp",
+    "slug": "basedapp",
+    "description": "React Native fintech prototype integrating Web3, SafeWallet, Magic Link, and blockchain functionalities.",
+    "type": "freelance",
+    "tech": ["React Native", "Web3", "Ethereum", "Ethers"],
+    "links": {},
+    "context": "Toptal"
+  },
+  {
+    "title": "Claude Multi",
+    "slug": "claude-multi",
+    "description": "Run multiple isolated Claude Code instances side by side — each with its own provider, config, plugins, and MCP servers.",
+    "type": "open-source",
+    "tech": ["TypeScript", "Astro", "Python", "Shell", "JavaScript"],
+    "links": {
+      "github": "https://github.com/hmziqrs/claude-multi",
+      "web": "https://claude-multi.hmziq.xyz",
+      "npm": "https://www.npmjs.com/package/claude-multi"
+    },
+    "stars": 22
+  },
+  {
+    "title": "Codex GLM",
+    "slug": "codex-glm",
+    "description": "A TypeScript project for GLM model integration.",
+    "type": "open-source",
+    "tech": ["TypeScript"],
+    "links": {
+      "github": "https://github.com/hmziqrs/codex-glm"
+    }
+  },
+  {
+    "title": "Dynv6-rs",
+    "slug": "dynv6-rs",
+    "description": "A Rust script to dynamically update IPv6 address to a domain.",
+    "type": "open-source",
+    "tech": ["Rust"],
+    "links": {
+      "github": "https://github.com/hmziqrs/dynv6-rs"
+    }
+  },
+  {
+    "title": "FHGL Launch",
+    "slug": "fhgllaunch",
+    "description": "A simple Dart command-line application, installable via Flutter pub global.",
+    "type": "open-source",
+    "tech": ["Dart"],
+    "links": {
+      "github": "https://github.com/hmziqrs/fhgllaunch"
+    },
+    "stars": 2
+  },
+  {
+    "title": "Flutter Experiments",
+    "slug": "flutter-experiments",
+    "description": "A collection of Flutter experiments and prototypes.",
+    "type": "open-source",
+    "tech": ["Flutter", "Dart"],
+    "links": {
+      "github": "https://github.com/hmziqrs/Flutter-Experiments"
+    }
+  },
+  {
+    "title": "Flutter Movie Concept",
+    "slug": "flutter-movie-concept",
+    "description": "True cross-platform UI design featuring complex scroll-based animations powered by Flutter.",
+    "type": "open-source",
+    "tech": ["Flutter", "Dart", "Kotlin", "Swift", "C++"],
+    "links": {
+      "github": "https://github.com/hmziqrs/invmovieconcept1",
+      "web": "https://movieui.hmziq.xyz",
+      "playStore": "https://play.google.com/store/apps/details?id=com.onemdev.invmovieconcept1"
+    },
+    "stars": 63
+  },
+  {
+    "title": "Flutter UI Designs",
+    "slug": "flutter-ui-designs",
+    "description": "Collection of beautifully crafted Flutter UI implementations supporting web, mobile, and desktop platforms.",
+    "type": "open-source",
+    "tech": ["Flutter", "Dart", "Firebase", "Provider"],
+    "links": {
+      "github": "https://github.com/hmziqrs/flutter-ui-designs",
+      "web": "https://flutter-uis.hmziq.xyz/",
+      "playStore": "https://play.google.com/store/apps/details?id=com.onemdev.flutter_ui_challenges"
+    },
+    "stars": 332
+  },
+  {
+    "title": "Gandalf Sax",
+    "slug": "gandalf",
+    "description": "Epic infinite sax Gandalf — NTP-synced to millisecond precision across all devices and platforms.",
+    "type": "open-source",
+    "tech": ["Kotlin", "Swift", "SwiftUI", "Jetpack Compose", "Rust", "egui", "Dart", "Firebase"],
+    "links": {
+      "github": "https://github.com/hmziqrs/gandalf-sax",
+      "web": "https://gandalf.hmziq.xyz",
+      "playStore": "https://play.google.com/store/apps/details?id=com.onemdev.gandalf"
+    },
+    "stars": 2
+  },
+  {
+    "title": "Go Cross Screenshot",
+    "slug": "go-cross-screenshot",
+    "description": "A small cross-platform Go program to take screenshots via command line, useful for GUI automation testing.",
+    "type": "open-source",
+    "tech": ["Go"],
+    "links": {
+      "github": "https://github.com/hmziqrs/go-cross-screenshot"
+    },
+    "stars": 2
+  },
+  {
+    "title": "Golang Minesweeper",
+    "slug": "golang-minesweeper",
+    "description": "CLI-based minesweeper built with Go.",
+    "type": "open-source",
+    "tech": ["Go"],
+    "links": {
+      "github": "https://github.com/hmziqrs/go-minesweeper"
+    }
+  },
+  {
+    "title": "GPUI Starter",
+    "slug": "gpui-starter",
+    "description": "A full-featured desktop application boilerplate built with GPUI from Zed, for macOS.",
+    "type": "open-source",
+    "tech": ["Rust", "GPUI", "SQLite", "TypeScript", "Astro"],
+    "links": {
+      "github": "https://github.com/hmziqrs/gpui-starter"
+    },
+    "stars": 3
+  },
+  {
+    "title": "Grow Youth Ministry",
+    "slug": "grow-youth-ministry",
+    "description": "Youth and kids ministry app published on both App Store and Play Store.",
+    "type": "product",
+    "tech": ["React Native", "Redux", "WordPress API"],
+    "links": {
+      "playStore": "https://play.google.com/store/apps/details?id=com.growappv2",
+      "appStore": "https://apps.apple.com/us/app/grow-youth-kids-ministry/id1260816727"
+    }
+  },
+  {
+    "title": "Hmziq.rs",
+    "slug": "hmziq-rs",
+    "description": "Personal portfolio site built with Next.js 15+, React 19+, Three.js, and Rust/WebAssembly.",
+    "type": "open-source",
+    "tech": [
+      "TypeScript",
+      "Next.js",
+      "React",
+      "Tailwind CSS",
+      "Three.js",
+      "React Three Fiber",
+      "Framer Motion",
+      "Rust",
+      "WebAssembly",
+      "Bun"
+    ],
+    "links": {
+      "github": "https://github.com/hmziqrs/hmziq.rs",
+      "web": "https://hmziq.rs/"
+    }
+  },
+  {
+    "title": "Hmziq.xyz",
+    "slug": "hmziq-xyz",
+    "description": "Portfolio website built with Dioxus 0.7+ and automatic Tailwind CSS.",
+    "type": "open-source",
+    "tech": [
+      "Rust",
+      "Dioxus",
+      "Dioxus Router",
+      "Dioxus Web",
+      "Tailwind CSS",
+      "CSS",
+      "HTML",
+      "JavaScript",
+      "TypeScript"
+    ],
+    "links": {
+      "github": "https://github.com/hmziqrs/hmziq.xyz",
+      "web": "https://hmziq.xyz/"
+    }
+  },
+  {
+    "title": "Iced Code Editor",
+    "slug": "iced-code-editor",
+    "description": "A high-performance, canvas-based code editor widget with syntax highlighting, line numbers, text selection, and keyboard navigation for the Iced GUI framework.",
+    "type": "open-source",
+    "tech": ["Rust", "Iced", "syntect"],
+    "links": {
+      "github": "https://github.com/hmziqrs/iced-code-editor",
+      "crates": "https://crates.io/crates/iced-code-editor"
+    }
+  },
+  {
+    "title": "Mixfame",
+    "slug": "mixfame",
+    "description": "Talent management platform built from scratch with Flutter, Firebase, in-app purchases, and deeplinking.",
+    "type": "product",
+    "tech": ["Flutter", "Bloc", "Provider", "Firebase"],
+    "links": {
+      "web": "https://mixfame.com",
+      "playStore": "https://play.google.com/store/apps/details?id=com.mobile.mixfame",
+      "appStore": "https://apps.apple.com/us/app/mixfame/id1586985916"
+    }
+  },
+  {
+    "title": "My CV",
+    "slug": "my-cv",
+    "description": "Modern, responsive CV/portfolio website built with Rust, Dioxus SSG, and Tailwind CSS.",
+    "type": "open-source",
+    "tech": ["Rust", "Dioxus", "Dioxus SSG", "Tailwind CSS"],
+    "links": {
+      "github": "https://github.com/hmziqrs/cv",
+      "web": "https://cv.hmziq.rs"
+    }
+  },
+  {
+    "title": "Peekaboo Guru",
+    "slug": "peekaboo-guru",
+    "description": "Location-based and lifestyle platform with NodeJS/MySQL backend, React web app, React Native mobile app, and internal tools.",
+    "type": "product",
+    "tech": [
+      "Node.js",
+      "MySQL",
+      "React",
+      "React Native",
+      "Redux",
+      "Redux-Saga",
+      "Immutable.js",
+      "TypeScript",
+      "Firebase",
+      "Puppeteer",
+      "AWS",
+      "Angular",
+      "styled-components"
+    ],
+    "links": {
+      "web": "https://peekaboo.guru/",
+      "playStore": "https://play.google.com/store/search?q=peekaboo%20guru",
+      "appStore": "https://apps.apple.com/pk/app/peekaboo-guru/id1114129707"
+    }
+  },
+  {
+    "title": "QuestSocial",
+    "slug": "questsocial",
+    "description": "Real-time social platform with custom AdonisJS backend, Socket.IO event system, and React Native mobile app.",
+    "type": "product",
+    "tech": [
+      "AdonisJS",
+      "PostgreSQL",
+      "Socket.IO",
+      "React Native",
+      "TypeScript",
+      "Firebase",
+      "Redux",
+      "Expo",
+      "Next.js",
+      "AWS"
+    ],
+    "links": {
+      "appStore": "https://apps.apple.com/us/app/questsocial/id1529478932"
+    }
+  },
+  {
+    "title": "React Native Loop",
+    "slug": "react-native-loop",
+    "description": "Clone of infinity loop game built with React Native, featuring parallax animations.",
+    "type": "open-source",
+    "tech": ["React Native", "TypeScript", "JavaScript", "Kotlin", "Swift"],
+    "links": {
+      "github": "https://github.com/hmziqrs/react-native-loop-game",
+      "web": "https://rnloop.hmziq.xyz",
+      "playStore": "https://play.google.com/store/apps/details?id=com.onemdev.rnloop"
+    },
+    "stars": 22
+  },
+  {
+    "title": "Ruxlog",
+    "slug": "ruxlog",
+    "description": "A full stack blog built with Dioxus, Rust, and WebAssembly.",
+    "type": "open-source",
+    "tech": ["Rust", "Dioxus", "WASM"],
+    "links": {
+      "github": "https://github.com/hmziqrs/ruxlog"
+    }
+  },
+  {
+    "title": "Sastaticket.pk",
+    "slug": "sastaticket-pk",
+    "description": "Pakistan's top-ranked airline travel app with multi-payment gateway integration, automated CI/CD, and comprehensive analytics.",
+    "type": "product",
+    "tech": [
+      "Flutter",
+      "Bloc",
+      "Provider",
+      "Firebase",
+      "Node.js",
+      "GitHub Actions",
+      "Kotlin",
+      "Swift",
+      "Dart"
+    ],
+    "links": {
+      "web": "https://www.sastaticket.pk/",
+      "playStore": "https://play.google.com/store/apps/details?id=com.pk.sastaticket",
+      "appStore": "https://apps.apple.com/by/app/sastaticket-flight-hotels/id1564441908"
+    }
+  },
+  {
+    "title": "SHA2 Labs",
+    "slug": "sha2-labs",
+    "description": "Web3 crypto wallet app built with Flutter and React Native, featuring wallet creation, KYC verification, and virtual card management.",
+    "type": "freelance",
+    "tech": [
+      "Flutter",
+      "React Native",
+      "Web3",
+      "TypeScript",
+      "Next.js",
+      "Ethereum",
+      "Ethers.js",
+      "Polygon",
+      "Tailwind CSS"
+    ],
+    "links": {},
+    "context": "Toptal"
+  },
+  {
+    "title": "Small CMS",
+    "slug": "small-cms",
+    "description": "ExpressJS backend with React Native app for business information management.",
+    "type": "freelance",
+    "tech": ["ExpressJS", "React Native", "MySQL"],
+    "links": {},
+    "context": "Upwork / Fiverr"
+  },
+  {
+    "title": "Twitter Activity Viewer",
+    "slug": "twitter-activity-viewer",
+    "description": "A Node.js crawler with Vue.js client for exploring Twitter profile activity with sorting and filtering.",
+    "type": "open-source",
+    "tech": ["TypeScript", "Node.js", "Puppeteer", "Vue.js", "Tailwind CSS"],
+    "links": {
+      "github": "https://github.com/hmziqrs/twitter-activity-viewer"
+    }
+  },
+  {
+    "title": "Vibekit",
+    "slug": "vibekit",
+    "description": "A SvelteKit project with Tailwind CSS, Cloudflare Workers, D1 database, Drizzle ORM, and better-auth.",
+    "type": "open-source",
+    "tech": [
+      "Svelte",
+      "SvelteKit",
+      "TypeScript",
+      "Tailwind CSS",
+      "Cloudflare Workers",
+      "D1",
+      "Drizzle ORM",
+      "better-auth"
+    ],
+    "links": {
+      "github": "https://github.com/hmziqrs/vibekit"
+    }
+  },
+  {
+    "title": "Voxlabs",
+    "slug": "voxlabs-paywall",
+    "description": "Digital wallet app, JavaScript paywall plugin with ad-block bypass, and admin panel.",
+    "type": "contract",
+    "tech": [
+      "Flutter",
+      "JavaScript",
+      "TypeScript",
+      "React",
+      "Zustand",
+      "Material UI",
+      "Firebase",
+      "Webpack",
+      "Jest",
+      "MongoDB"
+    ],
+    "links": {},
+    "context": "Voxlabs"
+  },
+  {
+    "title": "Wheelbees",
+    "slug": "wheelbees",
+    "description": "A comprehensive chat application for drivers with social auth, real-time messaging, and search capabilities.",
+    "type": "product",
+    "tech": ["React Native", "Flutter", "AdonisJS", "MySQL", "Node.js", "Firebase", "Socket.IO"],
+    "links": {
+      "web": "https://wheelbees.com",
+      "playStore": "https://play.google.com/store/apps/details?id=com.wheelbees",
+      "appStore": "https://apps.apple.com/nl/app/wheelbees/id1585504248"
+    }
+  },
+  {
+    "title": "YouTube Playlist Sync",
+    "slug": "yt-playlist-sync",
+    "description": "A Go tool to sync YouTube playlists to Google Drive as MP3 files using GitHub Actions.",
+    "type": "open-source",
+    "tech": ["Go", "GitHub Actions", "YouTube API", "Google Drive API"],
+    "links": {
+      "github": "https://github.com/hmziqrs/yt-playlist-sync"
+    }
+  }
+]

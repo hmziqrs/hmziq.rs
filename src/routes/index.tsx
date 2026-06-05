@@ -4,6 +4,7 @@ import { lazy } from 'react'
 import { ErrorBoundary } from '~/components/ErrorBoundary'
 import Contact from '~/components/sections/Contact'
 import Hero from '~/components/sections/Hero'
+import Projects from '~/components/sections/Projects'
 import Skills from '~/components/sections/Skills'
 import { WASMCanvas } from '~/components/WASMCanvas'
 
@@ -34,6 +35,7 @@ function HomePage() {
         <div className="relative" style={{ zIndex: 10 }}>
           <Hero />
           <Skills />
+          <Projects />
           <Contact />
         </div>
       </ErrorBoundary>
