@@ -2,19 +2,11 @@ import { SiGithub } from '@icons-pack/react-simple-icons'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Star, ExternalLink, Globe, Smartphone } from 'lucide-react'
-import { lazy } from 'react'
 
 import { ErrorBoundary } from '~/components/ErrorBoundary'
 import { MarkdownRenderer } from '~/components/MarkdownRenderer'
-import { WASMCanvas } from '~/components/WASMCanvas'
 import { useSectionVariants } from '~/hooks/useSectionVariants'
 import { projects, type Project } from '~/lib/content/Projects'
-
-const StarField3D = lazy(() => import('~/components/three/StarField'))
-
-const blackFallback = (
-  <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
-)
 
 export const Route = createFileRoute('/projects/$slug')({
   component: ProjectDetailPage,
@@ -27,9 +19,6 @@ function ProjectDetailPage() {
   if (!project) {
     return (
       <main className="relative min-h-screen">
-        <WASMCanvas loadingFallback={blackFallback} errorFallback={blackFallback}>
-          <StarField3D />
-        </WASMCanvas>
         <div
           className="relative flex min-h-screen items-center justify-center"
           style={{ zIndex: 10 }}
@@ -51,10 +40,6 @@ function ProjectDetailPage() {
 
   return (
     <main className="relative min-h-screen">
-      <WASMCanvas loadingFallback={blackFallback} errorFallback={blackFallback}>
-        <StarField3D />
-      </WASMCanvas>
-
       <ErrorBoundary
         fallback={
           <div className="flex min-h-screen items-center justify-center text-white">

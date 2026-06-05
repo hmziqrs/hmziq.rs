@@ -80,7 +80,21 @@ export default function OptimizedStarField() {
 
   return (
     <div className="fixed inset-0" style={{ zIndex: 1 }} aria-hidden="true">
-      <Canvas camera={STARFIELD_CAMERA} style={{ background: '#000000' }}>
+      <Canvas
+        camera={STARFIELD_CAMERA}
+        style={{ background: '#000000' }}
+        onCreated={({ gl }) => {
+          const canvas = gl.domElement
+          const handleContextLost = (e: Event) => {
+            e.preventDefault()
+          }
+          const handleContextRestored = () => {
+            // R3F handles re-render automatically
+          }
+          canvas.addEventListener('webglcontextlost', handleContextLost)
+          canvas.addEventListener('webglcontextrestored', handleContextRestored)
+        }}
+      >
         <Stars />
       </Canvas>
     </div>

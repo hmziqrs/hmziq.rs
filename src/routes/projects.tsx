@@ -1,19 +1,12 @@
 import { createFileRoute, Link, Outlet, useLocation } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { ArrowLeft, X } from 'lucide-react'
-import { lazy, useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 
 import { ErrorBoundary } from '~/components/ErrorBoundary'
 import { ProjectCard } from '~/components/ProjectCard'
-import { WASMCanvas } from '~/components/WASMCanvas'
 import { useSectionVariants } from '~/hooks/useSectionVariants'
 import { projects, type Project } from '~/lib/content/Projects'
-
-const StarField3D = lazy(() => import('~/components/three/StarField'))
-
-const blackFallback = (
-  <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
-)
 
 export const Route = createFileRoute('/projects')({
   component: ProjectsPage,
@@ -26,9 +19,6 @@ function ProjectsPage() {
   if (!isIndex) {
     return (
       <main className="relative min-h-screen">
-        <WASMCanvas loadingFallback={blackFallback} errorFallback={blackFallback}>
-          <StarField3D />
-        </WASMCanvas>
         <ErrorBoundary
           fallback={
             <div className="flex min-h-screen items-center justify-center text-white">
@@ -84,10 +74,6 @@ function ProjectsListing() {
 
   return (
     <main className="relative min-h-screen">
-      <WASMCanvas loadingFallback={blackFallback} errorFallback={blackFallback}>
-        <StarField3D />
-      </WASMCanvas>
-
       <ErrorBoundary
         fallback={
           <div className="flex min-h-screen items-center justify-center text-white">

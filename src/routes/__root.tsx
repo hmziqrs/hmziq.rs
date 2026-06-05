@@ -1,10 +1,18 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router'
+import { lazy } from 'react'
 
+import { WASMCanvas } from '~/components/WASMCanvas'
 import metadataData from '~/content/data/metadata.json'
 import userData from '~/content/data/user.json'
 import { WASMProvider } from '~/contexts/WASMContext'
 import { AnalyticsProvider } from '~/lib/analytics'
+
+const StarField3D = lazy(() => import('~/components/three/StarField'))
+
+const blackFallback = (
+  <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
+)
 
 import appCss from '~/styles.css?url'
 
@@ -104,6 +112,9 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
           Skip to content
         </a>
         <WASMProvider>
+          <WASMCanvas loadingFallback={blackFallback} errorFallback={blackFallback}>
+            <StarField3D />
+          </WASMCanvas>
           <AnalyticsProvider>
             <div id="root">{children}</div>
           </AnalyticsProvider>
