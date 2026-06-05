@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { ArrowLeft, X } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { useMemo, useState, useCallback } from 'react'
 
 import { ErrorBoundary } from '~/components/ErrorBoundary'
@@ -35,7 +35,6 @@ function ProjectsPage() {
 }
 
 function ProjectsListing() {
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
   const [selectedType, setSelectedType] = useState<Project['type'] | undefined>()
 
   const { containerVariants, itemVariants } = useSectionVariants({
@@ -46,30 +45,19 @@ function ProjectsListing() {
     ease: [0.25, 0.1, 0.25, 1.0],
   })
 
-  const allSkills = useMemo(() => projects.skills, [])
   const allTypes = useMemo(() => projects.types, [])
 
-  const filtered = useMemo(
-    () => projects.filter(selectedSkills.length > 0 ? selectedSkills : undefined, selectedType),
-    [selectedSkills, selectedType]
-  )
-
-  const toggleSkill = useCallback((skill: string) => {
-    setSelectedSkills((prev) =>
-      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
-    )
-  }, [])
+  const filtered = useMemo(() => {
+    let result = projects.all
+    if (selectedType) {
+      result = result.filter((p) => p.type === selectedType)
+    }
+    return [...result].sort((a, b) => (b.stars ?? 0) - (a.stars ?? 0))
+  }, [selectedType])
 
   const toggleType = useCallback((type: Project['type']) => {
     setSelectedType((prev) => (prev === type ? undefined : type))
   }, [])
-
-  const clearFilters = useCallback(() => {
-    setSelectedSkills([])
-    setSelectedType(undefined)
-  }, [])
-
-  const hasFilters = selectedSkills.length > 0 || selectedType != null
 
   return (
     <PageContainer contentClassName="px-6 py-20">
@@ -106,18 +94,17 @@ function ProjectsListing() {
             </motion.h1>
             <motion.p variants={itemVariants} className="mt-2 font-mono text-sm text-white/40">
               {filtered.length} of {projects.all.length} projects
-              {hasFilters && ' (filtered)'}
+              {selectedType && ' (filtered)'}
             </motion.p>
           </motion.div>
 
-          {/* Filters */}
+          {/* Type filter */}
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="mb-10 space-y-4"
+            className="mb-10"
           >
-            {/* Type filter */}
             <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs text-white/30">Type:</span>
               {allTypes.map((type) => (
@@ -134,54 +121,6 @@ function ProjectsListing() {
                 </button>
               ))}
             </motion.div>
-
-            {/* Skill filter */}
-            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-xs text-white/30">Skills:</span>
-              {allSkills.map((skill) => (
-                <button
-                  key={skill}
-                  onClick={() => toggleSkill(skill)}
-                  className={`rounded-lg px-3 py-1.5 font-mono text-xs transition-all duration-200 ${
-                    selectedSkills.includes(skill)
-                      ? 'bg-white/15 text-white'
-                      : 'bg-white/[0.05] text-white/40 hover:bg-white/[0.08] hover:text-white/60'
-                  }`}
-                >
-                  {skill}
-                </button>
-              ))}
-            </motion.div>
-
-            {/* Clear filters */}
-            {hasFilters && (
-              <motion.div
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2"
-              >
-                <button
-                  onClick={clearFilters}
-                  className="inline-flex items-center gap-1 rounded-lg bg-white/[0.06] px-3 py-1.5 font-mono text-xs text-white/50 transition-all hover:bg-white/[0.1] hover:text-white/70"
-                >
-                  <X size={12} />
-                  Clear filters
-                </button>
-                {selectedSkills.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {selectedSkills.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => toggleSkill(s)}
-                        className="rounded-md bg-white/10 px-2 py-0.5 font-mono text-[10px] text-white/60 transition-colors hover:bg-white/15"
-                      >
-                        {s} ×
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            )}
           </motion.div>
 
           {/* Project grid */}
@@ -207,10 +146,10 @@ function ProjectsListing() {
                 No projects match the selected filters.
               </p>
               <button
-                onClick={clearFilters}
+                onClick={() => setSelectedType(undefined)}
                 className="mt-4 font-mono text-sm text-white/50 underline underline-offset-4 transition-colors hover:text-white/70"
               >
-                Clear all filters
+                Clear filter
               </button>
             </motion.div>
           )}

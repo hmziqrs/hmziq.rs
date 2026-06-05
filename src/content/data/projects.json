@@ -1,5 +1,155 @@
 [
   {
+    "title": "Flutter UI Designs",
+    "slug": "flutter-ui-designs",
+    "description": "Collection of beautifully crafted Flutter UI implementations supporting web, mobile, and desktop platforms.",
+    "type": "open-source",
+    "tech": ["Flutter", "Dart", "Firebase", "Provider"],
+    "readme": "A comprehensive collection of beautifully crafted Flutter UI implementations supporting web, mobile, and desktop platforms.\n\n## Features\n\n- Cross-platform support (Web, Android, iOS, Windows, macOS, Linux)\n- Responsive layouts that adapt to different screen sizes\n- Complex animations and transitions\n- Internationalization (English, Chinese, Arabic)\n- Dark/Light theme support\n- Firebase integration for analytics and crash reporting\n- State management with Provider pattern\n- Clean and modular architecture\n\n## UI Implementations\n\n1. **Healthy Food Delivery** — Food listing with parallax effects, nutritional info, rating system\n2. **Hot Air Balloon** — Booking interface, flight details, interactive balloon animations\n3. **Sky View** — Planet/Star viewing interface, parallax star field effects\n4. **Asics Shoes Concept** — Product showcase, color variants, size selection\n5. **Egg Timer Concept** — Circular timer interface, gesture-based controls\n6. **Chef Craft** — Recipe browsing, cooking instructions, ingredient lists\n\n## Key Contributions\n\n- Built custom internationalization library from scratch\n- Custom GitHub Actions script for multi-platform builds (Windows, Linux, macOS, Android)\n- Custom Dart CLI script for automated translation of JSON files\n- E2E tests with screenshots in both dark and light modes",
+    "stars": 332,
+    "links": {
+      "github": "https://github.com/hmziqrs/flutter-ui-designs"
+    },
+    "forks": 59,
+    "language": "Dart",
+    "lastPushed": "2024-11-20T05:30:09Z"
+  },
+  {
+    "title": "Flutter Movie Concept",
+    "slug": "flutter-movie-concept",
+    "description": "True cross-platform UI design featuring complex scroll-based animations powered by Flutter.",
+    "type": "open-source",
+    "tech": ["Flutter", "Dart", "Kotlin", "Swift", "C++"],
+    "readme": "A true cross-platform UI design featuring complex scroll-based animations powered by Flutter, running on mobile, desktop, and web.\n\nOriginally designed by [Aneesh](https://dribbble.com/aneeshravi).\n\n## Key Contributions\n\n- Structured code with Provider state management for maximum performance\n- Dark and light mode support\n- Custom internationalization library from scratch\n- Custom GitHub Actions script for multi-platform builds (Windows, Linux, macOS, Android)\n- Custom Dart CLI script for automated translation of English JSON files\n- E2E tests with screenshots in both dark and light mode\n- Complex gesture-based parallax animations\n\n## Downloads\n\nAvailable on Play Store, plus direct downloads for Windows, macOS, Linux, and Android APK from GitHub releases.",
+    "stars": 63,
+    "links": {
+      "github": "https://github.com/hmziqrs/invmovieconcept1"
+    },
+    "forks": 18,
+    "language": "Dart",
+    "lastPushed": "2024-11-20T05:24:36Z"
+  },
+  {
+    "title": "Claude Multi",
+    "slug": "claude-multi",
+    "description": "Run multiple isolated Claude Code instances side by side — each with its own provider, config, plugins, and MCP servers.",
+    "type": "open-source",
+    "tech": ["TypeScript", "Astro", "Python", "Shell", "JavaScript"],
+    "readme": "Run multiple isolated Claude Code instances side by side. Each one gets its own provider, config directory, plugins, MCP servers, and `claude-<name>` command.\n\n## Why?\n\nClaude Code is great. Switching between providers and model setups is not. If you want to try GLM today and DeepSeek tomorrow, you usually end up editing `settings.json` by hand, juggling env vars, swapping keys, or maintaining shell aliases.\n\nclaude-multi takes the other way: keep one harness you already like, and put the providers behind it. One workflow, many providers.\n\n```bash\nclaude          # your normal Claude Code setup\nclaude-glm      # Claude Code using GLM / Z.ai config\nclaude-deepseek # Claude Code using DeepSeek config\nclaude-minimax  # Claude Code using MiniMax config\n```\n\n## Features\n\n- Multiple Claude Code instances, one `claude-<name>` command each\n- Provider templates for GLM/Z.ai, MiniMax, and DeepSeek\n- Isolated config directories — every instance gets its own `~/.claude-<name>/`\n- Full terminal UI for adding, listing, plugins, MCP, and sync\n- Plugin management per instance: enable, disable, install, copy, remove\n- MCP management: list and copy server configs between instances\n- Optional auto-sync that symlinks plugins and skills from your default `~/.claude`\n- No fork — wraps your existing `claude` binary\n\n## Requirements\n\n- Node.js 18+ or Bun 1+\n- Claude Code installed globally",
+    "stars": 22,
+    "links": {
+      "github": "https://github.com/hmziqrs/claude-multi"
+    },
+    "forks": 4,
+    "language": "TypeScript",
+    "lastPushed": "2026-06-03T02:10:03Z"
+  },
+  {
+    "title": "React Native Loop",
+    "slug": "react-native-loop",
+    "description": "Clone of infinity loop game built with React Native, featuring parallax animations.",
+    "type": "open-source",
+    "tech": ["React Native", "TypeScript", "JavaScript", "Kotlin", "Swift"],
+    "readme": "A clone of the infinity loop game built with React Native, featuring parallax animations and cross-platform support.\n\n> **Note:** This project is archived. Planning a Flutter rewrite.",
+    "stars": 22,
+    "links": {
+      "github": "https://github.com/hmziqrs/react-native-loop-game"
+    },
+    "forks": 13,
+    "language": "TypeScript",
+    "lastPushed": "2024-11-20T01:54:38Z"
+  },
+  {
+    "title": "GPUI Starter",
+    "slug": "gpui-starter",
+    "description": "A full-featured desktop application boilerplate built with GPUI from Zed, for macOS.",
+    "type": "open-source",
+    "tech": ["Rust", "GPUI", "SQLite", "TypeScript", "Astro"],
+    "readme": "A full-featured desktop application boilerplate built with [GPUI](https://github.com/zed-industries/zed) from Zed, for macOS.\n\n## Features\n\n### Core\n\n- Lifecycle — startup / shutdown / crash state machine with first-run detection\n- Single instance — IPC guard prevents duplicate processes and forwards deep links\n- Window management — custom title bar with drag regions and native traffic-light buttons\n\n### UI\n\n- Collapsible sidebar with page routing\n- Custom title bar replacing native window chrome\n- Status bar with contextual status display\n- Command launcher (Cmd+K) with fuzzy search\n- Undo/redo with command-pattern stack\n\n### Data\n\n- SQLite via rusqlite for local persistence\n- JSON config with migration system\n- Secure storage via OS keyring (macOS Keychain, Windows Credential Manager, Linux Secret Service)\n\n### System\n\n- macOS system tray with quick-access menu\n- Native OS notifications with in-app toast fallback\n- Global hotkey (Alt+Space) and app-level keybindings\n- Deep link URL scheme handling\n\n### Internationalization\n\n- Fluent-based translations (English + Chinese Simplified)\n\n### Developer Experience\n\n- File-based logging via tracing-appender\n- Telemetry with consent gate\n- Live diagnostics page\n- Integration test harness\n- AccessKit integration for screen reader support\n\n## Themes\n\n23 built-in themes with live hot-reloading: Gruvbox, Tokyonight, Catppuccin, Everforest, Solarized, Ayu, Molokai, Jellybeans, Matrix, and more.",
+    "stars": 3,
+    "links": {
+      "github": "https://github.com/hmziqrs/gpui-starter"
+    },
+    "forks": 0,
+    "language": "Rust",
+    "lastPushed": "2026-06-05T00:20:08Z"
+  },
+  {
+    "title": "FHGL Launch",
+    "slug": "fhgllaunch",
+    "description": "A simple Dart command-line application, installable via Flutter pub global.",
+    "type": "open-source",
+    "tech": ["Dart"],
+    "readme": "A simple command-line application built with Dart.\n\n## Install\n\n```bash\nflutter pub global activate fhgllaunch\n```\n\n## Requirements\n\n- Dart 12.2+",
+    "stars": 2,
+    "links": {
+      "github": "https://github.com/hmziqrs/fhgllaunch"
+    },
+    "forks": 0,
+    "language": "Dart",
+    "lastPushed": "2022-01-06T01:28:01Z"
+  },
+  {
+    "title": "Gandalf Sax",
+    "slug": "gandalf",
+    "description": "Epic infinite sax Gandalf — NTP-synced to millisecond precision across all devices and platforms.",
+    "type": "open-source",
+    "tech": ["Kotlin", "Swift", "SwiftUI", "Jetpack Compose", "Rust", "egui", "Dart", "Firebase"],
+    "readme": "Glorious Gandalf sax — now NTP-synced to millisecond precision. Every device on every platform plays the exact same frame at the same time.\n\n## Features\n\n- NTP time sync — all devices play the same frame at the same time (millisecond precision)\n- Perfect seamless loop\n- Native first-party implementations per platform\n- Firebase Analytics + Crashlytics (mobile)\n- Hardware-accelerated video playback\n\n## Supported Platforms\n\n| Platform | Stack                    | Video Engine       |\n| -------- | ------------------------ | ------------------ |\n| Android  | Kotlin + Jetpack Compose | Media3 / ExoPlayer |\n| iOS      | Swift + SwiftUI          | AVPlayer           |\n| macOS    | Swift + SwiftUI          | AVPlayer           |\n| Windows  | Rust + egui              | libmpv             |\n| Linux    | Rust + egui              | libmpv             |\n\n## How Time Sync Works\n\nEvery device computes: `seekPosition = (correctedTime % videoDuration) + buffer`\n\nWhere `correctedTime = deviceTime + ntpOffset`. NTP offset is computed by querying 4 time servers and taking the median. Re-syncs every 60 seconds.",
+    "stars": 2,
+    "links": {
+      "github": "https://github.com/hmziqrs/gandalf-sax"
+    },
+    "forks": 0,
+    "language": "Dart",
+    "lastPushed": "2026-06-02T12:34:27Z"
+  },
+  {
+    "title": "Go Cross Screenshot",
+    "slug": "go-cross-screenshot",
+    "description": "A small cross-platform Go program to take screenshots via command line, useful for GUI automation testing.",
+    "type": "open-source",
+    "tech": ["Go"],
+    "readme": "A very small piece of cross-platform Go code to take screenshots via command line. Useful for taking screenshots of GUI apps during automation testing.",
+    "stars": 2,
+    "links": {
+      "github": "https://github.com/hmziqrs/go-cross-screenshot"
+    },
+    "forks": 1,
+    "language": "Go",
+    "lastPushed": "2020-07-30T03:19:35Z"
+  },
+  {
+    "title": "Ruxlog",
+    "slug": "ruxlog",
+    "description": "A full stack blog built with Dioxus, Rust, and WebAssembly.",
+    "type": "open-source",
+    "tech": ["Rust", "Dioxus", "WASM"],
+    "readme": "A full stack blog application built with Dioxus, featuring both server-side and web client capabilities using Rust and WebAssembly.",
+    "links": {
+      "github": "https://github.com/hmziqrs/ruxlog"
+    },
+    "stars": 2,
+    "forks": 1,
+    "language": "Rust",
+    "lastPushed": "2026-05-17T07:57:27Z"
+  },
+  {
+    "title": "Golang Minesweeper",
+    "slug": "golang-minesweeper",
+    "description": "CLI-based minesweeper built with Go.",
+    "type": "open-source",
+    "tech": ["Go"],
+    "readme": "A classic minesweeper game implemented as a CLI application in Go, playable directly in the terminal.",
+    "links": {
+      "github": "https://github.com/hmziqrs/go-minesweeper"
+    },
+    "stars": 1,
+    "forks": 0,
+    "language": "Go",
+    "lastPushed": "2021-08-18T19:18:30Z"
+  },
+  {
     "title": "Analytics Dashboard",
     "slug": "analytics-dashboard",
     "description": "Server-side rendered analytics dashboard with PDF reporting capabilities.",
@@ -24,16 +174,14 @@
     "type": "freelance",
     "tech": ["React Native", "Web3", "Ethereum", "Ethers"],
     "readme": "A fintech mobile prototype built under Toptal, integrating Web3 capabilities including SafeWallet, Magic Link authentication, and various blockchain functionalities using React Native.",
-    "context": "Toptal"
-  },
-  {
-    "title": "Claude Multi",
-    "slug": "claude-multi",
-    "description": "Run multiple isolated Claude Code instances side by side — each with its own provider, config, plugins, and MCP servers.",
-    "type": "open-source",
-    "tech": ["TypeScript", "Astro", "Python", "Shell", "JavaScript"],
-    "readme": "Run multiple isolated Claude Code instances side by side. Each one gets its own provider, config directory, plugins, MCP servers, and `claude-<name>` command.\n\n## Why?\n\nClaude Code is great. Switching between providers and model setups is not. If you want to try GLM today and DeepSeek tomorrow, you usually end up editing `settings.json` by hand, juggling env vars, swapping keys, or maintaining shell aliases.\n\nclaude-multi takes the other way: keep one harness you already like, and put the providers behind it. One workflow, many providers.\n\n```bash\nclaude          # your normal Claude Code setup\nclaude-glm      # Claude Code using GLM / Z.ai config\nclaude-deepseek # Claude Code using DeepSeek config\nclaude-minimax  # Claude Code using MiniMax config\n```\n\n## Features\n\n- Multiple Claude Code instances, one `claude-<name>` command each\n- Provider templates for GLM/Z.ai, MiniMax, and DeepSeek\n- Isolated config directories — every instance gets its own `~/.claude-<name>/`\n- Full terminal UI for adding, listing, plugins, MCP, and sync\n- Plugin management per instance: enable, disable, install, copy, remove\n- MCP management: list and copy server configs between instances\n- Optional auto-sync that symlinks plugins and skills from your default `~/.claude`\n- No fork — wraps your existing `claude` binary\n\n## Requirements\n\n- Node.js 18+ or Bun 1+\n- Claude Code installed globally",
-    "stars": 22
+    "context": "Toptal",
+    "links": {
+      "github": "https://github.com/hmziqrs/based_app_demo"
+    },
+    "stars": 0,
+    "forks": 0,
+    "language": "Dart",
+    "lastPushed": "2023-08-15T02:08:43Z"
   },
   {
     "title": "Codex GLM",
@@ -41,7 +189,14 @@
     "description": "A TypeScript project for GLM model integration.",
     "type": "open-source",
     "tech": ["TypeScript"],
-    "readme": "A TypeScript project related to GLM model integration and tooling."
+    "readme": "A TypeScript project related to GLM model integration and tooling.",
+    "links": {
+      "github": "https://github.com/hmziqrs/codex-glm"
+    },
+    "stars": 0,
+    "forks": 0,
+    "language": "TypeScript",
+    "lastPushed": "2026-05-07T18:05:59Z"
   },
   {
     "title": "Dynv6-rs",
@@ -49,16 +204,14 @@
     "description": "A Rust script to dynamically update IPv6 address to a domain.",
     "type": "open-source",
     "tech": ["Rust"],
-    "readme": "A Rust script that dynamically updates an IPv6 address to a domain using the dynv6 service, useful for home servers and dynamic DNS setups."
-  },
-  {
-    "title": "FHGL Launch",
-    "slug": "fhgllaunch",
-    "description": "A simple Dart command-line application, installable via Flutter pub global.",
-    "type": "open-source",
-    "tech": ["Dart"],
-    "readme": "A simple command-line application built with Dart.\n\n## Install\n\n```bash\nflutter pub global activate fhgllaunch\n```\n\n## Requirements\n\n- Dart 12.2+",
-    "stars": 2
+    "readme": "A Rust script that dynamically updates an IPv6 address to a domain using the dynv6 service, useful for home servers and dynamic DNS setups.",
+    "links": {
+      "github": "https://github.com/hmziqrs/dynv6-rs"
+    },
+    "stars": 0,
+    "forks": 0,
+    "language": "Rust",
+    "lastPushed": "2025-04-23T11:56:21Z"
   },
   {
     "title": "Flutter Experiments",
@@ -67,59 +220,6 @@
     "type": "open-source",
     "tech": ["Flutter", "Dart"],
     "readme": "A collection of Flutter experiments, prototypes, and proof-of-concept implementations exploring various Flutter capabilities and patterns."
-  },
-  {
-    "title": "Flutter Movie Concept",
-    "slug": "flutter-movie-concept",
-    "description": "True cross-platform UI design featuring complex scroll-based animations powered by Flutter.",
-    "type": "open-source",
-    "tech": ["Flutter", "Dart", "Kotlin", "Swift", "C++"],
-    "readme": "A true cross-platform UI design featuring complex scroll-based animations powered by Flutter, running on mobile, desktop, and web.\n\nOriginally designed by [Aneesh](https://dribbble.com/aneeshravi).\n\n## Key Contributions\n\n- Structured code with Provider state management for maximum performance\n- Dark and light mode support\n- Custom internationalization library from scratch\n- Custom GitHub Actions script for multi-platform builds (Windows, Linux, macOS, Android)\n- Custom Dart CLI script for automated translation of English JSON files\n- E2E tests with screenshots in both dark and light mode\n- Complex gesture-based parallax animations\n\n## Downloads\n\nAvailable on Play Store, plus direct downloads for Windows, macOS, Linux, and Android APK from GitHub releases.",
-    "stars": 63
-  },
-  {
-    "title": "Flutter UI Designs",
-    "slug": "flutter-ui-designs",
-    "description": "Collection of beautifully crafted Flutter UI implementations supporting web, mobile, and desktop platforms.",
-    "type": "open-source",
-    "tech": ["Flutter", "Dart", "Firebase", "Provider"],
-    "readme": "A comprehensive collection of beautifully crafted Flutter UI implementations supporting web, mobile, and desktop platforms.\n\n## Features\n\n- Cross-platform support (Web, Android, iOS, Windows, macOS, Linux)\n- Responsive layouts that adapt to different screen sizes\n- Complex animations and transitions\n- Internationalization (English, Chinese, Arabic)\n- Dark/Light theme support\n- Firebase integration for analytics and crash reporting\n- State management with Provider pattern\n- Clean and modular architecture\n\n## UI Implementations\n\n1. **Healthy Food Delivery** — Food listing with parallax effects, nutritional info, rating system\n2. **Hot Air Balloon** — Booking interface, flight details, interactive balloon animations\n3. **Sky View** — Planet/Star viewing interface, parallax star field effects\n4. **Asics Shoes Concept** — Product showcase, color variants, size selection\n5. **Egg Timer Concept** — Circular timer interface, gesture-based controls\n6. **Chef Craft** — Recipe browsing, cooking instructions, ingredient lists\n\n## Key Contributions\n\n- Built custom internationalization library from scratch\n- Custom GitHub Actions script for multi-platform builds (Windows, Linux, macOS, Android)\n- Custom Dart CLI script for automated translation of JSON files\n- E2E tests with screenshots in both dark and light modes",
-    "stars": 332
-  },
-  {
-    "title": "Gandalf Sax",
-    "slug": "gandalf",
-    "description": "Epic infinite sax Gandalf — NTP-synced to millisecond precision across all devices and platforms.",
-    "type": "open-source",
-    "tech": ["Kotlin", "Swift", "SwiftUI", "Jetpack Compose", "Rust", "egui", "Dart", "Firebase"],
-    "readme": "Glorious Gandalf sax — now NTP-synced to millisecond precision. Every device on every platform plays the exact same frame at the same time.\n\n## Features\n\n- NTP time sync — all devices play the same frame at the same time (millisecond precision)\n- Perfect seamless loop\n- Native first-party implementations per platform\n- Firebase Analytics + Crashlytics (mobile)\n- Hardware-accelerated video playback\n\n## Supported Platforms\n\n| Platform | Stack                    | Video Engine       |\n| -------- | ------------------------ | ------------------ |\n| Android  | Kotlin + Jetpack Compose | Media3 / ExoPlayer |\n| iOS      | Swift + SwiftUI          | AVPlayer           |\n| macOS    | Swift + SwiftUI          | AVPlayer           |\n| Windows  | Rust + egui              | libmpv             |\n| Linux    | Rust + egui              | libmpv             |\n\n## How Time Sync Works\n\nEvery device computes: `seekPosition = (correctedTime % videoDuration) + buffer`\n\nWhere `correctedTime = deviceTime + ntpOffset`. NTP offset is computed by querying 4 time servers and taking the median. Re-syncs every 60 seconds.",
-    "stars": 2
-  },
-  {
-    "title": "Go Cross Screenshot",
-    "slug": "go-cross-screenshot",
-    "description": "A small cross-platform Go program to take screenshots via command line, useful for GUI automation testing.",
-    "type": "open-source",
-    "tech": ["Go"],
-    "readme": "A very small piece of cross-platform Go code to take screenshots via command line. Useful for taking screenshots of GUI apps during automation testing.",
-    "stars": 2
-  },
-  {
-    "title": "Golang Minesweeper",
-    "slug": "golang-minesweeper",
-    "description": "CLI-based minesweeper built with Go.",
-    "type": "open-source",
-    "tech": ["Go"],
-    "readme": "A classic minesweeper game implemented as a CLI application in Go, playable directly in the terminal."
-  },
-  {
-    "title": "GPUI Starter",
-    "slug": "gpui-starter",
-    "description": "A full-featured desktop application boilerplate built with GPUI from Zed, for macOS.",
-    "type": "open-source",
-    "tech": ["Rust", "GPUI", "SQLite", "TypeScript", "Astro"],
-    "readme": "A full-featured desktop application boilerplate built with [GPUI](https://github.com/zed-industries/zed) from Zed, for macOS.\n\n## Features\n\n### Core\n\n- Lifecycle — startup / shutdown / crash state machine with first-run detection\n- Single instance — IPC guard prevents duplicate processes and forwards deep links\n- Window management — custom title bar with drag regions and native traffic-light buttons\n\n### UI\n\n- Collapsible sidebar with page routing\n- Custom title bar replacing native window chrome\n- Status bar with contextual status display\n- Command launcher (Cmd+K) with fuzzy search\n- Undo/redo with command-pattern stack\n\n### Data\n\n- SQLite via rusqlite for local persistence\n- JSON config with migration system\n- Secure storage via OS keyring (macOS Keychain, Windows Credential Manager, Linux Secret Service)\n\n### System\n\n- macOS system tray with quick-access menu\n- Native OS notifications with in-app toast fallback\n- Global hotkey (Alt+Space) and app-level keybindings\n- Deep link URL scheme handling\n\n### Internationalization\n\n- Fluent-based translations (English + Chinese Simplified)\n\n### Developer Experience\n\n- File-based logging via tracing-appender\n- Telemetry with consent gate\n- Live diagnostics page\n- Integration test harness\n- AccessKit integration for screen reader support\n\n## Themes\n\n23 built-in themes with live hot-reloading: Gruvbox, Tokyonight, Catppuccin, Everforest, Solarized, Ayu, Molokai, Jellybeans, Matrix, and more.",
-    "stars": 3
   },
   {
     "title": "Grow Youth Ministry",
@@ -146,7 +246,14 @@
       "WebAssembly",
       "Bun"
     ],
-    "readme": "A personal portfolio website built for speed and flexibility.\n\n## Tech Stack\n\nBun, Next.js 15+, React 19+, TypeScript, shadcn/ui, Tailwind CSS v4, Three.js, @react-three/fiber, @react-three/drei, Framer Motion, WebAssembly, Rust\n\n## Structure\n\n```\n├── app/              # Next.js App Router\n├── components/\n│   ├── ui/           # shadcn/ui components\n│   ├── three/        # Three.js components\n│   ├── sections/     # Page sections\n│   ├── effects/      # 2D canvas effects\n│   ├── performance/  # Performance monitoring\n│   └── debug/        # Debug components\n├── lib/              # Utils and configs\n├── hooks/            # Custom React hooks\n├── public/           # Static assets\n├── docs/             # Documentation\n├── wasm/             # Rust WebAssembly module\n└── scripts/          # Build scripts\n```"
+    "readme": "A personal portfolio website built for speed and flexibility.\n\n## Tech Stack\n\nBun, Next.js 15+, React 19+, TypeScript, shadcn/ui, Tailwind CSS v4, Three.js, @react-three/fiber, @react-three/drei, Framer Motion, WebAssembly, Rust\n\n## Structure\n\n```\n├── app/              # Next.js App Router\n├── components/\n│   ├── ui/           # shadcn/ui components\n│   ├── three/        # Three.js components\n│   ├── sections/     # Page sections\n│   ├── effects/      # 2D canvas effects\n│   ├── performance/  # Performance monitoring\n│   └── debug/        # Debug components\n├── lib/              # Utils and configs\n├── hooks/            # Custom React hooks\n├── public/           # Static assets\n├── docs/             # Documentation\n├── wasm/             # Rust WebAssembly module\n└── scripts/          # Build scripts\n```",
+    "links": {
+      "github": "https://github.com/hmziqrs/hmziq.rs"
+    },
+    "stars": 0,
+    "forks": 0,
+    "language": "TypeScript",
+    "lastPushed": "2026-05-18T11:59:02Z"
   },
   {
     "title": "Hmziq.xyz",
@@ -164,7 +271,14 @@
       "JavaScript",
       "TypeScript"
     ],
-    "readme": "A portfolio website built with Dioxus, a Rust-based web framework.\n\n## Features\n\n- Dioxus 0.7+ with automatic Tailwind CSS (no manual install needed)\n- Server and static asset generation\n- Component-focused architecture\n- Firebase deployment configuration\n\n## Development\n\n```bash\ndx serve                    # Start dev server\ndx serve --platform desktop # Desktop platform\n```\n\nAutomatic tailwind is supported by checking for `tailwind.css` in the app's manifest directory. Customize via `dioxus.toml`."
+    "readme": "A portfolio website built with Dioxus, a Rust-based web framework.\n\n## Features\n\n- Dioxus 0.7+ with automatic Tailwind CSS (no manual install needed)\n- Server and static asset generation\n- Component-focused architecture\n- Firebase deployment configuration\n\n## Development\n\n```bash\ndx serve                    # Start dev server\ndx serve --platform desktop # Desktop platform\n```\n\nAutomatic tailwind is supported by checking for `tailwind.css` in the app's manifest directory. Customize via `dioxus.toml`.",
+    "links": {
+      "github": "https://github.com/hmziqrs/hmziq.xyz"
+    },
+    "stars": 0,
+    "forks": 0,
+    "language": "HTML",
+    "lastPushed": "2026-06-05T00:29:09Z"
   },
   {
     "title": "Iced Code Editor",
@@ -172,7 +286,14 @@
     "description": "A high-performance, canvas-based code editor widget with syntax highlighting, line numbers, text selection, and keyboard navigation for the Iced GUI framework.",
     "type": "open-source",
     "tech": ["Rust", "Iced", "syntect"],
-    "readme": "A high-performance, canvas-based code editor widget for the [Iced](https://github.com/iced-rs/iced) GUI framework.\n\n## Features\n\n- Syntax highlighting for multiple programming languages via syntect\n- Line numbers with styled gutter\n- Text selection via mouse drag and keyboard shortcuts\n- Clipboard operations (copy, paste)\n- Undo/Redo with smart command grouping and configurable history\n- Custom scrollbars with themed styling\n- Focus management for multiple editors\n- Native Iced theme support — adapts to all 23+ built-in Iced themes\n- Line wrapping for long lines\n- High performance canvas-based rendering\n- Search and replace text\n- Language Server Protocol (LSP) support"
+    "readme": "A high-performance, canvas-based code editor widget for the [Iced](https://github.com/iced-rs/iced) GUI framework.\n\n## Features\n\n- Syntax highlighting for multiple programming languages via syntect\n- Line numbers with styled gutter\n- Text selection via mouse drag and keyboard shortcuts\n- Clipboard operations (copy, paste)\n- Undo/Redo with smart command grouping and configurable history\n- Custom scrollbars with themed styling\n- Focus management for multiple editors\n- Native Iced theme support — adapts to all 23+ built-in Iced themes\n- Line wrapping for long lines\n- High performance canvas-based rendering\n- Search and replace text\n- Language Server Protocol (LSP) support",
+    "links": {
+      "github": "https://github.com/hmziqrs/iced-code-editor"
+    },
+    "stars": 0,
+    "forks": 0,
+    "language": "Rust",
+    "lastPushed": "2026-04-07T19:31:58Z"
   },
   {
     "title": "Mixfame",
@@ -232,23 +353,6 @@
     "readme": "A real-time social platform built from the ground up with a custom backend replacing Firestore.\n\n**Key contributions:**\n\n- Built a custom back end with AdonisJS and PostgreSQL to replace Firestore as it bottlenecked primary queries\n- Built a Socket.IO-based event-triggering system to fetch and sync the latest data\n- Enhanced the Redux store architecture, improving code readability and scalability\n- Made a custom image caching component for Expo React Native\n- Full-stack architecture spanning Firebase, AWS (EC2, S3, RDS), and serverless functions"
   },
   {
-    "title": "React Native Loop",
-    "slug": "react-native-loop",
-    "description": "Clone of infinity loop game built with React Native, featuring parallax animations.",
-    "type": "open-source",
-    "tech": ["React Native", "TypeScript", "JavaScript", "Kotlin", "Swift"],
-    "readme": "A clone of the infinity loop game built with React Native, featuring parallax animations and cross-platform support.\n\n> **Note:** This project is archived. Planning a Flutter rewrite.",
-    "stars": 22
-  },
-  {
-    "title": "Ruxlog",
-    "slug": "ruxlog",
-    "description": "A full stack blog built with Dioxus, Rust, and WebAssembly.",
-    "type": "open-source",
-    "tech": ["Rust", "Dioxus", "WASM"],
-    "readme": "A full stack blog application built with Dioxus, featuring both server-side and web client capabilities using Rust and WebAssembly."
-  },
-  {
     "title": "Sastaticket.pk",
     "slug": "sastaticket-pk",
     "description": "Pakistan's top-ranked airline travel app with multi-payment gateway integration, automated CI/CD, and comprehensive analytics.",
@@ -301,7 +405,14 @@
     "description": "A Node.js crawler with Vue.js client for exploring Twitter profile activity with sorting and filtering.",
     "type": "open-source",
     "tech": ["TypeScript", "Node.js", "Puppeteer", "Vue.js", "Tailwind CSS"],
-    "readme": "A tool for crawling and exploring Twitter profile public activity.\n\n**Components:**\n\n- Node.js backend with Puppeteer for data crawling\n- Vue.js 3 frontend for data visualization\n- Tailwind CSS for styling\n- Sorting and filtering capabilities for tweets"
+    "readme": "A tool for crawling and exploring Twitter profile public activity.\n\n**Components:**\n\n- Node.js backend with Puppeteer for data crawling\n- Vue.js 3 frontend for data visualization\n- Tailwind CSS for styling\n- Sorting and filtering capabilities for tweets",
+    "links": {
+      "github": "https://github.com/hmziqrs/twitter-activity-viewer"
+    },
+    "stars": 0,
+    "forks": 0,
+    "language": "TypeScript",
+    "lastPushed": "2023-05-30T12:44:57Z"
   },
   {
     "title": "Vibekit",
@@ -318,7 +429,14 @@
       "Drizzle ORM",
       "better-auth"
     ],
-    "readme": "A SvelteKit project built with modern tooling.\n\n## Tech Stack\n\n- SvelteKit with TypeScript\n- Tailwind CSS with forms and typography plugins\n- Cloudflare Workers adapter\n- D1 database with Drizzle ORM\n- better-auth for authentication\n- Paraglide for internationalization (English + Urdu)"
+    "readme": "A SvelteKit project built with modern tooling.\n\n## Tech Stack\n\n- SvelteKit with TypeScript\n- Tailwind CSS with forms and typography plugins\n- Cloudflare Workers adapter\n- D1 database with Drizzle ORM\n- better-auth for authentication\n- Paraglide for internationalization (English + Urdu)",
+    "links": {
+      "github": "https://github.com/hmziqrs/vibekit"
+    },
+    "stars": 0,
+    "forks": 0,
+    "language": "TypeScript",
+    "lastPushed": "2026-05-27T00:51:31Z"
   },
   {
     "title": "Voxlabs",
@@ -355,6 +473,13 @@
     "description": "A Go tool to sync YouTube playlists to Google Drive as MP3 files using GitHub Actions.",
     "type": "open-source",
     "tech": ["Go", "GitHub Actions", "YouTube API", "Google Drive API"],
-    "readme": "A command-line tool built in Go that syncs YouTube playlists to Google Drive as MP3 files, automated via GitHub Actions.\n\n**Features:**\n\n- YouTube API v3 integration for playlist fetching\n- Google Drive API v3 for cloud storage\n- Automated scheduling via GitHub Actions\n- Audio extraction and MP3 conversion"
+    "readme": "A command-line tool built in Go that syncs YouTube playlists to Google Drive as MP3 files, automated via GitHub Actions.\n\n**Features:**\n\n- YouTube API v3 integration for playlist fetching\n- Google Drive API v3 for cloud storage\n- Automated scheduling via GitHub Actions\n- Audio extraction and MP3 conversion",
+    "links": {
+      "github": "https://github.com/hmziqrs/yt-playlist-sync"
+    },
+    "stars": 0,
+    "forks": 0,
+    "language": "Go",
+    "lastPushed": "2022-07-29T08:38:52Z"
   }
 ]

@@ -65,7 +65,7 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
           <TechBadge key={t} tech={t} />
         ))}
         {project.tech.length > 5 && (
-          <span className="flex h-6 items-center rounded-md bg-white/[0.04] px-1.5 font-mono text-[10px] text-white/30">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/10 font-mono text-[10px] text-white/40">
             +{project.tech.length - 5}
           </span>
         )}

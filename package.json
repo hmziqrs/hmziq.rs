@@ -18,6 +18,7 @@
     "dev": "bun build:wasm:dev && vp dev",
     "build": "bun run build:wasm && bun generate:feeds && vite build",
     "generate:feeds": "bun ./scripts/generate-feeds.ts",
+    "fetch:github": "bun ./scripts/fetch-github-stats.ts",
     "copy:wasm": "bun ./scripts/copy-wasm.ts",
     "build:wasm": "cd wasm && wasm-pack build --release --target web --out-dir pkg && bun copy:wasm",
     "build:wasm:dev": "cd wasm && wasm-pack build --target web --out-dir pkg --dev && bun ../scripts/copy-wasm.ts",
