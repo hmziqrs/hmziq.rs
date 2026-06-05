@@ -32,7 +32,7 @@ export function GlowTile({
 
   const content = (
     <div
-      className={`group relative flex ${direction === 'col' ? 'flex-col' : 'flex-row'} bg-gradient-radial items-center gap-3 overflow-hidden rounded-lg from-transparent via-transparent to-white/[0.05] px-6 py-4 shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)] backdrop-blur-sm transition-all duration-500 hover:to-white/[0.08] ${className}`}
+      className={`group relative flex ${direction === 'col' ? 'flex-col' : 'flex-row'} bg-white/3  border-white/2 hover:border-white/10 hover:bg-white/1 items-center gap-3 overflow-hidden px-6 py-4 backdrop-blur-sm transition-all border duration-500 ${className}`}
     >
       <div className="z-10 transition-transform duration-300 group-hover:scale-110">{icon}</div>
       <span className="relative z-10 font-mono text-sm font-medium tracking-wide text-white">
