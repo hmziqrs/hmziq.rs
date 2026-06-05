@@ -1,6 +1,6 @@
-import { IconType, SiGithub, SiX } from '@icons-pack/react-simple-icons'
+import { IconType, SiGithub, SiRust, SiX } from '@icons-pack/react-simple-icons'
 import { motion, type Variants } from 'framer-motion'
-import { Mail } from 'lucide-react'
+import { Box, Mail } from 'lucide-react'
 
 import { GlowTile } from '~/components/GlowTile'
 import { useSectionVariants } from '~/hooks/useSectionVariants'
@@ -89,6 +89,18 @@ export default function Contact() {
 
         <motion.div variants={itemVariants}>
           <p className="text-sm font-medium text-white/80">{copyright}</p>
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="mt-6 flex items-center justify-center gap-4">
+          <span className="flex items-center gap-1.5 font-mono text-xs text-white/30">
+            <SiRust size={14} color="#FFFFFF" />
+            Rust + WASM
+          </span>
+          <span className="text-white/10">·</span>
+          <span className="flex items-center gap-1.5 font-mono text-xs text-white/30">
+            <Box size={14} />
+            Three.js
+          </span>
         </motion.div>
       </motion.div>
     </section>

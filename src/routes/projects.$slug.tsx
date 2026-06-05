@@ -43,7 +43,7 @@ function ProjectDetailPage() {
           </div>
         }
       >
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-6xl">
           <ProjectDetail project={project} />
         </div>
       </ErrorBoundary>
@@ -116,7 +116,7 @@ function ProjectDetail({ project }: { project: Project }) {
         {project.tech.map((t) => (
           <span
             key={t}
-            className="rounded-lg bg-white/[0.06] px-3 py-1 font-mono text-xs text-white/50"
+            className="rounded-lg border border-white/10 bg-white/10 px-3 py-1 font-mono text-xs text-white/70"
           >
             {t}
           </span>

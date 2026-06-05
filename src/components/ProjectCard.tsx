@@ -3,10 +3,35 @@ import { motion, type Variants } from 'framer-motion'
 import { Star, ArrowRight } from 'lucide-react'
 
 import type { Project } from '~/lib/content/Projects'
+import { getTechIcon } from '~/lib/techIcons'
 
 interface ProjectCardProps {
   project: Project
   variants?: Variants
+}
+
+function TechBadge({ tech }: { tech: string }) {
+  const { icon: Icon, color, abbr } = getTechIcon(tech)
+
+  return (
+    <span className="group/badge relative inline-flex">
+      <span
+        className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/10 transition-colors group-hover/badge:border-white/20 group-hover/badge:bg-white/15"
+        title={tech}
+      >
+        {Icon ? (
+          <Icon size={14} color={color} title={tech} />
+        ) : (
+          <span className="font-mono text-[9px] font-bold" style={{ color }}>
+            {abbr}
+          </span>
+        )}
+      </span>
+      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 font-mono text-[10px] whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity group-hover/badge:opacity-100">
+        {tech}
+      </span>
+    </span>
+  )
 }
 
 export function ProjectCard({ project, variants }: ProjectCardProps) {
@@ -34,18 +59,13 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
       {/* Description */}
       <p className="line-clamp-2 text-xs leading-relaxed text-white/40">{project.description}</p>
 
-      {/* Tech pills */}
+      {/* Tech icons */}
       <div className="mt-auto flex flex-wrap gap-1.5">
         {project.tech.slice(0, 5).map((t) => (
-          <span
-            key={t}
-            className="rounded-md bg-white/[0.06] px-2 py-0.5 font-mono text-[10px] text-white/40"
-          >
-            {t}
-          </span>
+          <TechBadge key={t} tech={t} />
         ))}
         {project.tech.length > 5 && (
-          <span className="rounded-md bg-white/[0.04] px-2 py-0.5 font-mono text-[10px] text-white/30">
+          <span className="flex h-6 items-center rounded-md bg-white/[0.04] px-1.5 font-mono text-[10px] text-white/30">
             +{project.tech.length - 5}
           </span>
         )}
