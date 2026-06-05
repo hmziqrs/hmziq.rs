@@ -49,7 +49,7 @@ function ProjectsListing() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
   const [selectedType, setSelectedType] = useState<Project['type'] | undefined>()
 
-  const { containerVariants, itemVariants, prefersReducedMotion } = useSectionVariants({
+  const { containerVariants, itemVariants } = useSectionVariants({
     containerDuration: 0.6,
     staggerChildren: 0.05,
     itemDuration: 0.3,
@@ -208,12 +208,7 @@ function ProjectsListing() {
               className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
             >
               {filtered.map((project) => (
-                <ProjectCard
-                  key={project.slug}
-                  project={project}
-                  variants={itemVariants}
-                  prefersReducedMotion={prefersReducedMotion}
-                />
+                <ProjectCard key={project.slug} project={project} variants={itemVariants} />
               ))}
             </motion.div>
 

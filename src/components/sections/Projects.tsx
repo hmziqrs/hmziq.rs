@@ -39,12 +39,7 @@ export default function Projects() {
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {topProjects.map((project) => (
-            <ProjectCard
-              key={project.slug}
-              project={project}
-              variants={itemVariants}
-              prefersReducedMotion={prefersReducedMotion}
-            />
+            <ProjectCard key={project.slug} project={project} variants={itemVariants} />
           ))}
         </div>
 
