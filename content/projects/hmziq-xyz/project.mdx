@@ -1,7 +1,7 @@
 ---
 title: "Hmziq.xyz"
 slug: hmziq-xyz
-description: "Portfolio website built with Dioxus — a Rust web framework."
+description: "Portfolio website built with Dioxus 0.7+ and automatic Tailwind CSS."
 type: open-source
 tech:
   - Rust
@@ -9,17 +9,29 @@ tech:
   - Dioxus Router
   - Dioxus Web
   - Tailwind CSS
-  - Firebase
+  - CSS
+  - HTML
+  - JavaScript
+  - TypeScript
 links:
   github: "https://github.com/hmziqrs/hmziq.xyz"
   web: "https://hmziq.xyz/"
 ---
 
-A portfolio website built with Dioxus, a Rust-based web framework featuring both server and static assets.
+A portfolio website built with Dioxus, a Rust-based web framework.
 
-**Key features:**
-- Built as a Rust/Dioxus web app with Dioxus manifest and Cargo configuration
-- Tailwind CSS for styling
-- Contains HTML, Rust, CSS, and small JS/TS pieces
-- Deployment/config files for Firebase
-- Lightweight, component-focused structure optimized for experiments and fast iteration
+## Features
+
+- Dioxus 0.7+ with automatic Tailwind CSS (no manual install needed)
+- Server and static asset generation
+- Component-focused architecture
+- Firebase deployment configuration
+
+## Development
+
+```bash
+dx serve                    # Start dev server
+dx serve --platform desktop # Desktop platform
+```
+
+Automatic tailwind is supported by checking for `tailwind.css` in the app's manifest directory. Customize via `dioxus.toml`.

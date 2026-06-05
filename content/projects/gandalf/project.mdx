@@ -1,17 +1,46 @@
 ---
 title: "Gandalf Sax"
 slug: gandalf
-description: "Behold the glory of epic infinite gandalf — a cross-platform saxophone app with Svelte website."
+description: "Epic infinite sax Gandalf — NTP-synced to millisecond precision across all devices and platforms."
 type: open-source
 tech:
+  - Kotlin
+  - Swift
+  - SwiftUI
+  - Jetpack Compose
+  - Rust
+  - egui
   - Dart
-  - Flutter
-  - Svelte
-  - SvelteKit
+  - Firebase
+stars: 2
 links:
   github: "https://github.com/hmziqrs/gandalf-sax"
   playStore: "https://play.google.com/store/apps/details?id=com.onemdev.gandalf"
   web: "https://gandalf.hmziq.xyz"
 ---
 
-Behold the glory of epic infinite gandalf. A cross-platform application featuring saxophone content, built with Flutter/Dart for mobile and desktop, with a Svelte/SvelteKit website.
+Glorious Gandalf sax — now NTP-synced to millisecond precision. Every device on every platform plays the exact same frame at the same time.
+
+## Features
+
+- NTP time sync — all devices play the same frame at the same time (millisecond precision)
+- Perfect seamless loop
+- Native first-party implementations per platform
+- Firebase Analytics + Crashlytics (mobile)
+- Hardware-accelerated video playback
+
+## Supported Platforms
+
+| Platform | Stack | Video Engine |
+|----------|-------|-------------|
+| Android | Kotlin + Jetpack Compose | Media3 / ExoPlayer |
+| iOS | Swift + SwiftUI | AVPlayer |
+| macOS | Swift + SwiftUI | AVPlayer |
+| Windows | Rust + egui | libmpv |
+| Linux | Rust + egui | libmpv |
+
+## How Time Sync Works
+
+Every device computes: `seekPosition = (correctedTime % videoDuration) + buffer`
+
+Where `correctedTime = deviceTime + ntpOffset`. NTP offset is computed by querying 4 time servers and taking the median. Re-syncs every 60 seconds.

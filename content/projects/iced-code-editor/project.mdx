@@ -1,20 +1,30 @@
 ---
 title: "Iced Code Editor"
 slug: iced-code-editor
-description: "A fully-featured code editor widget with syntax highlighting, line numbers, text selection, and keyboard navigation for the Iced GUI framework."
+description: "A high-performance, canvas-based code editor widget with syntax highlighting, line numbers, text selection, and keyboard navigation for the Iced GUI framework."
 type: open-source
 tech:
   - Rust
   - Iced
+  - syntect
 links:
   github: "https://github.com/hmziqrs/iced-code-editor"
   crates: "https://crates.io/crates/iced-code-editor"
 ---
 
-A crate providing a fully-featured code editor widget for the Iced GUI framework.
+A high-performance, canvas-based code editor widget for the [Iced](https://github.com/iced-rs/iced) GUI framework.
 
-**Features:**
-- Syntax highlighting
-- Line numbers
-- Text selection
-- Comprehensive keyboard navigation
+## Features
+
+- Syntax highlighting for multiple programming languages via syntect
+- Line numbers with styled gutter
+- Text selection via mouse drag and keyboard shortcuts
+- Clipboard operations (copy, paste)
+- Undo/Redo with smart command grouping and configurable history
+- Custom scrollbars with themed styling
+- Focus management for multiple editors
+- Native Iced theme support — adapts to all 23+ built-in Iced themes
+- Line wrapping for long lines
+- High performance canvas-based rendering
+- Search and replace text
+- Language Server Protocol (LSP) support

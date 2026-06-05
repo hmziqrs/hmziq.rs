@@ -1,15 +1,38 @@
 ---
 title: "My CV"
 slug: my-cv
-description: "Personal CV built with Dioxus SSG and Rust."
+description: "Modern, responsive CV/portfolio website built with Rust, Dioxus SSG, and Tailwind CSS."
 type: open-source
 tech:
   - Rust
   - Dioxus
   - Dioxus SSG
+  - Tailwind CSS
 links:
   github: "https://github.com/hmziqrs/cv"
   web: "https://cv.hmziq.rs"
 ---
 
-A personal portfolio and CV website built with Dioxus static site generation (SSG) in Rust, featuring a clean design and responsive layout.
+A modern, responsive CV/portfolio website built with Rust and Dioxus, using Tailwind CSS for styling and hmziq-dioxus-free-icons for custom icon components.
+
+## Features
+
+- Responsive design optimized for desktop, tablet, and mobile
+- Light/Dark mode with auto-detection and smooth transitions
+- Print-friendly layout for PDF export
+- SEO optimized with structured metadata
+- Component-based modular architecture
+- Static site generation for fast loading
+
+## Utility Scripts
+
+- **chrome_capture.rs** — Headless Chrome automation for generating PDF and JPEG versions in light/dark themes
+- **stripper.rs** — HTML optimization tool that removes hydration data, cleans Dioxus attributes, and minifies output
+
+## Deployment
+
+Automated via GitHub Actions:
+- Builds with Dioxus and Tailwind CSS
+- Optimizes HTML output with stripper tool
+- Generates PDF/JPEG versions
+- Deploys to GitHub Pages and Cloudflare Pages

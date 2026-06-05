@@ -1,7 +1,7 @@
 ---
 title: "Hmziq.rs"
 slug: hmziq-rs
-description: "Personal portfolio site built with Next.js, React, Tailwind CSS, Three.js, and Rust/WebAssembly."
+description: "Personal portfolio site built with Next.js 15+, React 19+, Three.js, and Rust/WebAssembly."
 type: open-source
 tech:
   - TypeScript
@@ -9,9 +9,11 @@ tech:
   - React
   - Tailwind CSS
   - Three.js
+  - React Three Fiber
   - Framer Motion
   - Rust
   - WebAssembly
+  - Bun
 links:
   github: "https://github.com/hmziqrs/hmziq.rs"
   web: "https://hmziq.rs/"
@@ -19,9 +21,25 @@ links:
 
 A personal portfolio website built for speed and flexibility.
 
-**Key features:**
-- Next.js and React for server-side rendering and flexibility
-- Tailwind CSS and shadcn/ui for clean, responsive design
-- Framer Motion and Three.js for animations and 3D visuals
-- Rust with WebAssembly for performance-heavy computations
-- Optimized, containerized, and easy to maintain
+## Tech Stack
+
+Bun, Next.js 15+, React 19+, TypeScript, shadcn/ui, Tailwind CSS v4, Three.js, @react-three/fiber, @react-three/drei, Framer Motion, WebAssembly, Rust
+
+## Structure
+
+```
+├── app/              # Next.js App Router
+├── components/
+│   ├── ui/           # shadcn/ui components
+│   ├── three/        # Three.js components
+│   ├── sections/     # Page sections
+│   ├── effects/      # 2D canvas effects
+│   ├── performance/  # Performance monitoring
+│   └── debug/        # Debug components
+├── lib/              # Utils and configs
+├── hooks/            # Custom React hooks
+├── public/           # Static assets
+├── docs/             # Documentation
+├── wasm/             # Rust WebAssembly module
+└── scripts/          # Build scripts
+```

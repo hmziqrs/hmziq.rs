@@ -1,25 +1,48 @@
 ---
 title: "Claude Multi"
 slug: claude-multi
-description: "A tool to have multiple claude-code instances with deepseek, minimax, and z.ai glm models."
+description: "Run multiple isolated Claude Code instances side by side — each with its own provider, config, plugins, and MCP servers."
 type: open-source
 tech:
   - TypeScript
-  - Node.js
-  - Bun
+  - Astro
+  - Python
+  - Shell
+  - JavaScript
 stars: 22
 links:
   github: "https://github.com/hmziqrs/claude-multi"
   web: "https://claude-multi.hmziq.xyz"
+  npm: "https://www.npmjs.com/package/claude-multi"
 ---
 
-A tool to run multiple Claude Code instances with different LLM providers — each with its own config, plugins, and MCP servers.
+Run multiple isolated Claude Code instances side by side. Each one gets its own provider, config directory, plugins, MCP servers, and `claude-<name>` command.
 
-**Supported providers:** DeepSeek, MiniMax, Z.ai GLM, Xiaomi Mimo
+## Why?
 
-**Key features:**
-- Run isolated instances like `claude-glm` or `claude-deepseek`
-- Wraps the stock `claude` binary for each provider
-- Terminal UI for managing configurations
-- Published on npm
-- Runs on Node.js, Bun, pnpm, and Deno
+Claude Code is great. Switching between providers and model setups is not. If you want to try GLM today and DeepSeek tomorrow, you usually end up editing `settings.json` by hand, juggling env vars, swapping keys, or maintaining shell aliases.
+
+claude-multi takes the other way: keep one harness you already like, and put the providers behind it. One workflow, many providers.
+
+```bash
+claude          # your normal Claude Code setup
+claude-glm      # Claude Code using GLM / Z.ai config
+claude-deepseek # Claude Code using DeepSeek config
+claude-minimax  # Claude Code using MiniMax config
+```
+
+## Features
+
+- Multiple Claude Code instances, one `claude-<name>` command each
+- Provider templates for GLM/Z.ai, MiniMax, and DeepSeek
+- Isolated config directories — every instance gets its own `~/.claude-<name>/`
+- Full terminal UI for adding, listing, plugins, MCP, and sync
+- Plugin management per instance: enable, disable, install, copy, remove
+- MCP management: list and copy server configs between instances
+- Optional auto-sync that symlinks plugins and skills from your default `~/.claude`
+- No fork — wraps your existing `claude` binary
+
+## Requirements
+
+- Node.js 18+ or Bun 1+
+- Claude Code installed globally

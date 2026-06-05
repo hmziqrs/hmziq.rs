@@ -1,13 +1,56 @@
 ---
 title: "GPUI Starter"
 slug: gpui-starter
-description: "Starter boilerplate for building native desktop applications with GPUI in Rust."
+description: "A full-featured desktop application boilerplate built with GPUI from Zed, for macOS."
 type: open-source
 tech:
   - Rust
   - GPUI
+  - SQLite
+  - TypeScript
+  - Astro
+stars: 3
 links:
   github: "https://github.com/hmziqrs/gpui-starter"
 ---
 
-A starter boilerplate for building native desktop applications using the GPUI framework in Rust. Provides a foundation with component structure, build configuration, and common patterns for GPUI-based apps.
+A full-featured desktop application boilerplate built with [GPUI](https://github.com/zed-industries/zed) from Zed, for macOS.
+
+## Features
+
+### Core
+- Lifecycle — startup / shutdown / crash state machine with first-run detection
+- Single instance — IPC guard prevents duplicate processes and forwards deep links
+- Window management — custom title bar with drag regions and native traffic-light buttons
+
+### UI
+- Collapsible sidebar with page routing
+- Custom title bar replacing native window chrome
+- Status bar with contextual status display
+- Command launcher (Cmd+K) with fuzzy search
+- Undo/redo with command-pattern stack
+
+### Data
+- SQLite via rusqlite for local persistence
+- JSON config with migration system
+- Secure storage via OS keyring (macOS Keychain, Windows Credential Manager, Linux Secret Service)
+
+### System
+- macOS system tray with quick-access menu
+- Native OS notifications with in-app toast fallback
+- Global hotkey (Alt+Space) and app-level keybindings
+- Deep link URL scheme handling
+
+### Internationalization
+- Fluent-based translations (English + Chinese Simplified)
+
+### Developer Experience
+- File-based logging via tracing-appender
+- Telemetry with consent gate
+- Live diagnostics page
+- Integration test harness
+- AccessKit integration for screen reader support
+
+## Themes
+
+23 built-in themes with live hot-reloading: Gruvbox, Tokyonight, Catppuccin, Everforest, Solarized, Ayu, Molokai, Jellybeans, Matrix, and more.
