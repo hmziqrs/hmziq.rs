@@ -10,10 +10,6 @@ import { AnalyticsProvider } from '~/lib/analytics'
 
 const StarField3D = lazy(() => import('~/components/three/StarField'))
 
-const blackFallback = (
-  <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: -10 }} />
-)
-
 import appCss from '~/styles.css?url'
 
 const siteUrl = userData.websites.portfolio
@@ -112,10 +108,23 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
           Skip to content
         </a>
         <WASMProvider>
-          <WASMCanvas loadingFallback={blackFallback} errorFallback={blackFallback}>
-            <StarField3D />
-          </WASMCanvas>
           <AnalyticsProvider>
+            <WASMCanvas
+              loadingFallback={
+                <div
+                  className="fixed inset-0"
+                  style={{ backgroundColor: '#000000', zIndex: -10 }}
+                />
+              }
+              errorFallback={
+                <div
+                  className="fixed inset-0"
+                  style={{ backgroundColor: '#000000', zIndex: -10 }}
+                />
+              }
+            >
+              <StarField3D />
+            </WASMCanvas>
             <div id="root">{children}</div>
           </AnalyticsProvider>
         </WASMProvider>

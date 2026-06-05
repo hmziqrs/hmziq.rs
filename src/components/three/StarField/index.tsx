@@ -4,6 +4,7 @@ import * as THREE from 'three'
 
 import { useWASM } from '~/contexts/WASMContext'
 
+import { CanvasContextEvents } from '../CanvasContextEvents'
 import { VERTEX_SHADER, FRAGMENT_SHADER } from './shaders'
 import { useStarfieldEvents } from './useStarfieldEvents'
 import { useStarfieldFrame } from './useStarfieldFrame'
@@ -73,30 +74,52 @@ function Stars() {
   )
 }
 
+function StarFieldCanvas() {
+  const [canvasVersion, setCanvasVersion] = useState(0)
+  const recoveryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const markCanvas = useCallback((canvas: HTMLCanvasElement | null) => {
+    if (canvas) {
+      canvas.dataset.webglCanvas = 'starfield'
+    }
+  }, [])
+
+  const recoverContext = useCallback(() => {
+    if (recoveryTimeoutRef.current) return
+
+    recoveryTimeoutRef.current = setTimeout(() => {
+      setCanvasVersion((version) => version + 1)
+      recoveryTimeoutRef.current = null
+    }, 100)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (recoveryTimeoutRef.current) {
+        clearTimeout(recoveryTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  return (
+    <div className="fixed inset-0" style={{ zIndex: 1 }} aria-hidden="true">
+      <Canvas
+        key={canvasVersion}
+        ref={markCanvas}
+        camera={STARFIELD_CAMERA}
+        style={{ background: '#000000' }}
+      >
+        <CanvasContextEvents onContextLost={recoverContext} />
+        <Stars />
+      </Canvas>
+    </div>
+  )
+}
+
 export default function OptimizedStarField() {
   if (typeof window === 'undefined') {
     return <div className="fixed inset-0" style={{ backgroundColor: '#000000', zIndex: 1 }} />
   }
 
-  return (
-    <div className="fixed inset-0" style={{ zIndex: 1 }} aria-hidden="true">
-      <Canvas
-        camera={STARFIELD_CAMERA}
-        style={{ background: '#000000' }}
-        onCreated={({ gl }) => {
-          const canvas = gl.domElement
-          const handleContextLost = (e: Event) => {
-            e.preventDefault()
-          }
-          const handleContextRestored = () => {
-            // R3F handles re-render automatically
-          }
-          canvas.addEventListener('webglcontextlost', handleContextLost)
-          canvas.addEventListener('webglcontextrestored', handleContextRestored)
-        }}
-      >
-        <Stars />
-      </Canvas>
-    </div>
-  )
+  return <StarFieldCanvas />
 }

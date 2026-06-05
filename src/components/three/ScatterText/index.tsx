@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { useWASM } from '~/contexts/WASMContext'
 import { ScatterTextSharedMemory } from '~/lib/wasm/scatter-text'
 
+import { CanvasContextEvents } from '../CanvasContextEvents'
 import { fragmentShader, vertexShader } from './shaders'
 import { ScatterTextProps, PixelData, PixelGeneratorProps, ScatterRendererProps } from './types'
 
@@ -163,6 +164,7 @@ export default function ScatterText({ text }: ScatterTextProps) {
   const [isGenerating, setIsGenerating] = useState(true)
   const [pixelData, setPixelData] = useState<PixelData | null>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
+  const [canvasVersion, setCanvasVersion] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -185,6 +187,18 @@ export default function ScatterText({ text }: ScatterTextProps) {
     setIsGenerating(false)
   }, [])
 
+  const handleContextLost = useCallback(() => {
+    setPixelData(null)
+    setIsGenerating(true)
+    setCanvasVersion((version) => version + 1)
+  }, [])
+
+  const markCanvas = useCallback((canvas: HTMLCanvasElement | null) => {
+    if (canvas) {
+      canvas.dataset.webglCanvas = 'scatter-text'
+    }
+  }, [])
+
   if (typeof window === 'undefined') return null
 
   return (
@@ -202,6 +216,8 @@ export default function ScatterText({ text }: ScatterTextProps) {
         </>
       ) : pixelData ? (
         <Canvas
+          key={canvasVersion}
+          ref={markCanvas}
           camera={SCATTER_CAMERA}
           style={{
             position: 'absolute',
@@ -211,6 +227,7 @@ export default function ScatterText({ text }: ScatterTextProps) {
             height: containerSize.height,
           }}
         >
+          <CanvasContextEvents onContextLost={handleContextLost} />
           <ScatterRenderer pixelData={pixelData} />
         </Canvas>
       ) : null}

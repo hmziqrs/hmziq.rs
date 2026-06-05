@@ -5,6 +5,8 @@ import * as THREE from 'three'
 import type { WASMModule } from '~/lib/wasm/core'
 import type { StarFieldSharedMemory } from '~/lib/wasm/starfield'
 
+import { bindStarfieldGeometry } from './useStarfieldGeometry'
+
 interface UseStarfieldFrameOptions {
   wasmModule: WASMModule | null
   sharedMemoryRef: React.RefObject<StarFieldSharedMemory | null>
@@ -31,6 +33,12 @@ export function useStarfieldFrame({
     if (!wasmModule || !sharedMemoryRef.current) return
 
     try {
+      const sharedMemory = sharedMemoryRef.current
+      const geometry = starMeshRef.current?.geometry
+      if (geometry && sharedMemory.refreshViewsIfNeeded()) {
+        bindStarfieldGeometry(geometry, sharedMemory)
+      }
+
       if (!(state.camera instanceof THREE.PerspectiveCamera)) return
       const camera = state.camera
       if (!viewProjectionMatrixRef.current) viewProjectionMatrixRef.current = new THREE.Matrix4()
@@ -58,7 +66,7 @@ export function useStarfieldFrame({
 
       vpMatrix.set(viewProjectionMatrix.elements)
 
-      const frameResult = sharedMemoryRef.current.updateFrame(
+      const frameResult = sharedMemory.updateFrame(
         wasmModule,
         state.clock.elapsedTime,
         deltaTime,
@@ -67,6 +75,10 @@ export function useStarfieldFrame({
         clickBoostRef.current,
         speedMultiplierRef.current
       )
+
+      if (geometry && sharedMemory.refreshViewsIfNeeded()) {
+        bindStarfieldGeometry(geometry, sharedMemory)
+      }
 
       const baseRotationSpeedX = 0.02
       const baseRotationSpeedY = 0.01
@@ -80,6 +92,7 @@ export function useStarfieldFrame({
       // Read from pre-allocated WASM buffer (pointer to [f32; 2])
       if (
         !rotationDeltaViewRef.current ||
+        rotationDeltaViewRef.current.buffer !== wasmModule.memory.buffer ||
         rotationDeltaViewRef.current.byteOffset !== rotationDeltaPtr
       ) {
         rotationDeltaViewRef.current = new Float32Array(

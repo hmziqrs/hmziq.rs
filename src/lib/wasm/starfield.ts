@@ -10,6 +10,7 @@ export interface StarMemoryPointers {
   sizes_ptr: number
   twinkles_ptr: number
   sparkles_ptr: number
+  visibility_ptr: number
   count: number
   positions_x_length: number
   positions_y_length: number
@@ -20,6 +21,7 @@ export interface StarMemoryPointers {
   sizes_length: number
   twinkles_length: number
   sparkles_length: number
+  visibility_length: number
 }
 
 export interface FrameUpdateResult {
@@ -52,6 +54,20 @@ export class StarFieldSharedMemory {
     this.pointers = wasmModule.initialize_star_memory_pool(starCount)
     this.cameraMatrixPtr = 0
 
+    this.positions_x = null
+    this.positions_y = null
+    this.positions_z = null
+    this.colors_r = null
+    this.colors_g = null
+    this.colors_b = null
+    this.sizes = null
+    this.twinkles = null
+    this.sparkles = null
+
+    this.refreshViews()
+  }
+
+  private refreshViews(): void {
     this.positions_x = new Float32Array(
       this.wasmMemory.buffer,
       this.pointers.positions_x_ptr,
@@ -101,6 +117,15 @@ export class StarFieldSharedMemory {
       this.pointers.sparkles_ptr,
       this.pointers.sparkles_length
     )
+  }
+
+  refreshViewsIfNeeded(): boolean {
+    if (this.positions_x?.buffer === this.wasmMemory.buffer) {
+      return false
+    }
+
+    this.refreshViews()
+    return true
   }
 
   get count(): number {
