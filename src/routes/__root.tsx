@@ -4,7 +4,7 @@ import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/reac
 import metadataData from '~/content/data/metadata.json'
 import userData from '~/content/data/user.json'
 import { WASMProvider } from '~/contexts/WASMContext'
-import { AnalyticsProvider } from '~/providers/analytics'
+import { AnalyticsProvider } from '~/lib/analytics'
 
 import appCss from '~/styles.css?url'
 
@@ -43,16 +43,19 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { name: 'description', content: description },
       { name: 'theme-color', content: metadataData.theme.themeColor },
       { name: 'robots', content: 'index, follow' },
+      { name: 'keywords', content: metadataData.seo.additionalKeywords.join(', ') },
       { name: 'yandex-verification', content: '2c30efbb908a334d' },
       { property: 'og:type', content: metadataData.openGraph.type },
       { property: 'og:locale', content: metadataData.openGraph.locale },
       { property: 'og:url', content: siteUrl },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
+      { property: 'og:image', content: `${siteUrl}/fav/android-chrome-512x512.png` },
       { property: 'og:site_name', content: new URL(siteUrl).hostname },
       { name: 'twitter:card', content: metadataData.twitter.card },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
+      { name: 'twitter:image', content: `${siteUrl}/fav/android-chrome-512x512.png` },
       { name: 'twitter:creator', content: `@${userData.username}` },
     ],
     links: [
@@ -77,7 +80,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     scripts: [
       {
         type: 'application/ld+json',
-        children: JSON.stringify(jsonLd),
+        children: JSON.stringify(jsonLd).replace(/<\/script/gi, '<\\/script'),
       },
     ],
   }),

@@ -1,0 +1,82 @@
+import { useRouter } from '@tanstack/react-router'
+import { useEffect, useRef, useState } from 'react'
+
+// Lazy-loaded Firebase modules
+let firebaseAnalytics: typeof import('firebase/analytics') | null = null
+let firebaseApp: typeof import('firebase/app') | null = null
+
+const firebaseConfig = {
+  apiKey: import.meta.env.NEXT_PUBLIC_API_KEY,
+  authDomain: import.meta.env.NEXT_PUBLIC_AUTH_DOMAIN,
+  projectId: import.meta.env.NEXT_PUBLIC_PROJECT_ID,
+  storageBucket: import.meta.env.NEXT_PUBLIC_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.NEXT_PUBLIC_MESSAGING_SENDER_ID,
+  appId: import.meta.env.NEXT_PUBLIC_APP_ID,
+  measurementId: import.meta.env.NEXT_PUBLIC_MEASUREMENT_ID,
+}
+
+let initPromise: Promise<{ analytics: import('firebase/analytics').Analytics | null }> | null = null
+
+async function initFirebase() {
+  if (initPromise) return initPromise
+
+  initPromise = (async () => {
+    if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+      return { analytics: null }
+    }
+
+    try {
+      firebaseApp = await import('firebase/app')
+      firebaseAnalytics = await import('firebase/analytics')
+
+      const app = firebaseApp.initializeApp(firebaseConfig)
+      const analyticsSupported = await firebaseAnalytics.isSupported()
+
+      if (analyticsSupported) {
+        const analytics = firebaseAnalytics.getAnalytics(app)
+        return { analytics }
+      }
+
+      return { analytics: null }
+    } catch (error) {
+      console.error('Firebase initialization error:', error)
+      return { analytics: null }
+    }
+  })()
+
+  return initPromise
+}
+
+function AnalyticsTracker() {
+  const [analytics, setAnalytics] = useState<import('firebase/analytics').Analytics | null>(null)
+  const router = useRouter()
+  const { pathname } = router.state.location
+  const initRef = useRef(false)
+
+  useEffect(() => {
+    if (initRef.current) return
+    initRef.current = true
+
+    initFirebase().then(({ analytics: a }) => {
+      if (a) setAnalytics(a)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!analytics || !firebaseAnalytics) return
+    firebaseAnalytics.logEvent(analytics, 'page_view', {
+      page_path: pathname,
+    })
+  }, [analytics, pathname])
+
+  return null
+}
+
+export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <AnalyticsTracker />
+      {children}
+    </>
+  )
+}

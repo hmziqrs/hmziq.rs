@@ -1,8 +1,8 @@
 import { rmSync, writeFileSync } from 'node:fs'
-import { pipeline } from 'node:stream/promises'
 import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { Writable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
+import { fileURLToPath } from 'node:url'
 
 import { Feed } from 'feed'
 import { EnumChangefreq, SitemapStream } from 'sitemap'
@@ -56,7 +56,9 @@ console.log('Generated public/atom.xml')
 // Remove legacy sitemap artifacts
 rmSync(join(publicDir, 'sitemaps'), { recursive: true, force: true })
 for (const f of ['sitemap-index.xml', 'sitemap-0.xml']) {
-  try { rmSync(join(publicDir, f)) } catch {}
+  try {
+    rmSync(join(publicDir, f))
+  } catch {}
 }
 
 const pages = [

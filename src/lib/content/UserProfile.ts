@@ -25,6 +25,9 @@ interface WebsiteLink {
 class UserProfile {
   private data: UserData = userData
   private siteConfig: SiteData = siteData
+  private _socialLinks: SocialLink[] | null = null
+  private _primarySocialLinks: SocialLink[] | null = null
+  private _allLinksForSEO: (SocialLink | WebsiteLink)[] | null = null
 
   get profile(): Profile {
     return {
@@ -39,8 +42,9 @@ class UserProfile {
   }
 
   getSocialLinks(): SocialLink[] {
+    if (this._socialLinks) return this._socialLinks
     const social = this.data.social || {}
-    return Object.entries(social)
+    this._socialLinks = Object.entries(social)
       .map(([platform, username]) => {
         const platformConfig: SocialPlatform | undefined = this.siteConfig.socialPlatforms[platform]
         if (!platformConfig) return null
@@ -55,14 +59,17 @@ class UserProfile {
         }
       })
       .filter((link): link is SocialLink => link !== null)
+    return this._socialLinks
   }
 
   getPrimarySocialLinks(): SocialLink[] {
+    if (this._primarySocialLinks) return this._primarySocialLinks
     const primaryPlatforms = this.siteConfig.socialVisibility.primary.filter((p) => p !== 'email')
     const socialLinks = this.getSocialLinks().filter((link) =>
       primaryPlatforms.includes(link.name.toLowerCase())
     )
-    return [...socialLinks, this.getEmail()]
+    this._primarySocialLinks = [...socialLinks, this.getEmail()]
+    return this._primarySocialLinks
   }
 
   getWebsiteLinks(): WebsiteLink[] {
@@ -90,7 +97,9 @@ class UserProfile {
   }
 
   getAllLinksForSEO(): (SocialLink | WebsiteLink)[] {
-    return [...this.getAllSocialLinks(), ...this.getWebsiteLinks()]
+    if (this._allLinksForSEO) return this._allLinksForSEO
+    this._allLinksForSEO = [...this.getAllSocialLinks(), ...this.getWebsiteLinks()]
+    return this._allLinksForSEO
   }
 }
 

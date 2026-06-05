@@ -1,41 +1,22 @@
-import { motion, type Variants } from 'framer-motion'
-import { lazy, Suspense } from 'react'
+import { motion } from 'framer-motion'
+import { lazy } from 'react'
 
-import { ErrorBoundary } from '~/components/ErrorBoundary'
-import WASMLoader from '~/components/WASMLoader'
-import { useReducedMotion } from '~/hooks/useReducedMotion'
+import { WASMCanvas } from '~/components/WASMCanvas'
+import { useSectionVariants } from '~/hooks/useSectionVariants'
 import { siteContent } from '~/lib/content/SiteContent'
 import { userProfile } from '~/lib/content/UserProfile'
 
 const ScatterText = lazy(() => import('~/components/three/ScatterText'))
 
 export default function Hero() {
-  const prefersReducedMotion = useReducedMotion()
+  const { containerVariants, itemVariants, prefersReducedMotion } = useSectionVariants({
+    containerDuration: 1,
+    itemDuration: 0.8,
+    itemY: 50,
+    ease: [0.25, 0.46, 0.45, 0.94],
+  })
   const { name, title } = userProfile.profile
   const { scrollText } = siteContent.ui
-
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: prefersReducedMotion ? 0 : 1,
-        staggerChildren: prefersReducedMotion ? 0 : 0.2,
-      },
-    },
-  }
-
-  const itemVariants: Variants = {
-    hidden: { y: prefersReducedMotion ? 0 : 50, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: prefersReducedMotion ? 0 : 0.8,
-        ease: [0.25, 0.46, 0.45, 0.94],
-      },
-    },
-  }
 
   return (
     <section
@@ -50,19 +31,15 @@ export default function Hero() {
         animate="visible"
       >
         <div className="relative h-32 w-full">
-          <WASMLoader
+          <WASMCanvas
             loadingFallback={
               <div className="h-32 w-full">
                 <div className="text-6xl font-bold text-white md:text-7xl lg:text-8xl">{name}</div>
               </div>
             }
           >
-            <ErrorBoundary>
-              <Suspense fallback={null}>
-                <ScatterText text={name} />
-              </Suspense>
-            </ErrorBoundary>
-          </WASMLoader>
+            <ScatterText text={name} />
+          </WASMCanvas>
         </div>
 
         <motion.p

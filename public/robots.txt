@@ -3,8 +3,7 @@
 # Generic - Allow everything by default
 User-agent: *
 Allow: /
-Disallow: /_build/
-Disallow: /_serverFn/
+
 
 # Feeds
 Allow: /rss.xml
@@ -187,4 +186,4 @@ User-agent: Bravebot
 Allow: /
 
 # Sitemap
-Sitemap: https://hmziq.rs/sitemaps/sitemap-index.xml
+Sitemap: https://hmziq.rs/sitemap.xml

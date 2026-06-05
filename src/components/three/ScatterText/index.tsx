@@ -89,7 +89,6 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
 
 function ScatterRenderer({ pixelData }: ScatterRendererProps) {
   const { size } = useThree()
-  const meshRef = useRef<THREE.Points>(null)
   const wasmModule = useWASM().wasmModule
   const [threeData] = useState(() => {
     const sharedMemory = ScatterTextSharedMemory.getInstance()
@@ -157,7 +156,7 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
     }
   })
 
-  return <points ref={meshRef} geometry={threeData.geometry} material={threeData.material} />
+  return <points geometry={threeData.geometry} material={threeData.material} />
 }
 
 export default function ScatterText({ text }: ScatterTextProps) {

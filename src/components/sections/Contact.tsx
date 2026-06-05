@@ -2,7 +2,8 @@ import { IconType, SiGithub, SiX } from '@icons-pack/react-simple-icons'
 import { motion, type Variants } from 'framer-motion'
 import { Mail } from 'lucide-react'
 
-import { useReducedMotion } from '~/hooks/useReducedMotion'
+import { GlowTile } from '~/components/GlowTile'
+import { useSectionVariants } from '~/hooks/useSectionVariants'
 import { siteContent } from '~/lib/content/SiteContent'
 import { userProfile } from '~/lib/content/UserProfile'
 
@@ -26,33 +27,10 @@ function SocialIcon({ platform }: { platform: string }) {
 }
 
 export default function Contact() {
-  const prefersReducedMotion = useReducedMotion()
+  const { containerVariants, itemVariants, prefersReducedMotion } = useSectionVariants()
   const primarySocialLinks = userProfile.getPrimarySocialLinks()
   const allLinksForSEO = userProfile.getAllLinksForSEO()
   const { copyright } = siteContent.ui
-
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: prefersReducedMotion ? 0 : 0.8,
-        staggerChildren: prefersReducedMotion ? 0 : 0.2,
-      },
-    },
-  }
-
-  const itemVariants: Variants = {
-    hidden: { y: prefersReducedMotion ? 0 : 30, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: prefersReducedMotion ? 0 : 0.6,
-        ease: 'easeOut',
-      },
-    },
-  }
 
   const linkVariants: Variants = {
     hover: {
@@ -86,47 +64,16 @@ export default function Contact() {
           variants={itemVariants}
         >
           {primarySocialLinks.map((link) => (
-            <motion.a
+            <GlowTile
               key={link.name}
+              icon={<SocialIcon platform={link.name} />}
+              label={link.username}
+              direction="col"
               href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${link.name}: ${link.username}`}
-              className="cosmic-contact-tile"
+              ariaLabel={`${link.name}: ${link.username}`}
               variants={linkVariants}
-              whileHover={
-                prefersReducedMotion
-                  ? {}
-                  : {
-                      scale: 1.15,
-                      rotate: 3,
-                      transition: { type: 'spring', stiffness: 400, damping: 25 },
-                    }
-              }
-            >
-              <div className="group bg-gradient-radial relative flex cursor-pointer flex-col items-center gap-3 overflow-hidden rounded-lg from-transparent via-transparent to-white/[0.05] px-6 py-4 shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)] backdrop-blur-sm transition-all duration-500 hover:to-white/[0.08]">
-                <div className="z-10 transition-transform duration-300 group-hover:scale-110">
-                  <SocialIcon platform={link.name} />
-                </div>
-
-                <span className="relative z-10 text-center font-mono text-sm font-medium tracking-wide text-white">
-                  {link.username}
-                </span>
-
-                {/* White shine effect on hover */}
-                <div className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100">
-                  <div
-                    className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0"
-                    style={{
-                      background:
-                        'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',
-                      width: '200%',
-                      height: '200%',
-                    }}
-                  />
-                </div>
-              </div>
-            </motion.a>
+              prefersReducedMotion={prefersReducedMotion}
+            />
           ))}
         </motion.div>
 

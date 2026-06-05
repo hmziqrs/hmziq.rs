@@ -26,9 +26,6 @@ routeTree.gen.ts
 # local env files
 .env*.local
 
-# vercel
-.vercel
-
 # typescript
 *.tsbuildinfo
 
@@ -49,6 +46,5 @@ Cargo.lock
 # Generated static assets (run `bun generate:feeds`)
 /public/rss.xml
 /public/atom.xml
-/public/sitemaps/
 
 .react-doctor

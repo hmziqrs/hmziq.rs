@@ -45,17 +45,18 @@
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color-scheme: dark;
   }
 
   body {
     scroll-behavior: smooth;
   }
-}
 
-/* Remove default link styles */
-a {
-  color: inherit;
-  text-decoration: none;
+  /* Remove default link styles */
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 /* Custom scrollbar */
@@ -74,6 +75,12 @@ a {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #737373;
+}
+
+/* Firefox scrollbar */
+html {
+  scrollbar-color: #525252 #111111;
+  scrollbar-width: thin;
 }
 
 /* Focus styles for accessibility */
@@ -106,4 +113,13 @@ a {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.bg-gradient-radial {
+  background-image: radial-gradient(
+    ellipse at center,
+    var(--tw-gradient-from),
+    var(--tw-gradient-via),
+    var(--tw-gradient-to)
+  );
 }

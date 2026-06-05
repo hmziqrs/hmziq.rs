@@ -1,6 +1,8 @@
 {
   "name": "hmziqrs",
   "short_name": "hmziqrs",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "/fav/android-chrome-192x192.png",

@@ -3,6 +3,8 @@ use wasm_bindgen::prelude::*;
 
 use std::simd::{f32x16, num::SimdFloat};
 
+use crate::math::seed_random;
+
 const SIMD_BATCH_SIZE: usize = 16;
 const MAX_PARTICLES: usize = 10000;
 
@@ -170,9 +172,9 @@ pub fn set_text_pixels(
 
                         // Set random starting position
                         state.positions_x[particle_index] =
-                            js_sys::Math::random() as f32 * canvas_width;
+                            seed_random(particle_count as i32 + 1000) * canvas_width;
                         state.positions_y[particle_index] =
-                            js_sys::Math::random() as f32 * canvas_height;
+                            seed_random(particle_count as i32 + 2000) * canvas_height;
 
                         // Set color
                         state.colors_r[particle_index] = (pixel_data[index] as f32) / 255.0;
@@ -183,8 +185,8 @@ pub fn set_text_pixels(
                         state.opacity[particle_index] = 1.0;
 
                         // Pre-calculate scatter velocity
-                        let angle = js_sys::Math::random() as f32 * std::f32::consts::PI * 2.0;
-                        let speed = (js_sys::Math::random() as f32 * state.scatter_speed) + 1.0;
+                        let angle = seed_random(particle_count as i32 + 3000) * std::f32::consts::PI * 2.0;
+                        let speed = (seed_random(particle_count as i32 + 4000) * state.scatter_speed) + 1.0;
                         state.scatter_vx[particle_index] = angle.cos() * speed;
                         state.scatter_vy[particle_index] = angle.sin() * speed;
 
@@ -249,7 +251,7 @@ pub fn start_scattering() {
 }
 
 #[wasm_bindgen]
-pub fn update_particles(_delta_time: f32) {
+pub fn update_particles(delta_time: f32) {
     SCATTER_TEXT_STATE.with(|cell| {
         let mut state_ref = cell.borrow_mut();
         let state = state_ref.as_mut().expect("ScatterText not initialized");
@@ -264,18 +266,18 @@ pub fn update_particles(_delta_time: f32) {
 
         for chunk in 0..simd_chunks {
             let base = chunk * SIMD_BATCH_SIZE;
-            update_particle_batch_simd(state, base);
+            update_particle_batch_simd(state, base, delta_time);
         }
 
         // Handle remaining particles
         let remaining_start = simd_chunks * SIMD_BATCH_SIZE;
         for i in remaining_start..count {
-            update_particle_scalar(state, i);
+            update_particle_scalar(state, i, delta_time);
         }
     });
 }
 
-fn update_particle_batch_simd(state: &mut ScatterTextState, base: usize) {
+fn update_particle_batch_simd(state: &mut ScatterTextState, base: usize, delta_time: f32) {
     // Load current positions
     let pos_x = f32x16::from_slice(&state.positions_x[base..base + SIMD_BATCH_SIZE]);
     let pos_y = f32x16::from_slice(&state.positions_y[base..base + SIMD_BATCH_SIZE]);
@@ -307,8 +309,9 @@ fn update_particle_batch_simd(state: &mut ScatterTextState, base: usize) {
         let vy = f32x16::from_slice(&state.scatter_vy[base..base + SIMD_BATCH_SIZE]);
 
         // Update positions with scatter velocity
-        let new_x = pos_x + vx;
-        let new_y = pos_y + vy;
+        let dt = f32x16::splat(delta_time);
+        let new_x = pos_x + vx * dt;
+        let new_y = pos_y + vy * dt;
 
         // Store new positions
         new_x.copy_to_slice(&mut state.positions_x[base..base + SIMD_BATCH_SIZE]);
@@ -330,7 +333,7 @@ fn update_particle_batch_simd(state: &mut ScatterTextState, base: usize) {
     }
 }
 
-fn update_particle_scalar(state: &mut ScatterTextState, index: usize) {
+fn update_particle_scalar(state: &mut ScatterTextState, index: usize, delta_time: f32) {
     if state.forming {
         // Reset opacity
         state.opacity[index] = 1.0;
@@ -357,8 +360,8 @@ fn update_particle_scalar(state: &mut ScatterTextState, index: usize) {
         }
 
         // Scatter animation
-        state.positions_x[index] += state.scatter_vx[index];
-        state.positions_y[index] += state.scatter_vy[index];
+        state.positions_x[index] += state.scatter_vx[index] * delta_time;
+        state.positions_y[index] += state.scatter_vy[index] * delta_time;
 
         // Fade out
         state.opacity[index] = (state.opacity[index] - state.fade_rate).max(0.0);

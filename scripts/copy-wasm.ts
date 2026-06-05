@@ -18,7 +18,7 @@ if (!existsSync(wasmPkgDir)) {
 }
 
 // Copy all necessary files
-const filesToCopy = ['hmziq_wasm_bg.wasm', 'hmziq_wasm.js', 'hmziq_wasm_bg.js', 'hmziq_wasm.d.ts']
+const filesToCopy = ['hmziq_wasm_bg.wasm', 'hmziq_wasm.js', 'hmziq_wasm.d.ts']
 
 for (const file of filesToCopy) {
   const src = join(wasmPkgDir, file)
