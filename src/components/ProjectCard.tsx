@@ -1,8 +1,8 @@
+import { Link } from '@tanstack/react-router'
 import { motion, type TargetAndTransition, type Variants } from 'framer-motion'
-import { Star, ExternalLink } from 'lucide-react'
+import { Star, ArrowRight } from 'lucide-react'
 
 import type { Project } from '~/lib/content/Projects'
-import { projects } from '~/lib/content/Projects'
 
 interface ProjectCardProps {
   project: Project
@@ -11,8 +11,6 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, variants, prefersReducedMotion }: ProjectCardProps) {
-  const href = projects.primaryLink(project)
-
   const hoverAnimation: TargetAndTransition | undefined = prefersReducedMotion
     ? undefined
     : {
@@ -34,12 +32,10 @@ export function ProjectCard({ project, variants, prefersReducedMotion }: Project
               {project.stars}
             </span>
           )}
-          {href && (
-            <ExternalLink
-              size={14}
-              className="text-white/30 transition-colors group-hover:text-white/60"
-            />
-          )}
+          <ArrowRight
+            size={14}
+            className="text-white/20 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-white/50"
+          />
         </div>
       </div>
 
@@ -85,25 +81,16 @@ export function ProjectCard({ project, variants, prefersReducedMotion }: Project
     </div>
   )
 
-  if (href) {
-    return (
-      <motion.a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
+  return (
+    <motion.div variants={variants} whileHover={hoverAnimation} className="h-full">
+      <Link
+        to="/projects/$slug"
+        params={{ slug: project.slug }}
         aria-label={`${project.title} — ${project.description}`}
-        variants={variants}
-        whileHover={hoverAnimation}
         className="block h-full"
       >
         {content}
-      </motion.a>
-    )
-  }
-
-  return (
-    <motion.div variants={variants} whileHover={hoverAnimation} className="h-full">
-      {content}
+      </Link>
     </motion.div>
   )
 }

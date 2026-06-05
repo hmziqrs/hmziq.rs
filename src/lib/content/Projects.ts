@@ -18,6 +18,8 @@ export interface Project {
   stars?: number
   links?: ProjectLink
   context?: string
+  period?: string
+  readme?: string
 }
 
 class ProjectsManager {
@@ -25,6 +27,10 @@ class ProjectsManager {
 
   get all(): Project[] {
     return this.projects
+  }
+
+  findBySlug(slug: string): Project | undefined {
+    return this.projects.find((p) => p.slug === slug)
   }
 
   topByStars(n: number): Project[] {
