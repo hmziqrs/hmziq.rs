@@ -1,5 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Link } from '@tanstack/react-router'
+import { createFileRoute, Link, Outlet, useLocation } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { ArrowLeft, X } from 'lucide-react'
 import { lazy, useMemo, useState, useCallback } from 'react'
@@ -21,6 +20,32 @@ export const Route = createFileRoute('/projects')({
 })
 
 function ProjectsPage() {
+  const location = useLocation()
+  const isIndex = location.pathname === '/projects'
+
+  if (!isIndex) {
+    return (
+      <main className="relative min-h-screen">
+        <WASMCanvas loadingFallback={blackFallback} errorFallback={blackFallback}>
+          <StarField3D />
+        </WASMCanvas>
+        <ErrorBoundary
+          fallback={
+            <div className="flex min-h-screen items-center justify-center text-white">
+              Something went wrong
+            </div>
+          }
+        >
+          <Outlet />
+        </ErrorBoundary>
+      </main>
+    )
+  }
+
+  return <ProjectsListing />
+}
+
+function ProjectsListing() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
   const [selectedType, setSelectedType] = useState<Project['type'] | undefined>()
 

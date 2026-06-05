@@ -7,7 +7,7 @@ import { useSectionVariants } from '~/hooks/useSectionVariants'
 import { projects } from '~/lib/content/Projects'
 
 export default function Projects() {
-  const { containerVariants, itemVariants, prefersReducedMotion } = useSectionVariants({
+  const { containerVariants, itemVariants } = useSectionVariants({
     containerDuration: 0.8,
     staggerChildren: 0.1,
     itemDuration: 0.4,

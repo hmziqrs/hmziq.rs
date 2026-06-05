@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { motion, type TargetAndTransition, type Variants } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 import { Star, ArrowRight } from 'lucide-react'
 
 import type { Project } from '~/lib/content/Projects'
@@ -7,19 +7,11 @@ import type { Project } from '~/lib/content/Projects'
 interface ProjectCardProps {
   project: Project
   variants?: Variants
-  prefersReducedMotion?: boolean
 }
 
-export function ProjectCard({ project, variants, prefersReducedMotion }: ProjectCardProps) {
-  const hoverAnimation: TargetAndTransition | undefined = prefersReducedMotion
-    ? undefined
-    : {
-        scale: 1.03,
-        transition: { type: 'spring', stiffness: 400, damping: 25 },
-      }
-
+export function ProjectCard({ project, variants }: ProjectCardProps) {
   const content = (
-    <div className="group bg-gradient-radial relative flex h-full flex-col gap-3 overflow-hidden rounded-xl from-transparent via-transparent to-white/[0.05] p-5 shadow-[inset_0_0_20px_rgba(255,255,255,0.07),0_0_10px_rgba(255,255,255,0.03)] backdrop-blur-sm transition-all duration-500 hover:to-white/[0.08]">
+    <div className="group relative flex h-full flex-col gap-3 overflow-hidden border border-white/2 bg-white/3 px-6 py-4 backdrop-blur-sm transition-all duration-500 hover:border-white/10 hover:bg-white/1">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-mono text-sm font-semibold tracking-wide text-white group-hover:text-white/90">
@@ -72,7 +64,7 @@ export function ProjectCard({ project, variants, prefersReducedMotion }: Project
           className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0"
           style={{
             background:
-              'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%)',
+              'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',
             width: '200%',
             height: '200%',
           }}
@@ -82,7 +74,7 @@ export function ProjectCard({ project, variants, prefersReducedMotion }: Project
   )
 
   return (
-    <motion.div variants={variants} whileHover={hoverAnimation} className="h-full">
+    <motion.div variants={variants} className="h-full">
       <Link
         to="/projects/$slug"
         params={{ slug: project.slug }}
