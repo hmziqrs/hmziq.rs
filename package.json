@@ -15,7 +15,7 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "bun build:wasm:dev && vite dev",
+    "dev": "bun build:wasm:dev && vp dev",
     "build": "bun run build:wasm && bun generate:feeds && vite build",
     "generate:feeds": "bun ./scripts/generate-feeds.ts",
     "copy:wasm": "bun ./scripts/copy-wasm.ts",

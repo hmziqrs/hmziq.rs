@@ -26,7 +26,8 @@ export interface WASMModule {
     base_speed_y: number,
     speed_multiplier: number,
     delta_time: number
-  ) => Float32Array
+  ) => number
+  destroy_star_memory_pool: () => void
   set_text_pixels: (
     pixel_data: Uint8Array,
     width: number,
@@ -47,6 +48,7 @@ interface WasmGlueModule {
   update_frame_simd: WASMModule['update_frame_simd']
   calculate_speed_multiplier: WASMModule['calculate_speed_multiplier']
   calculate_rotation_delta: WASMModule['calculate_rotation_delta']
+  destroy_star_memory_pool: () => void
   set_text_pixels: WASMModule['set_text_pixels']
   get_scatter_text_pointers: () => ScatterTextPointers
   start_forming: () => void
@@ -78,6 +80,7 @@ export async function loadWASM(): Promise<WASMModule> {
         update_frame_simd: wasmImport.update_frame_simd,
         calculate_speed_multiplier: wasmImport.calculate_speed_multiplier,
         calculate_rotation_delta: wasmImport.calculate_rotation_delta,
+        destroy_star_memory_pool: wasmImport.destroy_star_memory_pool,
         set_text_pixels: wasmImport.set_text_pixels,
         get_scatter_text_pointers: wasmImport.get_scatter_text_pointers,
         start_forming: wasmImport.start_forming,

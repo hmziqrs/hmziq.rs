@@ -15,6 +15,10 @@ thread_local! {
     static STAR_MEMORY_POOL: RefCell<Option<StarMemoryPool>> = const { RefCell::new(None) };
 }
 
+thread_local! {
+    static ROTATION_DELTA_BUFFER: RefCell<[f32; 2]> = const { RefCell::new([0.0; 2]) };
+}
+
 #[repr(C)]
 pub struct StarMemoryPool {
     positions_x: Vec<f32>,
@@ -356,6 +360,13 @@ pub fn initialize_star_memory_pool(count: usize) -> StarMemoryPointers {
     pointers
 }
 
+#[wasm_bindgen]
+pub fn destroy_star_memory_pool() {
+    STAR_MEMORY_POOL.with(|pool_cell| {
+        *pool_cell.borrow_mut() = None;
+    });
+}
+
 fn calculate_effects_into_buffers_simd(
     positions_x: &[f32],
     positions_y: &[f32],
@@ -510,11 +521,13 @@ pub fn calculate_rotation_delta(
     base_speed_y: f32,
     speed_multiplier: f32,
     delta_time: f32,
-) -> Vec<f32> {
-    vec![
-        base_speed_x * speed_multiplier * delta_time,
-        base_speed_y * speed_multiplier * delta_time,
-    ]
+) -> u32 {
+    ROTATION_DELTA_BUFFER.with(|buffer| {
+        let mut buf = buffer.borrow_mut();
+        buf[0] = base_speed_x * speed_multiplier * delta_time;
+        buf[1] = base_speed_y * speed_multiplier * delta_time;
+        buf.as_ptr() as u32
+    })
 }
 
 #[wasm_bindgen]
@@ -548,25 +561,41 @@ pub struct FrameUpdateResult {
     pub culling_dirty: bool,
 }
 
+fn extract_frustum_planes(vp: &[f32]) -> [[f32; 4]; 6] {
+    // Column-major layout: vp[col * 4 + row]
+    let (r0, r1, r2, r3) = (vp[0], vp[4], vp[8], vp[12]);
+    let (r4, r5, r6, r7) = (vp[1], vp[5], vp[9], vp[13]);
+    let (r8, r9, r10, r11) = (vp[2], vp[6], vp[10], vp[14]);
+    let (r12, r13, r14, r15) = (vp[3], vp[7], vp[11], vp[15]);
+
+    [
+        // Left:   row3 + row0
+        [r3 + r0, r7 + r4, r11 + r8, r15 + r12],
+        // Right:  row3 - row0
+        [r3 - r0, r7 - r4, r11 - r8, r15 - r12],
+        // Bottom: row3 + row1
+        [r3 + r1, r7 + r5, r11 + r9, r15 + r13],
+        // Top:    row3 - row1
+        [r3 - r1, r7 - r5, r11 - r9, r15 - r13],
+        // Near:   row3 + row2
+        [r3 + r2, r7 + r6, r11 + r10, r15 + r14],
+        // Far:    row3 - row2
+        [r3 - r2, r7 - r6, r11 - r10, r15 - r14],
+    ]
+}
+
 #[wasm_bindgen]
 pub fn update_frame_simd(
     time: f32,
     _delta_time: f32,
     camera_matrix_ptr: *const f32,
-    is_moving: bool,
-    click_time: f32,
-    current_speed_multiplier: f32,
+    _is_moving: bool,
+    _click_time: f32,
+    _current_speed_multiplier: f32,
 ) -> FrameUpdateResult {
     STAR_MEMORY_POOL.with(|pool_cell| {
         if let Some(pool) = pool_cell.borrow_mut().as_mut() {
             let count = pool.count;
-
-            let _speed_multiplier = calculate_speed_multiplier(
-                is_moving,
-                click_time as f64,
-                time as f64,
-                current_speed_multiplier,
-            );
 
             calculate_effects_into_buffers_simd(
                 &pool.positions_x,
@@ -578,8 +607,31 @@ pub fn update_frame_simd(
             );
 
             let visible_count = if !camera_matrix_ptr.is_null() {
-                // TODO: Implement safe camera matrix handling when needed
-                count
+                // Read view-projection matrix (column-major 4x4)
+                let vp = unsafe { std::slice::from_raw_parts(camera_matrix_ptr, 16) };
+
+                // Extract frustum planes from VP matrix (Gribb-Hartmann method)
+                let planes = extract_frustum_planes(vp);
+
+                // Count visible stars
+                let mut visible = 0;
+                for i in 0..count {
+                    let x = pool.positions_x[i];
+                    let y = pool.positions_y[i];
+                    let z = pool.positions_z[i];
+
+                    let mut inside = true;
+                    for plane in &planes {
+                        if x * plane[0] + y * plane[1] + z * plane[2] + plane[3] < 0.0 {
+                            inside = false;
+                            break;
+                        }
+                    }
+                    if inside {
+                        visible += 1;
+                    }
+                }
+                visible
             } else {
                 count
             };

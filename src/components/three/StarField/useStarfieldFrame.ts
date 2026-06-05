@@ -25,6 +25,7 @@ export function useStarfieldFrame({
   const shouldBoostFromClick = useRef(false)
   const viewProjectionMatrixRef = useRef<THREE.Matrix4 | null>(null)
   const vpMatrixBufferRef = useRef<Float32Array | null>(null)
+  const rotationDeltaViewRef = useRef<Float32Array | null>(null)
 
   useFrame((state) => {
     if (!wasmModule || !sharedMemoryRef.current) return
@@ -69,15 +70,27 @@ export function useStarfieldFrame({
 
       const baseRotationSpeedX = 0.02
       const baseRotationSpeedY = 0.01
-      const rotationDelta = wasmModule.calculate_rotation_delta(
+      const rotationDeltaPtr = wasmModule.calculate_rotation_delta(
         baseRotationSpeedX,
         baseRotationSpeedY,
         speedMultiplierRef.current,
         deltaTime
       )
 
-      rotationXRef.current += rotationDelta[0]
-      rotationYRef.current += rotationDelta[1]
+      // Read from pre-allocated WASM buffer (pointer to [f32; 2])
+      if (
+        !rotationDeltaViewRef.current ||
+        rotationDeltaViewRef.current.byteOffset !== rotationDeltaPtr
+      ) {
+        rotationDeltaViewRef.current = new Float32Array(
+          wasmModule.memory.buffer,
+          rotationDeltaPtr,
+          2
+        )
+      }
+      const rotView = rotationDeltaViewRef.current
+      rotationXRef.current += rotView[0]
+      rotationYRef.current += rotView[1]
 
       if (starMeshRef.current) {
         starMeshRef.current.rotation.x = rotationXRef.current

@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use wasm_bindgen::prelude::*;
+use web_sys::console;
 
 use std::simd::{f32x16, num::SimdFloat};
 
@@ -131,6 +132,10 @@ pub fn set_text_pixels(
         }
     }
 
+    if particle_count >= MAX_PARTICLES {
+        console::warn_1(&format!("ScatterText: hit MAX_PARTICLES limit ({}), some pixels were dropped", MAX_PARTICLES).into());
+    }
+
     // Initialize memory with exact particle count
     initialize_scatter_text_internal(particle_count);
 
@@ -172,9 +177,9 @@ pub fn set_text_pixels(
 
                         // Set random starting position
                         state.positions_x[particle_index] =
-                            seed_random(particle_count as i32 + 1000) * canvas_width;
+                            seed_random(particle_index as i32 + 1000) * canvas_width;
                         state.positions_y[particle_index] =
-                            seed_random(particle_count as i32 + 2000) * canvas_height;
+                            seed_random(particle_index as i32 + 2000) * canvas_height;
 
                         // Set color
                         state.colors_r[particle_index] = (pixel_data[index] as f32) / 255.0;
@@ -185,8 +190,8 @@ pub fn set_text_pixels(
                         state.opacity[particle_index] = 1.0;
 
                         // Pre-calculate scatter velocity
-                        let angle = seed_random(particle_count as i32 + 3000) * std::f32::consts::PI * 2.0;
-                        let speed = (seed_random(particle_count as i32 + 4000) * state.scatter_speed) + 1.0;
+                        let angle = seed_random(particle_index as i32 + 3000) * std::f32::consts::PI * 2.0;
+                        let speed = (seed_random(particle_index as i32 + 4000) * state.scatter_speed) + 1.0;
                         state.scatter_vx[particle_index] = angle.cos() * speed;
                         state.scatter_vy[particle_index] = angle.sin() * speed;
 

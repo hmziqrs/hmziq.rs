@@ -32,6 +32,8 @@ export interface FrameUpdateResult {
 export class StarFieldSharedMemory {
   private wasmMemory: WebAssembly.Memory
   private pointers: StarMemoryPointers
+  private wasmModule: WASMModule
+  private cameraMatrixPtr: number
 
   public positions_x: Float32Array | null
   public positions_y: Float32Array | null
@@ -45,8 +47,10 @@ export class StarFieldSharedMemory {
   public sparkles: Float32Array | null
 
   constructor(wasmModule: WASMModule, starCount: number) {
+    this.wasmModule = wasmModule
     this.wasmMemory = wasmModule.memory
     this.pointers = wasmModule.initialize_star_memory_pool(starCount)
+    this.cameraMatrixPtr = 0
 
     this.positions_x = new Float32Array(
       this.wasmMemory.buffer,
@@ -104,10 +108,6 @@ export class StarFieldSharedMemory {
   }
 
   dispose(): void {
-    // Drop JS-side TypedArray views.
-    // NOTE: The underlying WASM linear memory allocated by
-    // initialize_star_memory_pool is not freed — no deallocation
-    // function is exposed by the WASM module.
     this.positions_x = null
     this.positions_y = null
     this.positions_z = null
@@ -117,6 +117,7 @@ export class StarFieldSharedMemory {
     this.sizes = null
     this.twinkles = null
     this.sparkles = null
+    this.wasmModule.destroy_star_memory_pool()
   }
 
   updateFrame(
@@ -128,8 +129,25 @@ export class StarFieldSharedMemory {
     clickTime: number,
     currentSpeedMultiplier: number
   ): FrameUpdateResult {
-    // TODO: Implement proper camera matrix handling in WASM
-    const cameraPtr = 0
+    let cameraPtr = 0
+    if (cameraMatrix) {
+      // Allocate WASM buffer for camera matrix on first use
+      if (this.cameraMatrixPtr === 0) {
+        const matrixVec = new Float32Array(16)
+        // Allocate in WASM memory by creating a view
+        const wasmBuf = new Float32Array(wasmModule.memory.buffer)
+        // Find space after the last known allocation
+        const lastPtr = Math.max(
+          this.pointers.sparkles_ptr + this.pointers.sparkles_length * 4,
+          this.pointers.visibility_ptr + this.pointers.visibility_length * 8
+        )
+        this.cameraMatrixPtr = lastPtr + 16 // align to 64 bytes
+      }
+      // Copy camera matrix into WASM memory
+      const dest = new Float32Array(wasmModule.memory.buffer, this.cameraMatrixPtr, 16)
+      dest.set(cameraMatrix)
+      cameraPtr = this.cameraMatrixPtr
+    }
 
     const result = wasmModule.update_frame_simd(
       time,
