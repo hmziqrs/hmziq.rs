@@ -8,6 +8,7 @@ import { MarkdownRenderer } from '~/components/MarkdownRenderer'
 import { PageContainer } from '~/components/PageContainer'
 import { useSectionVariants } from '~/hooks/useSectionVariants'
 import { projects, type Project } from '~/lib/content/Projects'
+import { getTechIcon } from '~/lib/techIcons'
 
 export const Route = createFileRoute('/projects/$slug')({
   component: ProjectDetailPage,
@@ -113,14 +114,24 @@ function ProjectDetail({ project }: { project: Project }) {
 
       {/* Tech stack */}
       <motion.div variants={itemVariants} className="mb-8 flex flex-wrap gap-2">
-        {project.tech.map((t) => (
-          <span
-            key={t}
-            className="rounded-lg border border-white/10 bg-white/10 px-3 py-1 font-mono text-xs text-white/70"
-          >
-            {t}
-          </span>
-        ))}
+        {project.tech.map((t) => {
+          const { icon: Icon, color, abbr } = getTechIcon(t)
+          return (
+            <span
+              key={t}
+              className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/10 px-3 py-1 font-mono text-xs text-white/70"
+            >
+              {Icon ? (
+                <Icon size={12} color={color} title={t} />
+              ) : (
+                <span className="font-mono text-[9px] font-bold" style={{ color }}>
+                  {abbr}
+                </span>
+              )}
+              {t}
+            </span>
+          )
+        })}
       </motion.div>
 
       {/* Links */}

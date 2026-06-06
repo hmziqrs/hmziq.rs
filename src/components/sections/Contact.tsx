@@ -87,17 +87,20 @@ export default function Contact() {
           ))}
         </div>
 
-        <motion.div variants={itemVariants}>
-          <p className="text-sm font-medium text-white/80">{copyright}</p>
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="mt-6 flex items-center justify-center gap-4">
-          <span className="flex items-center gap-1.5 font-mono text-xs text-white/30">
+        <motion.div
+          variants={itemVariants}
+          className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
+        >
+          <span className="text-sm font-medium text-white/80">{copyright}</span>
+          <span className="text-white/30">·</span>
+          <span className="font-mono text-xs text-white/50">TanStack Start</span>
+          <span className="text-white/30">·</span>
+          <span className="flex items-center gap-1.5 font-mono text-xs text-white/50">
             <SiRust size={14} color="#FFFFFF" />
             Rust + WASM
           </span>
-          <span className="text-white/10">·</span>
-          <span className="flex items-center gap-1.5 font-mono text-xs text-white/30">
+          <span className="text-white/30">·</span>
+          <span className="flex items-center gap-1.5 font-mono text-xs text-white/50">
             <Box size={14} />
             Three.js
           </span>

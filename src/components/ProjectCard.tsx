@@ -39,9 +39,16 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
     <div className="group relative flex h-full flex-col gap-3 overflow-hidden border border-white/2 bg-white/3 px-6 py-4 backdrop-blur-sm transition-all duration-500 hover:border-white/10 hover:bg-white/1">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
-        <h3 className="font-mono text-sm font-semibold tracking-wide text-white group-hover:text-white/90">
-          {project.title}
-        </h3>
+        <div className="flex min-w-0 items-center gap-2">
+          <h3 className="truncate font-mono text-sm font-semibold tracking-wide text-white group-hover:text-white/90">
+            {project.title}
+          </h3>
+          {project.context && (
+            <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] text-white/30">
+              {project.context}
+            </span>
+          )}
+        </div>
         <div className="flex shrink-0 items-center gap-2">
           {project.stars != null && project.stars > 0 && (
             <span className="flex items-center gap-1 font-mono text-xs text-white/50">
@@ -70,13 +77,6 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
           </span>
         )}
       </div>
-
-      {/* Context badge */}
-      {project.context && (
-        <span className="absolute top-3 right-3 rounded-md bg-white/[0.06] px-2 py-0.5 font-mono text-[10px] text-white/30">
-          {project.context}
-        </span>
-      )}
 
       {/* Hover shine */}
       <div className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100">
