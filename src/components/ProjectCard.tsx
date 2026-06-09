@@ -44,27 +44,27 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
             {project.title}
           </h3>
           {project.context && (
-            <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] text-white/30">
+            <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] text-white/55">
               {project.context}
             </span>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {project.stars != null && project.stars > 0 && (
-            <span className="flex items-center gap-1 font-mono text-xs text-white/50">
+            <span className="flex items-center gap-1 font-mono text-xs text-white/65">
               <Star size={12} fill="currentColor" className="text-yellow-500/80" />
               {project.stars}
             </span>
           )}
           <ArrowRight
             size={14}
-            className="text-white/20 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-white/50"
+            className="text-white/30 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-white/60"
           />
         </div>
       </div>
 
       {/* Description */}
-      <p className="line-clamp-2 text-xs leading-relaxed text-white/40">{project.description}</p>
+      <p className="line-clamp-2 text-xs leading-relaxed text-white/60">{project.description}</p>
 
       {/* Tech icons */}
       <div className="mt-auto flex flex-wrap gap-1.5">
@@ -72,7 +72,7 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
           <TechBadge key={t} tech={t} />
         ))}
         {project.tech.length > 5 && (
-          <span className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/10 font-mono text-[10px] text-white/40">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/10 font-mono text-[10px] text-white/55">
             +{project.tech.length - 5}
           </span>
         )}

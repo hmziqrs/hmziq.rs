@@ -31,7 +31,7 @@ export default function Experience() {
       >
         <motion.h2
           variants={itemVariants}
-          className="mb-10 text-center font-mono text-lg font-semibold tracking-wider text-white/70"
+          className="mb-10 text-center font-mono text-lg font-semibold tracking-wider text-white/80"
         >
           Experience
         </motion.h2>
@@ -52,20 +52,20 @@ export default function Experience() {
                 {/* Header */}
                 <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <h3 className="font-mono text-base font-semibold text-white/70">
+                    <h3 className="font-mono text-base font-semibold text-white/80">
                       {exp.company ?? exp.role}
                     </h3>
                     {exp.company && (
-                      <p className="text-sm text-white/50">{exp.role}</p>
+                      <p className="text-sm text-white/65">{exp.role}</p>
                     )}
                   </div>
-                  <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-xs text-white/40">
+                  <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-xs text-white/55">
                     {exp.period}
                   </span>
                 </div>
 
                 {/* Description */}
-                <p className="mb-3 text-sm leading-relaxed text-white/50">
+                <p className="mb-3 text-sm leading-relaxed text-white/65">
                   {exp.description}
                 </p>
 
@@ -74,7 +74,7 @@ export default function Experience() {
                   {exp.bullets.map((bullet, i) => (
                     <li
                       key={i}
-                      className="pl-4 text-xs leading-relaxed text-white/40 before:-ml-4 before:mr-2 before:text-white/20 before:content-['-']"
+                      className="pl-4 text-xs leading-relaxed text-white/55 before:-ml-4 before:mr-2 before:text-white/40 before:content-['-']"
                     >
                       {bullet}
                     </li>
@@ -89,7 +89,7 @@ export default function Experience() {
                         key={project.slug}
                         to="/projects/$slug"
                         params={{ slug: project.slug }}
-                        className="inline-flex items-center rounded-full border border-white/5 bg-white/5 px-3 py-1 font-mono text-[11px] text-white/40 transition-all duration-200 hover:border-white/15 hover:text-white/60"
+                        className="inline-flex items-center rounded-full border border-white/5 bg-white/5 px-3 py-1 font-mono text-[11px] text-white/55 transition-all duration-200 hover:border-white/15 hover:text-white/75"
                       >
                         {project.title}
                       </Link>

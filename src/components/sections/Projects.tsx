@@ -32,7 +32,7 @@ export default function Projects() {
       >
         <motion.h2
           variants={itemVariants}
-          className="mb-10 text-center font-mono text-lg font-semibold tracking-wider text-white/70"
+          className="mb-10 text-center font-mono text-lg font-semibold tracking-wider text-white/80"
         >
           Featured Projects
         </motion.h2>
@@ -46,7 +46,7 @@ export default function Projects() {
         <motion.div variants={itemVariants} className="mt-10 text-center">
           <Link
             to="/projects"
-            className="inline-flex items-center gap-2 rounded-lg bg-white/[0.06] px-6 py-3 font-mono text-sm text-white/60 backdrop-blur-sm transition-all duration-300 hover:bg-white/[0.1] hover:text-white/80"
+            className="inline-flex items-center gap-2 rounded-lg bg-white/[0.06] px-6 py-3 font-mono text-sm text-white/70 backdrop-blur-sm transition-all duration-300 hover:bg-white/[0.1] hover:text-white"
           >
             View all projects
             <ArrowRight size={16} />

@@ -1,10 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 
+import Footer from '~/components/Footer'
 import { PageContainer } from '~/components/PageContainer'
-import Contact from '~/components/sections/Contact'
+import Experience from '~/components/sections/Experience'
 import Hero from '~/components/sections/Hero'
 import Projects from '~/components/sections/Projects'
-import Experience from '~/components/sections/Experience'
 import Skills from '~/components/sections/Skills'
 
 export const Route = createFileRoute('/')({
@@ -18,7 +18,7 @@ function HomePage() {
       <Skills />
       <Projects />
       <Experience />
-      <Contact />
+      <Footer />
     </PageContainer>
   )
 }
