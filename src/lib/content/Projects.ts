@@ -1,4 +1,4 @@
-import projectsData from '~/content/data/projects.json'
+import { projects as projectsData } from 'virtual:content'
 
 export interface ProjectLink {
   github?: string
@@ -16,10 +16,14 @@ export interface Project {
   type: 'open-source' | 'product' | 'freelance' | 'contract'
   tech: string[]
   stars?: number
+  forks?: number
+  language?: string
+  lastPushed?: string
   links?: ProjectLink
   context?: string
   period?: string
   readme?: string
+  experienceSlug?: string
 }
 
 class ProjectsManager {

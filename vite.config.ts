@@ -6,6 +6,8 @@ import viteReact, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { nitro } from 'nitro/vite'
 import { defineConfig } from 'vite-plus'
 
+import { contentPlugin } from './vite-plugin-content'
+
 export default defineConfig({
   staged: {
     '*': 'vp fmt --no-error-on-unmatched-pattern',
@@ -88,6 +90,7 @@ export default defineConfig({
   envPrefix: ['NEXT_PUBLIC_'],
   server: { port: 3000 },
   plugins: [
+    contentPlugin(),
     devtools(),
     tanstackStart(),
     nitro({ preset: 'static', traceDeps: ['react', 'react-dom'] }),

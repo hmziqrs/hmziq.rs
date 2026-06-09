@@ -1,16 +1,20 @@
 #!/usr/bin/env bun
 /**
  * Fetches latest GitHub stats for all projects with a GitHub link.
- * Updates src/content/data/projects.json in place.
+ * Updates each project directory's project.mdx frontmatter in place.
  *
  * Usage: bun run scripts/fetch-github-stats.ts
  */
 
 import { execSync } from 'node:child_process'
-import { readFileSync, writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, resolve, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const PROJECTS_PATH = resolve(import.meta.dir, '../src/content/data/projects.json')
+import matter from 'gray-matter'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const CONTENT_DIR = resolve(__dirname, '../content/projects')
 
 interface GitHubStats {
   stargazerCount: number
@@ -19,29 +23,7 @@ interface GitHubStats {
   primaryLanguage: { name: string } | null
   pushedAt: string
   updatedAt: string
-}
-
-interface ProjectData {
-  title: string
-  slug: string
-  description: string
-  type: string
-  tech: string[]
-  stars?: number
-  forks?: number
-  language?: string
-  lastPushed?: string
-  links?: {
-    github?: string
-    web?: string
-    playStore?: string
-    appStore?: string
-    npm?: string
-    crates?: string
-  }
-  context?: string
-  period?: string
-  readme?: string
+  homepageUrl: string
 }
 
 function extractRepoPath(githubUrl: string): string | null {
@@ -52,8 +34,8 @@ function extractRepoPath(githubUrl: string): string | null {
 function fetchStats(repo: string): GitHubStats | null {
   try {
     const raw = execSync(
-      `gh repo view "${repo}" --json stargazerCount,forkCount,issues,primaryLanguage,pushedAt,updatedAt`,
-      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
+      `gh repo view "${repo}" --json stargazerCount,forkCount,issues,primaryLanguage,pushedAt,updatedAt,homepageUrl`,
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
     )
     return JSON.parse(raw)
   } catch {
@@ -62,46 +44,68 @@ function fetchStats(repo: string): GitHubStats | null {
 }
 
 function main() {
-  const data: ProjectData[] = JSON.parse(readFileSync(PROJECTS_PATH, 'utf-8'))
-  const withGithub = data.filter((p) => p.links?.github)
+  const dirs = readdirSync(CONTENT_DIR, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name)
 
-  console.log(`Found ${withGithub.length} projects with GitHub links\n`)
+  console.log(`Found ${dirs.length} project directories\n`)
 
   let updated = 0
   let failed = 0
+  let skipped = 0
 
-  for (const project of withGithub) {
-    const repo = extractRepoPath(project.links!.github!)
+  for (const dir of dirs) {
+    const filePath = join(CONTENT_DIR, dir, 'project.mdx')
+    if (!existsSync(filePath)) {
+      console.log(`  ⊘ ${dir.padEnd(30)} — no project.mdx`)
+      skipped++
+      continue
+    }
+
+    const raw = readFileSync(filePath, 'utf-8')
+    const { data: frontmatter, content } = matter(raw)
+    const githubUrl = frontmatter.links?.github as string | undefined
+
+    if (!githubUrl) {
+      console.log(`  ⊘ ${dir.padEnd(30)} — no GitHub link`)
+      skipped++
+      continue
+    }
+
+    const repo = extractRepoPath(githubUrl)
     if (!repo) {
-      console.log(`  ✗ ${project.slug} — invalid GitHub URL`)
+      console.log(`  ✗ ${dir.padEnd(30)} — invalid GitHub URL`)
       failed++
       continue
     }
 
     const stats = fetchStats(repo)
     if (!stats) {
-      console.log(`  ✗ ${project.slug} — repo not found or private`)
+      console.log(`  ✗ ${dir.padEnd(30)} — repo not found or private`)
       failed++
       continue
     }
 
-    project.stars = stats.stargazerCount
-    project.forks = stats.forkCount
-    project.language = stats.primaryLanguage?.name
-    project.lastPushed = stats.pushedAt
+    frontmatter.stars = stats.stargazerCount
+    frontmatter.forks = stats.forkCount
+    frontmatter.language = stats.primaryLanguage?.name
+    frontmatter.lastPushed = stats.pushedAt
+
+    if (stats.homepageUrl) {
+      frontmatter.links = frontmatter.links ?? {}
+      frontmatter.links.web = stats.homepageUrl
+    }
+
+    const output = matter.stringify(content, frontmatter)
+    writeFileSync(filePath, output)
 
     console.log(
-      `  ✓ ${project.slug.padEnd(30)} ★ ${String(stats.stargazerCount).padStart(4)}  ⑂ ${String(stats.forkCount).padStart(3)}  ${stats.primaryLanguage?.name ?? '—'}`
+      `  ✓ ${dir.padEnd(30)} ★ ${String(stats.stargazerCount).padStart(4)}  ⑂ ${String(stats.forkCount).padStart(3)}  ${stats.primaryLanguage?.name ?? '—'}`,
     )
     updated++
   }
 
-  // Sort by stars descending for consistent output
-  data.sort((a, b) => (b.stars ?? 0) - (a.stars ?? 0))
-
-  writeFileSync(PROJECTS_PATH, JSON.stringify(data, null, 2) + '\n')
-
-  console.log(`\nDone: ${updated} updated, ${failed} failed`)
+  console.log(`\nDone: ${updated} updated, ${failed} failed, ${skipped} skipped`)
 }
 
 main()
