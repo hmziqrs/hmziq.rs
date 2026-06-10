@@ -53,7 +53,7 @@ function InitiativeCard({
 }) {
   const badge = statusConfig[initiative.status]
   const card = (
-    <div className="group relative flex h-full flex-col gap-3 overflow-hidden border border-white/2 bg-white/3 px-6 py-5 backdrop-blur-sm transition-all duration-500 hover:border-white/10 hover:bg-white/1">
+    <div className="group relative flex h-full flex-col gap-3 overflow-hidden border border-white/2 bg-white/3 px-6 py-5 backdrop-blur-sm transition-all duration-500 hover:border-white/10 hover:bg-white/1 focus-within:border-white/10 focus-within:bg-white/1">
       {/* Header: icon + name + badge */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
@@ -78,7 +78,7 @@ function InitiativeCard({
       {/* Link */}
       {initiative.href && (
         <div className="mt-auto pt-2">
-          <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-white/40 transition-colors duration-200 group-hover:text-white/60">
+          <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-white/40 transition-colors duration-200 group-hover:text-white/60 group-focus-within:text-white/60">
             Explore
             <ExternalLink size={10} />
           </span>
@@ -110,7 +110,10 @@ function InitiativeCard({
           aria-label={`${initiative.name} — ${initiative.description}`}
           className="block h-full"
         >
-          {card}
+          <article>
+            {card}
+          </article>
+          <span className="sr-only">(opens in new tab)</span>
         </a>
       </motion.li>
     )
@@ -118,7 +121,9 @@ function InitiativeCard({
 
   return (
     <motion.li variants={variants as never} className="h-full">
-      {card}
+      <article>
+        {card}
+      </article>
     </motion.li>
   )
 }

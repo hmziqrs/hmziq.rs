@@ -11,10 +11,37 @@ import { experience } from '~/lib/content/Experience'
 import { projects, type Project } from '~/lib/content/Projects'
 import { getTechIcon } from '~/lib/techIcons'
 
+/** Parse "MMM YYYY - MMM YYYY" or "MMM YYYY - Present" to ISO datetime range */
+function periodToDatetime(period: string): string | undefined {
+  const months: Record<string, string> = {
+    Jan: '01',
+    Feb: '02',
+    Mar: '03',
+    Apr: '04',
+    May: '05',
+    Jun: '06',
+    Jul: '07',
+    Aug: '08',
+    Sep: '09',
+    Oct: '10',
+    Nov: '11',
+    Dec: '12',
+  }
+  const [start, end] = period.split(' - ')
+  if (!start) return undefined
+  const [, sMon, sYear] = start.match(/^(\w{3})\s(\d{4})$/) ?? []
+  if (!sMon || !sYear || !months[sMon]) return undefined
+  const startISO = `${sYear}-${months[sMon]}`
+  if (!end || end === 'Present') return startISO
+  const [, eMon, eYear] = end.match(/^(\w{3})\s(\d{4})$/) ?? []
+  if (!eMon || !eYear || !months[eMon]) return startISO
+  return `${startISO}/${eYear}-${months[eMon]}`
+}
+
 export const Route = createFileRoute('/projects/$slug')({
   head: ({ params }) => {
     const project = projects.findBySlug(params.slug)
-    const title = project ? `${project.title} | Projects` : 'Project Not Found'
+    const title = project ? `${project.title} - Projects` : 'Project Not Found'
     return {
       meta: [{ title }],
     }
@@ -33,7 +60,7 @@ function ProjectDetailPage() {
           <h1 className="font-mono text-2xl font-bold text-white">Project not found</h1>
           <Link
             to="/projects"
-            className="mt-4 inline-flex items-center gap-2 font-mono text-sm text-white/50 hover:text-white/70"
+            className="mt-4 inline-flex items-center gap-2 font-mono text-sm text-white/50 hover:text-white/70 focus-visible:text-white/70"
           >
             <ArrowLeft size={14} />
             Back to projects
@@ -78,7 +105,7 @@ function ProjectDetail({ project }: { project: Project }) {
       <motion.div variants={itemVariants} className="mb-8">
         <Link
           to="/projects"
-          className="inline-flex items-center gap-2 font-mono text-sm text-white/40 transition-colors hover:text-white/70"
+          className="inline-flex items-center gap-2 font-mono text-sm text-white/40 transition-colors hover:text-white/70 focus-visible:text-white/70"
         >
           <ArrowLeft size={14} />
           All projects
@@ -122,9 +149,9 @@ function ProjectDetail({ project }: { project: Project }) {
           </span>
         )}
         {project.period && (
-          <span className="rounded-lg bg-white/[0.04] px-3 py-1 font-mono text-xs text-white/55">
+          <time dateTime={periodToDatetime(project.period) ?? project.period} className="rounded-lg bg-white/[0.04] px-3 py-1 font-mono text-xs text-white/55">
             {project.period}
-          </span>
+          </time>
         )}
       </motion.div>
 
@@ -158,7 +185,7 @@ function ProjectDetail({ project }: { project: Project }) {
         })()}
 
       {/* Tech stack */}
-      <motion.ul variants={itemVariants} className="mb-8 flex list-none flex-wrap gap-2">
+      <motion.ul variants={itemVariants} className="mb-8 flex list-none flex-wrap gap-2" role="list">
         {project.tech.map((t) => {
           const { icon: Icon, color, abbr } = getTechIcon(t)
           return (
@@ -167,9 +194,9 @@ function ProjectDetail({ project }: { project: Project }) {
               className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/10 px-3 py-1 font-mono text-xs text-white/70"
             >
               {Icon ? (
-                <Icon size={12} color={color} title={t} />
+                <Icon size={12} color={color} aria-hidden="true" />
               ) : (
-                <span className="font-mono text-[9px] font-bold" style={{ color }}>
+                <span className="font-mono text-[9px] font-bold" style={{ color }} aria-hidden="true">
                   {abbr}
                 </span>
               )}
@@ -181,28 +208,28 @@ function ProjectDetail({ project }: { project: Project }) {
 
       {/* Links */}
       {links && (
-        <motion.div variants={itemVariants} className="mb-10 flex flex-wrap gap-3">
+        <motion.ul variants={itemVariants} className="mb-10 flex list-none flex-wrap gap-3" role="list">
           {links.github && (
-            <LinkButton href={links.github} icon={<SiGithub size={14} />} label="GitHub" />
+            <li><LinkButton href={links.github} icon={<SiGithub size={14} aria-hidden="true" />} label="GitHub" /></li>
           )}
-          {links.web && <LinkButton href={links.web} icon={<Globe size={14} />} label="Website" />}
+          {links.web && <li><LinkButton href={links.web} icon={<Globe size={14} />} label="Website" /></li>}
           {links.playStore && (
-            <LinkButton
+            <li><LinkButton
               href={links.playStore}
-              icon={<SiGoogleplay size={14} />}
+              icon={<SiGoogleplay size={14} aria-hidden="true" />}
               label="Play Store"
-            />
+            /></li>
           )}
           {links.appStore && (
-            <LinkButton href={links.appStore} icon={<SiApple size={14} />} label="App Store" />
+            <li><LinkButton href={links.appStore} icon={<SiApple size={14} aria-hidden="true" />} label="App Store" /></li>
           )}
           {links.npm && (
-            <LinkButton href={links.npm} icon={<SiNpm size={14} color="#CB3837" />} label="npm" />
+            <li><LinkButton href={links.npm} icon={<SiNpm size={14} color="#CB3837" aria-hidden="true" />} label="npm" /></li>
           )}
           {links.crates && (
-            <LinkButton href={links.crates} icon={<ExternalLink size={14} />} label="crates.io" />
+            <li><LinkButton href={links.crates} icon={<ExternalLink size={14} />} label="crates.io" /></li>
           )}
-        </motion.div>
+        </motion.ul>
       )}
 
       {/* Divider */}

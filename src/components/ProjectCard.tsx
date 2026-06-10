@@ -8,6 +8,7 @@ import { getTechIcon } from '~/lib/techIcons'
 interface ProjectCardProps {
   project: Project
   variants?: Variants
+  headingLevel?: 'h2' | 'h3'
 }
 
 function TechBadge({ tech }: { tech: string }) {
@@ -22,7 +23,7 @@ function TechBadge({ tech }: { tech: string }) {
         {Icon ? (
           <Icon size={14} color={color} title={tech} />
         ) : (
-          <span className="font-mono text-[9px] font-bold" style={{ color }}>
+          <span aria-hidden="true" className="font-mono text-[9px] font-bold" style={{ color }}>
             {abbr}
           </span>
         )}
@@ -34,15 +35,15 @@ function TechBadge({ tech }: { tech: string }) {
   )
 }
 
-export function ProjectCard({ project, variants }: ProjectCardProps) {
+export function ProjectCard({ project, variants, headingLevel: Heading = 'h2' }: ProjectCardProps) {
   const content = (
     <div className="group relative flex h-full flex-col gap-3 overflow-hidden border border-white/2 bg-white/3 px-6 py-4 backdrop-blur-sm transition-all duration-500 focus-within:border-white/10 focus-within:bg-white/1 hover:border-white/10 hover:bg-white/1">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <h3 className="truncate font-mono text-sm font-semibold tracking-wide text-white group-hover:text-white/90">
+          <Heading className="truncate font-mono text-sm font-semibold tracking-wide text-white group-hover:text-white/90 group-focus-within:text-white/90">
             {project.title}
-          </h3>
+          </Heading>
           {project.context && (
             <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] text-white/55">
               {project.context}
@@ -66,7 +67,7 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
           )}
           <ArrowRight
             size={14}
-            className="text-white/30 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-white/60"
+            className="text-white/30 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-white/60 group-focus-within:translate-x-0.5 group-focus-within:text-white/60"
           />
         </div>
       </div>
@@ -90,9 +91,9 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
       </div>
 
       {/* Hover shine */}
-      <div className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100 group-focus-within:opacity-100">
         <div
-          className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0"
+          className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0 group-focus-within:translate-x-0 group-focus-within:translate-y-0"
           style={{
             background:
               'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',

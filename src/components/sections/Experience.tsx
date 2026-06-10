@@ -63,7 +63,7 @@ export default function Experience() {
           Experience
         </motion.h2>
 
-        <ul className="relative ml-4 list-none border-l border-white/10 pl-8">
+        <ul className="relative ml-4 list-none border-l border-white/10 pl-8" role="list">
           {entries.map((exp) => {
             const linkedProjects = experience.getProjectsFor(exp, projects.all)
 
@@ -71,11 +71,11 @@ export default function Experience() {
               <motion.li
                 key={exp.slug}
                 variants={itemVariants}
-                className="group relative mb-8 rounded-lg border border-white/2 bg-white/3 p-6 backdrop-blur-sm transition-all duration-300 last:mb-0 hover:border-white/10 hover:bg-white/1"
+                className="group relative mb-8 rounded-lg border border-white/2 bg-white/3 p-6 backdrop-blur-sm transition-all duration-300 last:mb-0 hover:border-white/10 hover:bg-white/1 focus-within:border-white/10 focus-within:bg-white/1"
               >
                 <article>
                   {/* Timeline dot */}
-                  <div className="absolute top-7 -left-[41px] h-3 w-3 rounded-full border-2 border-white/30 bg-black" />
+                  <div className="absolute top-7 -left-[41px] h-3 w-3 rounded-full border-2 border-white/30 bg-black" aria-hidden="true" />
 
                   {/* Header */}
                   <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
@@ -87,7 +87,7 @@ export default function Experience() {
                     </div>
                     <time
                       className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-xs text-white/55"
-                      dateTime={periodToDatetime(exp.period)}
+                      dateTime={periodToDatetime(exp.period) ?? exp.period}
                     >
                       {exp.period}
                     </time>

@@ -84,7 +84,7 @@ function ProjectsListing() {
             <motion.div variants={itemVariants} className="mb-6">
               <Link
                 to="/"
-                className="inline-flex items-center gap-2 font-mono text-sm text-white/40 transition-colors hover:text-white/70"
+                className="inline-flex items-center gap-2 font-mono text-sm text-white/40 transition-colors hover:text-white/70 focus-visible:text-white/70"
               >
                 <ArrowLeft size={14} />
                 Back home
@@ -140,6 +140,7 @@ function ProjectsListing() {
 
           {/* Project grid */}
           <motion.ul
+            role="list"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -165,7 +166,7 @@ function ProjectsListing() {
               </p>
               <button
                 onClick={() => setSelectedType(undefined)}
-                className="mt-4 font-mono text-sm text-white/50 underline underline-offset-4 transition-colors hover:text-white/70"
+                className="mt-4 font-mono text-sm text-white/50 underline underline-offset-4 transition-colors hover:text-white/70 focus-visible:text-white/70"
               >
                 Clear filter
               </button>

@@ -101,12 +101,14 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
         className="antialiased"
         style={{ backgroundColor: '#000000', color: '#ffffff', minHeight: '100vh' }}
       >
-        <a
-          href="#hero"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-black"
-        >
-          Skip to content
-        </a>
+        <header>
+          <a
+            href="#hero"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-black"
+          >
+            Skip to content
+          </a>
+        </header>
         <WASMProvider>
           <AnalyticsProvider>
             <WASMCanvas

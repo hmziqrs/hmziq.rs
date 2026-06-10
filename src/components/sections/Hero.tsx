@@ -103,6 +103,7 @@ export default function Hero() {
 
         {/* Social links */}
         <motion.ul
+          role="list"
           className="flex list-none flex-wrap items-center justify-center gap-3"
           variants={itemVariants}
         >
