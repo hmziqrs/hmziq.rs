@@ -27,7 +27,7 @@ function TechBadge({ tech }: { tech: string }) {
           </span>
         )}
       </span>
-      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 font-mono text-[10px] whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity group-hover/badge:opacity-100">
+      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-black px-2 py-1 font-mono text-[10px] whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity group-hover/badge:opacity-100">
         {tech}
       </span>
     </span>
@@ -36,7 +36,7 @@ function TechBadge({ tech }: { tech: string }) {
 
 export function ProjectCard({ project, headingLevel: Heading = 'h2' }: ProjectCardProps) {
   const content = (
-    <GlassCard className="group flex h-full flex-col gap-3 px-6 py-4">
+    <GlassCard rounded="rounded-none" className="group flex h-full flex-col gap-3 px-6 py-4">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">

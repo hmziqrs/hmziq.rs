@@ -5,13 +5,21 @@ interface GlassCardProps {
   className?: string
   /** Show the hover shine effect. @default true */
   shine?: boolean
+  /** Border radius. @default 'rounded-2xl' */
+  rounded?: string
 }
 
-export function GlassCard({ children, className = '', shine = true }: GlassCardProps) {
+export function GlassCard({ children, className = '', shine = true, rounded = 'rounded-2xl' }: GlassCardProps) {
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border border-white/2 bg-white/3 backdrop-blur-sm transition-all duration-500 hover:border-white/10 hover:bg-white/1 ${className}`}
+      className={`group relative overflow-hidden ${rounded} border border-white/[0.08] transition-all duration-500 hover:border-white/[0.12] ${className}`}
     >
+      {/* Blurred frosted glass layer */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-white/[0.04]"
+        style={{ filter: 'blur(20px)' }}
+      />
       {children}
       {shine && (
         <div

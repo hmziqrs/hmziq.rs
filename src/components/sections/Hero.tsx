@@ -44,19 +44,19 @@ export default function Hero() {
         </div>
 
         <p
-          className="text-xl font-light text-gray-300 md:text-2xl lg:text-3xl"
+          className="text-xl font-light md:text-2xl lg:text-3xl"
           style={slideUpLgStyle(0.2)}
         >
           {title}
         </p>
 
         <p
-          className="max-w-lg text-sm font-light text-white/60 md:text-base"
+          className="max-w-lg font-mono font-medium text-white/75 text-sm py-2"
           style={slideUpLgStyle(0.4)}
         >
           {tagline}
         </p>
-
+            <div className="h-4" />
         <div style={slideUpLgStyle(0.6)}>
           <SocialLinks
             links={userProfile.getPrimarySocialLinks()}
