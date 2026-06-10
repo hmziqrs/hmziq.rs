@@ -1,12 +1,10 @@
 import { createFileRoute, Outlet, useLocation } from '@tanstack/react-router'
-import { motion } from 'framer-motion'
 import { useMemo, useState, useCallback } from 'react'
 
 import { BackLink } from '~/components/BackLink'
 import { ErrorBoundary } from '~/components/ErrorBoundary'
 import { PageContainer } from '~/components/PageContainer'
 import { ProjectCard } from '~/components/ProjectCard'
-import { useSectionVariants } from '~/hooks/useSectionVariants'
 import { projects, type Project } from '~/lib/content/Projects'
 
 export const Route = createFileRoute('/projects')({
@@ -42,14 +40,6 @@ function ProjectsPage() {
 function ProjectsListing() {
   const [selectedType, setSelectedType] = useState<Project['type'] | undefined>()
 
-  const { containerVariants, itemVariants } = useSectionVariants({
-    containerDuration: 0.6,
-    staggerChildren: 0.05,
-    itemDuration: 0.3,
-    itemY: 15,
-    ease: [0.25, 0.1, 0.25, 1.0],
-  })
-
   const allTypes = useMemo(() => projects.types, [])
 
   const filtered = useMemo(() => {
@@ -75,41 +65,31 @@ function ProjectsListing() {
       >
         <div className="mx-auto max-w-6xl">
           {/* Header */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="mb-12"
-          >
-            <motion.div variants={itemVariants} className="mb-6">
+          <div className="animate-in mb-12">
+            <div style={{ animationDelay: '0s' }} className="mb-6">
               <BackLink to="/">Back home</BackLink>
-            </motion.div>
+            </div>
 
-            <motion.h1
-              variants={itemVariants}
+            <h1
+              style={{ animationDelay: '0.05s' }}
               className="font-mono text-2xl font-bold tracking-wider text-white md:text-3xl"
             >
               Projects
-            </motion.h1>
-            <motion.p
-              variants={itemVariants}
+            </h1>
+            <p
+              style={{ animationDelay: '0.1s' }}
               aria-live="polite"
               className="mt-2 font-mono text-sm text-white/55"
             >
               {filtered.length} of {projects.all.length} projects
               {selectedType && ' (filtered)'}
-            </motion.p>
-          </motion.div>
+            </p>
+          </div>
 
           {/* Type filter */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="mb-10"
-          >
-            <motion.div
-              variants={itemVariants}
+          <div className="animate-in mb-10">
+            <div
+              style={{ animationDelay: '0.15s' }}
               role="group"
               aria-label="Filter by type"
               className="flex flex-wrap items-center gap-2"
@@ -129,32 +109,24 @@ function ProjectsListing() {
                   {type}
                 </button>
               ))}
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
           {/* Project grid */}
-          <motion.ul
+          <ul
             role="list"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            className="animate-in grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
           >
             {filtered.map((project) => (
-              <li key={project.slug}>
-                <ProjectCard project={project} variants={itemVariants} />
+              <li key={project.slug} style={{ animationDelay: '0.2s' }}>
+                <ProjectCard project={project} />
               </li>
             ))}
-          </motion.ul>
+          </ul>
 
           {/* Empty state */}
           {filtered.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              role="status"
-              className="py-20 text-center"
-            >
+            <div role="status" className="animate-[fadeIn_0.3s_ease] py-20 text-center">
               <p className="font-mono text-sm text-white/55">
                 No projects match the selected filters.
               </p>
@@ -164,7 +136,7 @@ function ProjectsListing() {
               >
                 Clear filter
               </button>
-            </motion.div>
+            </div>
           )}
         </div>
       </ErrorBoundary>

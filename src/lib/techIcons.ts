@@ -32,7 +32,6 @@ import {
   SiMysql,
   SiNextdotjs,
   SiNodedotjs,
-
   SiPolygon,
   SiPostgresql,
   SiPuppeteer,
@@ -47,7 +46,6 @@ import {
   SiSvelte,
   SiSwift,
   SiTailwindcss,
-
   SiThreedotjs,
   SiTypescript,
   SiVuedotjs,

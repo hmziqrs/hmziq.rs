@@ -20,7 +20,6 @@ interface SocialLink {
 class UserProfile {
   private data: UserData = userData
   private siteConfig: SiteData = siteData
-  private _socialLinks: SocialLink[] | null = null
   private _primarySocialLinks: SocialLink[] | null = null
 
   get profile(): Profile {
@@ -36,16 +35,15 @@ class UserProfile {
     return this.data.skills
   }
 
-  private getSocialLinks(): SocialLink[] {
-    if (this._socialLinks) return this._socialLinks
+  getPrimarySocialLinks(): SocialLink[] {
+    if (this._primarySocialLinks) return this._primarySocialLinks
+    const primaryPlatforms = this.siteConfig.socialVisibility.primary.filter((p) => p !== 'email')
     const social = this.data.social || {}
-    this._socialLinks = Object.entries(social)
+    const socialLinks = Object.entries(social)
       .map(([platform, username]) => {
         const platformConfig: SocialPlatform | undefined = this.siteConfig.socialPlatforms[platform]
         if (!platformConfig) return null
-
         const actualUsername = username || this.data.username
-
         return {
           name: platformConfig.name,
           url: `${platformConfig.baseUrl}${actualUsername}`,
@@ -54,25 +52,16 @@ class UserProfile {
         }
       })
       .filter((link): link is SocialLink => link !== null)
-    return this._socialLinks
-  }
-
-  private getEmail(): SocialLink {
-    return {
-      name: 'Email',
-      url: `mailto:${this.data.email}`,
-      username: this.data.email,
-      description: 'Direct communication',
-    }
-  }
-
-  getPrimarySocialLinks(): SocialLink[] {
-    if (this._primarySocialLinks) return this._primarySocialLinks
-    const primaryPlatforms = this.siteConfig.socialVisibility.primary.filter((p) => p !== 'email')
-    const socialLinks = this.getSocialLinks().filter((link) =>
-      primaryPlatforms.includes(link.name.toLowerCase())
-    )
-    this._primarySocialLinks = [...socialLinks, this.getEmail()]
+      .filter((link) => primaryPlatforms.includes(link.name.toLowerCase()))
+    this._primarySocialLinks = [
+      ...socialLinks,
+      {
+        name: 'Email',
+        url: `mailto:${this.data.email}`,
+        username: this.data.email,
+        description: 'Direct communication',
+      },
+    ]
     return this._primarySocialLinks
   }
 }

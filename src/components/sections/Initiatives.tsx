@@ -1,11 +1,9 @@
-import { motion } from 'framer-motion'
 import { Package, Sparkles, ExternalLink } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { GlassCard } from '~/components/GlassCard'
 import { Section } from '~/components/Section'
 import { useReducedMotion } from '~/hooks/useReducedMotion'
-import { useSectionVariants } from '~/hooks/useSectionVariants'
 import {
   initiatives,
   statusConfig,
@@ -18,7 +16,7 @@ const iconMap: Record<InitiativeIconName, ReactNode> = {
   sparkles: <Sparkles size={20} className="text-white/70" />,
 }
 
-function InitiativeCard({ initiative, variants }: { initiative: Initiative; variants: unknown }) {
+function InitiativeCard({ initiative }: { initiative: Initiative }) {
   const badge = statusConfig[initiative.status]
   const card = (
     <GlassCard className="flex h-full flex-col gap-3 px-6 py-5 focus-within:border-white/10 focus-within:bg-white/1">
@@ -57,7 +55,7 @@ function InitiativeCard({ initiative, variants }: { initiative: Initiative; vari
 
   if (initiative.href) {
     return (
-      <motion.li variants={variants as never} className="h-full">
+      <li className="h-full">
         <a
           href={initiative.href}
           target="_blank"
@@ -68,50 +66,33 @@ function InitiativeCard({ initiative, variants }: { initiative: Initiative; vari
           <article aria-label={initiative.name}>{card}</article>
           <span className="sr-only">(opens in new tab)</span>
         </a>
-      </motion.li>
+      </li>
     )
   }
 
   return (
-    <motion.li variants={variants as never} className="h-full">
+    <li className="h-full">
       <article aria-label={initiative.name}>{card}</article>
-    </motion.li>
+    </li>
   )
 }
 
-function MysteryCard({ variants }: { variants: unknown }) {
+function MysteryCard() {
   const prefersReducedMotion = useReducedMotion()
 
   return (
-    <motion.li
-      variants={variants as never}
-      className="h-full"
-      aria-label="Unannounced initiative — coming soon"
-    >
+    <li className="h-full" aria-label="Unannounced initiative — coming soon">
       <GlassCard className="flex h-full flex-col items-center justify-center gap-3 px-6 py-5">
         {/* Pulsing question mark */}
-        <motion.span
+        <span
           className="font-mono text-3xl font-bold text-white/25"
           aria-hidden="true"
-          animate={
-            prefersReducedMotion
-              ? undefined
-              : {
-                  opacity: [0.25, 0.5, 0.25],
-                }
-          }
-          transition={
-            prefersReducedMotion
-              ? undefined
-              : {
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }
-          }
+          style={{
+            animation: prefersReducedMotion ? 'none' : 'pulseOpacity 3s ease-in-out infinite',
+          }}
         >
           ?
-        </motion.span>
+        </span>
 
         {/* Description */}
         <p className="text-center text-xs text-white/55 italic">Something is brewing...</p>
@@ -124,30 +105,22 @@ function MysteryCard({ variants }: { variants: unknown }) {
           Coming Soon
         </span>
       </GlassCard>
-    </motion.li>
+    </li>
   )
 }
 
 export default function Initiatives() {
-  const { itemVariants } = useSectionVariants({
-    containerDuration: 0.8,
-    staggerChildren: 0.1,
-    itemDuration: 0.4,
-    itemY: 20,
-    ease: [0.25, 0.1, 0.25, 1.0],
-  })
-
   return (
     <Section
       id="initiatives"
       heading="Initiatives"
       className="relative flex min-h-screen items-center justify-center px-6 py-20"
     >
-      <ul  className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {initiatives.map((initiative) => (
-          <InitiativeCard key={initiative.name} initiative={initiative} variants={itemVariants} />
+          <InitiativeCard key={initiative.name} initiative={initiative} />
         ))}
-        <MysteryCard variants={itemVariants} />
+        <MysteryCard />
       </ul>
     </Section>
   )

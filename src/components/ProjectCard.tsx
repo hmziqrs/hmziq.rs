@@ -1,5 +1,4 @@
 import { Link } from '@tanstack/react-router'
-import { motion, type Variants } from 'framer-motion'
 import { Star, ArrowRight } from 'lucide-react'
 
 import { GlassCard } from '~/components/GlassCard'
@@ -8,7 +7,6 @@ import { getTechIcon } from '~/lib/techIcons'
 
 interface ProjectCardProps {
   project: Project
-  variants?: Variants
   headingLevel?: 'h2' | 'h3'
 }
 
@@ -36,7 +34,7 @@ function TechBadge({ tech }: { tech: string }) {
   )
 }
 
-export function ProjectCard({ project, variants, headingLevel: Heading = 'h2' }: ProjectCardProps) {
+export function ProjectCard({ project, headingLevel: Heading = 'h2' }: ProjectCardProps) {
   const content = (
     <GlassCard className="group flex h-full flex-col gap-3 px-6 py-4">
       {/* Header */}
@@ -95,7 +93,7 @@ export function ProjectCard({ project, variants, headingLevel: Heading = 'h2' }:
   )
 
   return (
-    <motion.article variants={variants} className="h-full">
+    <article className="h-full">
       <Link
         to="/projects/$slug"
         params={{ slug: project.slug }}
@@ -104,6 +102,6 @@ export function ProjectCard({ project, variants, headingLevel: Heading = 'h2' }:
       >
         {content}
       </Link>
-    </motion.article>
+    </article>
   )
 }

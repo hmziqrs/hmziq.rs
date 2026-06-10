@@ -1,21 +1,11 @@
 import { Link } from '@tanstack/react-router'
-import { motion } from 'framer-motion'
 
 import { Section } from '~/components/Section'
-import { useSectionVariants } from '~/hooks/useSectionVariants'
 import { experience } from '~/lib/content/Experience'
 import { projects } from '~/lib/content/Projects'
 import { periodToDatetime } from '~/lib/dateUtils'
 
 export default function Experience() {
-  const { itemVariants } = useSectionVariants({
-    containerDuration: 0.8,
-    staggerChildren: 0.1,
-    itemDuration: 0.4,
-    itemY: 20,
-    ease: [0.25, 0.1, 0.25, 1.0],
-  })
-
   const entries = experience.all
 
   return (
@@ -24,14 +14,13 @@ export default function Experience() {
       heading="Experience"
       className="relative flex min-h-screen items-center justify-center px-6 py-20"
     >
-      <ul className="relative ml-4 list-none border-l border-white/10 pl-8" >
+      <ul className="relative ml-4 list-none border-l border-white/10 pl-8">
         {entries.map((exp) => {
           const linkedProjects = experience.getProjectsFor(exp, projects.all)
 
           return (
-            <motion.li
+            <li
               key={exp.slug}
-              variants={itemVariants}
               className="group relative mb-8 rounded-lg border border-white/2 bg-white/3 p-6 backdrop-blur-sm transition-all duration-300 last:mb-0 focus-within:border-white/10 focus-within:bg-white/1 hover:border-white/10 hover:bg-white/1"
             >
               <article>
@@ -61,7 +50,7 @@ export default function Experience() {
                 <p className="mb-3 text-sm leading-relaxed text-white/65">{exp.description}</p>
 
                 {/* Bullets */}
-                <ul className="mb-4 space-y-1.5" >
+                <ul className="mb-4 space-y-1.5">
                   {exp.bullets.map((bullet, i) => (
                     <li
                       key={i}
@@ -89,7 +78,7 @@ export default function Experience() {
                   </div>
                 )}
               </article>
-            </motion.li>
+            </li>
           )
         })}
       </ul>

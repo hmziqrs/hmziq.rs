@@ -1,7 +1,4 @@
-import { motion } from 'framer-motion'
-
-import { Section, SECTION_DEFAULTS } from '~/components/Section'
-import { useSectionVariants } from '~/hooks/useSectionVariants'
+import { Section } from '~/components/Section'
 
 function SkeletonCard() {
   return (
@@ -23,26 +20,21 @@ function SkeletonCard() {
 }
 
 export default function Blog() {
-  const { itemVariants } = useSectionVariants(SECTION_DEFAULTS)
-
   return (
     <Section
       id="blog"
       heading="Blog"
       className="relative flex items-center justify-center px-6 py-20"
     >
-      <motion.p
-        variants={itemVariants}
-        className="mb-10 text-center font-mono text-xs text-white/55"
-      >
+      <p className="mb-10 text-center font-mono text-xs text-white/55">
         Stay tuned — something is on the way.
-      </motion.p>
+      </p>
 
-      <ul  className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }, (_, i) => (
-          <motion.li key={i} variants={itemVariants}>
+          <li key={i}>
             <SkeletonCard />
-          </motion.li>
+          </li>
         ))}
       </ul>
     </Section>

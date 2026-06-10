@@ -1,13 +1,11 @@
 import { SiGithub, SiGoogleplay, SiApple, SiNpm } from '@icons-pack/react-simple-icons'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { motion } from 'framer-motion'
 import { Star, ExternalLink, Globe, ArrowRight } from 'lucide-react'
 
 import { BackLink } from '~/components/BackLink'
 import { ErrorBoundary } from '~/components/ErrorBoundary'
 import { MarkdownRenderer } from '~/components/MarkdownRenderer'
 import { PageContainer } from '~/components/PageContainer'
-import { useSectionVariants } from '~/hooks/useSectionVariants'
 import { experience } from '~/lib/content/Experience'
 import { projects, type Project } from '~/lib/content/Projects'
 import { periodToDatetime } from '~/lib/dateUtils'
@@ -59,26 +57,18 @@ function ProjectDetailPage() {
 }
 
 function ProjectDetail({ project }: { project: Project }) {
-  const { containerVariants, itemVariants } = useSectionVariants({
-    containerDuration: 0.6,
-    staggerChildren: 0.08,
-    itemDuration: 0.3,
-    itemY: 15,
-    ease: [0.25, 0.1, 0.25, 1.0],
-  })
-
   const links = project.links
   const hasReadme = project.readme && project.readme.length > 0
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="visible">
+    <div className="animate-in">
       {/* Back link */}
-      <motion.div variants={itemVariants} className="mb-8">
+      <div style={{ animationDelay: '0s' }} className="mb-8">
         <BackLink to="/projects">All projects</BackLink>
-      </motion.div>
+      </div>
 
       {/* Header */}
-      <motion.div variants={itemVariants} className="mb-8">
+      <div style={{ animationDelay: '0.08s' }} className="mb-8">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="font-mono text-2xl font-bold tracking-wide text-white md:text-3xl">
@@ -101,10 +91,10 @@ function ProjectDetail({ project }: { project: Project }) {
             </span>
           )}
         </div>
-      </motion.div>
+      </div>
 
       {/* Meta row */}
-      <motion.div variants={itemVariants} className="mb-6 flex flex-wrap items-center gap-3">
+      <div style={{ animationDelay: '0.16s' }} className="mb-6 flex flex-wrap items-center gap-3">
         <span className="rounded-lg bg-white/[0.06] px-3 py-1 font-mono text-xs text-white/60">
           {project.type}
         </span>
@@ -121,7 +111,7 @@ function ProjectDetail({ project }: { project: Project }) {
             {project.period}
           </time>
         )}
-      </motion.div>
+      </div>
 
       {/* Linked experience */}
       {project.experienceSlug &&
@@ -129,7 +119,7 @@ function ProjectDetail({ project }: { project: Project }) {
           const exp = experience.findBySlug(project.experienceSlug)
           if (!exp) return null
           return (
-            <motion.div variants={itemVariants} className="mb-6">
+            <div style={{ animationDelay: '0.24s' }} className="mb-6">
               <Link
                 to="/"
                 hash="experience"
@@ -149,13 +139,13 @@ function ProjectDetail({ project }: { project: Project }) {
                   aria-hidden="true"
                 />
               </Link>
-            </motion.div>
+            </div>
           )
         })()}
 
       {/* Tech stack */}
-      <motion.ul
-        variants={itemVariants}
+      <ul
+        style={{ animationDelay: '0.32s' }}
         className="mb-8 flex list-none flex-wrap gap-2"
         role="list"
       >
@@ -181,12 +171,12 @@ function ProjectDetail({ project }: { project: Project }) {
             </li>
           )
         })}
-      </motion.ul>
+      </ul>
 
       {/* Links */}
       {links && (
-        <motion.ul
-          variants={itemVariants}
+        <ul
+          style={{ animationDelay: '0.40s' }}
           className="mb-10 flex list-none flex-wrap gap-3"
           role="list"
         >
@@ -244,7 +234,7 @@ function ProjectDetail({ project }: { project: Project }) {
               />
             </li>
           )}
-        </motion.ul>
+        </ul>
       )}
 
       {/* Divider */}
@@ -252,11 +242,11 @@ function ProjectDetail({ project }: { project: Project }) {
 
       {/* README content */}
       {hasReadme && (
-        <motion.article variants={itemVariants} className="prose-project">
+        <article style={{ animationDelay: '0.48s' }} className="prose-project">
           <MarkdownRenderer content={project.readme!} />
-        </motion.article>
+        </article>
       )}
-    </motion.div>
+    </div>
   )
 }
 

@@ -1,4 +1,3 @@
-import { motion, type TargetAndTransition, type Variants } from 'framer-motion'
 import { type ReactNode } from 'react'
 
 import { GlassCard } from '~/components/GlassCard'
@@ -8,7 +7,6 @@ interface GlowTileProps {
   label: string
   direction?: 'row' | 'col'
   className?: string
-  variants?: Variants
   href?: string
   ariaLabel?: string
   prefersReducedMotion?: boolean
@@ -17,20 +15,15 @@ interface GlowTileProps {
 export function GlowTile({
   icon,
   label,
-  direction = 'row',
+  direction = 'col',
   className = '',
-  variants,
   href,
   ariaLabel,
   prefersReducedMotion,
 }: GlowTileProps) {
-  const hoverAnimation: TargetAndTransition | undefined = prefersReducedMotion
-    ? undefined
-    : {
-        scale: 1.15,
-        rotate: 3,
-        transition: { type: 'spring', stiffness: 400, damping: 25 },
-      }
+  const hoverClass = prefersReducedMotion
+    ? ''
+    : 'transition-transform duration-300 hover:scale-[1.15] hover:rotate-[3deg]'
 
   const content = (
     <GlassCard
@@ -47,24 +40,22 @@ export function GlowTile({
 
   if (href) {
     return (
-      <motion.a
+      <a
         href={href}
         target="_blank"
         rel="noopener noreferrer"
         aria-label={ariaLabel ?? label}
-        variants={variants}
-        whileHover={hoverAnimation}
-        className="min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+        className={`min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${hoverClass}`}
       >
         {content}
         <span className="sr-only">(opens in new tab)</span>
-      </motion.a>
+      </a>
     )
   }
 
   return (
-    <motion.div variants={variants} whileHover={hoverAnimation} tabIndex={0}>
+    <div tabIndex={0} className={hoverClass}>
       {content}
-    </motion.div>
+    </div>
   )
 }

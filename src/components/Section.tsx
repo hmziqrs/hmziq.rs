@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion'
 import { type ReactNode } from 'react'
 
-import { useSectionVariants } from '~/hooks/useSectionVariants'
+import { useInView } from '~/hooks/useInView'
+import { useReducedMotion } from '~/hooks/useReducedMotion'
 
 const SECTION_DEFAULTS = {
   containerDuration: 0.8,
@@ -9,6 +9,14 @@ const SECTION_DEFAULTS = {
   itemDuration: 0.4,
   itemY: 20,
   ease: [0.25, 0.1, 0.25, 1.0] as [number, number, number, number],
+}
+
+/**
+ * Hook that provides prefersReducedMotion for section children.
+ */
+export function useSectionItemVariants() {
+  const prefersReducedMotion = useReducedMotion()
+  return { prefersReducedMotion }
 }
 
 interface SectionProps {
@@ -28,28 +36,22 @@ export function Section({
   containerClassName = '',
   children,
 }: SectionProps) {
-  const { containerVariants, itemVariants } = useSectionVariants(SECTION_DEFAULTS)
+  const { ref, isInView } = useInView({ once: true, rootMargin: '-100px' })
   const label = ariaLabel || heading
 
   return (
     <section id={id} aria-label={label} className={className}>
-      <motion.div
-        className={`mx-auto w-full max-w-6xl ${containerClassName}`}
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-100px' }}
+      <div
+        ref={ref as React.RefObject<HTMLDivElement>}
+        className={`mx-auto w-full max-w-6xl ${isInView ? 'section-visible' : 'section-invisible'} ${containerClassName}`}
       >
         {heading && (
-          <motion.h2
-            variants={itemVariants}
-            className="mb-10 text-center font-mono text-lg font-semibold tracking-wider text-white/80"
-          >
+          <h2 className="mb-10 text-center font-mono text-lg font-semibold tracking-wider text-white/80">
             {heading}
-          </motion.h2>
+          </h2>
         )}
         {children}
-      </motion.div>
+      </div>
     </section>
   )
 }
