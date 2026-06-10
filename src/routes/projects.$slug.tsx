@@ -1,7 +1,7 @@
-import { SiGithub } from '@icons-pack/react-simple-icons'
+import { SiGithub, SiGoogleplay, SiApple } from '@icons-pack/react-simple-icons'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Star, ExternalLink, Globe, Smartphone, ArrowRight } from 'lucide-react'
+import { ArrowLeft, Star, ExternalLink, Globe, ArrowRight } from 'lucide-react'
 
 import { ErrorBoundary } from '~/components/ErrorBoundary'
 import { MarkdownRenderer } from '~/components/MarkdownRenderer'
@@ -167,10 +167,10 @@ function ProjectDetail({ project }: { project: Project }) {
           )}
           {links.web && <LinkButton href={links.web} icon={<Globe size={14} />} label="Website" />}
           {links.playStore && (
-            <LinkButton href={links.playStore} icon={<Smartphone size={14} />} label="Play Store" />
+            <LinkButton href={links.playStore} icon={<SiGoogleplay size={14} />} label="Play Store" />
           )}
           {links.appStore && (
-            <LinkButton href={links.appStore} icon={<Smartphone size={14} />} label="App Store" />
+            <LinkButton href={links.appStore} icon={<SiApple size={14} />} label="App Store" />
           )}
           {links.npm && (
             <LinkButton href={links.npm} icon={<ExternalLink size={14} />} label="npm" />
