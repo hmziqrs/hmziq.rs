@@ -25,7 +25,9 @@ function ProjectsPage() {
       <ErrorBoundary
         fallback={
           <PageContainer contentClassName="flex min-h-screen items-center justify-center">
-            <div className="text-white" role="alert">Something went wrong</div>
+            <div className="text-white" role="alert">
+              Something went wrong
+            </div>
           </PageContainer>
         }
       >
@@ -95,7 +97,11 @@ function ProjectsListing() {
             >
               Projects
             </motion.h1>
-            <motion.p variants={itemVariants} aria-live="polite" className="mt-2 font-mono text-sm text-white/55">
+            <motion.p
+              variants={itemVariants}
+              aria-live="polite"
+              className="mt-2 font-mono text-sm text-white/55"
+            >
               {filtered.length} of {projects.all.length} projects
               {selectedType && ' (filtered)'}
             </motion.p>
@@ -108,7 +114,12 @@ function ProjectsListing() {
             animate="visible"
             className="mb-10"
           >
-            <motion.div variants={itemVariants} role="group" aria-label="Filter by type" className="flex flex-wrap items-center gap-2">
+            <motion.div
+              variants={itemVariants}
+              role="group"
+              aria-label="Filter by type"
+              className="flex flex-wrap items-center gap-2"
+            >
               <span className="font-mono text-xs text-white/50">Type:</span>
               {allTypes.map((type) => (
                 <button

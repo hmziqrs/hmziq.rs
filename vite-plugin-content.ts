@@ -1,6 +1,7 @@
-import matter from 'gray-matter'
 import fs from 'node:fs'
 import path from 'node:path'
+
+import matter from 'gray-matter'
 import type { Plugin } from 'vite'
 
 const VIRTUAL_ID = 'virtual:content'
@@ -12,13 +13,10 @@ interface ContentOptions {
 }
 
 export function contentPlugin(options: ContentOptions = {}): Plugin {
-  const projectsDir = path.resolve(
-    process.cwd(),
-    options.projectsDir ?? 'content/projects',
-  )
+  const projectsDir = path.resolve(process.cwd(), options.projectsDir ?? 'content/projects')
   const experiencesDir = path.resolve(
     process.cwd(),
-    options.experiencesDir ?? 'content/experiences',
+    options.experiencesDir ?? 'content/experiences'
   )
 
   function loadCollection(dir: string, fileName: string) {
@@ -57,9 +55,7 @@ export function contentPlugin(options: ContentOptions = {}): Plugin {
     handleHotUpdate({ file, server }) {
       const normalized = path.normalize(file)
       const isProject = normalized.includes(path.normalize('content/projects/'))
-      const isExperience = normalized.includes(
-        path.normalize('content/experiences/'),
-      )
+      const isExperience = normalized.includes(path.normalize('content/experiences/'))
 
       if (isProject || isExperience) {
         const mod = server.moduleGraph.getModuleById(RESOLVED_ID)

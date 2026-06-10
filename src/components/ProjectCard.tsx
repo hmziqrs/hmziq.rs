@@ -36,7 +36,7 @@ function TechBadge({ tech }: { tech: string }) {
 
 export function ProjectCard({ project, variants }: ProjectCardProps) {
   const content = (
-    <div className="group relative flex h-full flex-col gap-3 overflow-hidden border border-white/2 bg-white/3 px-6 py-4 backdrop-blur-sm transition-all duration-500 hover:border-white/10 hover:bg-white/1 focus-within:border-white/10 focus-within:bg-white/1">
+    <div className="group relative flex h-full flex-col gap-3 overflow-hidden border border-white/2 bg-white/3 px-6 py-4 backdrop-blur-sm transition-all duration-500 focus-within:border-white/10 focus-within:bg-white/1 hover:border-white/10 hover:bg-white/1">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
@@ -51,8 +51,16 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {project.stars != null && project.stars > 0 && (
-            <span className="flex items-center gap-1 font-mono text-xs text-white/65" aria-label={`${project.stars} GitHub stars`}>
-              <Star size={12} fill="currentColor" className="text-yellow-500/80" aria-hidden="true" />
+            <span
+              className="flex items-center gap-1 font-mono text-xs text-white/65"
+              aria-label={`${project.stars} GitHub stars`}
+            >
+              <Star
+                size={12}
+                fill="currentColor"
+                className="text-yellow-500/80"
+                aria-hidden="true"
+              />
               {project.stars}
             </span>
           )}
@@ -72,7 +80,10 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
           <TechBadge key={t} tech={t} />
         ))}
         {project.tech.length > 5 && (
-          <span className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/10 font-mono text-[10px] text-white/55" aria-label={`+${project.tech.length - 5} more technologies`}>
+          <span
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/10 font-mono text-[10px] text-white/55"
+            aria-label={`+${project.tech.length - 5} more technologies`}
+          >
             +{project.tech.length - 5}
           </span>
         )}

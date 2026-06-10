@@ -35,7 +35,7 @@ function fetchStats(repo: string): GitHubStats | null {
   try {
     const raw = execSync(
       `gh repo view "${repo}" --json stargazerCount,forkCount,issues,primaryLanguage,pushedAt,updatedAt,homepageUrl`,
-      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
     )
     return JSON.parse(raw)
   } catch {
@@ -100,7 +100,7 @@ function main() {
     writeFileSync(filePath, output)
 
     console.log(
-      `  ✓ ${dir.padEnd(30)} ★ ${String(stats.stargazerCount).padStart(4)}  ⑂ ${String(stats.forkCount).padStart(3)}  ${stats.primaryLanguage?.name ?? '—'}`,
+      `  ✓ ${dir.padEnd(30)} ★ ${String(stats.stargazerCount).padStart(4)}  ⑂ ${String(stats.forkCount).padStart(3)}  ${stats.primaryLanguage?.name ?? '—'}`
     )
     updated++
   }

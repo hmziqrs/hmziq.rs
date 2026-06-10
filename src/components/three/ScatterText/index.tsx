@@ -2,8 +2,8 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import * as THREE from 'three'
 
-import { useReducedMotion } from '~/hooks/useReducedMotion'
 import { useWASM } from '~/contexts/WASMContext'
+import { useReducedMotion } from '~/hooks/useReducedMotion'
 import { ScatterTextSharedMemory } from '~/lib/wasm/scatter-text'
 
 import { CanvasContextEvents } from '../CanvasContextEvents'

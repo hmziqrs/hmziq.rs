@@ -8,8 +8,18 @@ import { projects } from '~/lib/content/Projects'
 /** Parse "MMM YYYY - MMM YYYY" or "MMM YYYY - Present" to ISO datetime range */
 function periodToDatetime(period: string): string | undefined {
   const months: Record<string, string> = {
-    Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06',
-    Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12',
+    Jan: '01',
+    Feb: '02',
+    Mar: '03',
+    Apr: '04',
+    May: '05',
+    Jun: '06',
+    Jul: '07',
+    Aug: '08',
+    Sep: '09',
+    Oct: '10',
+    Nov: '11',
+    Dec: '12',
   }
   const [start, end] = period.split(' - ')
   if (!start) return undefined
@@ -53,7 +63,7 @@ export default function Experience() {
           Experience
         </motion.h2>
 
-        <ul className="list-none relative ml-4 border-l border-white/10 pl-8">
+        <ul className="relative ml-4 list-none border-l border-white/10 pl-8">
           {entries.map((exp) => {
             const linkedProjects = experience.getProjectsFor(exp, projects.all)
 
@@ -61,11 +71,11 @@ export default function Experience() {
               <motion.li
                 key={exp.slug}
                 variants={itemVariants}
-                className="group relative mb-8 last:mb-0 rounded-lg border border-white/2 bg-white/3 p-6 backdrop-blur-sm transition-all duration-300 hover:border-white/10 hover:bg-white/1"
+                className="group relative mb-8 rounded-lg border border-white/2 bg-white/3 p-6 backdrop-blur-sm transition-all duration-300 last:mb-0 hover:border-white/10 hover:bg-white/1"
               >
                 <article>
                   {/* Timeline dot */}
-                  <div className="absolute -left-[41px] top-7 h-3 w-3 rounded-full border-2 border-white/30 bg-black" />
+                  <div className="absolute top-7 -left-[41px] h-3 w-3 rounded-full border-2 border-white/30 bg-black" />
 
                   {/* Header */}
                   <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
@@ -73,26 +83,25 @@ export default function Experience() {
                       <h3 className="font-mono text-base font-semibold text-white/80">
                         {exp.company ?? exp.role}
                       </h3>
-                      {exp.company && (
-                        <p className="text-sm text-white/65">{exp.role}</p>
-                      )}
+                      {exp.company && <p className="text-sm text-white/65">{exp.role}</p>}
                     </div>
-                    <time className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-xs text-white/55" dateTime={periodToDatetime(exp.period)}>
+                    <time
+                      className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-xs text-white/55"
+                      dateTime={periodToDatetime(exp.period)}
+                    >
                       {exp.period}
                     </time>
                   </div>
 
                   {/* Description */}
-                  <p className="mb-3 text-sm leading-relaxed text-white/65">
-                    {exp.description}
-                  </p>
+                  <p className="mb-3 text-sm leading-relaxed text-white/65">{exp.description}</p>
 
                   {/* Bullets */}
                   <ul className="mb-4 space-y-1.5">
                     {exp.bullets.map((bullet, i) => (
                       <li
                         key={i}
-                        className="pl-4 text-xs leading-relaxed text-white/55 before:-ml-4 before:mr-2 before:text-white/40 before:content-['-']"
+                        className="pl-4 text-xs leading-relaxed text-white/55 before:mr-2 before:-ml-4 before:text-white/40 before:content-['-']"
                       >
                         {bullet}
                       </li>
