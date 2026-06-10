@@ -37,11 +37,13 @@ export default function Projects() {
           Featured Projects
         </motion.h2>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {topProjects.map((project) => (
-            <ProjectCard key={project.slug} project={project} variants={itemVariants} />
+            <li key={project.slug}>
+              <ProjectCard project={project} variants={itemVariants} />
+            </li>
           ))}
-        </div>
+        </ul>
 
         <motion.div variants={itemVariants} className="mt-10 text-center">
           <Link

@@ -202,7 +202,7 @@ export default function ScatterText({ text }: ScatterTextProps) {
   if (typeof window === 'undefined') return null
 
   return (
-    <div ref={containerRef} className="absolute min-h-full min-w-full">
+    <div ref={containerRef} className="absolute min-h-full min-w-full" aria-hidden="true">
       {isGenerating ? (
         <>
           {!!containerSize.width && (

@@ -33,6 +33,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
             className="text-white/70 underline underline-offset-4 transition-colors hover:text-white"
           >
             {children}
+            <span className="sr-only"> (opens in new tab)</span>
           </a>
         ),
         strong: ({ children }) => (

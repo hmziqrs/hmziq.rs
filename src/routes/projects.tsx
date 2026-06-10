@@ -11,6 +11,9 @@ import { projects, type Project } from '~/lib/content/Projects'
 
 export const Route = createFileRoute('/projects')({
   component: ProjectsPage,
+  head: () => ({
+    meta: [{ title: 'Projects - hmziq.rs' }],
+  }),
 })
 
 function ProjectsPage() {
@@ -22,7 +25,7 @@ function ProjectsPage() {
       <ErrorBoundary
         fallback={
           <PageContainer contentClassName="flex min-h-screen items-center justify-center">
-            <div className="text-white">Something went wrong</div>
+            <div className="text-white" role="alert">Something went wrong</div>
           </PageContainer>
         }
       >
@@ -63,7 +66,7 @@ function ProjectsListing() {
     <PageContainer contentClassName="px-6 py-20">
       <ErrorBoundary
         fallback={
-          <div className="flex min-h-screen items-center justify-center text-white">
+          <div role="alert" className="flex min-h-screen items-center justify-center text-white">
             Something went wrong
           </div>
         }
@@ -92,7 +95,7 @@ function ProjectsListing() {
             >
               Projects
             </motion.h1>
-            <motion.p variants={itemVariants} className="mt-2 font-mono text-sm text-white/40">
+            <motion.p variants={itemVariants} aria-live="polite" className="mt-2 font-mono text-sm text-white/40">
               {filtered.length} of {projects.all.length} projects
               {selectedType && ' (filtered)'}
             </motion.p>
@@ -105,12 +108,13 @@ function ProjectsListing() {
             animate="visible"
             className="mb-10"
           >
-            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2">
+            <motion.div variants={itemVariants} role="group" aria-label="Filter by type" className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs text-white/30">Type:</span>
               {allTypes.map((type) => (
                 <button
                   key={type}
                   onClick={() => toggleType(type)}
+                  aria-pressed={selectedType === type}
                   className={`rounded-lg px-3 py-1.5 font-mono text-xs transition-all duration-200 ${
                     selectedType === type
                       ? 'bg-white/15 text-white'
@@ -124,22 +128,25 @@ function ProjectsListing() {
           </motion.div>
 
           {/* Project grid */}
-          <motion.div
+          <motion.ul
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
           >
             {filtered.map((project) => (
-              <ProjectCard key={project.slug} project={project} variants={itemVariants} />
+              <li key={project.slug}>
+                <ProjectCard project={project} variants={itemVariants} />
+              </li>
             ))}
-          </motion.div>
+          </motion.ul>
 
           {/* Empty state */}
           {filtered.length === 0 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
+              role="status"
               className="py-20 text-center"
             >
               <p className="font-mono text-sm text-white/30">

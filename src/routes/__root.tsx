@@ -102,7 +102,7 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
         style={{ backgroundColor: '#000000', color: '#ffffff', minHeight: '100vh' }}
       >
         <a
-          href="#skills"
+          href="#hero"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-black"
         >
           Skip to content
@@ -112,12 +112,14 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
             <WASMCanvas
               loadingFallback={
                 <div
+                  aria-hidden="true"
                   className="fixed inset-0"
                   style={{ backgroundColor: '#000000', zIndex: -10 }}
                 />
               }
               errorFallback={
                 <div
+                  aria-hidden="true"
                   className="fixed inset-0"
                   style={{ backgroundColor: '#000000', zIndex: -10 }}
                 />

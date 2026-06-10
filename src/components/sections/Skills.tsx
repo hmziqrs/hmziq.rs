@@ -55,7 +55,7 @@ function SkillIcon({ skill }: { skill: string }) {
   const iconColor = skillColorMap[skill] || '#9CA3AF'
 
   if (LUCIDE_SKILLS.includes(skill)) {
-    return <IconComponent size={20} color={iconColor} strokeWidth={2} />
+    return <IconComponent size={20} color={iconColor} strokeWidth={2} aria-hidden="true" />
   }
 
   return <IconComponent size={20} color={iconColor} title={skill} />
@@ -81,6 +81,7 @@ export default function Skills() {
       className="relative flex items-center justify-center px-6 py-20"
       aria-label="Skills"
     >
+      <h2 className="sr-only">Skills</h2>
       <motion.div
         className="mx-auto max-w-6xl"
         variants={containerVariants}
@@ -88,19 +89,20 @@ export default function Skills() {
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
       >
-        <div className="flex max-w-6xl flex-row flex-wrap justify-center gap-4">
+        <ul className="flex max-w-6xl list-none flex-row flex-wrap justify-center gap-4">
           {skills.map((skill) => (
-            <GlowTile
-              key={skill}
-              icon={<SkillIcon skill={skill} />}
-              label={skill}
-              direction="row"
-              className="to-white/[0.03] px-4 py-3 backdrop-blur-xl hover:to-white/[0.05]"
-              variants={skillVariants}
-              prefersReducedMotion={prefersReducedMotion}
-            />
+            <li key={skill}>
+              <GlowTile
+                icon={<SkillIcon skill={skill} />}
+                label={skill}
+                direction="row"
+                className="to-white/[0.03] px-4 py-3 backdrop-blur-xl hover:to-white/[0.05]"
+                variants={skillVariants}
+                prefersReducedMotion={prefersReducedMotion}
+              />
+            </li>
           ))}
-        </div>
+        </ul>
       </motion.div>
     </section>
   )

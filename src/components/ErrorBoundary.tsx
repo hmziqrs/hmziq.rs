@@ -22,7 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback ?? null
+      return this.props.fallback ?? <div role="alert">Something went wrong</div>
     }
     return this.props.children
   }

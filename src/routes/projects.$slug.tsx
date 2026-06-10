@@ -12,6 +12,13 @@ import { projects, type Project } from '~/lib/content/Projects'
 import { getTechIcon } from '~/lib/techIcons'
 
 export const Route = createFileRoute('/projects/$slug')({
+  head: ({ params }) => {
+    const project = projects.findBySlug(params.slug)
+    const title = project ? `${project.title} | Projects` : 'Project Not Found'
+    return {
+      meta: [{ title }],
+    }
+  },
   component: ProjectDetailPage,
 })
 
@@ -40,7 +47,7 @@ function ProjectDetailPage() {
     <PageContainer contentClassName="px-6 py-20">
       <ErrorBoundary
         fallback={
-          <div className="flex min-h-screen items-center justify-center text-white">
+          <div role="alert" className="flex min-h-screen items-center justify-center text-white">
             Something went wrong
           </div>
         }
@@ -88,8 +95,8 @@ function ProjectDetail({ project }: { project: Project }) {
             <p className="mt-2 text-sm leading-relaxed text-white/50">{project.description}</p>
           </div>
           {project.stars != null && project.stars > 0 && (
-            <span className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white/[0.06] px-3 py-1.5 font-mono text-sm text-white/60">
-              <Star size={14} fill="currentColor" className="text-yellow-500/80" />
+            <span className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white/[0.06] px-3 py-1.5 font-mono text-sm text-white/60" aria-label={`${project.stars} GitHub stars`}>
+              <Star size={14} fill="currentColor" className="text-yellow-500/80" aria-hidden="true" />
               {project.stars}
             </span>
           )}
@@ -204,6 +211,7 @@ function LinkButton({ href, icon, label }: { href: string; icon: React.ReactNode
     >
       {icon}
       {label}
+      <span className="sr-only"> (opens in new tab)</span>
     </a>
   )
 }

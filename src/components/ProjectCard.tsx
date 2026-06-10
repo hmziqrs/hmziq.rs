@@ -36,7 +36,7 @@ function TechBadge({ tech }: { tech: string }) {
 
 export function ProjectCard({ project, variants }: ProjectCardProps) {
   const content = (
-    <div className="group relative flex h-full flex-col gap-3 overflow-hidden border border-white/2 bg-white/3 px-6 py-4 backdrop-blur-sm transition-all duration-500 hover:border-white/10 hover:bg-white/1">
+    <div className="group relative flex h-full flex-col gap-3 overflow-hidden border border-white/2 bg-white/3 px-6 py-4 backdrop-blur-sm transition-all duration-500 hover:border-white/10 hover:bg-white/1 focus-within:border-white/10 focus-within:bg-white/1">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
@@ -51,7 +51,7 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {project.stars != null && project.stars > 0 && (
-            <span className="flex items-center gap-1 font-mono text-xs text-white/65">
+            <span className="flex items-center gap-1 font-mono text-xs text-white/65" aria-label={`${project.stars} GitHub stars`}>
               <Star size={12} fill="currentColor" className="text-yellow-500/80" />
               {project.stars}
             </span>
@@ -94,7 +94,7 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
   )
 
   return (
-    <motion.div variants={variants} className="h-full">
+    <motion.article variants={variants} className="h-full">
       <Link
         to="/projects/$slug"
         params={{ slug: project.slug }}
@@ -103,6 +103,6 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
       >
         {content}
       </Link>
-    </motion.div>
+    </motion.article>
   )
 }
