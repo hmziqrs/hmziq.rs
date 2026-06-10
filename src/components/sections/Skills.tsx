@@ -78,7 +78,7 @@ export default function Skills() {
   return (
     <section
       id="skills"
-      className="relative flex min-h-screen items-center justify-center px-6 py-20"
+      className="relative flex items-center justify-center px-6 py-20"
       aria-label="Skills"
     >
       <motion.div
