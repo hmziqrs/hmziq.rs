@@ -60,7 +60,7 @@ export default function Hero() {
     itemY: 50,
     ease: [0.25, 0.46, 0.45, 0.94],
   })
-  const { name, title } = userProfile.profile
+  const { name, title, tagline } = userProfile.profile
   const { scrollText } = siteContent.ui
   const primarySocialLinks = userProfile.getPrimarySocialLinks()
 
@@ -97,6 +97,13 @@ export default function Hero() {
           variants={itemVariants}
         >
           {title}
+        </motion.p>
+
+        <motion.p
+          className="max-w-lg text-sm font-light text-white/50 md:text-base"
+          variants={itemVariants}
+        >
+          {tagline}
         </motion.p>
 
         <div className="h-6" />

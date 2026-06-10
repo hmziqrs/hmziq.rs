@@ -149,7 +149,10 @@ function ProjectDetail({ project }: { project: Project }) {
           </span>
         )}
         {project.period && (
-          <time dateTime={periodToDatetime(project.period) ?? project.period} className="rounded-lg bg-white/[0.04] px-3 py-1 font-mono text-xs text-white/55">
+          <time
+            dateTime={periodToDatetime(project.period) ?? project.period}
+            className="rounded-lg bg-white/[0.04] px-3 py-1 font-mono text-xs text-white/55"
+          >
             {project.period}
           </time>
         )}
@@ -185,7 +188,11 @@ function ProjectDetail({ project }: { project: Project }) {
         })()}
 
       {/* Tech stack */}
-      <motion.ul variants={itemVariants} className="mb-8 flex list-none flex-wrap gap-2" role="list">
+      <motion.ul
+        variants={itemVariants}
+        className="mb-8 flex list-none flex-wrap gap-2"
+        role="list"
+      >
         {project.tech.map((t) => {
           const { icon: Icon, color, abbr } = getTechIcon(t)
           return (
@@ -196,7 +203,11 @@ function ProjectDetail({ project }: { project: Project }) {
               {Icon ? (
                 <Icon size={12} color={color} aria-hidden="true" />
               ) : (
-                <span className="font-mono text-[9px] font-bold" style={{ color }} aria-hidden="true">
+                <span
+                  className="font-mono text-[9px] font-bold"
+                  style={{ color }}
+                  aria-hidden="true"
+                >
                   {abbr}
                 </span>
               )}
@@ -208,26 +219,56 @@ function ProjectDetail({ project }: { project: Project }) {
 
       {/* Links */}
       {links && (
-        <motion.ul variants={itemVariants} className="mb-10 flex list-none flex-wrap gap-3" role="list">
+        <motion.ul
+          variants={itemVariants}
+          className="mb-10 flex list-none flex-wrap gap-3"
+          role="list"
+        >
           {links.github && (
-            <li><LinkButton href={links.github} icon={<SiGithub size={14} aria-hidden="true" />} label="GitHub" /></li>
+            <li>
+              <LinkButton
+                href={links.github}
+                icon={<SiGithub size={14} aria-hidden="true" />}
+                label="GitHub"
+              />
+            </li>
           )}
-          {links.web && <li><LinkButton href={links.web} icon={<Globe size={14} />} label="Website" /></li>}
+          {links.web && (
+            <li>
+              <LinkButton href={links.web} icon={<Globe size={14} />} label="Website" />
+            </li>
+          )}
           {links.playStore && (
-            <li><LinkButton
-              href={links.playStore}
-              icon={<SiGoogleplay size={14} aria-hidden="true" />}
-              label="Play Store"
-            /></li>
+            <li>
+              <LinkButton
+                href={links.playStore}
+                icon={<SiGoogleplay size={14} aria-hidden="true" />}
+                label="Play Store"
+              />
+            </li>
           )}
           {links.appStore && (
-            <li><LinkButton href={links.appStore} icon={<SiApple size={14} aria-hidden="true" />} label="App Store" /></li>
+            <li>
+              <LinkButton
+                href={links.appStore}
+                icon={<SiApple size={14} aria-hidden="true" />}
+                label="App Store"
+              />
+            </li>
           )}
           {links.npm && (
-            <li><LinkButton href={links.npm} icon={<SiNpm size={14} color="#CB3837" aria-hidden="true" />} label="npm" /></li>
+            <li>
+              <LinkButton
+                href={links.npm}
+                icon={<SiNpm size={14} color="#CB3837" aria-hidden="true" />}
+                label="npm"
+              />
+            </li>
           )}
           {links.crates && (
-            <li><LinkButton href={links.crates} icon={<ExternalLink size={14} />} label="crates.io" /></li>
+            <li>
+              <LinkButton href={links.crates} icon={<ExternalLink size={14} />} label="crates.io" />
+            </li>
           )}
         </motion.ul>
       )}

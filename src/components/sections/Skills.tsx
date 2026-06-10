@@ -76,10 +76,7 @@ export default function Skills() {
   const skills = userProfile.skills
 
   return (
-    <section
-      id="skills"
-      className="relative flex items-center justify-center px-6 py-20"
-    >
+    <section id="skills" className="relative flex items-center justify-center px-6 py-20">
       <h2 className="sr-only">Skills</h2>
       <motion.div
         className="mx-auto max-w-6xl"
@@ -88,7 +85,10 @@ export default function Skills() {
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
       >
-        <ul className="flex max-w-6xl list-none flex-row flex-wrap justify-center gap-4" role="list">
+        <ul
+          className="flex max-w-6xl list-none flex-row flex-wrap justify-center gap-4"
+          role="list"
+        >
           {skills.map((skill) => (
             <li key={skill}>
               <GlowTile

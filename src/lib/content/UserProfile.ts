@@ -6,6 +6,7 @@ import type { UserData, SiteData, SocialPlatform } from './types'
 interface Profile {
   name: string
   title: string
+  tagline: string
   yearsOfExperience: number
 }
 
@@ -33,6 +34,7 @@ class UserProfile {
     return {
       name: this.data.name,
       title: this.data.title,
+      tagline: this.data.tagline,
       yearsOfExperience: this.data.yearsOfExperience,
     }
   }

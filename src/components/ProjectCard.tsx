@@ -41,7 +41,7 @@ export function ProjectCard({ project, variants, headingLevel: Heading = 'h2' }:
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <Heading className="truncate font-mono text-sm font-semibold tracking-wide text-white group-hover:text-white/90 group-focus-within:text-white/90">
+          <Heading className="truncate font-mono text-sm font-semibold tracking-wide text-white group-focus-within:text-white/90 group-hover:text-white/90">
             {project.title}
           </Heading>
           {project.context && (
@@ -67,7 +67,7 @@ export function ProjectCard({ project, variants, headingLevel: Heading = 'h2' }:
           )}
           <ArrowRight
             size={14}
-            className="text-white/30 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-white/60 group-focus-within:translate-x-0.5 group-focus-within:text-white/60"
+            className="text-white/30 transition-all duration-300 group-focus-within:translate-x-0.5 group-focus-within:text-white/60 group-hover:translate-x-0.5 group-hover:text-white/60"
           />
         </div>
       </div>
@@ -91,9 +91,12 @@ export function ProjectCard({ project, variants, headingLevel: Heading = 'h2' }:
       </div>
 
       {/* Hover shine */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100 group-focus-within:opacity-100">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-focus-within:opacity-100 group-hover:opacity-100"
+      >
         <div
-          className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0 group-focus-within:translate-x-0 group-focus-within:translate-y-0"
+          className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-focus-within:translate-x-0 group-focus-within:translate-y-0 group-hover:translate-x-0 group-hover:translate-y-0"
           style={{
             background:
               'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',

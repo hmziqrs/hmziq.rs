@@ -2,6 +2,7 @@ export interface UserData {
   username: string
   name: string
   title: string
+  tagline: string
   yearsOfExperience: number
   email: string
   skills: string[]
