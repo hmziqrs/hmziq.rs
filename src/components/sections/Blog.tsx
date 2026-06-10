@@ -51,12 +51,12 @@ export default function Blog() {
         </motion.h2>
         <motion.p
           variants={itemVariants}
-          className="mb-10 text-center font-mono text-xs text-white/40"
+          className="mb-10 text-center font-mono text-xs text-white/55"
         >
           Stay tuned — something is on the way.
         </motion.p>
 
-        <ul className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul role="list" className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }, (_, i) => (
             <motion.li key={i} variants={itemVariants}>
               <SkeletonCard />

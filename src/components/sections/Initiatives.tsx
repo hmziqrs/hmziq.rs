@@ -78,17 +78,17 @@ function InitiativeCard({
       {/* Link */}
       {initiative.href && (
         <div className="mt-auto pt-2">
-          <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-white/40 transition-colors duration-200 group-focus-within:text-white/60 group-hover:text-white/60">
+          <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-white/60 transition-colors duration-200 group-focus-within:text-white/60 group-hover:text-white/60">
             Explore
-            <ExternalLink size={10} />
+            <ExternalLink size={10} aria-hidden="true" />
           </span>
         </div>
       )}
 
       {/* Hover shine */}
-      <div className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none">
         <div
-          className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0"
+          className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0 group-focus-within:translate-x-0 group-focus-within:translate-y-0 motion-reduce:transition-none"
           style={{
             background:
               'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',
@@ -110,7 +110,7 @@ function InitiativeCard({
           aria-label={`${initiative.name} — ${initiative.description}`}
           className="block h-full"
         >
-          <article>{card}</article>
+          <article aria-label={initiative.name}>{card}</article>
           <span className="sr-only">(opens in new tab)</span>
         </a>
       </motion.li>
@@ -119,7 +119,7 @@ function InitiativeCard({
 
   return (
     <motion.li variants={variants as never} className="h-full">
-      <article>{card}</article>
+      <article aria-label={initiative.name}>{card}</article>
     </motion.li>
   )
 }
@@ -159,7 +159,7 @@ function MysteryCard({ variants }: { variants: unknown }) {
         </motion.span>
 
         {/* Description */}
-        <p className="text-center text-xs text-white/40 italic">Something is brewing...</p>
+        <p className="text-center text-xs text-white/55 italic">Something is brewing...</p>
 
         {/* Badge */}
         <span
@@ -170,9 +170,9 @@ function MysteryCard({ variants }: { variants: unknown }) {
         </span>
 
         {/* Hover shine */}
-        <div className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100 motion-reduce:transition-none">
           <div
-            className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0"
+            className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0 motion-reduce:transition-none"
             style={{
               background:
                 'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',
@@ -215,7 +215,7 @@ export default function Initiatives() {
           Initiatives
         </motion.h2>
 
-        <ul className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul role="list" className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {initiatives.map((initiative) => (
             <InitiativeCard key={initiative.name} initiative={initiative} variants={itemVariants} />
           ))}

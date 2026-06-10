@@ -60,9 +60,9 @@ function ProjectDetailPage() {
           <h1 className="font-mono text-2xl font-bold text-white">Project not found</h1>
           <Link
             to="/projects"
-            className="mt-4 inline-flex items-center gap-2 font-mono text-sm text-white/50 hover:text-white/70 focus-visible:text-white/70"
+            className="mt-4 inline-flex items-center gap-2 font-mono text-sm text-white/60 hover:text-white/70 focus-visible:text-white/70"
           >
-            <ArrowLeft size={14} />
+            <ArrowLeft size={14} aria-hidden="true" />
             Back to projects
           </Link>
         </div>
@@ -105,9 +105,9 @@ function ProjectDetail({ project }: { project: Project }) {
       <motion.div variants={itemVariants} className="mb-8">
         <Link
           to="/projects"
-          className="inline-flex items-center gap-2 font-mono text-sm text-white/40 transition-colors hover:text-white/70 focus-visible:text-white/70"
+          className="inline-flex items-center gap-2 font-mono text-sm text-white/60 transition-colors hover:text-white/70 focus-visible:text-white/70"
         >
-          <ArrowLeft size={14} />
+          <ArrowLeft size={14} aria-hidden="true" />
           All projects
         </Link>
       </motion.div>
@@ -119,7 +119,7 @@ function ProjectDetail({ project }: { project: Project }) {
             <h1 className="font-mono text-2xl font-bold tracking-wide text-white md:text-3xl">
               {project.title}
             </h1>
-            <p className="mt-2 text-sm leading-relaxed text-white/50">{project.description}</p>
+            <p className="mt-2 text-sm leading-relaxed text-white/60">{project.description}</p>
           </div>
           {project.stars != null && project.stars > 0 && (
             <span
@@ -140,7 +140,7 @@ function ProjectDetail({ project }: { project: Project }) {
 
       {/* Meta row */}
       <motion.div variants={itemVariants} className="mb-6 flex flex-wrap items-center gap-3">
-        <span className="rounded-lg bg-white/[0.06] px-3 py-1 font-mono text-xs text-white/50">
+        <span className="rounded-lg bg-white/[0.06] px-3 py-1 font-mono text-xs text-white/60">
           {project.type}
         </span>
         {project.context && (
@@ -181,6 +181,7 @@ function ProjectDetail({ project }: { project: Project }) {
                 <ArrowRight
                   size={14}
                   className="shrink-0 text-white/20 transition-transform group-hover:translate-x-0.5 group-hover:text-white/40 group-focus-visible:translate-x-0.5 group-focus-visible:text-white/40"
+                  aria-hidden="true"
                 />
               </Link>
             </motion.div>
@@ -235,7 +236,7 @@ function ProjectDetail({ project }: { project: Project }) {
           )}
           {links.web && (
             <li>
-              <LinkButton href={links.web} icon={<Globe size={14} />} label="Website" />
+              <LinkButton href={links.web} icon={<Globe size={14} aria-hidden="true" />} label="Website" />
             </li>
           )}
           {links.playStore && (
@@ -267,7 +268,7 @@ function ProjectDetail({ project }: { project: Project }) {
           )}
           {links.crates && (
             <li>
-              <LinkButton href={links.crates} icon={<ExternalLink size={14} />} label="crates.io" />
+              <LinkButton href={links.crates} icon={<ExternalLink size={14} aria-hidden="true" />} label="crates.io" />
             </li>
           )}
         </motion.ul>
@@ -292,7 +293,7 @@ function LinkButton({ href, icon, label }: { href: string; icon: React.ReactNode
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 rounded-lg bg-white/[0.06] px-4 py-2 font-mono text-xs text-white/60 backdrop-blur-sm transition-all duration-300 hover:bg-white/[0.1] hover:text-white/80 focus-visible:bg-white/[0.1] focus-visible:text-white/80"
+      className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-white/[0.06] px-4 py-2 font-mono text-xs text-white/60 backdrop-blur-sm transition-all duration-300 hover:bg-white/[0.1] hover:text-white/80 focus-visible:bg-white/[0.1] focus-visible:text-white/80"
     >
       <span aria-hidden="true">{icon}</span>
       {label}

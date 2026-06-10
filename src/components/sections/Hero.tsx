@@ -100,18 +100,16 @@ export default function Hero() {
         </motion.p>
 
         <motion.p
-          className="max-w-lg text-sm font-light text-white/50 md:text-base"
+          className="max-w-lg text-sm font-light text-white/60 md:text-base"
           variants={itemVariants}
         >
           {tagline}
         </motion.p>
 
-        <div className="h-6" />
-
         {/* Social links */}
         <motion.ul
           role="list"
-          className="flex list-none flex-wrap items-center justify-center gap-3"
+          className="mt-6 flex list-none flex-wrap items-center justify-center gap-3"
           variants={itemVariants}
         >
           {primarySocialLinks.map((link) => (
@@ -120,10 +118,10 @@ export default function Hero() {
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`${link.name}: ${link.username}`}
+                aria-label={`${link.name}: ${link.username} — ${link.description}`}
                 whileHover={prefersReducedMotion ? {} : { y: -2 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                className="group relative flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white/60 backdrop-blur-md transition-colors duration-300 hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:border-white/20 focus-visible:bg-white/10 focus-visible:text-white"
+                className="group relative flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-3 text-white/60 backdrop-blur-md transition-colors duration-300 hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:border-white/20 focus-visible:bg-white/10 focus-visible:text-white"
               >
                 <SocialIcon platform={link.name} />
                 <span className="text-sm text-white/80">{link.username}</span>
@@ -141,14 +139,15 @@ export default function Hero() {
           className="absolute bottom-8 left-1/2 -translate-x-1/2 transform"
           variants={itemVariants}
         >
+          <span className="sr-only">{scrollText}</span>
           <div className="flex flex-col items-center" aria-hidden="true">
             <motion.div
-              className="-right-1 flex h-10 w-6 justify-center rounded-full border-2 border-gray-500"
-              whileHover={{ borderColor: '#ffffff', scale: 1.2 }}
+              className="-right-1 flex h-10 w-6 justify-center rounded-full border-2 border-gray-400"
+              whileHover={prefersReducedMotion ? {} : { borderColor: '#ffffff', scale: 1.2 }}
               transition={{ duration: 0.2 }}
             >
               <motion.div
-                className="mt-2 h-3 w-1 rounded-full bg-gray-400"
+                className="mt-2 h-3 w-1 rounded-full bg-gray-300"
                 animate={
                   prefersReducedMotion
                     ? {}
@@ -165,7 +164,7 @@ export default function Hero() {
               />
             </motion.div>
             <div className="h-2" />
-            <p className="text-sm tracking-widest text-gray-400">{scrollText}</p>
+            <p className="text-sm tracking-widest text-gray-300">{scrollText}</p>
           </div>
         </motion.div>
       </motion.div>

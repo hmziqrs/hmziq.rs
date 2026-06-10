@@ -7,7 +7,6 @@
   "viewport": {
     "width": "device-width",
     "initialScale": 1,
-    "maximumScale": 10,
     "userScalable": true
   },
   "seo": {

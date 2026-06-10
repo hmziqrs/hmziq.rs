@@ -84,9 +84,9 @@ function ProjectsListing() {
             <motion.div variants={itemVariants} className="mb-6">
               <Link
                 to="/"
-                className="inline-flex items-center gap-2 font-mono text-sm text-white/40 transition-colors hover:text-white/70 focus-visible:text-white/70"
+                className="inline-flex items-center gap-2 font-mono text-sm text-white/60 transition-colors hover:text-white/70 focus-visible:text-white/70"
               >
-                <ArrowLeft size={14} />
+                <ArrowLeft size={14} aria-hidden="true" />
                 Back home
               </Link>
             </motion.div>
@@ -120,16 +120,16 @@ function ProjectsListing() {
               aria-label="Filter by type"
               className="flex flex-wrap items-center gap-2"
             >
-              <span className="font-mono text-xs text-white/50">Type:</span>
+              <span className="font-mono text-xs text-white/60">Type:</span>
               {allTypes.map((type) => (
                 <button
                   key={type}
                   onClick={() => toggleType(type)}
                   aria-pressed={selectedType === type}
-                  className={`rounded-lg px-3 py-1.5 font-mono text-xs transition-all duration-200 ${
+                  className={`rounded-lg px-4 py-2.5 font-mono text-xs transition-all duration-200 ${
                     selectedType === type
                       ? 'bg-white/15 text-white'
-                      : 'bg-white/[0.05] text-white/40 hover:bg-white/[0.08] hover:text-white/60 focus-visible:bg-white/[0.08] focus-visible:text-white/60'
+                      : 'bg-white/[0.05] text-white/60 hover:bg-white/[0.08] hover:text-white/60 focus-visible:bg-white/[0.08] focus-visible:text-white/60'
                   }`}
                 >
                   {type}

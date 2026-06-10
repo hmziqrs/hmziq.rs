@@ -41,7 +41,7 @@ export function GlowTile({
         {label}
       </span>
       {/* White shine effect on hover */}
-      <div className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100 group-focus-visible:opacity-100">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 motion-reduce:transition-none group-hover:opacity-100 group-focus-visible:opacity-100">
         <div
           className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0 group-focus-visible:translate-x-0 group-focus-visible:translate-y-0"
           style={{
@@ -61,17 +61,19 @@ export function GlowTile({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={ariaLabel}
+        aria-label={ariaLabel ?? label}
         variants={variants}
         whileHover={hoverAnimation}
+        className="focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black min-h-[44px] min-w-[44px]"
       >
         {content}
+        <span className="sr-only">(opens in new tab)</span>
       </motion.a>
     )
   }
 
   return (
-    <motion.div variants={variants} whileHover={hoverAnimation}>
+    <motion.div variants={variants} whileHover={hoverAnimation} tabIndex={0}>
       {content}
     </motion.div>
   )

@@ -45,7 +45,7 @@ export function ProjectCard({ project, variants, headingLevel: Heading = 'h2' }:
             {project.title}
           </Heading>
           {project.context && (
-            <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] text-white/55">
+            <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] text-white/65">
               {project.context}
             </span>
           )}
@@ -67,6 +67,7 @@ export function ProjectCard({ project, variants, headingLevel: Heading = 'h2' }:
           )}
           <ArrowRight
             size={14}
+            aria-hidden="true"
             className="text-white/30 transition-all duration-300 group-focus-within:translate-x-0.5 group-focus-within:text-white/60 group-hover:translate-x-0.5 group-hover:text-white/60"
           />
         </div>
@@ -93,7 +94,7 @@ export function ProjectCard({ project, variants, headingLevel: Heading = 'h2' }:
       {/* Hover shine */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-focus-within:opacity-100 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 motion-reduce:transition-none group-focus-within:opacity-100 group-hover:opacity-100"
       >
         <div
           className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-focus-within:translate-x-0 group-focus-within:translate-y-0 group-hover:translate-x-0 group-hover:translate-y-0"

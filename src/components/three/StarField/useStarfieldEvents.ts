@@ -32,6 +32,7 @@ export function useStarfieldEvents(
       }, 100)
     }
 
+    // Decorative easter-egg interaction — mouse-only by design (no keyboard equivalent needed for non-essential visual feedback)
     const handleClick = () => {
       shouldBoostFromClick.current = true
     }

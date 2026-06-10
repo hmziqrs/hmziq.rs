@@ -41,7 +41,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { charSet: 'utf-8' },
       {
         name: 'viewport',
-        content: `width=${metadataData.viewport.width}, initial-scale=${metadataData.viewport.initialScale}, maximum-scale=${metadataData.viewport.maximumScale}`,
+        content: `width=${metadataData.viewport.width}, initial-scale=${metadataData.viewport.initialScale}`,
       },
       { title },
       { name: 'description', content: description },
@@ -101,25 +101,27 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
         className="antialiased"
         style={{ backgroundColor: '#000000', color: '#ffffff', minHeight: '100vh' }}
       >
-        <header>
+        <div>
           <a
             href="#hero"
             className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-black"
           >
             Skip to content
           </a>
-        </header>
+        </div>
         <WASMProvider>
           <AnalyticsProvider>
             <WASMCanvas
               loadingFallback={
                 <div
                   aria-hidden="true"
+                  aria-busy="true"
                   className="fixed inset-0"
                   style={{ backgroundColor: '#000000', zIndex: -10 }}
                 />
               }
               errorFallback={
+                /* Decorative: solid background, no meaningful content */
                 <div
                   aria-hidden="true"
                   className="fixed inset-0"

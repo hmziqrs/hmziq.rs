@@ -4,6 +4,9 @@ interface MarkdownRendererProps {
   content: string
 }
 
+// TODO: When used inside pages that already render an h1 (e.g. project detail pages),
+// heading levels should be shifted by an offset to avoid skipping levels and preserve
+// the document outline. Consider adding a `headingOffset` prop (e.g. start at h2/h3).
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   return (
     <Markdown
@@ -23,14 +26,14 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           <h4 className="mt-4 mb-2 font-mono text-sm font-semibold text-white/70">{children}</h4>
         ),
         p: ({ children }) => (
-          <p className="mb-3 text-sm leading-relaxed text-white/50">{children}</p>
+          <p className="mb-3 text-sm leading-relaxed text-white/60">{children}</p>
         ),
         a: ({ href, children }) => (
           <a
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-white/70 underline underline-offset-4 transition-colors hover:text-white focus-visible:text-white"
+            className="text-white/70 underline underline-offset-4 transition-colors hover:text-white focus-visible:text-white focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:rounded-sm"
           >
             {children}
             <span className="sr-only"> (opens in new tab)</span>
@@ -41,10 +44,10 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         ),
         em: ({ children }) => <em className="text-white/60 italic">{children}</em>,
         ul: ({ children }) => (
-          <ul className="mb-3 ml-4 list-disc space-y-1 text-sm text-white/50">{children}</ul>
+          <ul className="mb-3 ml-4 list-disc space-y-1 text-sm text-white/60">{children}</ul>
         ),
         ol: ({ children }) => (
-          <ol className="mb-3 ml-4 list-decimal space-y-1 text-sm text-white/50">{children}</ol>
+          <ol className="mb-3 ml-4 list-decimal space-y-1 text-sm text-white/60">{children}</ol>
         ),
         li: ({ children }) => <li className="pl-1">{children}</li>,
         code: ({ className, children }) => {
@@ -80,9 +83,9 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
             {children}
           </th>
         ),
-        td: ({ children }) => <td className="px-3 py-2 text-xs text-white/50">{children}</td>,
+        td: ({ children }) => <td className="px-3 py-2 text-xs text-white/60">{children}</td>,
         img: ({ src, alt }) => (
-          <img src={src} alt={alt} className="mb-4 max-w-full rounded-lg" loading="lazy" />
+          <img src={src} alt={alt ?? ''} className="mb-4 max-w-full rounded-lg" loading="lazy" />
         ),
       }}
     >

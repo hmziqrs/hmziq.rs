@@ -89,7 +89,7 @@ export default function Experience() {
                       {exp.company && <p className="text-sm text-white/65">{exp.role}</p>}
                     </div>
                     <time
-                      className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-xs text-white/55"
+                      className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-xs text-white/65"
                       dateTime={periodToDatetime(exp.period) ?? exp.period}
                     >
                       {exp.period}
@@ -100,11 +100,11 @@ export default function Experience() {
                   <p className="mb-3 text-sm leading-relaxed text-white/65">{exp.description}</p>
 
                   {/* Bullets */}
-                  <ul className="mb-4 space-y-1.5">
+                  <ul className="mb-4 space-y-1.5" role="list">
                     {exp.bullets.map((bullet, i) => (
                       <li
                         key={i}
-                        className="pl-4 text-xs leading-relaxed text-white/55 before:mr-2 before:-ml-4 before:text-white/40 before:content-['-']"
+                        className="pl-4 text-xs leading-relaxed text-white/65 before:mr-2 before:-ml-4 before:text-white/55 before:content-['-']"
                       >
                         {bullet}
                       </li>
@@ -119,7 +119,8 @@ export default function Experience() {
                           key={project.slug}
                           to="/projects/$slug"
                           params={{ slug: project.slug }}
-                          className="inline-flex items-center rounded-full border border-white/5 bg-white/5 px-3 py-1 font-mono text-[11px] text-white/55 transition-all duration-200 hover:border-white/15 hover:text-white/75 focus-visible:border-white/15 focus-visible:text-white/75"
+                          aria-label={`View ${project.title} project`}
+                          className="inline-flex items-center rounded-full border border-white/5 bg-white/5 px-4 py-2 font-mono text-[11px] text-white/55 transition-all duration-200 hover:border-white/15 hover:text-white/75 focus-visible:border-white/15 focus-visible:text-white/75"
                         >
                           {project.title}
                         </Link>

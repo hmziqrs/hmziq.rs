@@ -51,7 +51,7 @@ export default function Projects() {
             className="inline-flex items-center gap-2 rounded-lg bg-white/[0.06] px-6 py-3 font-mono text-sm text-white/70 backdrop-blur-sm transition-all duration-300 hover:bg-white/[0.1] hover:text-white focus-visible:bg-white/[0.1] focus-visible:text-white"
           >
             View all projects
-            <ArrowRight size={16} />
+            <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </motion.div>
       </motion.div>

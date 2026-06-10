@@ -5,6 +5,8 @@ import { loadWASM, type WASMModule } from '~/lib/wasm'
 interface WASMContextType {
   wasmModule: WASMModule | null
   isLoading: boolean
+  isError: boolean
+  error?: Error | undefined
 }
 
 const WASMContext = createContext<WASMContextType | null>(null)
@@ -12,6 +14,8 @@ const WASMContext = createContext<WASMContextType | null>(null)
 export function WASMProvider({ children }: { children: ReactNode }) {
   const [wasmModule, setWasmModule] = useState<WASMModule | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isError, setIsError] = useState(false)
+  const [error, setError] = useState<Error | undefined>(undefined)
   const loadingRef = useRef(false)
 
   useEffect(() => {
@@ -25,9 +29,12 @@ export function WASMProvider({ children }: { children: ReactNode }) {
         setWasmModule(module)
         setIsLoading(false)
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (cancelled) return
         // WASM not available (files not built) — degrade gracefully
+        const loadError = err instanceof Error ? err : new Error(String(err))
+        setError(loadError)
+        setIsError(true)
         setIsLoading(false)
       })
 
@@ -36,7 +43,7 @@ export function WASMProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  return <WASMContext.Provider value={{ wasmModule, isLoading }}>{children}</WASMContext.Provider>
+  return <WASMContext.Provider value={{ wasmModule, isLoading, isError, error }}>{children}</WASMContext.Provider>
 }
 
 export function useWASM() {

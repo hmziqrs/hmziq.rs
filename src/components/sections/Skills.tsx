@@ -76,7 +76,7 @@ export default function Skills() {
   const skills = userProfile.skills
 
   return (
-    <section id="skills" className="relative flex items-center justify-center px-6 py-20">
+    <section id="skills" className="relative flex items-center justify-center px-6 py-20" aria-label="Skills">
       <h2 className="sr-only">Skills</h2>
       <motion.div
         className="mx-auto max-w-6xl"

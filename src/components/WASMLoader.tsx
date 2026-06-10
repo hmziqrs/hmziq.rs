@@ -13,7 +13,7 @@ export default function WASMLoader({ children, loadingFallback }: WASMLoaderProp
       <>
         {loadingFallback || (
           <output className="flex items-center justify-center" aria-live="polite">
-            <div className="text-gray-500">Loading WASM module…</div>
+            <div className="text-gray-300">Loading WASM module…</div>
           </output>
         )}
       </>
