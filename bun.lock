@@ -5,7 +5,7 @@
     "": {
       "name": "hmziq.rs",
       "dependencies": {
-        "@icons-pack/react-simple-icons": "^13.5.0",
+        "@icons-pack/react-simple-icons": "^13.13.0",
         "@react-three/fiber": "^9.1.2",
         "@tanstack/react-router": "^1.170.10",
         "@tanstack/react-start": "^1.168.18",

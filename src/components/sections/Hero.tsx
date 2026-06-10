@@ -10,8 +10,18 @@ import { userProfile } from '~/lib/content/UserProfile'
 
 const ScatterText = lazy(() => import('~/components/three/ScatterText'))
 
+function LinkedInIcon({ size = 24, color = 'currentColor', title }: { size?: number; color?: string; title?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={size} height={size} fill={color} aria-hidden={!title} {...(title ? { 'aria-label': title } : {})}>
+      {title && <title>{title}</title>}
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+    </svg>
+  )
+}
+
 const socialIconMap: Record<string, IconType> = {
   GitHub: SiGithub,
+  LinkedIn: LinkedInIcon as unknown as IconType,
   Twitter: SiX,
   Email: Mail,
 }
@@ -21,10 +31,10 @@ function SocialIcon({ platform }: { platform: string }) {
   if (!IconComponent) return null
 
   if (platform === 'Email') {
-    return <IconComponent size={20} color="currentColor" strokeWidth={2} />
+    return <IconComponent size={14} color="currentColor" strokeWidth={2} />
   }
 
-  return <IconComponent size={20} color="currentColor" title={platform} />
+  return <IconComponent size={14} color="currentColor" title={platform} />
 }
 
 export default function Hero() {
@@ -73,7 +83,7 @@ export default function Hero() {
 
         {/* Social links */}
         <motion.div
-          className="flex items-center justify-center gap-4"
+          className="flex flex-wrap items-center justify-center gap-3"
           variants={itemVariants}
         >
           {primarySocialLinks.map((link) => (
@@ -83,11 +93,15 @@ export default function Hero() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`${link.name}: ${link.username}`}
-              whileHover={prefersReducedMotion ? {} : { scale: 1.15, y: -2 }}
+              whileHover={prefersReducedMotion ? {} : { y: -2 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/60 transition-colors duration-300 hover:border-white/25 hover:text-white"
+              className="group relative flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-white/60 transition-colors duration-300 hover:border-white/25 hover:text-white"
             >
               <SocialIcon platform={link.name} />
+              <span className="text-sm text-white/50">{link.username}</span>
+              <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
+                {link.description}
+              </span>
             </motion.a>
           ))}
         </motion.div>
