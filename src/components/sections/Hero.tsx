@@ -95,10 +95,10 @@ export default function Hero() {
               aria-label={`${link.name}: ${link.username}`}
               whileHover={prefersReducedMotion ? {} : { y: -2 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              className="group relative flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-white/60 transition-colors duration-300 hover:border-white/25 hover:text-white"
+              className="group relative flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white/60 backdrop-blur-md transition-colors duration-300 hover:border-white/20 hover:bg-white/10 hover:text-white"
             >
               <SocialIcon platform={link.name} />
-              <span className="text-sm text-white/50">{link.username}</span>
+              <span className="text-sm text-white/80">{link.username}</span>
               <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
                 {link.description}
               </span>
