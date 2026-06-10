@@ -1,6 +1,9 @@
-import { SocialIcon } from '~/lib/socialIcons'
+import siteData from '~/content/data/site.json'
+import userData from '~/content/data/user.json'
 
-export interface SocialLinkData {
+import { SocialIcon } from './SocialIcon'
+
+interface SocialLink {
   name: string
   url: string
   username: string
@@ -8,11 +11,37 @@ export interface SocialLinkData {
 }
 
 interface SocialLinksProps {
-  links: SocialLinkData[]
   prefersReducedMotion: boolean
 }
 
-export function SocialLinks({ links, prefersReducedMotion }: SocialLinksProps) {
+const primaryPlatforms = new Set(siteData.socialVisibility.primary)
+const links: SocialLink[] = [
+  ...Object.entries(userData.social).flatMap(([platform, username]) => {
+    if (!primaryPlatforms.has(platform)) return []
+
+    const config = siteData.socialPlatforms[platform as keyof typeof siteData.socialPlatforms]
+    if (!config) return []
+
+    const actualUsername = username ?? userData.username
+    const prefix = 'usernamePrefix' in config ? config.usernamePrefix : ''
+    return [
+      {
+        name: config.name,
+        url: `${config.baseUrl}${actualUsername}`,
+        username: `${prefix}${actualUsername}`,
+        description: config.description,
+      },
+    ]
+  }),
+  {
+    name: 'Email',
+    url: `mailto:${userData.email}`,
+    username: userData.email,
+    description: 'Direct communication',
+  },
+]
+
+export function SocialLinks({ prefersReducedMotion }: SocialLinksProps) {
   return (
     <ul className="flex list-none flex-wrap items-center justify-center gap-3">
       {links.map((link) => (

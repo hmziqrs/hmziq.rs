@@ -1,12 +1,12 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowRight } from 'lucide-react'
 
-import { ProjectCard } from '~/components/ProjectCard'
-import { Section } from '~/components/Section'
-import { projects } from '~/lib/content/Projects'
+import { Section } from '~/components/layout/Section'
+import { ProjectCard } from '~/components/projects/ProjectCard'
+import { getTopProjectsByStars } from '~/content/projects'
 
 export default function Projects() {
-  const topProjects = projects.topByStars(6)
+  const topProjects = getTopProjectsByStars(6)
 
   return (
     <Section

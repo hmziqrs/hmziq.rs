@@ -1,23 +1,6 @@
 import { type ReactNode } from 'react'
 
 import { useInView } from '~/hooks/useInView'
-import { useReducedMotion } from '~/hooks/useReducedMotion'
-
-const SECTION_DEFAULTS = {
-  containerDuration: 0.8,
-  staggerChildren: 0.1,
-  itemDuration: 0.4,
-  itemY: 20,
-  ease: [0.25, 0.1, 0.25, 1.0] as [number, number, number, number],
-}
-
-/**
- * Hook that provides prefersReducedMotion for section children.
- */
-export function useSectionItemVariants() {
-  const prefersReducedMotion = useReducedMotion()
-  return { prefersReducedMotion }
-}
 
 interface SectionProps {
   id: string
@@ -55,5 +38,3 @@ export function Section({
     </section>
   )
 }
-
-export { SECTION_DEFAULTS }

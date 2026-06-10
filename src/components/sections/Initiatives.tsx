@@ -1,15 +1,15 @@
 import { Package, Sparkles, ExternalLink } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-import { GlassCard } from '~/components/GlassCard'
-import { Section } from '~/components/Section'
+import { Section } from '~/components/layout/Section'
+import { GlassCard } from '~/components/ui/GlassCard'
 import { useReducedMotion } from '~/hooks/useReducedMotion'
 import {
   initiatives,
   statusConfig,
   type Initiative,
   type InitiativeIconName,
-} from '~/lib/content/Initiatives'
+} from '~/content/initiatives'
 
 const iconMap: Record<InitiativeIconName, ReactNode> = {
   package: <Package size={20} className="text-white/70" />,
@@ -19,7 +19,7 @@ const iconMap: Record<InitiativeIconName, ReactNode> = {
 function InitiativeCard({ initiative }: { initiative: Initiative }) {
   const badge = statusConfig[initiative.status]
   const card = (
-    <GlassCard rounded="rounded-none" className="flex h-full flex-col gap-3 px-6 py-5 focus-within:border-white/10 focus-within:bg-white/1">
+    <GlassCard className="flex h-full flex-col gap-3 px-6 py-5 focus-within:border-white/10 focus-within:bg-white/1">
       {/* Header: icon + name + badge */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
@@ -82,7 +82,7 @@ function MysteryCard() {
 
   return (
     <li className="h-full" aria-label="Unannounced initiative — coming soon">
-      <GlassCard rounded="rounded-none" className="flex h-full flex-col items-center justify-center gap-3 px-6 py-5">
+      <GlassCard className="flex h-full flex-col items-center justify-center gap-3 px-6 py-5">
         {/* Pulsing question mark */}
         <span
           className="font-mono text-3xl font-bold text-white/25"

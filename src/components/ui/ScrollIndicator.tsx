@@ -1,12 +1,13 @@
 interface ScrollIndicatorProps {
-  scrollText: string
   prefersReducedMotion: boolean
 }
 
-export function ScrollIndicator({ scrollText, prefersReducedMotion }: ScrollIndicatorProps) {
+export function ScrollIndicator({ prefersReducedMotion }: ScrollIndicatorProps) {
+  const text = 'Scroll to explore'
+
   return (
     <div className="absolute bottom-8 left-1/2 -translate-x-1/2 transform">
-      <span className="sr-only">{scrollText}</span>
+      <span className="sr-only">{text}</span>
       <div className="flex flex-col items-center" aria-hidden="true">
         <div
           className="-right-1 flex h-10 w-6 justify-center rounded-full border-2 border-gray-400 transition-[border-color,transform] duration-200 hover:scale-110 hover:border-white"
@@ -20,7 +21,7 @@ export function ScrollIndicator({ scrollText, prefersReducedMotion }: ScrollIndi
           />
         </div>
         <div className="h-2" />
-        <p className="text-sm tracking-widest text-gray-300">{scrollText}</p>
+        <p className="text-sm tracking-widest text-gray-300">{text}</p>
       </div>
     </div>
   )

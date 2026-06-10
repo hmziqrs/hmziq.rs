@@ -1,13 +1,11 @@
 import { Link } from '@tanstack/react-router'
 
-import { Section } from '~/components/Section'
-import { experience } from '~/lib/content/Experience'
-import { projects } from '~/lib/content/Projects'
+import { Section } from '~/components/layout/Section'
+import { experiences, getExperienceProjects } from '~/content/experiences'
+import { projects } from '~/content/projects'
 import { periodToDatetime } from '~/lib/dateUtils'
 
 export default function Experience() {
-  const entries = experience.all
-
   return (
     <Section
       id="experience"
@@ -15,8 +13,8 @@ export default function Experience() {
       className="relative flex min-h-screen items-center justify-center px-6 py-20"
     >
       <ul className="relative ml-4 list-none border-l border-white/10 pl-8">
-        {entries.map((exp) => {
-          const linkedProjects = experience.getProjectsFor(exp, projects.all)
+        {experiences.map((exp) => {
+          const linkedProjects = getExperienceProjects(exp, projects)
 
           return (
             <li
@@ -51,9 +49,9 @@ export default function Experience() {
 
                 {/* Bullets */}
                 <ul className="mb-4 space-y-1.5">
-                  {exp.bullets.map((bullet, i) => (
+                  {exp.bullets.map((bullet) => (
                     <li
-                      key={i}
+                      key={bullet}
                       className="pl-4 text-xs leading-relaxed text-white/65 before:mr-2 before:-ml-4 before:text-white/55 before:content-['-']"
                     >
                       {bullet}

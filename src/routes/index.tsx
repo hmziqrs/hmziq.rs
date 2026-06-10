@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import Footer from '~/components/Footer'
-import { PageContainer } from '~/components/PageContainer'
+import Footer from '~/components/layout/Footer'
+import { PageContainer } from '~/components/layout/PageContainer'
 import Blog from '~/components/sections/Blog'
 import Experience from '~/components/sections/Experience'
 import Hero from '~/components/sections/Hero'

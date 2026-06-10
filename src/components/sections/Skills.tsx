@@ -1,11 +1,11 @@
-import { GlowTile } from '~/components/GlowTile'
-import { Section, useSectionItemVariants } from '~/components/Section'
-import { userProfile } from '~/lib/content/UserProfile'
-import { getTechIcon } from '~/lib/techIcons'
+import { Section } from '~/components/layout/Section'
+import { GlassCard } from '~/components/ui/GlassCard'
+import { TechIcon } from '~/components/ui/TechIcon'
+import userData from '~/content/data/user.json'
+import { useReducedMotion } from '~/hooks/useReducedMotion'
 
 export default function Skills() {
-  const { prefersReducedMotion } = useSectionItemVariants()
-  const skills = userProfile.skills
+  const prefersReducedMotion = useReducedMotion()
 
   return (
     <Section
@@ -14,40 +14,25 @@ export default function Skills() {
       className="relative flex items-center justify-center px-6 py-20"
     >
       <ul className="flex max-w-6xl list-none flex-row flex-wrap justify-center gap-4">
-        {skills.map((skill) => (
+        {userData.skills.map((skill) => (
           <li key={skill}>
-            <GlowTile
-              icon={<SkillIcon skill={skill} />}
-              label={skill}
-              direction="row"
-              className="to-white/[0.03] px-4 py-3 backdrop-blur-xl hover:to-white/[0.05]"
-              prefersReducedMotion={prefersReducedMotion}
-            />
+            <GlassCard
+              className={`flex items-center gap-3 px-4 py-3 backdrop-blur-xl ${
+                prefersReducedMotion
+                  ? ''
+                  : 'transition-transform duration-300 hover:scale-[1.15] hover:rotate-[3deg]'
+              }`}
+            >
+              <span className="z-10 flex h-5 w-5 items-center justify-center">
+                <TechIcon tech={skill} size={20} />
+              </span>
+              <span className="relative z-10 font-mono text-sm font-medium tracking-wide text-white">
+                {skill}
+              </span>
+            </GlassCard>
           </li>
         ))}
       </ul>
     </Section>
   )
-}
-
-function SkillIcon({ skill }: { skill: string }) {
-  const entry = getTechIcon(skill)
-  const IconComponent = entry.icon
-
-  if (!IconComponent) {
-    if (entry.abbr) {
-      return (
-        <span
-          className="flex h-5 w-5 items-center justify-center text-[10px] leading-none font-bold"
-          style={{ color: entry.color }}
-          aria-hidden="true"
-        >
-          {entry.abbr}
-        </span>
-      )
-    }
-    return null
-  }
-
-  return <IconComponent size={20} color={entry.color} aria-hidden="true" />
 }

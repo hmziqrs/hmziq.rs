@@ -26,7 +26,7 @@ function LinkedInIcon({
   )
 }
 
-export const socialIconMap: Record<string, IconType> = {
+const socialIconMap: Record<string, IconType> = {
   GitHub: SiGithub,
   LinkedIn: LinkedInIcon as unknown as IconType,
   Twitter: SiX,

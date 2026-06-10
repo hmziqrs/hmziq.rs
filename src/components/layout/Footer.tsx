@@ -1,10 +1,11 @@
 import { SiRust, SiTanstack, SiThreedotjs } from '@icons-pack/react-simple-icons'
 
-import { siteContent } from '~/lib/content/SiteContent'
+import siteData from '~/content/data/site.json'
+import userData from '~/content/data/user.json'
+
+const copyright = siteData.ui.copyright.replace('{name}', userData.name)
 
 export default function Footer() {
-  const { copyright } = siteContent.ui
-
   return (
     <footer className="px-6 py-8">
       <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">

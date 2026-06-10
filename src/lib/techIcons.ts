@@ -65,7 +65,7 @@ export interface TechIconEntry {
 
 // Map tech names to brand icons + colors.
 // Technologies without a brand icon get an `abbr` fallback.
-export const techIconMap: Record<string, TechIconEntry> = {
+const techIconMap: Record<string, TechIconEntry> = {
   // Languages
   TypeScript: { icon: SiTypescript, color: '#3178C6' },
   JavaScript: { icon: SiJavascript, color: '#F7DF1E' },

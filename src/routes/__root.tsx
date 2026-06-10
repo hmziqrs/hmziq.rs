@@ -2,7 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router'
 import { lazy } from 'react'
 
-import { WASMCanvas } from '~/components/WASMCanvas'
+import { WASMCanvas } from '~/components/wasm/WASMCanvas'
 import metadataData from '~/content/data/metadata.json'
 import userData from '~/content/data/user.json'
 import { AnalyticsProvider } from '~/contexts/AnalyticsContext'

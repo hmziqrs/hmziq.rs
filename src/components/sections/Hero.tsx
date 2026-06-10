@@ -1,12 +1,10 @@
 import { lazy } from 'react'
 
-import { ScrollIndicator } from '~/components/ScrollIndicator'
-import { SocialLinks } from '~/components/SocialLinks'
-import { WASMCanvas } from '~/components/WASMCanvas'
+import { ScrollIndicator } from '~/components/ui/ScrollIndicator'
+import { SocialLinks } from '~/components/ui/SocialLinks'
+import { WASMCanvas } from '~/components/wasm/WASMCanvas'
+import userData from '~/content/data/user.json'
 import { useReducedMotion } from '~/hooks/useReducedMotion'
-import { siteContent } from '~/lib/content/SiteContent'
-import type { Profile } from '~/lib/content/types'
-import { userProfile } from '~/lib/content/UserProfile'
 
 const ScatterText = lazy(() => import('~/components/three/ScatterText'))
 
@@ -17,8 +15,7 @@ const slideUpLgStyle = (delay: number): React.CSSProperties => ({
 
 export default function Hero() {
   const prefersReducedMotion = useReducedMotion()
-  const { name, title, tagline }: Profile = userProfile.profile
-  const { scrollText } = siteContent.ui
+  const { name, title, tagline } = userData
 
   return (
     <section
@@ -51,20 +48,17 @@ export default function Hero() {
         </p>
 
         <p
-          className="max-w-lg font-mono font-medium text-white/75 text-sm py-2"
+          className="max-w-lg py-2 font-mono text-sm font-medium text-white/75"
           style={slideUpLgStyle(0.4)}
         >
           {tagline}
         </p>
-            <div className="h-4" />
+        <div className="h-4" />
         <div style={slideUpLgStyle(0.6)}>
-          <SocialLinks
-            links={userProfile.getPrimarySocialLinks()}
-            prefersReducedMotion={prefersReducedMotion}
-          />
+          <SocialLinks prefersReducedMotion={prefersReducedMotion} />
         </div>
 
-        <ScrollIndicator scrollText={scrollText} prefersReducedMotion={prefersReducedMotion} />
+        <ScrollIndicator prefersReducedMotion={prefersReducedMotion} />
       </div>
     </section>
   )
