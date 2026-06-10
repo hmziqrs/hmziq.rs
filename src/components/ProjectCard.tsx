@@ -52,7 +52,7 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
         <div className="flex shrink-0 items-center gap-2">
           {project.stars != null && project.stars > 0 && (
             <span className="flex items-center gap-1 font-mono text-xs text-white/65" aria-label={`${project.stars} GitHub stars`}>
-              <Star size={12} fill="currentColor" className="text-yellow-500/80" />
+              <Star size={12} fill="currentColor" className="text-yellow-500/80" aria-hidden="true" />
               {project.stars}
             </span>
           )}
@@ -72,7 +72,7 @@ export function ProjectCard({ project, variants }: ProjectCardProps) {
           <TechBadge key={t} tech={t} />
         ))}
         {project.tech.length > 5 && (
-          <span className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/10 font-mono text-[10px] text-white/55">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/10 font-mono text-[10px] text-white/55" aria-label={`+${project.tech.length - 5} more technologies`}>
             +{project.tech.length - 5}
           </span>
         )}

@@ -16,4 +16,5 @@ export interface PixelGeneratorProps {
 
 export interface ScatterRendererProps {
   pixelData: PixelData
+  prefersReducedMotion: boolean
 }

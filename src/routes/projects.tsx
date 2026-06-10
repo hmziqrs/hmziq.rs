@@ -95,7 +95,7 @@ function ProjectsListing() {
             >
               Projects
             </motion.h1>
-            <motion.p variants={itemVariants} aria-live="polite" className="mt-2 font-mono text-sm text-white/40">
+            <motion.p variants={itemVariants} aria-live="polite" className="mt-2 font-mono text-sm text-white/55">
               {filtered.length} of {projects.all.length} projects
               {selectedType && ' (filtered)'}
             </motion.p>
@@ -109,7 +109,7 @@ function ProjectsListing() {
             className="mb-10"
           >
             <motion.div variants={itemVariants} role="group" aria-label="Filter by type" className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-xs text-white/30">Type:</span>
+              <span className="font-mono text-xs text-white/50">Type:</span>
               {allTypes.map((type) => (
                 <button
                   key={type}
@@ -118,7 +118,7 @@ function ProjectsListing() {
                   className={`rounded-lg px-3 py-1.5 font-mono text-xs transition-all duration-200 ${
                     selectedType === type
                       ? 'bg-white/15 text-white'
-                      : 'bg-white/[0.05] text-white/40 hover:bg-white/[0.08] hover:text-white/60'
+                      : 'bg-white/[0.05] text-white/40 hover:bg-white/[0.08] hover:text-white/60 focus-visible:bg-white/[0.08] focus-visible:text-white/60'
                   }`}
                 >
                   {type}
@@ -149,7 +149,7 @@ function ProjectsListing() {
               role="status"
               className="py-20 text-center"
             >
-              <p className="font-mono text-sm text-white/30">
+              <p className="font-mono text-sm text-white/55">
                 No projects match the selected filters.
               </p>
               <button

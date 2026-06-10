@@ -30,7 +30,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-white/70 underline underline-offset-4 transition-colors hover:text-white"
+            className="text-white/70 underline underline-offset-4 transition-colors hover:text-white focus-visible:text-white"
           >
             {children}
             <span className="sr-only"> (opens in new tab)</span>
@@ -64,7 +64,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           </pre>
         ),
         blockquote: ({ children }) => (
-          <blockquote className="mb-3 border-l-2 border-white/20 pl-4 text-sm text-white/40 italic">
+          <blockquote className="mb-3 border-l-2 border-white/20 pl-4 text-sm text-white/55 italic">
             {children}
           </blockquote>
         ),

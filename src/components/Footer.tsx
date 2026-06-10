@@ -13,17 +13,17 @@ export default function Footer() {
         <span className="text-sm font-medium text-white/80">{copyright}</span>
         <span className="text-white/40">·</span>
         <span className="flex items-center gap-1.5 font-mono text-xs text-white/60">
-          <SiTanstack size={14} color="#FFFFFF" />
+          <SiTanstack size={14} color="#FFFFFF" aria-hidden="true" />
           TanStack Start
         </span>
         <span className="text-white/40">·</span>
         <span className="flex items-center gap-1.5 font-mono text-xs text-white/60">
-          <SiRust size={14} color="#FFFFFF" />
+          <SiRust size={14} color="#FFFFFF" aria-hidden="true" />
           Rust + WASM
         </span>
         <span className="text-white/40">·</span>
         <span className="flex items-center gap-1.5 font-mono text-xs text-white/60">
-          <SiThreedotjs size={14} color="#FFFFFF" />
+          <SiThreedotjs size={14} color="#FFFFFF" aria-hidden="true" />
           Three.js
         </span>
       </div>

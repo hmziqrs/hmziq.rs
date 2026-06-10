@@ -2,6 +2,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import * as THREE from 'three'
 
+import { useReducedMotion } from '~/hooks/useReducedMotion'
 import { useWASM } from '~/contexts/WASMContext'
 import { ScatterTextSharedMemory } from '~/lib/wasm/scatter-text'
 
@@ -88,9 +89,10 @@ function PixelGenerator({ text, width, height, onPixelsGenerated }: PixelGenerat
   )
 }
 
-function ScatterRenderer({ pixelData }: ScatterRendererProps) {
+function ScatterRenderer({ pixelData, prefersReducedMotion }: ScatterRendererProps) {
   const { size } = useThree()
   const wasmModule = useWASM().wasmModule
+  const hasSnapped = useRef(false)
   const [threeData] = useState(() => {
     const sharedMemory = ScatterTextSharedMemory.getInstance()
 
@@ -138,6 +140,27 @@ function ScatterRenderer({ pixelData }: ScatterRendererProps) {
 
     try {
       if (!wasmModule) return
+
+      if (prefersReducedMotion) {
+        if (!hasSnapped.current) {
+          hasSnapped.current = true
+          sharedMemory.snapToFinalPositions()
+
+          material.uniforms.screenSize.value.set(size.width, size.height)
+
+          const positionXAttr = geometry.attributes.positionX
+          const positionYAttr = geometry.attributes.positionY
+          const opacityAttr = geometry.attributes.opacity
+
+          if (positionXAttr instanceof THREE.BufferAttribute) positionXAttr.needsUpdate = true
+          if (positionYAttr instanceof THREE.BufferAttribute) positionYAttr.needsUpdate = true
+          if (opacityAttr instanceof THREE.BufferAttribute) opacityAttr.needsUpdate = true
+
+          geometry.setDrawRange(0, pixelData.particleCount)
+        }
+        return
+      }
+
       sharedMemory.updateFrame(wasmModule, delta)
 
       material.uniforms.screenSize.value.set(size.width, size.height)
@@ -166,6 +189,7 @@ export default function ScatterText({ text }: ScatterTextProps) {
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [canvasVersion, setCanvasVersion] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
+  const prefersReducedMotion = useReducedMotion()
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -228,7 +252,7 @@ export default function ScatterText({ text }: ScatterTextProps) {
           }}
         >
           <CanvasContextEvents onContextLost={handleContextLost} />
-          <ScatterRenderer pixelData={pixelData} />
+          <ScatterRenderer pixelData={pixelData} prefersReducedMotion={prefersReducedMotion} />
         </Canvas>
       ) : null}
     </div>

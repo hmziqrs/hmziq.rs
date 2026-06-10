@@ -31,10 +31,10 @@ function SocialIcon({ platform }: { platform: string }) {
   if (!IconComponent) return null
 
   if (platform === 'Email') {
-    return <IconComponent size={14} color="currentColor" strokeWidth={2} />
+    return <IconComponent size={14} color="currentColor" strokeWidth={2} aria-hidden="true" />
   }
 
-  return <IconComponent size={14} color="currentColor" title={platform} />
+  return <IconComponent size={14} color="currentColor" aria-hidden="true" />
 }
 
 export default function Hero() {
@@ -51,6 +51,7 @@ export default function Hero() {
   return (
     <section
       id="hero"
+      tabIndex={-1}
       aria-label="Introduction"
       className="relative block min-h-screen w-full px-6"
     >
@@ -100,6 +101,7 @@ export default function Hero() {
               >
                 <SocialIcon platform={link.name} />
                 <span className="text-sm text-white/80">{link.username}</span>
+                <span className="sr-only"> (opens in new tab)</span>
                 <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
                   {link.description}
                 </span>

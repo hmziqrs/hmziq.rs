@@ -1,5 +1,6 @@
 import { useFrame } from '@react-three/fiber'
-import { useRef } from 'react'
+import { useReducedMotion } from 'framer-motion'
+import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 
 import type { WASMModule } from '~/lib/wasm/core'
@@ -18,6 +19,13 @@ export function useStarfieldFrame({
   sharedMemoryRef,
   starMeshRef,
 }: UseStarfieldFrameOptions) {
+  const prefersReducedMotion = useReducedMotion()
+  const reducedMotionRef = useRef(prefersReducedMotion)
+
+  useEffect(() => {
+    reducedMotionRef.current = prefersReducedMotion
+  })
+
   const speedMultiplierRef = useRef(1)
   const rotationXRef = useRef(0)
   const rotationYRef = useRef(0)
@@ -79,6 +87,9 @@ export function useStarfieldFrame({
       if (geometry && sharedMemory.refreshViewsIfNeeded()) {
         bindStarfieldGeometry(geometry, sharedMemory)
       }
+
+      // Skip rotation, twinkle, and sparkle when reduced motion is preferred
+      if (reducedMotionRef.current) return
 
       const baseRotationSpeedX = 0.02
       const baseRotationSpeedY = 0.01

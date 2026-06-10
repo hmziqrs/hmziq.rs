@@ -109,12 +109,12 @@ function ProjectDetail({ project }: { project: Project }) {
           {project.type}
         </span>
         {project.context && (
-          <span className="rounded-lg bg-white/[0.04] px-3 py-1 font-mono text-xs text-white/40">
+          <span className="rounded-lg bg-white/[0.04] px-3 py-1 font-mono text-xs text-white/55">
             {project.context}
           </span>
         )}
         {project.period && (
-          <span className="rounded-lg bg-white/[0.04] px-3 py-1 font-mono text-xs text-white/40">
+          <span className="rounded-lg bg-white/[0.04] px-3 py-1 font-mono text-xs text-white/55">
             {project.period}
           </span>
         )}
@@ -129,27 +129,27 @@ function ProjectDetail({ project }: { project: Project }) {
             <Link
               to="/"
               hash="experience"
-              className="group flex items-center gap-4 rounded-lg border border-white/5 bg-white/[0.03] px-4 py-3 transition-all duration-300 hover:border-white/10 hover:bg-white/[0.06]"
+              className="group flex items-center gap-4 rounded-lg border border-white/5 bg-white/[0.03] px-4 py-3 transition-all duration-300 hover:border-white/10 hover:bg-white/[0.06] focus-visible:border-white/10 focus-visible:bg-white/[0.06]"
             >
               <div className="flex flex-col gap-0.5">
-                <span className="font-mono text-xs text-white/30">Work Experience</span>
-                <span className="font-mono text-sm text-white/60 group-hover:text-white/80 transition-colors">
+                <span className="font-mono text-xs text-white/50">Work Experience</span>
+                <span className="font-mono text-sm text-white/60 group-hover:text-white/80 group-focus-visible:text-white/80 transition-colors">
                   {exp.role}{exp.company ? ` at ${exp.company}` : ''}
                 </span>
               </div>
-              <span className="ml-auto font-mono text-xs text-white/30">{exp.period}</span>
-              <ArrowRight size={14} className="shrink-0 text-white/20 transition-transform group-hover:translate-x-0.5 group-hover:text-white/40" />
+              <span className="ml-auto font-mono text-xs text-white/50">{exp.period}</span>
+              <ArrowRight size={14} className="shrink-0 text-white/20 transition-transform group-hover:translate-x-0.5 group-hover:text-white/40 group-focus-visible:translate-x-0.5 group-focus-visible:text-white/40" />
             </Link>
           </motion.div>
         )
       })()}
 
       {/* Tech stack */}
-      <motion.div variants={itemVariants} className="mb-8 flex flex-wrap gap-2">
+      <motion.ul variants={itemVariants} className="mb-8 flex list-none flex-wrap gap-2">
         {project.tech.map((t) => {
           const { icon: Icon, color, abbr } = getTechIcon(t)
           return (
-            <span
+            <li
               key={t}
               className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/10 px-3 py-1 font-mono text-xs text-white/70"
             >
@@ -161,10 +161,10 @@ function ProjectDetail({ project }: { project: Project }) {
                 </span>
               )}
               {t}
-            </span>
+            </li>
           )
         })}
-      </motion.div>
+      </motion.ul>
 
       {/* Links */}
       {links && (
@@ -207,9 +207,9 @@ function LinkButton({ href, icon, label }: { href: string; icon: React.ReactNode
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 rounded-lg bg-white/[0.06] px-4 py-2 font-mono text-xs text-white/60 backdrop-blur-sm transition-all duration-300 hover:bg-white/[0.1] hover:text-white/80"
+      className="inline-flex items-center gap-2 rounded-lg bg-white/[0.06] px-4 py-2 font-mono text-xs text-white/60 backdrop-blur-sm transition-all duration-300 hover:bg-white/[0.1] hover:text-white/80 focus-visible:bg-white/[0.1] focus-visible:text-white/80"
     >
-      {icon}
+      <span aria-hidden="true">{icon}</span>
       {label}
       <span className="sr-only"> (opens in new tab)</span>
     </a>

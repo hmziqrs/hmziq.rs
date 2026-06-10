@@ -107,7 +107,7 @@ export default function Experience() {
                           key={project.slug}
                           to="/projects/$slug"
                           params={{ slug: project.slug }}
-                          className="inline-flex items-center rounded-full border border-white/5 bg-white/5 px-3 py-1 font-mono text-[11px] text-white/55 transition-all duration-200 hover:border-white/15 hover:text-white/75"
+                          className="inline-flex items-center rounded-full border border-white/5 bg-white/5 px-3 py-1 font-mono text-[11px] text-white/55 transition-all duration-200 hover:border-white/15 hover:text-white/75 focus-visible:border-white/15 focus-visible:text-white/75"
                         >
                           {project.title}
                         </Link>

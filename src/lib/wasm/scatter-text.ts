@@ -22,6 +22,8 @@ export class ScatterTextSharedMemory {
 
   public positions_x: Float32Array
   public positions_y: Float32Array
+  public target_x: Float32Array
+  public target_y: Float32Array
   public colors_r: Float32Array
   public colors_g: Float32Array
   public colors_b: Float32Array
@@ -42,6 +44,16 @@ export class ScatterTextSharedMemory {
     this.positions_y = new Float32Array(
       this.wasmMemory.buffer,
       this.pointers.positions_y_ptr,
+      alignedCount
+    )
+    this.target_x = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.target_x_ptr,
+      alignedCount
+    )
+    this.target_y = new Float32Array(
+      this.wasmMemory.buffer,
+      this.pointers.target_y_ptr,
       alignedCount
     )
     this.colors_r = new Float32Array(
@@ -84,5 +96,11 @@ export class ScatterTextSharedMemory {
 
   updateFrame(wasmModule: WASMModule, deltaTime: number): void {
     wasmModule.update_particles(deltaTime)
+  }
+
+  snapToFinalPositions(): void {
+    this.positions_x.set(this.target_x)
+    this.positions_y.set(this.target_y)
+    this.opacity.fill(1.0)
   }
 }
