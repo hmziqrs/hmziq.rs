@@ -107,23 +107,6 @@ html {
   color: #ffffff;
 }
 
-/* Utility classes */
-.text-gradient {
-  background: linear-gradient(135deg, #ffffff 0%, #a3a3a3 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.bg-gradient-radial {
-  background-image: radial-gradient(
-    ellipse at center,
-    var(--tw-gradient-from),
-    var(--tw-gradient-via),
-    var(--tw-gradient-to)
-  );
-}
-
 /* Shimmer animation for skeleton placeholders */
 @keyframes shimmer {
   0% {

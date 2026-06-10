@@ -226,12 +226,12 @@ export default function ScatterText({ text }: ScatterTextProps) {
   if (typeof window === 'undefined') return null
 
   return (
-      <div
-        // Decorative particle text — hidden from assistive technology (sr-only h1 in Hero section provides the accessible text)
-        ref={containerRef}
-        className="absolute min-h-full min-w-full"
-        aria-hidden="true"
-      >
+    <div
+      // Decorative particle text — hidden from assistive technology (sr-only h1 in Hero section provides the accessible text)
+      ref={containerRef}
+      className="absolute min-h-full min-w-full"
+      aria-hidden="true"
+    >
       {isGenerating ? (
         <>
           {!!containerSize.width && (

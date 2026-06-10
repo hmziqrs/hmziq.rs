@@ -32,7 +32,7 @@ import {
   SiMysql,
   SiNextdotjs,
   SiNodedotjs,
-  SiNpm,
+
   SiPolygon,
   SiPostgresql,
   SiPuppeteer,
@@ -47,7 +47,7 @@ import {
   SiSvelte,
   SiSwift,
   SiTailwindcss,
-  SiTanstack,
+
   SiThreedotjs,
   SiTypescript,
   SiVuedotjs,
@@ -62,6 +62,7 @@ export interface TechIconEntry {
   icon?: IconType
   color: string
   abbr?: string
+  showInSkills?: boolean
 }
 
 // Map tech names to brand icons + colors.
@@ -82,10 +83,10 @@ export const techIconMap: Record<string, TechIconEntry> = {
   Python: { icon: SiPython, color: '#3776AB' },
 
   // Frameworks & Libraries
-  React: { icon: SiReact, color: '#61DAFB' },
-  'React Native': { icon: SiReact, color: '#61DAFB' },
+  React: { icon: SiReact, color: '#61DAFB', showInSkills: true },
+  'React Native': { icon: SiReact, color: '#61DAFB', showInSkills: true },
   'React Three Fiber': { icon: SiThreedotjs, color: '#049EF4' },
-  'Next.JS': { icon: SiNextdotjs, color: '#FFFFFF' },
+  'Next.JS': { icon: SiNextdotjs, color: '#FFFFFF', showInSkills: true },
   'Next.js': { icon: SiNextdotjs, color: '#FFFFFF' },
   Angular: { icon: SiAngular, color: '#DD0031' },
   AngularJS: { icon: SiAngular, color: '#DD0031' },
@@ -93,13 +94,14 @@ export const techIconMap: Record<string, TechIconEntry> = {
   Svelte: { icon: SiSvelte, color: '#FF3E00' },
   SvelteKit: { icon: SiSvelte, color: '#FF3E00' },
   Astro: { icon: SiAstro, color: '#FF5D01' },
-  Flutter: { icon: SiFlutter, color: '#02569B' },
+  Flutter: { icon: SiFlutter, color: '#02569B', showInSkills: true },
   SwiftUI: { icon: SiSwift, color: '#F05138' },
   'Jetpack Compose': { icon: SiJetpackcompose, color: '#4285F4' },
   Expo: { icon: SiExpo, color: '#000000' },
   ExpressJS: { icon: SiExpress, color: '#000000' },
-  AdonisJS: { icon: SiAdonisjs, color: '#5A45FF' },
-  Dioxus: { icon: SiRust, color: '#CE422B' },
+  AdonisJS: { icon: SiAdonisjs, color: '#5A45FF', showInSkills: true },
+  Dioxus: { icon: SiRust, color: '#CE422B', showInSkills: true },
+  Axum: { icon: SiRust, color: '#CE422B', showInSkills: true },
   'Dioxus Router': { icon: SiRust, color: '#CE422B' },
   'Dioxus SSG': { icon: SiRust, color: '#CE422B' },
   'Dioxus Web': { icon: SiRust, color: '#CE422B' },
@@ -120,7 +122,7 @@ export const techIconMap: Record<string, TechIconEntry> = {
   Bloc: { color: '#00B4D8', abbr: 'Bl' },
   Elasticsearch: { icon: SiElasticsearch, color: '#005571' },
   Polygon: { icon: SiPolygon, color: '#7B3FE4' },
-  HonoJS: { icon: SiHono, color: '#E36002' },
+  HonoJS: { icon: SiHono, color: '#E36002', showInSkills: true },
 
   // Runtime & Build
   Bun: { icon: SiBun, color: '#FBF0DF' },
@@ -138,7 +140,7 @@ export const techIconMap: Record<string, TechIconEntry> = {
   D1: { color: '#F38020', abbr: 'D1' },
 
   // Cloud & Infrastructure
-  Docker: { icon: SiDocker, color: '#2496ED' },
+  Docker: { icon: SiDocker, color: '#2496ED', showInSkills: true },
   Firebase: { icon: SiFirebase, color: '#FFCA28' },
   AWS: { color: '#FF9900', abbr: 'AW' },
   'Cloudflare Workers': { icon: SiCloudflareworkers, color: '#F48120' },
@@ -159,6 +161,11 @@ export const techIconMap: Record<string, TechIconEntry> = {
   Ethers: { icon: SiEthers, color: '#2B2B2B' },
   'Ethers.js': { icon: SiEthers, color: '#2B2B2B' },
   Web3: { color: '#F16822', abbr: 'W3' },
+
+  // General skills
+  'CI/CD': { color: '#10B981', abbr: 'CI', showInSkills: true },
+  Architecture: { color: '#8B5CF6', abbr: 'Ar', showInSkills: true },
+  Animations: { color: '#F59E0B', abbr: 'An', showInSkills: true },
 }
 
 export function getTechIcon(tech: string): TechIconEntry {

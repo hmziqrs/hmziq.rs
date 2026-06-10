@@ -33,7 +33,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-white/70 underline underline-offset-4 transition-colors hover:text-white focus-visible:text-white focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:rounded-sm"
+            className="text-white/70 underline underline-offset-4 transition-colors hover:text-white focus-visible:rounded-sm focus-visible:text-white focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           >
             {children}
             <span className="sr-only"> (opens in new tab)</span>

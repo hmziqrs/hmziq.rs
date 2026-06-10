@@ -1,64 +1,32 @@
 import { motion } from 'framer-motion'
 import { Package, Sparkles, ExternalLink } from 'lucide-react'
-import { type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
+import { GlassCard } from '~/components/GlassCard'
+import { Section } from '~/components/Section'
 import { useReducedMotion } from '~/hooks/useReducedMotion'
 import { useSectionVariants } from '~/hooks/useSectionVariants'
+import {
+  initiatives,
+  statusConfig,
+  type Initiative,
+  type InitiativeIconName,
+} from '~/lib/content/Initiatives'
 
-type InitiativeStatus = 'active' | 'coming-soon'
-
-interface InitiativeData {
-  name: string
-  description: string
-  status: InitiativeStatus
-  icon: ReactNode
-  href?: string
+const iconMap: Record<InitiativeIconName, ReactNode> = {
+  package: <Package size={20} className="text-white/70" />,
+  sparkles: <Sparkles size={20} className="text-white/70" />,
 }
 
-const initiatives: InitiativeData[] = [
-  {
-    name: 'Free Oxide',
-    description:
-      'High quality Rust open source free software. Reliable, well-tested, and built to last.',
-    status: 'active',
-    icon: <Package size={20} className="text-white/70" />,
-    href: 'https://github.com/hmziqrs',
-  },
-  {
-    name: 'Rust Slop',
-    description:
-      'AI-assisted vibe-coded rewrites. Not well tested — could have breaking changes. Use at your own risk.',
-    status: 'coming-soon',
-    icon: <Sparkles size={20} className="text-white/70" />,
-  },
-]
-
-const statusConfig: Record<InitiativeStatus, { label: string; className: string }> = {
-  active: {
-    label: 'Active',
-    className: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400/80',
-  },
-  'coming-soon': {
-    label: 'Coming Soon',
-    className: 'border-amber-500/20 bg-amber-500/5 text-amber-400/80',
-  },
-}
-
-function InitiativeCard({
-  initiative,
-  variants,
-}: {
-  initiative: InitiativeData
-  variants: unknown
-}) {
+function InitiativeCard({ initiative, variants }: { initiative: Initiative; variants: unknown }) {
   const badge = statusConfig[initiative.status]
   const card = (
-    <div className="group relative flex h-full flex-col gap-3 overflow-hidden border border-white/2 bg-white/3 px-6 py-5 backdrop-blur-sm transition-all duration-500 focus-within:border-white/10 focus-within:bg-white/1 hover:border-white/10 hover:bg-white/1">
+    <GlassCard className="flex h-full flex-col gap-3 px-6 py-5 focus-within:border-white/10 focus-within:bg-white/1">
       {/* Header: icon + name + badge */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
           <span className="text-white/60" aria-hidden="true">
-            {initiative.icon}
+            {iconMap[initiative.iconName]}
           </span>
           <h3 className="font-mono text-sm font-semibold tracking-wide text-white">
             {initiative.name}
@@ -84,20 +52,7 @@ function InitiativeCard({
           </span>
         </div>
       )}
-
-      {/* Hover shine */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none">
-        <div
-          className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0 group-focus-within:translate-x-0 group-focus-within:translate-y-0 motion-reduce:transition-none"
-          style={{
-            background:
-              'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',
-            width: '200%',
-            height: '200%',
-          }}
-        />
-      </div>
-    </div>
+    </GlassCard>
   )
 
   if (initiative.href) {
@@ -133,7 +88,7 @@ function MysteryCard({ variants }: { variants: unknown }) {
       className="h-full"
       aria-label="Unannounced initiative — coming soon"
     >
-      <div className="group relative flex h-full flex-col items-center justify-center gap-3 overflow-hidden border border-white/2 bg-white/3 px-6 py-5 backdrop-blur-sm transition-all duration-500 hover:border-white/10 hover:bg-white/1">
+      <GlassCard className="flex h-full flex-col items-center justify-center gap-3 px-6 py-5">
         {/* Pulsing question mark */}
         <motion.span
           className="font-mono text-3xl font-bold text-white/25"
@@ -168,26 +123,13 @@ function MysteryCard({ variants }: { variants: unknown }) {
         >
           Coming Soon
         </span>
-
-        {/* Hover shine */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 group-hover:opacity-100 motion-reduce:transition-none">
-          <div
-            className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0 motion-reduce:transition-none"
-            style={{
-              background:
-                'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',
-              width: '200%',
-              height: '200%',
-            }}
-          />
-        </div>
-      </div>
+      </GlassCard>
     </motion.li>
   )
 }
 
 export default function Initiatives() {
-  const { containerVariants, itemVariants } = useSectionVariants({
+  const { itemVariants } = useSectionVariants({
     containerDuration: 0.8,
     staggerChildren: 0.1,
     itemDuration: 0.4,
@@ -196,32 +138,17 @@ export default function Initiatives() {
   })
 
   return (
-    <section
+    <Section
       id="initiatives"
+      heading="Initiatives"
       className="relative flex min-h-screen items-center justify-center px-6 py-20"
-      aria-label="Initiatives"
     >
-      <motion.div
-        className="mx-auto w-full max-w-6xl"
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-100px' }}
-      >
-        <motion.h2
-          variants={itemVariants}
-          className="mb-10 text-center font-mono text-lg font-semibold tracking-wider text-white/80"
-        >
-          Initiatives
-        </motion.h2>
-
-        <ul role="list" className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {initiatives.map((initiative) => (
-            <InitiativeCard key={initiative.name} initiative={initiative} variants={itemVariants} />
-          ))}
-          <MysteryCard variants={itemVariants} />
-        </ul>
-      </motion.div>
-    </section>
+      <ul  className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {initiatives.map((initiative) => (
+          <InitiativeCard key={initiative.name} initiative={initiative} variants={itemVariants} />
+        ))}
+        <MysteryCard variants={itemVariants} />
+      </ul>
+    </Section>
   )
 }

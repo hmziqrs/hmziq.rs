@@ -3,13 +3,9 @@ import { useEffect } from 'react'
 
 interface CanvasContextEventsProps {
   onContextLost?: () => void
-  onContextRestored?: () => void
 }
 
-export function CanvasContextEvents({
-  onContextLost,
-  onContextRestored,
-}: CanvasContextEventsProps) {
+export function CanvasContextEvents({ onContextLost }: CanvasContextEventsProps) {
   const gl = useThree((state) => state.gl)
 
   useEffect(() => {
@@ -20,18 +16,12 @@ export function CanvasContextEvents({
       onContextLost?.()
     }
 
-    const handleContextRestored = () => {
-      onContextRestored?.()
-    }
-
     canvas.addEventListener('webglcontextlost', handleContextLost, false)
-    canvas.addEventListener('webglcontextrestored', handleContextRestored, false)
 
     return () => {
       canvas.removeEventListener('webglcontextlost', handleContextLost, false)
-      canvas.removeEventListener('webglcontextrestored', handleContextRestored, false)
     }
-  }, [gl, onContextLost, onContextRestored])
+  }, [gl, onContextLost])
 
   return null
 }

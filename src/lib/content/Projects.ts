@@ -44,51 +44,8 @@ class ProjectsManager {
       .slice(0, n)
   }
 
-  filterBySkill(skill: string): Project[] {
-    const lower = skill.toLowerCase()
-    return this.projects.filter((p) => p.tech.some((t) => t.toLowerCase() === lower))
-  }
-
-  filterByType(type: Project['type']): Project[] {
-    return this.projects.filter((p) => p.type === type)
-  }
-
-  filter(tech?: string[], type?: Project['type']): Project[] {
-    let result = this.projects
-    if (tech && tech.length > 0) {
-      const lowerTech = tech.map((t) => t.toLowerCase())
-      result = result.filter((p) => p.tech.some((t) => lowerTech.includes(t.toLowerCase())))
-    }
-    if (type) {
-      result = result.filter((p) => p.type === type)
-    }
-    return result
-  }
-
-  get skills(): string[] {
-    const set = new Set<string>()
-    for (const p of this.projects) {
-      for (const t of p.tech) {
-        set.add(t)
-      }
-    }
-    return [...set].sort()
-  }
-
   get types(): Project['type'][] {
     return [...new Set(this.projects.map((p) => p.type))]
-  }
-
-  primaryLink(project: Project): string | undefined {
-    if (!project.links) return undefined
-    return (
-      project.links.github ??
-      project.links.web ??
-      project.links.playStore ??
-      project.links.appStore ??
-      project.links.npm ??
-      project.links.crates
-    )
   }
 }
 

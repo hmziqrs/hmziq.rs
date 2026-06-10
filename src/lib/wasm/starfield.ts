@@ -1,12 +1,8 @@
 import type { WASMModule } from './core'
+import type { PointerBase } from './types'
 
-export interface StarMemoryPointers {
-  positions_x_ptr: number
-  positions_y_ptr: number
+export interface StarMemoryPointers extends PointerBase {
   positions_z_ptr: number
-  colors_r_ptr: number
-  colors_g_ptr: number
-  colors_b_ptr: number
   sizes_ptr: number
   twinkles_ptr: number
   sparkles_ptr: number

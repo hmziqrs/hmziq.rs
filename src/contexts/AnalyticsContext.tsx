@@ -6,13 +6,13 @@ let firebaseAnalytics: typeof import('firebase/analytics') | null = null
 let firebaseApp: typeof import('firebase/app') | null = null
 
 const firebaseConfig = {
-  apiKey: import.meta.env.NEXT_PUBLIC_API_KEY,
-  authDomain: import.meta.env.NEXT_PUBLIC_AUTH_DOMAIN,
-  projectId: import.meta.env.NEXT_PUBLIC_PROJECT_ID,
-  storageBucket: import.meta.env.NEXT_PUBLIC_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.NEXT_PUBLIC_MESSAGING_SENDER_ID,
-  appId: import.meta.env.NEXT_PUBLIC_APP_ID,
-  measurementId: import.meta.env.NEXT_PUBLIC_MEASUREMENT_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 }
 
 let initPromise: Promise<{ analytics: import('firebase/analytics').Analytics | null }> | null = null

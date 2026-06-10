@@ -1,42 +1,17 @@
 import { SiGithub, SiGoogleplay, SiApple, SiNpm } from '@icons-pack/react-simple-icons'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Star, ExternalLink, Globe, ArrowRight } from 'lucide-react'
+import { Star, ExternalLink, Globe, ArrowRight } from 'lucide-react'
 
+import { BackLink } from '~/components/BackLink'
 import { ErrorBoundary } from '~/components/ErrorBoundary'
 import { MarkdownRenderer } from '~/components/MarkdownRenderer'
 import { PageContainer } from '~/components/PageContainer'
 import { useSectionVariants } from '~/hooks/useSectionVariants'
 import { experience } from '~/lib/content/Experience'
 import { projects, type Project } from '~/lib/content/Projects'
+import { periodToDatetime } from '~/lib/dateUtils'
 import { getTechIcon } from '~/lib/techIcons'
-
-/** Parse "MMM YYYY - MMM YYYY" or "MMM YYYY - Present" to ISO datetime range */
-function periodToDatetime(period: string): string | undefined {
-  const months: Record<string, string> = {
-    Jan: '01',
-    Feb: '02',
-    Mar: '03',
-    Apr: '04',
-    May: '05',
-    Jun: '06',
-    Jul: '07',
-    Aug: '08',
-    Sep: '09',
-    Oct: '10',
-    Nov: '11',
-    Dec: '12',
-  }
-  const [start, end] = period.split(' - ')
-  if (!start) return undefined
-  const [, sMon, sYear] = start.match(/^(\w{3})\s(\d{4})$/) ?? []
-  if (!sMon || !sYear || !months[sMon]) return undefined
-  const startISO = `${sYear}-${months[sMon]}`
-  if (!end || end === 'Present') return startISO
-  const [, eMon, eYear] = end.match(/^(\w{3})\s(\d{4})$/) ?? []
-  if (!eMon || !eYear || !months[eMon]) return startISO
-  return `${startISO}/${eYear}-${months[eMon]}`
-}
 
 export const Route = createFileRoute('/projects/$slug')({
   head: ({ params }) => {
@@ -58,13 +33,9 @@ function ProjectDetailPage() {
       <PageContainer contentClassName="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <h1 className="font-mono text-2xl font-bold text-white">Project not found</h1>
-          <Link
-            to="/projects"
-            className="mt-4 inline-flex items-center gap-2 font-mono text-sm text-white/60 hover:text-white/70 focus-visible:text-white/70"
-          >
-            <ArrowLeft size={14} aria-hidden="true" />
+          <BackLink to="/projects" className="mt-4">
             Back to projects
-          </Link>
+          </BackLink>
         </div>
       </PageContainer>
     )
@@ -103,13 +74,7 @@ function ProjectDetail({ project }: { project: Project }) {
     <motion.div variants={containerVariants} initial="hidden" animate="visible">
       {/* Back link */}
       <motion.div variants={itemVariants} className="mb-8">
-        <Link
-          to="/projects"
-          className="inline-flex items-center gap-2 font-mono text-sm text-white/60 transition-colors hover:text-white/70 focus-visible:text-white/70"
-        >
-          <ArrowLeft size={14} aria-hidden="true" />
-          All projects
-        </Link>
+        <BackLink to="/projects">All projects</BackLink>
       </motion.div>
 
       {/* Header */}
@@ -236,7 +201,11 @@ function ProjectDetail({ project }: { project: Project }) {
           )}
           {links.web && (
             <li>
-              <LinkButton href={links.web} icon={<Globe size={14} aria-hidden="true" />} label="Website" />
+              <LinkButton
+                href={links.web}
+                icon={<Globe size={14} aria-hidden="true" />}
+                label="Website"
+              />
             </li>
           )}
           {links.playStore && (
@@ -268,7 +237,11 @@ function ProjectDetail({ project }: { project: Project }) {
           )}
           {links.crates && (
             <li>
-              <LinkButton href={links.crates} icon={<ExternalLink size={14} aria-hidden="true" />} label="crates.io" />
+              <LinkButton
+                href={links.crates}
+                icon={<ExternalLink size={14} aria-hidden="true" />}
+                label="crates.io"
+              />
             </li>
           )}
         </motion.ul>

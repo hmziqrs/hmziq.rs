@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { motion, type Variants } from 'framer-motion'
 import { Star, ArrowRight } from 'lucide-react'
 
+import { GlassCard } from '~/components/GlassCard'
 import type { Project } from '~/lib/content/Projects'
 import { getTechIcon } from '~/lib/techIcons'
 
@@ -37,7 +38,7 @@ function TechBadge({ tech }: { tech: string }) {
 
 export function ProjectCard({ project, variants, headingLevel: Heading = 'h2' }: ProjectCardProps) {
   const content = (
-    <div className="group relative flex h-full flex-col gap-3 overflow-hidden border border-white/2 bg-white/3 px-6 py-4 backdrop-blur-sm transition-all duration-500 focus-within:border-white/10 focus-within:bg-white/1 hover:border-white/10 hover:bg-white/1">
+    <GlassCard className="group flex h-full flex-col gap-3 px-6 py-4">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
@@ -90,23 +91,7 @@ export function ProjectCard({ project, variants, headingLevel: Heading = 'h2' }:
           </span>
         )}
       </div>
-
-      {/* Hover shine */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 motion-reduce:transition-none group-focus-within:opacity-100 group-hover:opacity-100"
-      >
-        <div
-          className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-focus-within:translate-x-0 group-focus-within:translate-y-0 group-hover:translate-x-0 group-hover:translate-y-0"
-          style={{
-            background:
-              'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',
-            width: '200%',
-            height: '200%',
-          }}
-        />
-      </div>
-    </div>
+    </GlassCard>
   )
 
   return (

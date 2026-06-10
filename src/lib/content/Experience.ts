@@ -23,10 +23,6 @@ class ExperienceManager {
     return this.experiences.find((e) => e.slug === slug)
   }
 
-  findByProjectSlug(projectSlug: string): Experience | undefined {
-    return this.experiences.find((e) => e.projectSlugs.includes(projectSlug))
-  }
-
   getProjectsFor(experience: Experience, allProjects: Project[]): Project[] {
     return experience.projectSlugs
       .map((slug) => allProjects.find((p) => p.slug === slug))

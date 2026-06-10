@@ -1,6 +1,8 @@
 import { motion, type TargetAndTransition, type Variants } from 'framer-motion'
 import { type ReactNode } from 'react'
 
+import { GlassCard } from '~/components/GlassCard'
+
 interface GlowTileProps {
   icon: ReactNode
   label: string
@@ -31,8 +33,8 @@ export function GlowTile({
       }
 
   const content = (
-    <div
-      className={`group relative flex ${direction === 'col' ? 'flex-col' : 'flex-row'} items-center gap-3 overflow-hidden border border-white/2 bg-white/3 px-6 py-4 backdrop-blur-sm transition-all duration-500 hover:border-white/10 hover:bg-white/1 focus-visible:border-white/10 focus-visible:bg-white/1 ${className}`}
+    <GlassCard
+      className={`flex ${direction === 'col' ? 'flex-col' : 'flex-row'} items-center gap-3 rounded-none px-6 py-4 focus-visible:border-white/10 focus-visible:bg-white/1 ${className}`}
     >
       <div className="z-10 transition-transform duration-300 group-hover:scale-110 group-focus-visible:scale-110">
         {icon}
@@ -40,19 +42,7 @@ export function GlowTile({
       <span className="relative z-10 font-mono text-sm font-medium tracking-wide text-white">
         {label}
       </span>
-      {/* White shine effect on hover */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-0 transition-all duration-1000 motion-reduce:transition-none group-hover:opacity-100 group-focus-visible:opacity-100">
-        <div
-          className="absolute inset-0 -translate-x-full -translate-y-full transition-transform duration-1000 group-hover:translate-x-0 group-hover:translate-y-0 group-focus-visible:translate-x-0 group-focus-visible:translate-y-0"
-          style={{
-            background:
-              'linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%)',
-            width: '200%',
-            height: '200%',
-          }}
-        />
-      </div>
-    </div>
+    </GlassCard>
   )
 
   if (href) {
@@ -64,7 +54,7 @@ export function GlowTile({
         aria-label={ariaLabel ?? label}
         variants={variants}
         whileHover={hoverAnimation}
-        className="focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black min-h-[44px] min-w-[44px]"
+        className="min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
       >
         {content}
         <span className="sr-only">(opens in new tab)</span>

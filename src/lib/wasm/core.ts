@@ -41,18 +41,11 @@ export interface WASMModule {
   update_particles: (delta_time: number) => void
 }
 
-interface WasmGlueModule {
+type WasmFunctions = Omit<WASMModule, 'memory'>
+
+interface WasmGlueModule extends WasmFunctions {
   default: (opts: { module_or_path: string }) => Promise<void>
   get_wasm_memory: () => WebAssembly.Memory
-  initialize_star_memory_pool: (count: number) => StarMemoryPointers
-  update_frame_simd: WASMModule['update_frame_simd']
-  calculate_speed_multiplier: WASMModule['calculate_speed_multiplier']
-  calculate_rotation_delta: WASMModule['calculate_rotation_delta']
-  destroy_star_memory_pool: () => void
-  set_text_pixels: WASMModule['set_text_pixels']
-  get_scatter_text_pointers: () => ScatterTextPointers
-  start_forming: () => void
-  update_particles: (delta_time: number) => void
 }
 
 export async function loadWASM(): Promise<WASMModule> {

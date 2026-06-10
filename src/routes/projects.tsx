@@ -1,8 +1,8 @@
-import { createFileRoute, Link, Outlet, useLocation } from '@tanstack/react-router'
+import { createFileRoute, Outlet, useLocation } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { ArrowLeft } from 'lucide-react'
 import { useMemo, useState, useCallback } from 'react'
 
+import { BackLink } from '~/components/BackLink'
 import { ErrorBoundary } from '~/components/ErrorBoundary'
 import { PageContainer } from '~/components/PageContainer'
 import { ProjectCard } from '~/components/ProjectCard'
@@ -82,13 +82,7 @@ function ProjectsListing() {
             className="mb-12"
           >
             <motion.div variants={itemVariants} className="mb-6">
-              <Link
-                to="/"
-                className="inline-flex items-center gap-2 font-mono text-sm text-white/60 transition-colors hover:text-white/70 focus-visible:text-white/70"
-              >
-                <ArrowLeft size={14} aria-hidden="true" />
-                Back home
-              </Link>
+              <BackLink to="/">Back home</BackLink>
             </motion.div>
 
             <motion.h1

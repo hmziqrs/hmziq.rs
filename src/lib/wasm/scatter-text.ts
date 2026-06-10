@@ -1,15 +1,11 @@
 import type { WASMModule } from './core'
+import type { PointerBase } from './types'
 
-export interface ScatterTextPointers {
-  positions_x_ptr: number
-  positions_y_ptr: number
+export interface ScatterTextPointers extends PointerBase {
   target_x_ptr: number
   target_y_ptr: number
   scatter_vx_ptr: number
   scatter_vy_ptr: number
-  colors_r_ptr: number
-  colors_g_ptr: number
-  colors_b_ptr: number
   opacity_ptr: number
   scattered_flags_ptr: number
   particle_count: number

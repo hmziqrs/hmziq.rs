@@ -102,12 +102,12 @@ function StarFieldCanvas() {
   }, [])
 
   return (
-      <div
-        // Decorative background canvas — hidden from assistive technology (sr-only heading in Hero provides accessible text)
-        className="fixed inset-0"
-        style={{ zIndex: 1 }}
-        aria-hidden="true"
-      >
+    <div
+      // Decorative background canvas — hidden from assistive technology (sr-only heading in Hero provides accessible text)
+      className="fixed inset-0"
+      style={{ zIndex: 1 }}
+      aria-hidden="true"
+    >
       <Canvas
         key={canvasVersion}
         ref={markCanvas}

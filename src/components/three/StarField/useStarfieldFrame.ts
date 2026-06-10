@@ -1,8 +1,8 @@
 import { useFrame } from '@react-three/fiber'
-import { useReducedMotion } from 'framer-motion'
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 
+import { useReducedMotion } from '~/hooks/useReducedMotion'
 import type { WASMModule } from '~/lib/wasm/core'
 import type { StarFieldSharedMemory } from '~/lib/wasm/starfield'
 

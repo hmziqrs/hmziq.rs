@@ -10,6 +10,8 @@ export interface UserData {
   social: Record<string, string | null>
 }
 
+export type Profile = Pick<UserData, 'name' | 'title' | 'tagline' | 'yearsOfExperience'>
+
 export interface SocialPlatform {
   name: string
   baseUrl: string

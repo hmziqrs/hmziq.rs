@@ -5,8 +5,8 @@ import { lazy } from 'react'
 import { WASMCanvas } from '~/components/WASMCanvas'
 import metadataData from '~/content/data/metadata.json'
 import userData from '~/content/data/user.json'
+import { AnalyticsProvider } from '~/contexts/AnalyticsContext'
 import { WASMProvider } from '~/contexts/WASMContext'
-import { AnalyticsProvider } from '~/lib/analytics'
 
 const StarField3D = lazy(() => import('~/components/three/StarField'))
 

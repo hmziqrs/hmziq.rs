@@ -17,18 +17,11 @@ interface SocialLink {
   description: string
 }
 
-interface WebsiteLink {
-  name: string
-  url: string
-  description: string
-}
-
 class UserProfile {
   private data: UserData = userData
   private siteConfig: SiteData = siteData
   private _socialLinks: SocialLink[] | null = null
   private _primarySocialLinks: SocialLink[] | null = null
-  private _allLinksForSEO: (SocialLink | WebsiteLink)[] | null = null
 
   get profile(): Profile {
     return {
@@ -43,7 +36,7 @@ class UserProfile {
     return this.data.skills
   }
 
-  getSocialLinks(): SocialLink[] {
+  private getSocialLinks(): SocialLink[] {
     if (this._socialLinks) return this._socialLinks
     const social = this.data.social || {}
     this._socialLinks = Object.entries(social)
@@ -64,28 +57,7 @@ class UserProfile {
     return this._socialLinks
   }
 
-  getPrimarySocialLinks(): SocialLink[] {
-    if (this._primarySocialLinks) return this._primarySocialLinks
-    const primaryPlatforms = this.siteConfig.socialVisibility.primary.filter((p) => p !== 'email')
-    const socialLinks = this.getSocialLinks().filter((link) =>
-      primaryPlatforms.includes(link.name.toLowerCase())
-    )
-    this._primarySocialLinks = [...socialLinks, this.getEmail()]
-    return this._primarySocialLinks
-  }
-
-  getWebsiteLinks(): WebsiteLink[] {
-    return Object.entries(this.data.websites).map(([type, url]) => {
-      const websiteConfig = this.siteConfig.websiteTypes[type]
-      return {
-        name: websiteConfig?.name || type,
-        url,
-        description: websiteConfig?.description || `${type} website`,
-      }
-    })
-  }
-
-  getEmail(): SocialLink {
+  private getEmail(): SocialLink {
     return {
       name: 'Email',
       url: `mailto:${this.data.email}`,
@@ -94,14 +66,14 @@ class UserProfile {
     }
   }
 
-  private getAllSocialLinks(): SocialLink[] {
-    return [...this.getSocialLinks(), this.getEmail()]
-  }
-
-  getAllLinksForSEO(): (SocialLink | WebsiteLink)[] {
-    if (this._allLinksForSEO) return this._allLinksForSEO
-    this._allLinksForSEO = [...this.getAllSocialLinks(), ...this.getWebsiteLinks()]
-    return this._allLinksForSEO
+  getPrimarySocialLinks(): SocialLink[] {
+    if (this._primarySocialLinks) return this._primarySocialLinks
+    const primaryPlatforms = this.siteConfig.socialVisibility.primary.filter((p) => p !== 'email')
+    const socialLinks = this.getSocialLinks().filter((link) =>
+      primaryPlatforms.includes(link.name.toLowerCase())
+    )
+    this._primarySocialLinks = [...socialLinks, this.getEmail()]
+    return this._primarySocialLinks
   }
 }
 
