@@ -1,4 +1,4 @@
-import { SiGithub, SiGoogleplay, SiApple } from '@icons-pack/react-simple-icons'
+import { SiGithub, SiGoogleplay, SiApple, SiNpm } from '@icons-pack/react-simple-icons'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Star, ExternalLink, Globe, ArrowRight } from 'lucide-react'
@@ -173,7 +173,7 @@ function ProjectDetail({ project }: { project: Project }) {
             <LinkButton href={links.appStore} icon={<SiApple size={14} />} label="App Store" />
           )}
           {links.npm && (
-            <LinkButton href={links.npm} icon={<ExternalLink size={14} />} label="npm" />
+            <LinkButton href={links.npm} icon={<SiNpm size={14} color="#CB3837" />} label="npm" />
           )}
           {links.crates && (
             <LinkButton href={links.crates} icon={<ExternalLink size={14} />} label="crates.io" />

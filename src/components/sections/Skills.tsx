@@ -3,10 +3,10 @@ import {
   SiRust,
   SiReact,
   SiNextdotjs,
-  SiJavascript,
+  SiHono,
   SiAdonisjs,
   SiDocker,
-  IconType,
+  type IconType,
 } from '@icons-pack/react-simple-icons'
 import { motion } from 'framer-motion'
 import { Workflow, Building2, Zap } from 'lucide-react'
@@ -21,7 +21,7 @@ const skillIconMap: Record<string, IconType> = {
   React: SiReact,
   'React Native': SiReact,
   'Next.JS': SiNextdotjs,
-  HonoJS: SiJavascript,
+  HonoJS: SiHono,
   AdonisJS: SiAdonisjs,
   Axum: SiRust,
   Docker: SiDocker,
@@ -37,7 +37,7 @@ const skillColorMap: Record<string, string> = {
   React: '#61DAFB',
   'React Native': '#61DAFB',
   'Next.JS': '#FFFFFF',
-  HonoJS: '#F7DF1E',
+  HonoJS: '#E36002',
   AdonisJS: '#5A45FF',
   Axum: '#CE422B',
   Docker: '#2496ED',

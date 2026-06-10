@@ -1,5 +1,4 @@
-import { SiRust } from '@icons-pack/react-simple-icons'
-import { Box } from 'lucide-react'
+import { SiRust, SiTanstack, SiThreedotjs } from '@icons-pack/react-simple-icons'
 
 import { siteContent } from '~/lib/content/SiteContent'
 import { userProfile } from '~/lib/content/UserProfile'
@@ -13,7 +12,10 @@ export default function Footer() {
       <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
         <span className="text-sm font-medium text-white/80">{copyright}</span>
         <span className="text-white/40">·</span>
-        <span className="font-mono text-xs text-white/60">TanStack Start</span>
+        <span className="flex items-center gap-1.5 font-mono text-xs text-white/60">
+          <SiTanstack size={14} color="#FFFFFF" />
+          TanStack Start
+        </span>
         <span className="text-white/40">·</span>
         <span className="flex items-center gap-1.5 font-mono text-xs text-white/60">
           <SiRust size={14} color="#FFFFFF" />
@@ -21,7 +23,7 @@ export default function Footer() {
         </span>
         <span className="text-white/40">·</span>
         <span className="flex items-center gap-1.5 font-mono text-xs text-white/60">
-          <Box size={14} />
+          <SiThreedotjs size={14} color="#FFFFFF" />
           Three.js
         </span>
       </div>
