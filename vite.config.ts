@@ -8,7 +8,7 @@ import { defineConfig } from 'vite-plus'
 
 import { contentPlugin } from './vite-plugin-content'
 
-export default defineConfig({
+export default defineConfig(({ command, isPreview }) => ({
   staged: {
     '*': 'vp fmt --no-error-on-unmatched-pattern',
   },
@@ -92,19 +92,20 @@ export default defineConfig({
   plugins: [
     contentPlugin(),
     devtools(),
-    tanstackStart(),
-    nitro({ preset: 'static', traceDeps: ['react', 'react-dom'] }),
+    tanstackStart({
+      prerender: {
+        enabled: true,
+        crawlLinks: true,
+        failOnError: true,
+      },
+    }),
+    ...(command === 'serve' && !isPreview ? nitro() : []),
     viteReact(),
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
   ],
   environments: {
-    nitro: {
-      build: {
-        rollupOptions: {
-          input: 'node_modules/.nitro/prerender/index.mjs',
-        },
-      },
-    },
+    client: { build: { outDir: '.output/public' } },
+    ssr: { build: { outDir: '.output/server' } },
   },
-})
+}))

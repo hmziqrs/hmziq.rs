@@ -22,17 +22,17 @@ export function contentPlugin(options: ContentOptions = {}): Plugin {
   function loadCollection(dir: string, fileName: string) {
     if (!fs.existsSync(dir)) return []
 
-    return fs
-      .readdirSync(dir, { withFileTypes: true })
-      .filter((d) => d.isDirectory())
-      .map((d) => {
-        const filePath = path.join(dir, d.name, fileName)
-        if (!fs.existsSync(filePath)) return null
-        const raw = fs.readFileSync(filePath, 'utf-8')
-        const { data, content } = matter(raw)
-        return { ...data, readme: content.trim() }
-      })
-      .filter(Boolean)
+    const collection = []
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue
+
+      const filePath = path.join(dir, entry.name, fileName)
+      if (!fs.existsSync(filePath)) continue
+
+      const { data, content } = matter(fs.readFileSync(filePath, 'utf-8'))
+      collection.push({ ...data, readme: content.trim() })
+    }
+    return collection
   }
 
   return {

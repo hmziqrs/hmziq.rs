@@ -19,7 +19,7 @@ export function Section({
   containerClassName = '',
   children,
 }: SectionProps) {
-  const { ref, isInView } = useInView({ once: true, rootMargin: '-100px' })
+  const { ref, isInView } = useInView()
   const label = ariaLabel || heading
 
   return (

@@ -29,8 +29,7 @@ export function GlassCard({ children, className = '' }: GlassCardProps) {
             width: '200%',
             height: '200%',
           }}
-        >
-        </div>
+        />
       </div>
     </div>
   )

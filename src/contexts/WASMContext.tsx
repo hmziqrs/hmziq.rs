@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, use, useEffect, useState, type ReactNode } from 'react'
 
 import { loadWASM, type WASMModule } from '~/lib/wasm'
 
@@ -26,7 +26,7 @@ export function WASMProvider({ children }: { children: ReactNode }) {
 }
 
 export function useWASM() {
-  const context = useContext(WASMContext)
+  const context = use(WASMContext)
   if (!context) {
     throw new Error('useWASM must be used within a WASMProvider')
   }

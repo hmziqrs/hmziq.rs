@@ -44,18 +44,18 @@ export function ProjectsListing() {
           </header>
 
           <div className="animate-in mb-10">
-            <div
+            <fieldset
               style={{ animationDelay: '0.15s' }}
-              role="group"
-              aria-label="Filter by type"
-              className="flex flex-wrap items-center gap-2"
+              className="flex flex-wrap items-center gap-2 border-0 p-0"
             >
-              <span className="font-mono text-xs text-white/60">Type:</span>
+              <legend className="font-mono text-xs text-white/60">Type:</legend>
               {projectTypes.map((type) => (
                 <button
                   type="button"
                   key={type}
-                  onClick={() => setSelectedType((current) => (current === type ? undefined : type))}
+                  onClick={() =>
+                    setSelectedType((current) => (current === type ? undefined : type))
+                  }
                   aria-pressed={selectedType === type}
                   className={`rounded-lg px-4 py-2.5 font-mono text-xs transition-all duration-200 ${
                     selectedType === type
@@ -66,7 +66,7 @@ export function ProjectsListing() {
                   {type}
                 </button>
               ))}
-            </div>
+            </fieldset>
           </div>
 
           <ul className="animate-in grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -78,10 +78,10 @@ export function ProjectsListing() {
           </ul>
 
           {filteredProjects.length === 0 && (
-            <div role="status" className="animate-[fadeIn_0.3s_ease] py-20 text-center">
-              <p className="font-mono text-sm text-white/55">
+            <output className="block animate-[fadeIn_0.3s_ease] py-20 text-center">
+              <span className="block font-mono text-sm text-white/55">
                 No projects match the selected filters.
-              </p>
+              </span>
               <button
                 type="button"
                 onClick={() => setSelectedType(undefined)}
@@ -89,7 +89,7 @@ export function ProjectsListing() {
               >
                 Clear filter
               </button>
-            </div>
+            </output>
           )}
         </div>
       </ErrorBoundary>

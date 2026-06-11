@@ -1,5 +1,5 @@
 import { useRouter } from '@tanstack/react-router'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect } from 'react'
 
 // Lazy-loaded Firebase modules
 let firebaseAnalytics: typeof import('firebase/analytics') | null = null
@@ -48,26 +48,15 @@ async function initFirebase() {
 }
 
 function AnalyticsTracker() {
-  const [analytics, setAnalytics] = useState<import('firebase/analytics').Analytics | null>(null)
   const router = useRouter()
   const { pathname } = router.state.location
-  const initRef = useRef(false)
 
   useEffect(() => {
-    if (initRef.current) return
-    initRef.current = true
-
-    initFirebase().then(({ analytics: a }) => {
-      if (a) setAnalytics(a)
+    void initFirebase().then(({ analytics }) => {
+      if (!analytics || !firebaseAnalytics) return
+      firebaseAnalytics.logEvent(analytics, 'page_view', { page_path: pathname })
     })
-  }, [])
-
-  useEffect(() => {
-    if (!analytics || !firebaseAnalytics) return
-    firebaseAnalytics.logEvent(analytics, 'page_view', {
-      page_path: pathname,
-    })
-  }, [analytics, pathname])
+  }, [pathname])
 
   return null
 }

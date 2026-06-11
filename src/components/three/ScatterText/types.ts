@@ -2,19 +2,7 @@ export interface ScatterTextProps {
   text: string
 }
 
-export interface PixelData {
-  pixelData: Uint8Array
-  particleCount: number
-}
-
-export interface PixelGeneratorProps {
-  text: string
-  width: number
-  height: number
-  onPixelsGenerated: (data: PixelData) => void
-}
-
 export interface ScatterRendererProps {
-  pixelData: PixelData
+  particleCount: number
   prefersReducedMotion: boolean
 }

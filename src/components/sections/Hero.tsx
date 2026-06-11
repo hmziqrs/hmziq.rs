@@ -40,10 +40,7 @@ export default function Hero() {
           </WASMCanvas>
         </div>
 
-        <p
-          className="text-xl font-light md:text-2xl lg:text-3xl"
-          style={slideUpLgStyle(0.2)}
-        >
+        <p className="text-xl font-light md:text-2xl lg:text-3xl" style={slideUpLgStyle(0.2)}>
           {title}
         </p>
 
