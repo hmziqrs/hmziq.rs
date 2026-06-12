@@ -12,7 +12,7 @@ const icons: Record<InitiativeIconName, ReactNode> = {
 export function InitiativeCard({ initiative }: { initiative: Initiative }) {
   const badge = statusConfig[initiative.status]
   const card = (
-    <GlassCard className="flex h-full flex-col gap-3 px-6 py-5 focus-within:border-white/10 focus-within:bg-white/1">
+    <GlassCard className="flex h-full flex-col gap-3 px-6 py-5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
           <span className="text-white/60" aria-hidden="true">

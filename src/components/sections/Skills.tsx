@@ -17,16 +17,16 @@ export default function Skills() {
         {userData.skills.map((skill) => (
           <li key={skill}>
             <GlassCard
-              className={`flex items-center gap-3 px-4 py-3 backdrop-blur-xl ${
+              className={`flex items-center gap-3 px-4 py-3 ${
                 prefersReducedMotion
                   ? ''
                   : 'transition-transform duration-300 hover:scale-[1.15] hover:rotate-[3deg]'
               }`}
             >
-              <span className="z-10 flex h-5 w-5 items-center justify-center">
+              <span className="flex h-5 w-5 items-center justify-center">
                 <TechIcon tech={skill} size={20} />
               </span>
-              <span className="relative z-10 font-mono text-sm font-medium tracking-wide text-white">
+              <span className="font-mono text-sm font-medium tracking-wide text-white">
                 {skill}
               </span>
             </GlassCard>
