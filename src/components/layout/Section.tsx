@@ -1,7 +1,5 @@
 import { type ReactNode } from 'react'
 
-import { useInView } from '~/hooks/useInView'
-
 interface SectionProps {
   id: string
   heading?: string
@@ -19,14 +17,12 @@ export function Section({
   containerClassName = '',
   children,
 }: SectionProps) {
-  const { ref, isInView } = useInView()
   const label = ariaLabel || heading
 
   return (
     <section id={id} aria-label={label} className={className}>
       <div
-        ref={ref as React.RefObject<HTMLDivElement>}
-        className={`mx-auto w-full max-w-6xl ${isInView ? 'section-visible' : 'section-invisible'} ${containerClassName}`}
+        className={`mx-auto w-full max-w-6xl ${containerClassName}`}
       >
         {heading && (
           <h2 className="mb-10 text-center font-mono text-lg font-semibold tracking-wider text-white/80">

@@ -34,12 +34,12 @@ export function ProjectDetail({ project }: { project: Project }) {
   })
 
   return (
-    <div className="animate-in">
-      <div style={{ animationDelay: '0s' }} className="mb-8">
+    <div>
+      <div className="mb-8">
         <BackLink to="/projects">All projects</BackLink>
       </div>
 
-      <div style={{ animationDelay: '0.08s' }} className="mb-8">
+      <div className="mb-8">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="font-mono text-2xl font-bold tracking-wide text-white md:text-3xl">
@@ -64,7 +64,7 @@ export function ProjectDetail({ project }: { project: Project }) {
         </div>
       </div>
 
-      <div style={{ animationDelay: '0.16s' }} className="mb-6 flex flex-wrap items-center gap-3">
+      <div className="mb-6 flex flex-wrap items-center gap-3">
         <span className="rounded-lg bg-white/[0.06] px-3 py-1 font-mono text-xs text-white/60">
           {project.type}
         </span>
@@ -84,7 +84,7 @@ export function ProjectDetail({ project }: { project: Project }) {
       </div>
 
       {linkedExperience && (
-        <div style={{ animationDelay: '0.24s' }} className="mb-6">
+        <div className="mb-6">
           <Link
             to="/"
             hash="experience"
@@ -109,7 +109,7 @@ export function ProjectDetail({ project }: { project: Project }) {
         </div>
       )}
 
-      <ul style={{ animationDelay: '0.32s' }} className="mb-8 flex list-none flex-wrap gap-2">
+      <ul className="mb-8 flex list-none flex-wrap gap-2">
         {project.tech.map((tech) => (
           <li
             key={tech}
@@ -122,7 +122,7 @@ export function ProjectDetail({ project }: { project: Project }) {
       </ul>
 
       {links.length > 0 && (
-        <ul style={{ animationDelay: '0.40s' }} className="mb-10 flex list-none flex-wrap gap-3">
+        <ul className="mb-10 flex list-none flex-wrap gap-3">
           {links.map((link) => (
             <li key={link.label}>
               <ProjectLink {...link} />
@@ -134,7 +134,7 @@ export function ProjectDetail({ project }: { project: Project }) {
       {project.readme && (
         <>
           <hr className="mb-10 border-white/10" />
-          <article style={{ animationDelay: '0.48s' }} className="prose-project">
+          <article className="prose-project">
             <MarkdownRenderer content={project.readme} />
           </article>
         </>

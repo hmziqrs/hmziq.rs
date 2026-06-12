@@ -23,18 +23,14 @@ export function ProjectsListing() {
         }
       >
         <div className="mx-auto max-w-6xl">
-          <header className="animate-in mb-12">
-            <div style={{ animationDelay: '0s' }} className="mb-6">
+          <header className="mb-12">
+            <div className="mb-6">
               <BackLink to="/">Back home</BackLink>
             </div>
-            <h1
-              style={{ animationDelay: '0.05s' }}
-              className="font-mono text-2xl font-bold tracking-wider text-white md:text-3xl"
-            >
+            <h1 className="font-mono text-2xl font-bold tracking-wider text-white md:text-3xl">
               Projects
             </h1>
             <p
-              style={{ animationDelay: '0.1s' }}
               aria-live="polite"
               className="mt-2 font-mono text-sm text-white/55"
             >
@@ -43,11 +39,8 @@ export function ProjectsListing() {
             </p>
           </header>
 
-          <div className="animate-in mb-10">
-            <fieldset
-              style={{ animationDelay: '0.15s' }}
-              className="flex flex-wrap items-center gap-2 border-0 p-0"
-            >
+          <div className="mb-10">
+            <fieldset className="flex flex-wrap items-center gap-2 border-0 p-0">
               <legend className="font-mono text-xs text-white/60">Type:</legend>
               {projectTypes.map((type) => (
                 <button
@@ -69,16 +62,16 @@ export function ProjectsListing() {
             </fieldset>
           </div>
 
-          <ul className="animate-in grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredProjects.map((project) => (
-              <li key={project.slug} style={{ animationDelay: '0.2s' }}>
+              <li key={project.slug}>
                 <ProjectCard project={project} />
               </li>
             ))}
           </ul>
 
           {filteredProjects.length === 0 && (
-            <output className="block animate-[fadeIn_0.3s_ease] py-20 text-center">
+            <output className="block py-20 text-center">
               <span className="block font-mono text-sm text-white/55">
                 No projects match the selected filters.
               </span>

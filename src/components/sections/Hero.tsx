@@ -8,11 +8,6 @@ import { useReducedMotion } from '~/hooks/useReducedMotion'
 
 const ScatterText = lazy(() => import('~/components/three/ScatterText'))
 
-const slideUpLgStyle = (delay: number): React.CSSProperties => ({
-  animation: `slideUpLg 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both`,
-  animationDelay: `${delay}s`,
-})
-
 export default function Hero() {
   const prefersReducedMotion = useReducedMotion()
   const { name, title, tagline } = userData
@@ -27,7 +22,7 @@ export default function Hero() {
       <h1 className="sr-only">
         {name} — {title}
       </h1>
-      <div className="animate-in flex min-h-screen w-full flex-col items-center justify-center text-center">
+      <div className="flex min-h-screen w-full flex-col items-center justify-center text-center">
         <div className="relative h-32 w-full">
           <WASMCanvas
             loadingFallback={
@@ -40,18 +35,15 @@ export default function Hero() {
           </WASMCanvas>
         </div>
 
-        <p className="text-xl font-light md:text-2xl lg:text-3xl" style={slideUpLgStyle(0.2)}>
+        <p className="text-xl font-light md:text-2xl lg:text-3xl">
           {title}
         </p>
 
-        <p
-          className="max-w-lg py-2 font-mono text-sm font-medium text-white/75"
-          style={slideUpLgStyle(0.4)}
-        >
+        <p className="max-w-lg py-2 font-mono text-sm font-medium text-white/75">
           {tagline}
         </p>
         <div className="h-4" />
-        <div style={slideUpLgStyle(0.6)}>
+        <div>
           <SocialLinks prefersReducedMotion={prefersReducedMotion} />
         </div>
 
