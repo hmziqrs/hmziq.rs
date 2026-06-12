@@ -12,4 +12,358 @@ links:
   github: 'https://github.com/hmziqrs/codex-glm'
 ---
 
-A TypeScript project related to GLM model integration and tooling.
+# codex-glm: Build Plan
+> Feed this document to an AI agent to build the full project from scratch.
+
+---
+
+## Project Overview
+
+Build a TypeScript Node.js CLI called `codex-glm` that launches OpenAI's Codex CLI
+pre-wired to Z.AI's GLM models. It must be completely isolated from the user's
+existing Codex setup (which uses OpenAI) by pointing to a separate config
+directory via the `CODEX_HOME` environment variable.
+
+The user should be able to type `codex-glm` or `codex-glm -t` and have Codex
+launch instantly with the correct Z.AI model — no profiles, no flags, no friction.
+
+The CLI also includes `setup` and `uninstall` subcommands for managing the
+isolated config directory and binary symlink — no shell scripts needed.
+
+---
+
+## How It Works (Architecture)
+
+```
+User runs:  codex-glm -t "fix the auth bug"
+                │
+                ▼
+        codex-glm (TypeScript CLI)
+          1. Reads -t flag → maps to model "GLM-5-Turbo"
+          2. Validates Z_AI_API_KEY env var exists
+          3. Sets CODEX_HOME=~/.codex-glm  ← isolation key
+          4. Spawns: codex -c model=GLM-5-Turbo -c model_provider=z_ai "fix the auth bug"
+                │
+                ▼
+        Codex CLI reads ~/.codex-glm/config.toml
+          - Finds [model_providers.z_ai] with base_url + env_key
+          - Sends requests to https://api.z.ai/api/coding/paas/v4
+          - Z.AI API serves GLM-5-Turbo responses
+```
+
+**Why `CODEX_HOME`?**
+Codex CLI respects the `CODEX_HOME` env var as the root for all its state:
+config, auth tokens, session history, logs. By setting it to `~/.codex-glm`,
+the wrapper gets a fully independent Codex environment. The user's existing
+`~/.codex` (OpenAI wiring) is never read or modified.
+
+**Why `-c` overrides instead of profiles?**
+Profiles require `--profile <name>` at launch. The `-c key=value` inline
+override achieves the same result with no named profile needed — the script
+just injects `model` and `model_provider` directly.
+
+**Why are models defined in the script, not the TOML?**
+Codex has no model registry for third-party providers. It passes whatever
+string you give it as `model` straight to the provider's API. The TOML only
+defines the provider connection (URL, auth, wire format). Model names live in
+the script's `MODELS` map and get injected at launch via `-c model=<name>`.
+
+---
+
+## Deliverables
+
+### 1. `~/.codex-glm/config.toml` (created by `codex-glm setup`)
+
+The Codex config file for the isolated GLM environment. Generated programmatically
+by the `setup` command — not shipped as a static file.
+
+**Must contain:**
+- `model = "GLM-5.1"` — default fallback if Codex is launched directly with CODEX_HOME set
+- `model_provider = "z_ai"`
+- `forced_login_method = "api"`
+- A `[model_providers.z_ai]` table with:
+  - `name = "Z.AI — GLM Coding Plan"`
+  - `base_url = "https://api.z.ai/api/coding/paas/v4"`
+  - `env_key = "Z_AI_API_KEY"`
+  - `wire_api = "chat"` with inline comment above documenting the known role-mapping bug
+    (see "Known Issue to Document" at bottom of this plan)
+- A `[shell_environment_policy]` table with:
+  - `inherit = "none"`
+  - `include_only = ["PATH", "HOME", "Z_AI_API_KEY", "TERM", "LANG"]`
+- Comment block listing the available GLM models and their characteristics
+  (for human reference only — not parsed by Codex):
+  ```toml
+  # Available models (set by codex-glm wrapper):
+  #   GLM-5.1      — flagship, complex & long-horizon tasks
+  #   GLM-5        — balanced general coding
+  #   GLM-5-Turbo  — fast iteration & quick edits
+  #   GLM-4.5-Air  — lightest & cheapest
+  ```
+
+---
+
+### 2. TypeScript CLI (`src/`)
+
+A TypeScript Node.js CLI project. Compiled with `tsc` to `dist/`. Entry point is
+`src/index.ts`, compiled to `dist/index.js` with a `#!/usr/bin/env node` shebang.
+
+**Tech stack:**
+- TypeScript 5.x with strict mode
+- Node.js built-ins only: `node:child_process`, `node:fs`, `node:os`, `node:path`,
+  `node:readline`
+- Zero npm runtime dependencies
+
+**`package.json` must have:**
+```json
+{
+  "name": "codex-glm",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": { "codex-glm": "./dist/index.js" },
+  "files": ["dist/"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  }
+}
+```
+
+**`tsconfig.json` must have:**
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "declaration": false,
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}
+```
+
+**Constants:**
+```ts
+const GLM_HOME = join(homedir(), ".codex-glm");
+
+const MODELS: Record<string, string> = {
+  default: "GLM-5.1",
+  "-51":   "GLM-5.1",
+  "-5":    "GLM-5",
+  "-t":    "GLM-5-Turbo",
+  "-a":    "GLM-4.5-Air",
+};
+
+const DESCRIPTIONS: Record<string, string> = {
+  "GLM-5.1":     "flagship — complex & long-horizon tasks",
+  "GLM-5":       "balanced general coding",
+  "GLM-5-Turbo": "fast iteration & quick edits",
+  "GLM-4.5-Air": "lightest & cheapest",
+};
+```
+
+**Subcommands — the CLI routes based on the first non-model argument:**
+
+#### `codex-glm setup`
+
+Creates the isolated GLM environment. Steps it must perform:
+
+1. Check Node.js >= 18 is available, exit with error if not
+2. Check `codex` is installed (`which codex`), exit with error if not
+3. `mkdir -p ~/.codex-glm`
+4. Write `config.toml` to `~/.codex-glm/config.toml`
+   — skip with a warning if it already exists (don't overwrite)
+5. Determine install dir: use `~/.local/bin` if it exists and is on PATH,
+   else `/usr/local/bin` if writable, else print an error asking the user to
+   pick a directory and add it to PATH.
+6. Create a symlink from `<install_dir>/codex-glm` pointing to the compiled
+   `dist/index.js` (or copy the file if symlinking fails). Make it executable.
+7. Check if `Z_AI_API_KEY` is set in the current shell.
+   If not, detect the user's shell from `$SHELL` and print the exact line
+   to add to the appropriate rc file:
+   - `zsh` → `~/.zshrc`
+   - `bash` → `~/.bashrc` (or `~/.bash_profile` on macOS if it exists)
+   - `fish` → `~/.config/fish/config.fish`
+   - fallback → `~/.profile`
+8. Print a success summary showing: install path, config path, and usage examples
+
+Must be idempotent — safe to run multiple times.
+
+#### `codex-glm uninstall`
+
+Removes everything `setup` created — for starting fresh.
+
+1. Ask for confirmation before deleting anything (prompt: "Remove codex-glm?")
+   — if the user says no, exit 0. Use `readline` from `node:readline` for the prompt.
+2. Remove `~/.codex-glm/` directory entirely (use `rmSync` with `recursive: true`)
+3. Remove the `codex-glm` symlink/binary from the install dir
+   (check `~/.local/bin/codex-glm` and `/usr/local/bin/codex-glm`,
+   remove whichever exists)
+4. Print what was removed and note that `Z_AI_API_KEY` was left in the
+   user's shell rc file (they can remove it manually if desired)
+5. Exit 0
+
+Must be safe to run multiple times and must not fail if files are already gone.
+
+#### `codex-glm [model-flag] [passthrough...]` (default — launches Codex)
+
+**Behaviour — in order:**
+
+1. **Help flag** — if `--help` or `-h` is in args, print usage table and exit 0.
+   Help output must show: all subcommands, all model flags, model names,
+   descriptions (from the `DESCRIPTIONS` constant), GLM_HOME path, and
+   requirements (codex installed, Z_AI_API_KEY set, config.toml present).
+   Note that the model flag must be the **first** argument if used.
+
+2. **Arg parsing** — inspect `process.argv.slice(2)`.
+   - If `args[0]` is `setup` or `uninstall`, route to that subcommand.
+   - If `args[0]` is a key in `MODELS`, treat it as the model flag and remove it.
+     The model flag **must be the first argument** — this is documented in `--help`.
+   - Everything remaining is `passthrough` — forwarded verbatim to Codex.
+   - If no flag is found, use `MODELS.default`.
+
+3. **API key validation** — read `process.env.Z_AI_API_KEY`.
+   If missing or empty, print a clear error with the exact export line to add,
+   then exit 1. Do not proceed.
+
+4. **Config file check** — verify `~/.codex-glm/config.toml` exists
+   (use `existsSync` from `node:fs`).
+   If missing, print an error telling the user to run `codex-glm setup` first,
+   then exit 1.
+
+5. **Launch header** — print a compact 2-line header before spawning:
+   ```
+   ⚡ codex-glm  [GLM-5-Turbo — fast iteration & quick edits]
+   📁 config: /Users/you/.codex-glm
+   ```
+
+6. **Spawn Codex** — use `spawnSync("codex", codexArgs, { stdio: "inherit" })`.
+   Using `stdio: "inherit"` means Ctrl+C (SIGINT) is automatically forwarded
+   to the Codex child process — no special signal handling needed.
+   with this env:
+   ```ts
+   {
+     ...process.env,
+     CODEX_HOME: GLM_HOME,
+     Z_AI_API_KEY: apiKey,
+   }
+   ```
+   `codexArgs` must be:
+   ```ts
+   ["-c", `model=${model}`, "-c", "model_provider=z_ai", ...passthrough]
+   ```
+
+7. **Exit** — forward Codex's exit code: `process.exit(result.status ?? 0)`
+
+---
+
+## File Structure
+
+```
+codex-glm/
+├── src/
+│   ├── index.ts          → entry point, arg routing, spawn logic
+│   ├── setup.ts          → setup subcommand
+│   ├── uninstall.ts      → uninstall subcommand
+│   ├── config.ts         → GLM_HOME, MODELS, DESCRIPTIONS, config.toml template
+│   └── utils.ts          → shared helpers (printHeader, getShellRcFile, etc.)
+├── dist/                 → compiled JS output (gitignored)
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+---
+
+## Usage (final UX)
+
+```bash
+# Setup (first time):
+codex-glm setup            # creates ~/.codex-glm/, writes config, links binary
+
+# Launch Codex with GLM models:
+codex              # existing OpenAI setup — UNCHANGED, uses ~/.codex
+codex-glm          # Z.AI GLM-5.1  — flagship
+codex-glm -5       # Z.AI GLM-5    — balanced
+codex-glm -t       # Z.AI GLM-5-Turbo — fast
+codex-glm -a       # Z.AI GLM-4.5-Air — cheapest
+
+# With inline prompts:
+codex-glm "explain this codebase"
+codex-glm -t "add unit tests to utils.js"
+codex-glm -a "rename this variable everywhere"
+
+# With extra Codex flags:
+codex-glm --sandbox workspace-write
+codex-glm -t --search "what does this API endpoint do"
+
+# Management:
+codex-glm setup            # (re)install config & binary — idempotent
+codex-glm uninstall        # remove ~/.codex-glm and binary
+codex-glm --help           # show usage
+```
+
+---
+
+## Constraints & Rules for the Agent
+
+- **Zero npm runtime dependencies.** The CLI uses only Node.js built-ins.
+- **TypeScript strict mode** — no `any`, no `as` casts to bypass types.
+- **ESM syntax** (`import` only). No CommonJS `require()`.
+- **`package.json` `"type": "module"`** — the project is ESM throughout.
+- **Do not touch `~/.codex`** or any files outside `~/.codex-glm` and the install dir.
+- **`CODEX_HOME` is the isolation mechanism** — it must be set on every spawn.
+- **Models are only defined in code** (`MODELS` constant). The TOML only defines
+  the provider. Do not attempt to define models in the TOML.
+- **`-c` overrides, not profiles.** Do not use `--profile` or define `[profiles]`
+  in the TOML.
+- Error messages must be human-friendly with the exact remediation step included.
+- The setup command must be idempotent — safe to run multiple times.
+- The uninstall command must be idempotent — safe to run even if already removed.
+
+---
+
+## Environment Variable Reference
+
+| Variable      | Set by        | Purpose                                      |
+|---------------|---------------|----------------------------------------------|
+| `Z_AI_API_KEY`| User (shell)  | Auth key for Z.AI API — validated at startup |
+| `CODEX_HOME`  | codex-glm     | Points Codex to `~/.codex-glm` config dir    |
+
+---
+
+## Z.AI API Reference
+
+| Property   | Value                                      |
+|------------|--------------------------------------------|
+| Base URL   | `https://api.z.ai/api/coding/paas/v4`     |
+| Wire API   | `chat` (OpenAI Chat Completions format)    |
+| Auth       | Bearer token via `Z_AI_API_KEY`            |
+
+| Model         | Tier     | Best for                          |
+|---------------|----------|-----------------------------------|
+| GLM-5.1       | Flagship | Complex, long-horizon agentic tasks |
+| GLM-5         | Standard | Balanced general coding           |
+| GLM-5-Turbo   | Fast     | Quick edits, fast iteration       |
+| GLM-4.5-Air   | Light    | Cheapest, fastest, simple tasks   |
+
+---
+
+## Known Issue to Document (in `config.toml` as a comment above `wire_api`)
+
+Place this comment directly above `wire_api = "chat"` in the `[model_providers.z_ai]`
+table. Since `config.toml` is generated by `setup`, this comment must be included
+in the TOML template string in `config.ts`.
+
+```toml
+# NOTE: Codex CLI has a role-mapping bug with custom providers when wire_api = "chat".
+# It sends messages using the "developer" role (from OpenAI's Responses API), but Z.AI's
+# Chat Completions endpoint only accepts "system", "user", and "assistant" roles, causing
+# Z.AI to reject requests with error 1214. This is an open bug in the Codex CLI repo
+# (issue #9612). Workaround: route through OpenRouter instead of directly to Z.AI.
+wire_api = "chat"
+```
