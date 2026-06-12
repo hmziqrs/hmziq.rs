@@ -4,6 +4,8 @@ import path from 'node:path'
 import matter from 'gray-matter'
 import type { Plugin } from 'vite'
 
+import { fetchBlogPosts } from './src/lib/blog-api'
+
 const VIRTUAL_ID = 'virtual:content'
 const RESOLVED_ID = '\0' + VIRTUAL_ID
 
@@ -18,6 +20,8 @@ export function contentPlugin(options: ContentOptions = {}): Plugin {
     process.cwd(),
     options.experiencesDir ?? 'content/experiences'
   )
+
+  let blogPostsCache: string | null = null
 
   function loadCollection(dir: string, fileName: string) {
     if (!fs.existsSync(dir)) return []
@@ -35,20 +39,34 @@ export function contentPlugin(options: ContentOptions = {}): Plugin {
     return collection
   }
 
+  async function getBlogPostsJson() {
+    if (blogPostsCache) return blogPostsCache
+    try {
+      const posts = await fetchBlogPosts()
+      blogPostsCache = JSON.stringify(posts)
+    } catch (e) {
+      console.warn('[content-loader] Failed to fetch blog posts:', e)
+      blogPostsCache = '[]'
+    }
+    return blogPostsCache
+  }
+
   return {
     name: 'content-loader',
     resolveId(id) {
       if (id === VIRTUAL_ID) return RESOLVED_ID
     },
-    load(id) {
+    async load(id) {
       if (id !== RESOLVED_ID) return
 
       const projects = loadCollection(projectsDir, 'project.mdx')
       const experiences = loadCollection(experiencesDir, 'experience.mdx')
+      const blogPosts = await getBlogPostsJson()
 
       return [
         `export const projects = ${JSON.stringify(projects)};`,
         `export const experiences = ${JSON.stringify(experiences)};`,
+        `export const blogPosts = ${blogPosts};`,
       ].join('\n')
     },
     // Rebuild when content files change
