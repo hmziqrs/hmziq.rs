@@ -67,7 +67,7 @@ export function ProjectCard({ project, headingLevel: Heading = 'h2' }: ProjectCa
                 >
                   <TechIcon tech={tech} />
                 </span>
-                <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-black px-2 py-1 font-mono text-[10px] whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity group-hover/badge:opacity-100">
+                <span className="pointer-events-none absolute -top-8 left-1/2 z-50 -translate-x-1/2 rounded bg-neutral-900 px-2 py-1 font-mono text-[10px] whitespace-nowrap text-white/80 opacity-0 shadow-lg transition-opacity group-hover/badge:opacity-100">
                   {tech}
                 </span>
               </span>

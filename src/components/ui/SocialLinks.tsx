@@ -56,7 +56,7 @@ export function SocialLinks({ prefersReducedMotion }: SocialLinksProps) {
             <SocialIcon platform={link.name} />
             <span className="text-sm text-white/80">{link.username}</span>
             <span className="sr-only"> (opens in new tab)</span>
-            <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 rounded bg-white/20 backdrop-blur-xl px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 shadow-lg transition-opacity duration-200 group-focus-within:opacity-100 group-hover:opacity-100">
+            <span className="pointer-events-none absolute -top-9 left-1/2 z-50 -translate-x-1/2 rounded bg-neutral-900 px-2 py-1 text-xs whitespace-nowrap text-white/80 opacity-0 shadow-lg transition-opacity duration-200 group-focus-within:opacity-100 group-hover:opacity-100">
               {link.description}
             </span>
           </a>
