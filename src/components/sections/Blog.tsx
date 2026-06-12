@@ -6,28 +6,13 @@ import { Section } from '~/components/layout/Section'
 import { getRecentPosts } from '~/content/blog'
 import { blogPostsQuery } from '~/lib/blog-queries'
 
-function SkeletonCard() {
-  return (
-    <div
-      className="h-full overflow-hidden border border-white/2 bg-white/3 px-6 py-5 backdrop-blur-sm"
-      aria-hidden="true"
-      role="presentation"
-    >
-      <div className="animate-shimmer h-4 w-3/5 rounded" />
-      <div className="animate-shimmer mt-3 h-3 w-1/4 rounded" />
-      <div className="animate-shimmer mt-4 h-3 w-full rounded" />
-      <div className="animate-shimmer mt-1.5 h-3 w-3/4 rounded" />
-      <div className="animate-shimmer mt-1.5 h-3 w-1/2 rounded" />
-    </div>
-  )
-}
-
 export default function Blog() {
   const buildTimePosts = getRecentPosts(3)
 
   const { data: posts } = useQuery({
     ...blogPostsQuery,
     initialData: buildTimePosts,
+    refetchOnMount: false,
   })
 
   const hasPosts = posts && posts.length > 0
@@ -58,18 +43,9 @@ export default function Blog() {
           </div>
         </>
       ) : (
-        <>
-          <p className="mb-10 text-center font-mono text-xs text-white/55">
-            Stay tuned — something is on the way.
-          </p>
-          <ul className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 3 }, (_, i) => (
-              <li key={i}>
-                <SkeletonCard />
-              </li>
-            ))}
-          </ul>
-        </>
+        <p className="text-center font-mono text-xs text-white/55">
+          Stay tuned — something is on the way.
+        </p>
       )}
     </Section>
   )
