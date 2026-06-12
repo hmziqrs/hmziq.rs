@@ -24,6 +24,7 @@ export interface Project {
   period?: string
   readme?: string
   experienceSlug?: string
+  initiative?: string
 }
 
 export const projects = projectsData as Project[]
@@ -39,4 +40,10 @@ export function getTopProjectsByStars(limit: number) {
     .filter((project) => (project.stars ?? 0) > 0)
     .toSorted((a, b) => (b.stars ?? 0) - (a.stars ?? 0))
     .slice(0, limit)
+}
+
+export function getProjectsByInitiative(initiativeSlug: string) {
+  return projects
+    .filter((project) => project.initiative === initiativeSlug)
+    .toSorted((a, b) => (b.stars ?? 0) - (a.stars ?? 0))
 }

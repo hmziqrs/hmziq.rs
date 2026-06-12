@@ -1,5 +1,6 @@
 import { ExternalLink, Package, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { Link } from '@tanstack/react-router'
 
 import { GlassCard } from '~/components/ui/GlassCard'
 import { statusConfig, type Initiative, type InitiativeIconName } from '~/content/initiatives'
@@ -32,33 +33,30 @@ export function InitiativeCard({ initiative }: { initiative: Initiative }) {
 
       <p className="text-xs leading-relaxed text-white/60">{initiative.description}</p>
 
-      {initiative.href && (
-        <div className="mt-auto pt-2">
-          <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-white/60 transition-colors duration-200 group-focus-within:text-white/60 group-hover:text-white/60">
-            Explore
+      <div className="mt-auto flex items-center gap-3 pt-2">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-white/60 transition-colors duration-200 group-focus-within:text-white/60 group-hover:text-white/60">
+          View details
+        </span>
+        {initiative.href && (
+          <span className="inline-flex items-center gap-1 font-mono text-[11px] text-white/40">
             <ExternalLink size={10} aria-hidden="true" />
+            Website
           </span>
-        </div>
-      )}
+        )}
+      </div>
     </GlassCard>
   )
 
   return (
     <li className="h-full">
-      {initiative.href ? (
-        <a
-          href={initiative.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`${initiative.name} — ${initiative.description}`}
-          className="block h-full"
-        >
-          <article aria-label={initiative.name}>{card}</article>
-          <span className="sr-only">(opens in new tab)</span>
-        </a>
-      ) : (
+      <Link
+        to="/initiatives/$slug"
+        params={{ slug: initiative.slug }}
+        aria-label={`${initiative.name} — ${initiative.description}`}
+        className="block h-full"
+      >
         <article aria-label={initiative.name}>{card}</article>
-      )}
+      </Link>
     </li>
   )
 }

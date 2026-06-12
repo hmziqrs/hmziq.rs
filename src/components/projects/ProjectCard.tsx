@@ -3,6 +3,7 @@ import { Star, ArrowRight } from 'lucide-react'
 
 import { GlassCard } from '~/components/ui/GlassCard'
 import { TechIcon } from '~/components/ui/TechIcon'
+import { findInitiativeBySlug } from '~/content/initiatives'
 import type { Project } from '~/content/projects'
 
 interface ProjectCardProps {
@@ -29,6 +30,16 @@ export function ProjectCard({ project, headingLevel: Heading = 'h2' }: ProjectCa
                 <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] text-white/65">
                   {project.context}
                 </span>
+              )}
+              {project.initiative && (
+                <Link
+                  to="/initiatives/$slug"
+                  params={{ slug: project.initiative }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="shrink-0 rounded border border-emerald-500/20 bg-emerald-500/5 px-1.5 py-0.5 font-mono text-[10px] text-emerald-400/80 transition-opacity hover:opacity-80"
+                >
+                  {findInitiativeBySlug(project.initiative)?.name ?? project.initiative}
+                </Link>
               )}
             </div>
             <div className="flex shrink-0 items-center gap-2">

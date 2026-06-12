@@ -2,6 +2,7 @@ import { SiApple, SiGithub, SiGoogleplay, SiNpm } from '@icons-pack/react-simple
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, ExternalLink, Globe, Star } from 'lucide-react'
 
+import { findInitiativeBySlug } from '~/content/initiatives'
 import { findExperienceBySlug } from '~/content/experiences'
 import type { Project, ProjectLink as ProjectLinks } from '~/content/projects'
 import { periodToDatetime } from '~/lib/dateUtils'
@@ -80,6 +81,15 @@ export function ProjectDetail({ project }: { project: Project }) {
           >
             {project.period}
           </time>
+        )}
+        {project.initiative && (
+          <Link
+            to="/initiatives/$slug"
+            params={{ slug: project.initiative }}
+            className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-1 font-mono text-xs text-emerald-400/80 transition-opacity hover:opacity-80"
+          >
+            {findInitiativeBySlug(project.initiative)?.name ?? project.initiative}
+          </Link>
         )}
       </div>
 
