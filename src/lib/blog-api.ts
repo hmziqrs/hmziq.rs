@@ -8,10 +8,14 @@ interface BlogPostsResponse {
 }
 
 export async function fetchBlogPosts(): Promise<BlogPostSummary[]> {
-  const res = await fetch(`${BLOG_API_BASE}/index.json`)
-  if (!res.ok) throw new Error(`Blog API error: ${res.status}`)
-  const data: BlogPostsResponse = await res.json()
-  return data.posts
+  try {
+    const res = await fetch(`${BLOG_API_BASE}/index.json`)
+    if (!res.ok) return []
+    const data: BlogPostsResponse = await res.json()
+    return data.posts
+  } catch {
+    return []
+  }
 }
 
 export function getBlogPostUrl(slug: string): string {

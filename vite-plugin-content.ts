@@ -44,8 +44,7 @@ export function contentPlugin(options: ContentOptions = {}): Plugin {
     try {
       const posts = await fetchBlogPosts()
       blogPostsCache = JSON.stringify(posts)
-    } catch (e) {
-      console.warn('[content-loader] Failed to fetch blog posts:', e)
+    } catch {
       blogPostsCache = '[]'
     }
     return blogPostsCache

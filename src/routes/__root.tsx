@@ -131,7 +131,7 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
             >
               <StarField3D />
             </WASMCanvas>
-            <div id="root">{children}</div>
+            <div id="root" className="relative" style={{ zIndex: 2 }}>{children}</div>
           </AnalyticsProvider>
         </WASMProvider>
         <Scripts />
