@@ -5,7 +5,21 @@ import { experiences, getExperienceProjects } from '~/content/experiences'
 import { projects } from '~/content/projects'
 import { periodToDatetime } from '~/lib/dateUtils'
 
+function parsePeriodStart(period: string): number {
+  const match = period.match(/^(\w{3})\s(\d{4})/)
+  if (!match) return 0
+  const months: Record<string, number> = {
+    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+  }
+  return new Date(+match[2], months[match[1]] ?? 0).getTime()
+}
+
 export default function Experience() {
+  const sorted = [...experiences].sort(
+    (a, b) => parsePeriodStart(b.period) - parsePeriodStart(a.period)
+  )
+
   return (
     <Section
       id="experience"
@@ -13,7 +27,7 @@ export default function Experience() {
       className="relative flex min-h-screen items-center justify-center px-6 py-20"
     >
       <ul className="relative ml-4 list-none border-l border-white/10 pl-8">
-        {experiences.map((exp) => {
+        {sorted.map((exp) => {
           const linkedProjects = getExperienceProjects(exp, projects)
 
           return (
