@@ -1,4 +1,4 @@
-name: Deploy site to Multiple Platforms
+name: Deploy to Cloudflare Pages
 
 on:
   push:
@@ -7,11 +7,9 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: 'pages'
+  group: 'deploy'
   cancel-in-progress: false
 
 env:
@@ -69,31 +67,6 @@ jobs:
           name: static-build
           path: ./.output/public
 
-  deploy-github-pages:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: static-build
-          path: ./out
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./out
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
   deploy-cloudflare-pages:
     needs: build
     runs-on: ubuntu-latest
@@ -119,23 +92,48 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy ./out --project-name=hmziqrs --branch=main
 
-  deploy-firebase-hosting:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  # deploy-github-pages:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   environment:
+  #     name: github-pages
+  #     url: ${{ steps.deployment.outputs.page_url }}
+  #   steps:
+  #     - name: Setup Pages
+  #       uses: actions/configure-pages@v5
+  #
+  #     - name: Download build artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: static-build
+  #         path: ./out
+  #
+  #     - name: Upload Pages artifact
+  #       uses: actions/upload-pages-artifact@v3
+  #       with:
+  #         path: ./out
+  #
+  #     - name: Deploy to GitHub Pages
+  #       id: deployment
+  #       uses: actions/deploy-pages@v4
 
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: static-build
-          path: ./out
-
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_HMZIQRS_HOME }}
-          channelId: live
-          projectId: hmziqrs-home
+  # deploy-firebase-hosting:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Download build artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: static-build
+  #         path: ./out
+  #
+  #     - name: Deploy to Firebase Hosting
+  #       uses: FirebaseExtended/action-hosting-deploy@v0
+  #       with:
+  #         repoToken: ${{ secrets.GITHUB_TOKEN }}
+  #         firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_HMZIQRS_HOME }}
+  #         channelId: live
+  #         projectId: hmziqrs-home
