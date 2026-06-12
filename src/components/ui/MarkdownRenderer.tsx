@@ -1,4 +1,5 @@
 import Markdown from 'react-markdown'
+import rehypeRaw from 'rehype-raw'
 
 interface MarkdownRendererProps {
   content: string
@@ -10,6 +11,7 @@ interface MarkdownRendererProps {
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   return (
     <Markdown
+      rehypePlugins={[rehypeRaw]}
       components={{
         h1: ({ children }) => (
           <h1 className="mt-8 mb-4 font-mono text-xl font-bold text-white first:mt-0">
@@ -84,8 +86,15 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           </th>
         ),
         td: ({ children }) => <td className="px-3 py-2 text-xs text-white/60">{children}</td>,
-        img: ({ src, alt }) => (
-          <img src={src} alt={alt ?? ''} className="mb-4 max-w-full rounded-lg" loading="lazy" />
+        img: ({ src, alt, width, height }) => (
+          <img
+            src={src}
+            alt={alt ?? ''}
+            width={width}
+            height={height}
+            className="mb-4 max-w-full rounded-lg"
+            loading="lazy"
+          />
         ),
       }}
     >
