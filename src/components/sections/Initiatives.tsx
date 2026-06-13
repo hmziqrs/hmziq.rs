@@ -12,7 +12,7 @@ export default function Initiatives() {
     >
       <ul className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {initiatives.map((initiative) => (
-          <InitiativeCard key={initiative.name} initiative={initiative} />
+          <InitiativeCard key={initiative.slug} initiative={initiative} />
         ))}
         <MysteryCard />
       </ul>

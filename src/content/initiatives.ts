@@ -21,15 +21,11 @@ export const initiatives: Initiative[] = [
     status: 'active',
     iconName: 'package',
     href: 'https://freeoxide.com',
-    content: `Free Oxide is Rust open source software that I publish when it's ready and maintain as long as people use it. The bar is simple: I test it, I run it myself, and I won't publish something I wouldn't ship in my own projects.
+    content: `Rust open source software that I publish when it's ready and maintain as long as people use it. I test it, I run it myself, and I won't publish something I wouldn't ship in my own projects.
 
-Everything here is Rust because that's what I work in. Not because of some ideological stance. Rust gives me the guarantees I want for the kind of software I build, and I'm not interested in fighting the language while I'm fighting the actual problem.
+Right now the work is mostly GPUI, the framework behind the Zed editor. gpui-starter gives you a working desktop app with window management, SQLite, and a sidebar. gpui-query handles async data fetching and caching the same way TanStack Query does for React. I built these because I needed them.
 
-The work right now is mostly GPUI, the framework behind the Zed editor. It's new, the docs are thin, and a lot of patterns you'd expect from a GUI toolkit don't exist yet. gpui-starter gives you a working desktop app with window management, SQLite, and a sidebar. gpui-query handles async data fetching and caching the same way TanStack Query does for React. I built these because I needed them.
-
-There is no roadmap. I build what I need, I publish it when the tests pass and the API doesn't make me cringe, and I fix things when people file issues. If it's under Free Oxide, it's not an experiment I abandoned on GitHub. It's software I'm running.
-
-If you're building with GPUI or Rust, contributions are welcome. Open a PR, start a discussion, or just use the libraries and tell me what breaks.`,
+No roadmap. I build what I need, publish when the tests pass, and fix things when people file issues. Contributions welcome.`,
   },
   {
     name: 'Rust Slop',
