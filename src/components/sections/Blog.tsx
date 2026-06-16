@@ -1,5 +1,5 @@
-import { ExternalLink } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
+import { ExternalLink } from 'lucide-react'
 
 import { BlogPostCard } from '~/components/blog/BlogPostCard'
 import { Section } from '~/components/layout/Section'

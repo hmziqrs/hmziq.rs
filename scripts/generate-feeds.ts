@@ -1,12 +1,12 @@
-import { rmSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
-import { Writable } from 'node:stream'
-import { pipeline } from 'node:stream/promises'
 import { fileURLToPath } from 'node:url'
 
 import { Feed } from 'feed'
-import { EnumChangefreq, SitemapStream } from 'sitemap'
+import matter from 'gray-matter'
+import { EnumChangefreq, SitemapStream, streamToPromise } from 'sitemap'
 
+import { initiatives } from '../src/content/initiatives'
 import { fetchBlogPosts } from '../src/lib/blog-api'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -89,34 +89,78 @@ writeFileSync(join(publicDir, 'atom.xml'), feed.atom1())
 console.log('Generated public/atom.xml')
 
 // --- Write sitemap ---
+// Clean up artifacts from a previous sharded-sitemap approach (unused now).
 rmSync(join(publicDir, 'sitemaps'), { recursive: true, force: true })
 for (const f of ['sitemap-index.xml', 'sitemap-0.xml']) {
-  try {
-    rmSync(join(publicDir, f))
-  } catch {}
+  rmSync(join(publicDir, f), { force: true })
 }
 
-const pages = [
+// Enumerate real routes from content sources. `generate:feeds` runs BEFORE
+// `vp build` (see package.json "build"), so .output/public doesn't exist yet —
+// URLs are derived from content, not from the build output.
+const projectsContentDir = join(__dirname, '..', 'content', 'projects')
+
+function isoDate(value: unknown): string | undefined {
+  if (value === undefined || value === null) return undefined
+  const d = new Date(value as string)
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString()
+}
+
+interface SitemapEntry {
+  url: string
+  changefreq: EnumChangefreq
+  priority: number
+  lastmod?: string
+}
+
+const sitemapEntries: SitemapEntry[] = [
   { url: '/', changefreq: EnumChangefreq.DAILY, priority: 1.0 },
   { url: '/projects', changefreq: EnumChangefreq.WEEKLY, priority: 0.8 },
+  { url: '/initiatives', changefreq: EnumChangefreq.WEEKLY, priority: 0.8 },
 ]
 
-const chunks: Buffer[] = []
-const smStream = new SitemapStream({ hostname: siteUrl })
-const collect = new Writable({
-  write(chunk, _encoding, callback) {
-    chunks.push(chunk)
-    callback
-    callback()
-  },
-})
+// One entry per content/projects/<slug>/project.mdx (folder name == frontmatter slug).
+let projectCount = 0
+if (existsSync(projectsContentDir)) {
+  for (const entry of readdirSync(projectsContentDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue
+    const mdxPath = join(projectsContentDir, entry.name, 'project.mdx')
+    if (!existsSync(mdxPath)) continue
 
-const done = pipeline(smStream, collect)
-for (const page of pages) {
-  smStream.write({ url: page.url, changefreq: page.changefreq, priority: page.priority })
+    const { data } = matter(readFileSync(mdxPath, 'utf-8'))
+    const slug = typeof data.slug === 'string' ? data.slug : entry.name
+    sitemapEntries.push({
+      url: `/projects/${slug}`,
+      changefreq: EnumChangefreq.WEEKLY,
+      priority: 0.7,
+      lastmod: isoDate(data.lastPushed),
+    })
+    projectCount++
+  }
+}
+
+// One entry per initiative. All are linked from the home page, so all prerender.
+for (const initiative of initiatives) {
+  sitemapEntries.push({
+    url: `/initiatives/${initiative.slug}`,
+    changefreq: EnumChangefreq.WEEKLY,
+    priority: 0.7,
+  })
+}
+
+const smStream = new SitemapStream({ hostname: siteUrl })
+const sitemapDone = streamToPromise(smStream)
+for (const entry of sitemapEntries) {
+  smStream.write({
+    url: entry.url,
+    changefreq: entry.changefreq,
+    priority: entry.priority,
+    ...(entry.lastmod ? { lastmod: entry.lastmod } : {}),
+  })
 }
 smStream.end()
-await done
 
-writeFileSync(join(publicDir, 'sitemap.xml'), Buffer.concat(chunks).toString())
-console.log('Generated public/sitemap.xml')
+writeFileSync(join(publicDir, 'sitemap.xml'), (await sitemapDone).toString())
+console.log(
+  `Generated public/sitemap.xml (${sitemapEntries.length} URLs: 3 indexes, ${projectCount} projects, ${initiatives.length} initiatives)`
+)

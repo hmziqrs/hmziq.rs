@@ -7,14 +7,11 @@ import metadataData from '~/content/data/metadata.json'
 import userData from '~/content/data/user.json'
 import { AnalyticsProvider } from '~/contexts/AnalyticsContext'
 import { WASMProvider } from '~/contexts/WASMContext'
+import { homeDescription, homeTitle, siteUrl } from '~/lib/seo'
 
 const StarField3D = lazy(() => import('~/components/three/StarField'))
 
 import appCss from '~/styles.css?url'
-
-const siteUrl = userData.websites.portfolio
-const title = `${userData.name} - ${userData.title}`
-const description = `Personal landing page of ${userData.name} - ${userData.title} with ${userData.yearsOfExperience} years of experience in full-stack development, TypeScript, React, and modern web technologies.`
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -43,8 +40,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         name: 'viewport',
         content: `width=${metadataData.viewport.width}, initial-scale=${metadataData.viewport.initialScale}`,
       },
-      { title },
-      { name: 'description', content: description },
+      { title: homeTitle },
+      { name: 'description', content: homeDescription },
       { name: 'theme-color', content: metadataData.theme.themeColor },
       { name: 'robots', content: 'index, follow' },
       { name: 'keywords', content: metadataData.seo.additionalKeywords.join(', ') },
@@ -52,13 +49,13 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { property: 'og:type', content: metadataData.openGraph.type },
       { property: 'og:locale', content: metadataData.openGraph.locale },
       { property: 'og:url', content: siteUrl },
-      { property: 'og:title', content: title },
-      { property: 'og:description', content: description },
+      { property: 'og:title', content: homeTitle },
+      { property: 'og:description', content: homeDescription },
       { property: 'og:image', content: `${siteUrl}/fav/android-chrome-512x512.png` },
       { property: 'og:site_name', content: new URL(siteUrl).hostname },
       { name: 'twitter:card', content: metadataData.twitter.card },
-      { name: 'twitter:title', content: title },
-      { name: 'twitter:description', content: description },
+      { name: 'twitter:title', content: homeTitle },
+      { name: 'twitter:description', content: homeDescription },
       { name: 'twitter:image', content: `${siteUrl}/fav/android-chrome-512x512.png` },
       { name: 'twitter:creator', content: `@${userData.username}` },
     ],
@@ -131,7 +128,9 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
             >
               <StarField3D />
             </WASMCanvas>
-            <div id="root" className="relative" style={{ zIndex: 2 }}>{children}</div>
+            <div id="root" className="relative" style={{ zIndex: 2 }}>
+              {children}
+            </div>
           </AnalyticsProvider>
         </WASMProvider>
         <Scripts />

@@ -21,9 +21,7 @@ export function Section({
 
   return (
     <section id={id} aria-label={label} className={className}>
-      <div
-        className={`mx-auto w-full max-w-6xl ${containerClassName}`}
-      >
+      <div className={`mx-auto w-full max-w-6xl ${containerClassName}`}>
         {heading && (
           <h2 className="mb-10 text-center font-mono text-lg font-semibold tracking-wider text-white/80">
             {heading}

@@ -28,11 +28,15 @@ export default function Footer() {
     <footer className="px-6 py-8">
       <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
         <span className="text-sm font-medium text-white/80">{copyright}</span>
-        <span className="text-white/40" aria-hidden="true">·</span>
+        <span className="text-white/40" aria-hidden="true">
+          ·
+        </span>
         {techLinks.map((tech, i) => (
           <span key={tech.name} className="flex items-center gap-1">
             {i > 0 && (
-              <span className="text-white/40" aria-hidden="true">·</span>
+              <span className="text-white/40" aria-hidden="true">
+                ·
+              </span>
             )}
             <a
               href={tech.href}

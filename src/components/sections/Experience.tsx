@@ -1,6 +1,6 @@
-import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { ChevronDown } from 'lucide-react'
+import { useState } from 'react'
 
 import { Section } from '~/components/layout/Section'
 import { experiences, type Experience, getExperienceProjects } from '~/content/experiences'
@@ -11,8 +11,18 @@ function parsePeriodStart(period: string): number {
   const match = period.match(/^(\w{3})\s(\d{4})/)
   if (!match) return 0
   const months: Record<string, number> = {
-    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
-    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+    Jan: 0,
+    Feb: 1,
+    Mar: 2,
+    Apr: 3,
+    May: 4,
+    Jun: 5,
+    Jul: 6,
+    Aug: 7,
+    Sep: 8,
+    Oct: 9,
+    Nov: 10,
+    Dec: 11,
   }
   return new Date(+match[2], months[match[1]] ?? 0).getTime()
 }
@@ -62,7 +72,7 @@ function ExperienceCard({ exp }: { exp: Experience }) {
         </div>
 
         {/* Description */}
-        <p className="mb-3 mt-3 text-sm leading-relaxed text-white/65">{exp.description}</p>
+        <p className="mt-3 mb-3 text-sm leading-relaxed text-white/65">{exp.description}</p>
 
         {/* Collapsible details */}
         <div
@@ -70,7 +80,7 @@ function ExperienceCard({ exp }: { exp: Experience }) {
         >
           <div className="overflow-hidden">
             {/* Bullets */}
-            <ul className="mb-4 mt-3 space-y-1.5">
+            <ul className="mt-3 mb-4 space-y-1.5">
               {exp.bullets.map((bullet) => (
                 <li
                   key={bullet}

@@ -5,11 +5,18 @@ import { ProjectDetail } from '~/components/projects/ProjectDetail'
 import { BackLink } from '~/components/ui/BackLink'
 import { ErrorBoundary } from '~/components/ui/ErrorBoundary'
 import { findProjectBySlug } from '~/content/projects'
+import { pageHead } from '~/lib/seo'
 
 export const Route = createFileRoute('/projects/$slug')({
   head: ({ params }) => {
     const project = findProjectBySlug(params.slug)
-    return { meta: [{ title: project ? `${project.title} - Projects` : 'Project Not Found' }] }
+    if (!project) return { meta: [{ title: 'Project Not Found' }] }
+    return pageHead({
+      path: `/projects/${project.slug}`,
+      title: `${project.title} - Projects`,
+      description: project.description,
+      type: 'article',
+    })
   },
   component: ProjectDetailPage,
 })

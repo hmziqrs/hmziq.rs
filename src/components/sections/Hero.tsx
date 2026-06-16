@@ -35,13 +35,9 @@ export default function Hero() {
           </WASMCanvas>
         </div>
 
-        <p className="text-xl font-light md:text-2xl lg:text-3xl">
-          {title}
-        </p>
+        <p className="text-xl font-light md:text-2xl lg:text-3xl">{title}</p>
 
-        <p className="max-w-lg py-2 font-mono text-sm font-medium text-white/75">
-          {tagline}
-        </p>
+        <p className="max-w-lg py-2 font-mono text-sm font-medium text-white/75">{tagline}</p>
         <div className="h-4" />
         <div>
           <SocialLinks prefersReducedMotion={prefersReducedMotion} />

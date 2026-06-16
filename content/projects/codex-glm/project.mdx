@@ -13,6 +13,7 @@ links:
 ---
 
 # codex-glm: Build Plan
+
 > Feed this document to an AI agent to build the full project from scratch.
 
 ---
@@ -78,6 +79,7 @@ The Codex config file for the isolated GLM environment. Generated programmatical
 by the `setup` command — not shipped as a static file.
 
 **Must contain:**
+
 - `model = "GLM-5.1"` — default fallback if Codex is launched directly with CODEX_HOME set
 - `model_provider = "z_ai"`
 - `forced_login_method = "api"`
@@ -108,12 +110,14 @@ A TypeScript Node.js CLI project. Compiled with `tsc` to `dist/`. Entry point is
 `src/index.ts`, compiled to `dist/index.js` with a `#!/usr/bin/env node` shebang.
 
 **Tech stack:**
+
 - TypeScript 5.x with strict mode
 - Node.js built-ins only: `node:child_process`, `node:fs`, `node:os`, `node:path`,
   `node:readline`
 - Zero npm runtime dependencies
 
 **`package.json` must have:**
+
 ```json
 {
   "name": "codex-glm",
@@ -130,6 +134,7 @@ A TypeScript Node.js CLI project. Compiled with `tsc` to `dist/`. Entry point is
 ```
 
 **`tsconfig.json` must have:**
+
 ```json
 {
   "compilerOptions": {
@@ -147,23 +152,24 @@ A TypeScript Node.js CLI project. Compiled with `tsc` to `dist/`. Entry point is
 ```
 
 **Constants:**
+
 ```ts
-const GLM_HOME = join(homedir(), ".codex-glm");
+const GLM_HOME = join(homedir(), '.codex-glm')
 
 const MODELS: Record<string, string> = {
-  default: "GLM-5.1",
-  "-51":   "GLM-5.1",
-  "-5":    "GLM-5",
-  "-t":    "GLM-5-Turbo",
-  "-a":    "GLM-4.5-Air",
-};
+  default: 'GLM-5.1',
+  '-51': 'GLM-5.1',
+  '-5': 'GLM-5',
+  '-t': 'GLM-5-Turbo',
+  '-a': 'GLM-4.5-Air',
+}
 
 const DESCRIPTIONS: Record<string, string> = {
-  "GLM-5.1":     "flagship — complex & long-horizon tasks",
-  "GLM-5":       "balanced general coding",
-  "GLM-5-Turbo": "fast iteration & quick edits",
-  "GLM-4.5-Air": "lightest & cheapest",
-};
+  'GLM-5.1': 'flagship — complex & long-horizon tasks',
+  'GLM-5': 'balanced general coding',
+  'GLM-5-Turbo': 'fast iteration & quick edits',
+  'GLM-4.5-Air': 'lightest & cheapest',
+}
 ```
 
 **Subcommands — the CLI routes based on the first non-model argument:**
@@ -236,6 +242,7 @@ Must be safe to run multiple times and must not fail if files are already gone.
    then exit 1.
 
 5. **Launch header** — print a compact 2-line header before spawning:
+
    ```
    ⚡ codex-glm  [GLM-5-Turbo — fast iteration & quick edits]
    📁 config: /Users/you/.codex-glm
@@ -245,6 +252,7 @@ Must be safe to run multiple times and must not fail if files are already gone.
    Using `stdio: "inherit"` means Ctrl+C (SIGINT) is automatically forwarded
    to the Codex child process — no special signal handling needed.
    with this env:
+
    ```ts
    {
      ...process.env,
@@ -252,9 +260,11 @@ Must be safe to run multiple times and must not fail if files are already gone.
      Z_AI_API_KEY: apiKey,
    }
    ```
+
    `codexArgs` must be:
+
    ```ts
-   ["-c", `model=${model}`, "-c", "model_provider=z_ai", ...passthrough]
+   ;['-c', `model=${model}`, '-c', 'model_provider=z_ai', ...passthrough]
    ```
 
 7. **Exit** — forward Codex's exit code: `process.exit(result.status ?? 0)`
@@ -329,27 +339,27 @@ codex-glm --help           # show usage
 
 ## Environment Variable Reference
 
-| Variable      | Set by        | Purpose                                      |
-|---------------|---------------|----------------------------------------------|
-| `Z_AI_API_KEY`| User (shell)  | Auth key for Z.AI API — validated at startup |
-| `CODEX_HOME`  | codex-glm     | Points Codex to `~/.codex-glm` config dir    |
+| Variable       | Set by       | Purpose                                      |
+| -------------- | ------------ | -------------------------------------------- |
+| `Z_AI_API_KEY` | User (shell) | Auth key for Z.AI API — validated at startup |
+| `CODEX_HOME`   | codex-glm    | Points Codex to `~/.codex-glm` config dir    |
 
 ---
 
 ## Z.AI API Reference
 
-| Property   | Value                                      |
-|------------|--------------------------------------------|
-| Base URL   | `https://api.z.ai/api/coding/paas/v4`     |
-| Wire API   | `chat` (OpenAI Chat Completions format)    |
-| Auth       | Bearer token via `Z_AI_API_KEY`            |
+| Property | Value                                   |
+| -------- | --------------------------------------- |
+| Base URL | `https://api.z.ai/api/coding/paas/v4`   |
+| Wire API | `chat` (OpenAI Chat Completions format) |
+| Auth     | Bearer token via `Z_AI_API_KEY`         |
 
-| Model         | Tier     | Best for                          |
-|---------------|----------|-----------------------------------|
-| GLM-5.1       | Flagship | Complex, long-horizon agentic tasks |
-| GLM-5         | Standard | Balanced general coding           |
-| GLM-5-Turbo   | Fast     | Quick edits, fast iteration       |
-| GLM-4.5-Air   | Light    | Cheapest, fastest, simple tasks   |
+| Model       | Tier     | Best for                            |
+| ----------- | -------- | ----------------------------------- |
+| GLM-5.1     | Flagship | Complex, long-horizon agentic tasks |
+| GLM-5       | Standard | Balanced general coding             |
+| GLM-5-Turbo | Fast     | Quick edits, fast iteration         |
+| GLM-4.5-Air | Light    | Cheapest, fastest, simple tasks     |
 
 ---
 

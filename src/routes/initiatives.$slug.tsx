@@ -1,17 +1,22 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { PageContainer } from '~/components/layout/PageContainer'
 import { InitiativeDetail } from '~/components/initiatives/InitiativeDetail'
+import { PageContainer } from '~/components/layout/PageContainer'
 import { BackLink } from '~/components/ui/BackLink'
 import { ErrorBoundary } from '~/components/ui/ErrorBoundary'
 import { findInitiativeBySlug } from '~/content/initiatives'
+import { pageHead } from '~/lib/seo'
 
 export const Route = createFileRoute('/initiatives/$slug')({
   head: ({ params }) => {
     const initiative = findInitiativeBySlug(params.slug)
-    return {
-      meta: [{ title: initiative ? `${initiative.name} - Initiatives` : 'Initiative Not Found' }],
-    }
+    if (!initiative) return { meta: [{ title: 'Initiative Not Found' }] }
+    return pageHead({
+      path: `/initiatives/${initiative.slug}`,
+      title: `${initiative.name} - Initiatives`,
+      description: initiative.description,
+      type: 'article',
+    })
   },
   component: InitiativeDetailPage,
 })

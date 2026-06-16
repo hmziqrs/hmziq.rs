@@ -97,6 +97,11 @@ export default defineConfig(({ command, isPreview }) => ({
         enabled: true,
         crawlLinks: true,
         failOnError: true,
+        // Default (os.cpus().length = 16) overwhelms the single-threaded Vite
+        // preview server: heavy SSR (large readme markdown via react-markdown)
+        // blocks the event loop, connections time out, and the build aborts with
+        // `fetch failed` / ETIMEDOUT. 2 keeps the event loop responsive.
+        concurrency: 2,
       },
     }),
     ...(command === 'serve' && !isPreview ? nitro() : []),

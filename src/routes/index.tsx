@@ -9,12 +9,14 @@ import Initiatives from '~/components/sections/Initiatives'
 import Projects from '~/components/sections/Projects'
 import Skills from '~/components/sections/Skills'
 import { blogPostsQuery } from '~/lib/blog-queries'
+import { homeDescription, homeTitle, pageHead } from '~/lib/seo'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(blogPostsQuery)
   },
+  head: () => pageHead({ path: '', title: homeTitle, description: homeDescription }),
 })
 
 function HomePage() {

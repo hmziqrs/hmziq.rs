@@ -46,6 +46,7 @@ Cargo.lock
 # Generated static assets (run `bun generate:feeds`)
 /public/rss.xml
 /public/atom.xml
+/public/sitemap.xml
 
 .react-doctor
 .playwright-mcp

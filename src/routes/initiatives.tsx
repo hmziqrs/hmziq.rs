@@ -1,14 +1,27 @@
 import { createFileRoute, Outlet, useLocation } from '@tanstack/react-router'
 
-import { PageContainer } from '~/components/layout/PageContainer'
 import { InitiativeCard } from '~/components/initiatives/InitiativeCard'
+import { PageContainer } from '~/components/layout/PageContainer'
 import { BackLink } from '~/components/ui/BackLink'
 import { ErrorBoundary } from '~/components/ui/ErrorBoundary'
 import { initiatives } from '~/content/initiatives'
+import { pageHead } from '~/lib/seo'
 
 export const Route = createFileRoute('/initiatives')({
   component: InitiativesPage,
-  head: () => ({ meta: [{ title: 'Initiatives - hmziq.rs' }] }),
+  head: ({ matches, match }) => {
+    // `/initiatives` is both the listing page and a layout (Outlet) for
+    // `/initiatives/$slug`. Only emit head when we are the deepest (leaf) match.
+    // As a layout we stay silent — see projects.tsx for the canonical-dedup
+    // rationale.
+    if (matches[matches.length - 1]?.id !== match.id) return {}
+    return pageHead({
+      path: '/initiatives',
+      title: 'Initiatives - hmziq.rs',
+      description:
+        'Long-running open-source initiatives maintained by hmziqrs — Free Oxide and Rust Slop.',
+    })
+  },
 })
 
 function InitiativesPage() {

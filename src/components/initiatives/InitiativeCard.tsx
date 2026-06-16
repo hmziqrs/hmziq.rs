@@ -1,6 +1,6 @@
+import { Link } from '@tanstack/react-router'
 import { ExternalLink, Package, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Link } from '@tanstack/react-router'
 
 import { GlassCard } from '~/components/ui/GlassCard'
 import { statusConfig, type Initiative, type InitiativeIconName } from '~/content/initiatives'

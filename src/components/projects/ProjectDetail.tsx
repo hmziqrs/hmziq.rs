@@ -2,8 +2,8 @@ import { SiApple, SiGithub, SiGoogleplay, SiNpm } from '@icons-pack/react-simple
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, ExternalLink, Globe, Star } from 'lucide-react'
 
-import { findInitiativeBySlug } from '~/content/initiatives'
 import { findExperienceBySlug } from '~/content/experiences'
+import { findInitiativeBySlug } from '~/content/initiatives'
 import type { Project, ProjectLink as ProjectLinks } from '~/content/projects'
 import { periodToDatetime } from '~/lib/dateUtils'
 

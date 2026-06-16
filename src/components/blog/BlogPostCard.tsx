@@ -26,7 +26,7 @@ export function BlogPostCard({ post }: { post: BlogPostSummary }) {
                   loading="lazy"
                   width={post.cover.width}
                   height={post.cover.height}
-                  className="aspect-video w-full object-cover opacity-80 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100"
+                  className="aspect-video w-full object-cover opacity-80 transition-opacity duration-300 group-focus-within:opacity-100 group-hover:opacity-100"
                 />
               </div>
             )}
@@ -52,7 +52,7 @@ export function BlogPostCard({ post }: { post: BlogPostSummary }) {
               </p>
 
               <div className="mt-auto flex items-center gap-1 pt-1">
-                <span className="font-mono text-[11px] text-white/50 transition-colors group-hover:text-white/60 group-focus-within:text-white/60">
+                <span className="font-mono text-[11px] text-white/50 transition-colors group-focus-within:text-white/60 group-hover:text-white/60">
                   Read post
                 </span>
                 <ExternalLink size={10} className="text-white/40" aria-hidden="true" />

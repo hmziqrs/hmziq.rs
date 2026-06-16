@@ -30,10 +30,7 @@ export function ProjectsListing() {
             <h1 className="font-mono text-2xl font-bold tracking-wider text-white md:text-3xl">
               Projects
             </h1>
-            <p
-              aria-live="polite"
-              className="mt-2 font-mono text-sm text-white/55"
-            >
+            <p aria-live="polite" className="mt-2 font-mono text-sm text-white/55">
               {filteredProjects.length} of {projects.length} projects
               {selectedType && ' (filtered)'}
             </p>
