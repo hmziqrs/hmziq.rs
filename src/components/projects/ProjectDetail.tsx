@@ -50,7 +50,7 @@ export function ProjectDetail({ project }: { project: Project }) {
           </div>
           {(project.stars ?? 0) > 0 && (
             <span
-              className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white/[0.06] px-3 py-1.5 font-mono text-sm text-white/60"
+              className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white/6 px-3 py-1.5 font-mono text-sm text-white/60"
               aria-label={`${project.stars} GitHub stars`}
             >
               <Star
@@ -66,18 +66,18 @@ export function ProjectDetail({ project }: { project: Project }) {
       </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <span className="rounded-lg bg-white/[0.06] px-3 py-1 font-mono text-xs text-white/60">
+        <span className="rounded-lg bg-white/6 px-3 py-1 font-mono text-xs text-white/60">
           {project.type}
         </span>
         {project.context && (
-          <span className="rounded-lg bg-white/[0.04] px-3 py-1 font-mono text-xs text-white/55">
+          <span className="rounded-lg bg-white/4 px-3 py-1 font-mono text-xs text-white/55">
             {project.context}
           </span>
         )}
         {project.period && (
           <time
             dateTime={periodToDatetime(project.period) ?? project.period}
-            className="rounded-lg bg-white/[0.04] px-3 py-1 font-mono text-xs text-white/55"
+            className="rounded-lg bg-white/4 px-3 py-1 font-mono text-xs text-white/55"
           >
             {project.period}
           </time>
@@ -98,7 +98,7 @@ export function ProjectDetail({ project }: { project: Project }) {
           <Link
             to="/"
             hash="experience"
-            className="group flex items-center gap-4 rounded-lg border border-white/5 bg-white/[0.03] px-4 py-3 transition-all duration-300 hover:border-white/10 hover:bg-white/[0.06] focus-visible:border-white/10 focus-visible:bg-white/[0.06]"
+            className="group flex items-center gap-4 rounded-lg border border-white/5 bg-white/3 px-4 py-3 transition-all duration-300 hover:border-white/10 hover:bg-white/6 focus-visible:border-white/10 focus-visible:bg-white/6"
           >
             <div className="flex flex-col gap-0.5">
               <span className="font-mono text-xs text-white/50">Work Experience</span>

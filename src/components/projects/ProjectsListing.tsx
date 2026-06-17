@@ -50,7 +50,7 @@ export function ProjectsListing() {
                   className={`rounded-lg px-4 py-2.5 font-mono text-xs transition-all duration-200 ${
                     selectedType === type
                       ? 'bg-white/15 text-white'
-                      : 'bg-white/[0.05] text-white/60 hover:bg-white/[0.08] hover:text-white/60 focus-visible:bg-white/[0.08] focus-visible:text-white/60'
+                      : 'bg-white/5 text-white/60 hover:bg-white/8 hover:text-white/60 focus-visible:bg-white/8 focus-visible:text-white/60'
                   }`}
                 >
                   {type}

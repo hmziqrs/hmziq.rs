@@ -30,7 +30,7 @@ export function ProjectCard({ project, headingLevel: Heading = 'h2' }: ProjectCa
                 {project.title}
               </Heading>
               {project.context && (
-                <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] text-white/65">
+                <span className="shrink-0 rounded bg-white/6 px-1.5 py-0.5 font-mono text-[10px] text-white/65">
                   {project.context}
                 </span>
               )}

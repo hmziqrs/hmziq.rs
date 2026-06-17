@@ -56,7 +56,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           const isInline = !className
           if (isInline) {
             return (
-              <code className="rounded bg-white/[0.08] px-1.5 py-0.5 font-mono text-xs text-white/70">
+              <code className="rounded bg-white/8 px-1.5 py-0.5 font-mono text-xs text-white/70">
                 {children}
               </code>
             )
@@ -64,9 +64,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           return <code className={className}>{children}</code>
         },
         pre: ({ children }) => (
-          <pre className="mb-4 overflow-x-auto rounded-lg bg-white/[0.04] p-4 text-xs">
-            {children}
-          </pre>
+          <pre className="mb-4 overflow-x-auto rounded-lg bg-white/4 p-4 text-xs">{children}</pre>
         ),
         blockquote: ({ children }) => (
           <blockquote className="mb-3 border-l-2 border-white/20 pl-4 text-sm text-white/55 italic">

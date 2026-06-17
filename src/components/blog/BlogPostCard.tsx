@@ -42,7 +42,7 @@ export function BlogPostCard({ post }: { post: BlogPostSummary }) {
                 <time className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 font-mono text-[10px] text-white/55">
                   {formatBlogDate(post.date)}
                 </time>
-                <span className="rounded-full border border-white/5 bg-white/[0.04] px-2.5 py-0.5 font-mono text-[10px] text-white/50">
+                <span className="rounded-full border border-white/5 bg-white/4 px-2.5 py-0.5 font-mono text-[10px] text-white/50">
                   {post.category}
                 </span>
               </div>

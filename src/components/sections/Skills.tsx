@@ -20,7 +20,7 @@ export default function Skills() {
               className={`flex items-center gap-3 px-4 py-3 ${
                 prefersReducedMotion
                   ? ''
-                  : 'transition-transform duration-300 hover:scale-[1.15] hover:rotate-[3deg]'
+                  : 'transition-transform duration-300 hover:scale-[1.15] hover:rotate-3'
               }`}
             >
               <span className="flex h-5 w-5 items-center justify-center">

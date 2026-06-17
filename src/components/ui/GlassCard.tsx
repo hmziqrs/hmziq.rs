@@ -8,7 +8,7 @@ interface GlassCardProps {
 export function GlassCard({ children, className = '' }: GlassCardProps) {
   return (
     <div
-      className={`group relative overflow-hidden rounded-none border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.06] ${className}`}
+      className={`group relative overflow-hidden rounded-none border border-white/8 bg-white/3 backdrop-blur-sm transition-all duration-300 hover:border-white/15 hover:bg-white/6 ${className}`}
     >
       {children}
       {/* Hover shine sweep */}

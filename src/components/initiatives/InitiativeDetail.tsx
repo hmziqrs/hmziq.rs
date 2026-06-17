@@ -48,7 +48,7 @@ export function InitiativeDetail({ initiative }: { initiative: Initiative }) {
             href={initiative.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.06] px-4 py-2 font-mono text-xs text-white/60 transition-all duration-300 hover:bg-white/[0.1] hover:text-white/80"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white/6 px-4 py-2 font-mono text-xs text-white/60 transition-all duration-300 hover:bg-white/10 hover:text-white/80"
           >
             Visit website
             <ExternalLink size={12} aria-hidden="true" />

@@ -36,7 +36,7 @@ function ExperienceCard({ exp }: { exp: Experience }) {
       <article>
         {/* Timeline dot */}
         <div
-          className="absolute top-7 -left-[41px] h-3 w-3 rounded-full border-2 border-white/30 bg-black"
+          className="absolute top-7 -left-10.25 h-3 w-3 rounded-full border-2 border-white/30 bg-black"
           aria-hidden="true"
         />
 
