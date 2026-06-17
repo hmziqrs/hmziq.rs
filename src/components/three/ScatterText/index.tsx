@@ -4,7 +4,7 @@ import * as THREE from 'three'
 
 import { useWASM } from '~/contexts/WASMContext'
 import { useReducedMotion } from '~/hooks/useReducedMotion'
-import { ScatterTextSharedMemory } from '~/lib/wasm/scatter-text'
+import { ScatterTextSharedMemory, type ScatterViewKey } from '~/lib/wasm/scatter-text'
 
 import { CanvasContextEvents } from '../CanvasContextEvents'
 import { fragmentShader, vertexShader } from './shaders'
@@ -58,13 +58,30 @@ function generateParticles(
   return particleCount
 }
 
+// Maps each declarative R3F attribute name to the ScatterTextSharedMemory view
+// it mirrors. Used to re-point a bound BufferAttribute at a fresh instance's
+// owned slices when setInstance replaces the singleton (container-resize regen).
+const SCATTER_ATTRIBUTE_KEYS: ReadonlyArray<[string, ScatterViewKey]> = [
+  ['positionX', 'positions_x'],
+  ['positionY', 'positions_y'],
+  ['colorR', 'colors_r'],
+  ['colorG', 'colors_g'],
+  ['colorB', 'colors_b'],
+  ['opacity', 'opacity'],
+]
+
 function ScatterRenderer({ particleCount, prefersReducedMotion }: ScatterRendererProps) {
   const { size } = useThree()
   const wasmModule = useWASM().wasmModule
   const hasSnapped = useRef(false)
   const geometryRef = useRef<THREE.BufferGeometry>(null)
   const materialRef = useRef<THREE.ShaderMaterial>(null)
+  // The bound Float32Arrays are independent non-WASM copies (see
+  // ScatterTextSharedMemory). Their byteLength is fixed for the instance
+  // lifetime, so the WebGLAttributes "Resizing buffer attributes is not
+  // supported" throw is unreachable regardless of WASM memory.grow.
   const sharedMemory = ScatterTextSharedMemory.getInstance()
+  const boundInstanceRef = useRef<ScatterTextSharedMemory>(sharedMemory)
   const [uniforms] = useState(() => ({ screenSize: { value: new THREE.Vector2(1, 1) } }))
 
   useEffect(() => {
@@ -87,16 +104,36 @@ function ScatterRenderer({ particleCount, prefersReducedMotion }: ScatterRendere
 
       const frameMemory = ScatterTextSharedMemory.getInstance()
 
+      // setInstance (container-resize regen) mints a fresh instance whose owned
+      // bound slices differ from the ones the JSX captured at mount. Re-point
+      // each attribute's backing array IN PLACE: the BufferAttribute object
+      // identity stays stable (so the WebGLAttributes WeakMap key is unchanged
+      // and data.size === attribute.array.byteLength still holds), while the
+      // rendered attribute now reads the live instance's buffers.
+      if (frameMemory !== boundInstanceRef.current) {
+        const views = frameMemory as unknown as Record<ScatterViewKey, Float32Array>
+        for (const [attributeName, viewKey] of SCATTER_ATTRIBUTE_KEYS) {
+          const attribute = geometry.attributes[attributeName]
+          if (attribute instanceof THREE.BufferAttribute) {
+            attribute.array = views[viewKey]
+            attribute.needsUpdate = true
+          }
+        }
+        boundInstanceRef.current = frameMemory
+      }
+
+      const positionXAttr = geometry.attributes.positionX
+      const positionYAttr = geometry.attributes.positionY
+      const opacityAttr = geometry.attributes.opacity
+
       if (prefersReducedMotion) {
         if (!hasSnapped.current) {
           hasSnapped.current = true
+          // snapToFinalPositions writes into the WASM source views and then
+          // syncBoundBuffers() copies the result into the owned bound buffers.
           frameMemory.snapToFinalPositions()
 
           material.uniforms.screenSize.value.set(size.width, size.height)
-
-          const positionXAttr = geometry.attributes.positionX
-          const positionYAttr = geometry.attributes.positionY
-          const opacityAttr = geometry.attributes.opacity
 
           if (positionXAttr instanceof THREE.BufferAttribute) positionXAttr.needsUpdate = true
           if (positionYAttr instanceof THREE.BufferAttribute) positionYAttr.needsUpdate = true
@@ -108,12 +145,12 @@ function ScatterRenderer({ particleCount, prefersReducedMotion }: ScatterRendere
       }
 
       frameMemory.updateFrame(wasmModule, delta)
+      // Copy the WASM-mutated positions/opacity into the owned bound buffers.
+      // The bound arrays are non-WASM copies with a fixed byteLength, so bumping
+      // version below always takes the updateBuffer path, never the throw path.
+      frameMemory.syncBoundBuffers()
 
       material.uniforms.screenSize.value.set(size.width, size.height)
-
-      const positionXAttr = geometry.attributes.positionX
-      const positionYAttr = geometry.attributes.positionY
-      const opacityAttr = geometry.attributes.opacity
 
       if (positionXAttr instanceof THREE.BufferAttribute) positionXAttr.needsUpdate = true
       if (positionYAttr instanceof THREE.BufferAttribute) positionYAttr.needsUpdate = true
