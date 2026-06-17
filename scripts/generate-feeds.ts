@@ -70,7 +70,7 @@ try {
       const d = new Date(post.updated ?? post.date)
       return d > latest ? d : latest
     }, new Date(0))
-    if (latestDate > new Date(feed.options.updated as string)) {
+    if (latestDate > (feed.options.updated ?? new Date(0))) {
       feed.options.updated = latestDate
     }
   }

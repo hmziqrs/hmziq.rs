@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { Star, ArrowRight } from 'lucide-react'
 
 import { GlassCard } from '~/components/ui/GlassCard'
@@ -12,6 +12,9 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, headingLevel: Heading = 'h2' }: ProjectCardProps) {
+  const navigate = useNavigate()
+  const initiativeSlug = project.initiative
+
   return (
     <article className="h-full">
       <Link
@@ -31,15 +34,29 @@ export function ProjectCard({ project, headingLevel: Heading = 'h2' }: ProjectCa
                   {project.context}
                 </span>
               )}
-              {project.initiative && (
-                <Link
-                  to="/initiatives/$slug"
-                  params={{ slug: project.initiative }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="shrink-0 rounded border border-emerald-500/20 bg-emerald-500/5 px-1.5 py-0.5 font-mono text-[10px] text-emerald-400/80 transition-opacity hover:opacity-80"
+              {initiativeSlug && (
+                <span
+                  role="link"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    // The card itself is a <Link>; keep this badge a non-anchor
+                    // element so we don't nest <a> inside <a> (invalid HTML →
+                    // hydration error). Stop the click from also triggering the
+                    // card's navigation, then route to the initiative directly.
+                    e.stopPropagation()
+                    e.preventDefault()
+                    navigate({ to: '/initiatives/$slug', params: { slug: initiativeSlug } })
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter' && e.key !== ' ') return
+                    e.preventDefault()
+                    e.stopPropagation()
+                    navigate({ to: '/initiatives/$slug', params: { slug: initiativeSlug } })
+                  }}
+                  className="shrink-0 cursor-pointer rounded border border-emerald-500/20 bg-emerald-500/5 px-1.5 py-0.5 font-mono text-[10px] text-emerald-400/80 transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
                 >
-                  {findInitiativeBySlug(project.initiative)?.name ?? project.initiative}
-                </Link>
+                  {findInitiativeBySlug(initiativeSlug)?.name ?? initiativeSlug}
+                </span>
               )}
             </div>
             <div className="flex shrink-0 items-center gap-2">
