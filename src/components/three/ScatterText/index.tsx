@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 import { useReducedMotion } from '~/hooks/useReducedMotion'
@@ -68,16 +68,14 @@ function ScatterRenderer({ generation, prefersReducedMotion }: ScatterRendererPr
   })
 
   const formStartRef = useRef(-1)
-  // Stable initial uniforms; kept in sync via the material ref in the effect below.
-  const uniforms = useMemo(
-    () => ({
-      uText: { value: null as THREE.Texture | null },
-      uGrid: { value: new THREE.Vector2(1, 1) },
-      screenSize: { value: new THREE.Vector2(1, 1) },
-      uTime: { value: 0 },
-    }),
-    []
-  )
+  // Init from the current generation (so the mount render has a real texture); subsequent
+  // generations sync via the material ref in the effect below.
+  const [uniforms] = useState(() => ({
+    uText: { value: generation.texture as THREE.Texture },
+    uGrid: { value: new THREE.Vector2(generation.gridW, generation.gridH) },
+    screenSize: { value: new THREE.Vector2(generation.width, generation.height) },
+    uTime: { value: 0 },
+  }))
 
   // Apply a (re)generation: point uniforms at the fresh texture/grid, set the draw range,
   // and restart the formation. Kicks one frame so demand-mode renders the new state.
@@ -137,18 +135,34 @@ export default function ScatterText({ text }: ScatterTextProps) {
   const versionRef = useRef(0)
 
   useEffect(() => {
-    if (!containerRef.current) return
+    const element = containerRef.current
+    if (!element) return
     let timeout: ReturnType<typeof setTimeout> | null = null
+    let measured = false
+
+    const apply = (rawWidth: number, rawHeight: number) => {
+      const width = Math.floor(rawWidth)
+      const height = Math.floor(rawHeight)
+      // Bail on unchanged size so a no-op observer fire doesn't restart the formation.
+      setContainerSize((prev) =>
+        prev.width === width && prev.height === height ? prev : { width, height }
+      )
+    }
+
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0]
       if (!entry) return
       const { width, height } = entry.contentRect
+      if (!measured) {
+        // First measurement is applied immediately — don't delay the intro by the debounce.
+        measured = true
+        apply(width, height)
+        return
+      }
       if (timeout) clearTimeout(timeout)
-      timeout = setTimeout(() => {
-        setContainerSize({ width: Math.floor(width), height: Math.floor(height) })
-      }, RESIZE_DEBOUNCE_MS)
+      timeout = setTimeout(() => apply(width, height), RESIZE_DEBOUNCE_MS)
     })
-    observer.observe(containerRef.current)
+    observer.observe(element)
     return () => {
       observer.disconnect()
       if (timeout) clearTimeout(timeout)
@@ -161,41 +175,61 @@ export default function ScatterText({ text }: ScatterTextProps) {
     const { width, height } = containerSize
     if (!width || !height) return
 
-    if (!offscreenRef.current) offscreenRef.current = document.createElement('canvas')
-    const canvas = offscreenRef.current
-    const gridW = Math.max(1, Math.round(width / SKIP))
-    const gridH = Math.max(1, Math.round(height / SKIP))
-    canvas.width = gridW
-    canvas.height = gridH
+    let cancelled = false
+    const fontSpec = `bold ${calculateFontSize(text, width, height) / SKIP}px "Geist Mono"`
 
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    ctx.clearRect(0, 0, gridW, gridH)
-    ctx.font = `bold ${calculateFontSize(text, width, height) / SKIP}px "Geist Mono"`
-    ctx.fillStyle = '#ffffff'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(text, gridW / 2, gridH / 2)
+    const rasterize = () => {
+      if (cancelled) return
 
-    if (!textureRef.current) {
-      const texture = new THREE.CanvasTexture(canvas)
-      texture.minFilter = THREE.NearestFilter
-      texture.magFilter = THREE.NearestFilter
-      texture.generateMipmaps = false
-      texture.flipY = false // match cell.y → screen.y so glyphs render upright
-      textureRef.current = texture
+      if (!offscreenRef.current) offscreenRef.current = document.createElement('canvas')
+      const canvas = offscreenRef.current
+      const gridW = Math.max(1, Math.round(width / SKIP))
+      const gridH = Math.max(1, Math.round(height / SKIP))
+      canvas.width = gridW
+      canvas.height = gridH
+
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      ctx.clearRect(0, 0, gridW, gridH)
+      ctx.font = fontSpec
+      ctx.fillStyle = '#ffffff'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(text, gridW / 2, gridH / 2)
+
+      if (!textureRef.current) {
+        const texture = new THREE.CanvasTexture(canvas)
+        texture.minFilter = THREE.NearestFilter
+        texture.magFilter = THREE.NearestFilter
+        texture.generateMipmaps = false
+        texture.flipY = false // match cell.y → screen.y so glyphs render upright
+        textureRef.current = texture
+      }
+      textureRef.current.needsUpdate = true
+
+      versionRef.current += 1
+      setGeneration({
+        texture: textureRef.current,
+        gridW,
+        gridH,
+        width,
+        height,
+        version: versionRef.current,
+      })
     }
-    textureRef.current.needsUpdate = true
 
-    versionRef.current += 1
-    setGeneration({
-      texture: textureRef.current,
-      gridW,
-      gridH,
-      width,
-      height,
-      version: versionRef.current,
-    })
+    // Don't sample until the real "Geist Mono" face is available — otherwise the canvas
+    // rasterizes a fallback glyph (font-display: swap) and the particles form the wrong shape.
+    const fonts = document.fonts
+    if (fonts && !fonts.check(fontSpec)) {
+      fonts.load(fontSpec).then(rasterize, rasterize)
+    } else {
+      rasterize()
+    }
+
+    return () => {
+      cancelled = true
+    }
   }, [text, containerSize, canvasVersion])
 
   useEffect(() => {
