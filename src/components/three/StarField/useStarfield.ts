@@ -42,6 +42,12 @@ const MAX_DELTA = 0.1
 const BASE_ROTATION_X = 0.02
 const BASE_ROTATION_Y = 0.01
 
+// Scroll-driven camera dolly: top of page sits at the base distance; scrolling
+// down eases the camera toward the field (zoom in), scrolling back up pulls out.
+const CAMERA_Z_BASE = 50
+const CAMERA_Z_ZOOMED = 28
+const CAMERA_ZOOM_LERP = 0.08
+
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
 
 function getStarCount(width: number, height: number) {
@@ -78,6 +84,7 @@ export function useStarfield({ wasmModule, starMeshRef, onFirstFrame }: UseStarf
   // Interaction state.
   const isMovingRef = useRef(false)
   const shouldBoostFromClick = useRef(false)
+  const scrollProgressRef = useRef(0)
 
   // Frame state.
   const clickTimeRef = useRef(-Infinity)
@@ -140,16 +147,23 @@ export function useStarfield({ wasmModule, starMeshRef, onFirstFrame }: UseStarf
       shouldBoostFromClick.current = true
     }
 
+    const handleScroll = () => {
+      markMoving()
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+      scrollProgressRef.current =
+        maxScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maxScroll)) : 0
+    }
+
     window.addEventListener('resize', handleResize)
     window.addEventListener('mousemove', markMoving)
     window.addEventListener('click', handleClick)
-    window.addEventListener('scroll', markMoving, { passive: true })
+    window.addEventListener('scroll', handleScroll, { passive: true })
 
     return () => {
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('mousemove', markMoving)
       window.removeEventListener('click', handleClick)
-      window.removeEventListener('scroll', markMoving)
+      window.removeEventListener('scroll', handleScroll)
       if (resizeTimeout) clearTimeout(resizeTimeout)
       if (moveTimeout) clearTimeout(moveTimeout)
     }
@@ -212,5 +226,9 @@ export function useStarfield({ wasmModule, starMeshRef, onFirstFrame }: UseStarf
     rotationYRef.current += BASE_ROTATION_Y * speedMultiplierRef.current * deltaTime
     mesh.rotation.x = rotationXRef.current
     mesh.rotation.y = rotationYRef.current
+
+    // Scroll-driven zoom: ease the camera toward the scroll-mapped distance.
+    const targetZ = CAMERA_Z_BASE + (CAMERA_Z_ZOOMED - CAMERA_Z_BASE) * scrollProgressRef.current
+    state.camera.position.z += (targetZ - state.camera.position.z) * CAMERA_ZOOM_LERP
   })
 }

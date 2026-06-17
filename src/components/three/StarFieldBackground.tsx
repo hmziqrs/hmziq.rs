@@ -23,7 +23,12 @@ function StarFieldLoader({ hidden }: { hidden: boolean }) {
         pointerEvents: 'none',
       }}
     >
-      <div className="star-loader-core" />
+      <div className="star-loader">
+        <span className="star-loader-ring" />
+        <span className="star-loader-ring" style={{ animationDelay: '1.27s' }} />
+        <span className="star-loader-ring" style={{ animationDelay: '2.53s' }} />
+        <div className="star-loader-core" />
+      </div>
     </div>
   )
 }
