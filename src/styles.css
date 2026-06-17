@@ -128,22 +128,32 @@ html {
   animation: shimmer 2s ease-in-out infinite;
 }
 
-/* CSS starfield backdrop (shown until the WebGL field loads) */
-@keyframes star-twinkle {
+/* Pulsing-core loader (shown until the WebGL star field loads) */
+@keyframes star-core-pulse {
   0%,
   100% {
-    opacity: 0.4;
+    transform: scale(0.8);
+    opacity: 0.5;
   }
   50% {
+    transform: scale(1.1);
     opacity: 1;
   }
 }
 
-.css-star-layer {
-  animation-name: star-twinkle;
-  animation-iteration-count: infinite;
-  animation-timing-function: ease-in-out;
-  will-change: opacity;
+.star-loader-core {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    #ffffff 0%,
+    rgba(153, 204, 255, 0.9) 40%,
+    rgba(153, 204, 255, 0) 70%
+  );
+  box-shadow: 0 0 24px 6px rgba(153, 204, 255, 0.45);
+  animation: star-core-pulse 1.6s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 /* Decorative animations */

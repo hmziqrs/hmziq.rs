@@ -7,16 +7,9 @@ import { useReducedMotion } from '~/hooks/useReducedMotion'
 
 import { CanvasContextEvents } from '../CanvasContextEvents'
 import { VERTEX_SHADER, FRAGMENT_SHADER } from './shaders'
-import { useStarfieldEvents } from './useStarfieldEvents'
-import { useStarfieldFrame } from './useStarfieldFrame'
-import { useStarfieldGeometry } from './useStarfieldGeometry'
+import { useStarfield } from './useStarfield'
 
 const STARFIELD_CAMERA = { position: [0, 0, 50] as [number, number, number], fov: 75 } as const
-
-function getStarCount(width: number, height: number) {
-  const rawCount = Math.floor(((width * height) / 1000) * 0.36 * 1.125)
-  return Math.ceil(rawCount / 8) * 8
-}
 
 function markStarfieldCanvas(canvas: HTMLCanvasElement | null) {
   if (canvas) canvas.dataset.webglCanvas = 'starfield'
@@ -27,33 +20,13 @@ interface StarsProps {
 }
 
 function Stars({ onFirstFrame }: StarsProps) {
-  const [starCount, setStarCount] = useState(() =>
-    getStarCount(
-      typeof window !== 'undefined' ? window.innerWidth : 1920,
-      typeof window !== 'undefined' ? window.innerHeight : 1080
-    )
-  )
   const { wasmModule } = useWASM()
   const starMeshRef = useRef<THREE.Points>(null)
 
   // Stable uniforms object — its identity must not change or R3F rebuilds the material.
   const uniforms = useMemo(() => ({ uTime: { value: 0 }, uBoot: { value: 0 } }), [])
 
-  const handleResize = (width: number, height: number) => setStarCount(getStarCount(width, height))
-
-  const { sharedMemoryRef } = useStarfieldGeometry({
-    wasmModule,
-    starCount,
-    starMeshRef,
-  })
-
-  const { isMovingRef, shouldBoostFromClick } = useStarfieldFrame({
-    sharedMemoryRef,
-    starMeshRef,
-    onFirstFrame,
-  })
-
-  useStarfieldEvents(handleResize, isMovingRef, shouldBoostFromClick)
+  useStarfield({ wasmModule, starMeshRef, onFirstFrame })
 
   return (
     // eslint-disable-next-line react-hooks-js/refs -- ref passed to Three.js element, not read during render
@@ -137,10 +110,7 @@ interface OptimizedStarFieldProps {
 }
 
 export default function OptimizedStarField({ onReady, onContextLost }: OptimizedStarFieldProps) {
-  if (typeof window === 'undefined') {
-    // SSR/first paint is covered by the CSS starfield rendered alongside this component.
-    return null
-  }
+  if (typeof window === 'undefined') return null
 
   return <StarFieldCanvas onReady={onReady} onContextLost={onContextLost} />
 }
