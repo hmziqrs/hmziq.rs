@@ -4,11 +4,9 @@ use wasm_bindgen::prelude::*;
 // Module imports
 mod math;
 mod star_field;
-mod scatter_text;
 
 pub use math::*;
 pub use star_field::*;
-pub use scatter_text::*;
 
 #[wasm_bindgen]
 extern "C" {

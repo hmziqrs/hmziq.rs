@@ -1,5 +1,4 @@
 import type { StarMemoryPointers } from './starfield'
-import type { ScatterTextPointers } from './scatter-text'
 
 let wasmModule: WASMModule | null = null
 let loadPromise: Promise<WASMModule> | null = null
@@ -8,17 +7,6 @@ export interface WASMModule {
   memory: WebAssembly.Memory
   initialize_star_memory_pool: (count: number) => StarMemoryPointers
   destroy_star_memory_pool: () => void
-  set_text_pixels: (
-    pixel_data: Uint8Array,
-    width: number,
-    height: number,
-    canvas_width: number,
-    canvas_height: number,
-    skip: number
-  ) => number
-  get_scatter_text_pointers: () => ScatterTextPointers
-  start_forming: () => void
-  update_particles: (delta_time: number) => void
 }
 
 type WasmFunctions = Omit<WASMModule, 'memory'>
@@ -51,10 +39,6 @@ export async function loadWASM(): Promise<WASMModule> {
         memory: wasmImport.get_wasm_memory(),
         initialize_star_memory_pool: wasmImport.initialize_star_memory_pool,
         destroy_star_memory_pool: wasmImport.destroy_star_memory_pool,
-        set_text_pixels: wasmImport.set_text_pixels,
-        get_scatter_text_pointers: wasmImport.get_scatter_text_pointers,
-        start_forming: wasmImport.start_forming,
-        update_particles: wasmImport.update_particles,
       }
 
       return wasmModule

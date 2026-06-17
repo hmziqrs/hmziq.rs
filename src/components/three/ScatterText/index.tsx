@@ -1,14 +1,34 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
-import { useWASM } from '~/contexts/WASMContext'
 import { useReducedMotion } from '~/hooks/useReducedMotion'
-import { ScatterTextSharedMemory, type ScatterViewKey } from '~/lib/wasm/scatter-text'
 
 import { CanvasContextEvents } from '../CanvasContextEvents'
 import { fragmentShader, vertexShader } from './shaders'
-import { ScatterRendererProps, ScatterTextProps } from './types'
+
+interface ScatterTextProps {
+  text: string
+}
+
+const SCATTER_CAMERA = { position: [0, 0, 150] as [number, number, number], fov: 50 } as const
+
+// Particle spacing (1 particle per SKIP px of the source text).
+const SKIP = 3
+// Upper bound on grid cells; covers very wide containers. Drives the (constant) geometry size.
+const MAX_PARTICLES = 40000
+// Formation easing settles well within this (exp(-5·2) ≈ 4.5e-5); afterwards rendering idles.
+const FORM_DURATION = 2.0
+const RESIZE_DEBOUNCE_MS = 150
+
+// Constant geometry: the particle id is packed into position.x (y,z unused). Three derives
+// the point draw-count from this attribute; real screen positions are computed in the shader,
+// so the points are rendered with frustumCulled disabled. Built once.
+const PARTICLE_POSITIONS = (() => {
+  const array = new Float32Array(MAX_PARTICLES * 3)
+  for (let i = 0; i < MAX_PARTICLES; i++) array[i * 3] = i
+  return array
+})()
 
 function calculateFontSize(text: string, containerWidth: number, containerHeight: number): number {
   const baseSize = containerHeight * 0.85
@@ -19,158 +39,78 @@ function calculateFontSize(text: string, containerWidth: number, containerHeight
   return Math.max(40, Math.min(fontSize, 500))
 }
 
-const SCATTER_CAMERA = { position: [0, 0, 150] as [number, number, number], fov: 50 } as const
-
-const SKIP = 3
-
 function markWebGLCanvas(canvas: HTMLCanvasElement | null) {
   if (canvas) canvas.dataset.webglCanvas = 'scatter-text'
 }
 
-function generateParticles(
-  text: string,
-  width: number,
-  height: number,
-  wasmModule: NonNullable<ReturnType<typeof useWASM>['wasmModule']>
-) {
-  const canvas = document.createElement('canvas')
-  const context = canvas.getContext('2d')
-  if (!context) return null
-
-  canvas.width = width
-  canvas.height = height
-  context.font = `bold ${calculateFontSize(text, width, height)}px "Geist Mono"`
-  context.fillStyle = '#ffffff'
-  context.textAlign = 'center'
-  context.textBaseline = 'middle'
-  context.fillText(text, width / 2, height / 2)
-
-  const imageData = context.getImageData(0, 0, width, height)
-  const particleCount = wasmModule.set_text_pixels(
-    new Uint8Array(imageData.data),
-    width,
-    height,
-    width,
-    height,
-    SKIP
-  )
-  ScatterTextSharedMemory.setInstance(wasmModule)
-  return particleCount
+interface Generation {
+  texture: THREE.CanvasTexture
+  gridW: number
+  gridH: number
+  width: number
+  height: number
+  version: number
 }
 
-// Maps each declarative R3F attribute name to the ScatterTextSharedMemory view
-// it mirrors. Used to re-point a bound BufferAttribute at a fresh instance's
-// owned slices when setInstance replaces the singleton (container-resize regen).
-const SCATTER_ATTRIBUTE_KEYS: ReadonlyArray<[string, ScatterViewKey]> = [
-  ['positionX', 'positions_x'],
-  ['positionY', 'positions_y'],
-  ['colorR', 'colors_r'],
-  ['colorG', 'colors_g'],
-  ['colorB', 'colors_b'],
-  ['opacity', 'opacity'],
-]
+interface ScatterRendererProps {
+  generation: Generation
+  prefersReducedMotion: boolean
+}
 
-function ScatterRenderer({ particleCount, prefersReducedMotion }: ScatterRendererProps) {
-  const { size } = useThree()
-  const wasmModule = useWASM().wasmModule
-  const hasSnapped = useRef(false)
+function ScatterRenderer({ generation, prefersReducedMotion }: ScatterRendererProps) {
   const geometryRef = useRef<THREE.BufferGeometry>(null)
   const materialRef = useRef<THREE.ShaderMaterial>(null)
-  // The bound Float32Arrays are independent non-WASM copies (see
-  // ScatterTextSharedMemory). Their byteLength is fixed for the instance
-  // lifetime, so the WebGLAttributes "Resizing buffer attributes is not
-  // supported" throw is unreachable regardless of WASM memory.grow.
-  const sharedMemory = ScatterTextSharedMemory.getInstance()
-  const boundInstanceRef = useRef<ScatterTextSharedMemory>(sharedMemory)
-  const [uniforms] = useState(() => ({ screenSize: { value: new THREE.Vector2(1, 1) } }))
+  const invalidate = useThree((state) => state.invalidate)
 
+  const reducedMotionRef = useRef(prefersReducedMotion)
   useEffect(() => {
-    return () => ScatterTextSharedMemory.resetInstance()
-  }, [])
+    reducedMotionRef.current = prefersReducedMotion
+  })
 
+  const formStartRef = useRef(-1)
+  // Stable initial uniforms; kept in sync via the material ref in the effect below.
+  const uniforms = useMemo(
+    () => ({
+      uText: { value: null as THREE.Texture | null },
+      uGrid: { value: new THREE.Vector2(1, 1) },
+      screenSize: { value: new THREE.Vector2(1, 1) },
+      uTime: { value: 0 },
+    }),
+    []
+  )
+
+  // Apply a (re)generation: point uniforms at the fresh texture/grid, set the draw range,
+  // and restart the formation. Kicks one frame so demand-mode renders the new state.
   useEffect(() => {
-    if (!wasmModule || !geometryRef.current) return
-    geometryRef.current.setDrawRange(0, particleCount)
-    wasmModule.start_forming()
-  }, [wasmModule, particleCount])
-
-  useFrame((_, delta) => {
-    const geometry = geometryRef.current
     const material = materialRef.current
-    if (!geometry || !material) return
+    if (!material) return
+    material.uniforms.uText.value = generation.texture
+    material.uniforms.uGrid.value.set(generation.gridW, generation.gridH)
+    material.uniforms.screenSize.value.set(generation.width, generation.height)
+    const count = Math.min(generation.gridW * generation.gridH, MAX_PARTICLES)
+    geometryRef.current?.setDrawRange(0, count)
+    formStartRef.current = -1
+    invalidate()
+  }, [generation, invalidate])
 
-    try {
-      if (!wasmModule) return
-
-      const frameMemory = ScatterTextSharedMemory.getInstance()
-
-      // setInstance (container-resize regen) mints a fresh instance whose owned
-      // bound slices differ from the ones the JSX captured at mount. Re-point
-      // each attribute's backing array IN PLACE: the BufferAttribute object
-      // identity stays stable (so the WebGLAttributes WeakMap key is unchanged
-      // and data.size === attribute.array.byteLength still holds), while the
-      // rendered attribute now reads the live instance's buffers.
-      if (frameMemory !== boundInstanceRef.current) {
-        const views = frameMemory as unknown as Record<ScatterViewKey, Float32Array>
-        for (const [attributeName, viewKey] of SCATTER_ATTRIBUTE_KEYS) {
-          const attribute = geometry.attributes[attributeName]
-          if (attribute instanceof THREE.BufferAttribute) {
-            attribute.array = views[viewKey]
-            attribute.needsUpdate = true
-          }
-        }
-        boundInstanceRef.current = frameMemory
-      }
-
-      const positionXAttr = geometry.attributes.positionX
-      const positionYAttr = geometry.attributes.positionY
-      const opacityAttr = geometry.attributes.opacity
-
-      if (prefersReducedMotion) {
-        if (!hasSnapped.current) {
-          hasSnapped.current = true
-          // snapToFinalPositions writes into the WASM source views and then
-          // syncBoundBuffers() copies the result into the owned bound buffers.
-          frameMemory.snapToFinalPositions()
-
-          material.uniforms.screenSize.value.set(size.width, size.height)
-
-          if (positionXAttr instanceof THREE.BufferAttribute) positionXAttr.needsUpdate = true
-          if (positionYAttr instanceof THREE.BufferAttribute) positionYAttr.needsUpdate = true
-          if (opacityAttr instanceof THREE.BufferAttribute) opacityAttr.needsUpdate = true
-
-          geometry.setDrawRange(0, particleCount)
-        }
-        return
-      }
-
-      frameMemory.updateFrame(wasmModule, delta)
-      // Copy the WASM-mutated positions/opacity into the owned bound buffers.
-      // The bound arrays are non-WASM copies with a fixed byteLength, so bumping
-      // version below always takes the updateBuffer path, never the throw path.
-      frameMemory.syncBoundBuffers()
-
-      material.uniforms.screenSize.value.set(size.width, size.height)
-
-      if (positionXAttr instanceof THREE.BufferAttribute) positionXAttr.needsUpdate = true
-      if (positionYAttr instanceof THREE.BufferAttribute) positionYAttr.needsUpdate = true
-      if (opacityAttr instanceof THREE.BufferAttribute) opacityAttr.needsUpdate = true
-
-      geometry.setDrawRange(0, particleCount)
-    } catch (error) {
-      console.error('Error updating ScatterText:', error)
+  useFrame((state) => {
+    const material = materialRef.current
+    if (!material) return
+    if (reducedMotionRef.current) {
+      material.uniforms.uTime.value = 1000 // settled (exp(-5000) → at target)
+      return
     }
+    if (formStartRef.current < 0) formStartRef.current = state.clock.elapsedTime
+    const elapsed = state.clock.elapsedTime - formStartRef.current
+    material.uniforms.uTime.value = elapsed
+    // Keep rendering only while the text is still forming, then idle.
+    if (elapsed < FORM_DURATION) state.invalidate()
   })
 
   return (
-    <points>
+    <points frustumCulled={false}>
       <bufferGeometry ref={geometryRef}>
-        <bufferAttribute attach="attributes-positionX" args={[sharedMemory.positions_x, 1]} />
-        <bufferAttribute attach="attributes-positionY" args={[sharedMemory.positions_y, 1]} />
-        <bufferAttribute attach="attributes-colorR" args={[sharedMemory.colors_r, 1]} />
-        <bufferAttribute attach="attributes-colorG" args={[sharedMemory.colors_g, 1]} />
-        <bufferAttribute attach="attributes-colorB" args={[sharedMemory.colors_b, 1]} />
-        <bufferAttribute attach="attributes-opacity" args={[sharedMemory.opacity, 1]} />
+        <bufferAttribute attach="attributes-position" args={[PARTICLE_POSITIONS, 3]} />
       </bufferGeometry>
       <shaderMaterial
         ref={materialRef}
@@ -186,51 +126,86 @@ function ScatterRenderer({ particleCount, prefersReducedMotion }: ScatterRendere
 }
 
 export default function ScatterText({ text }: ScatterTextProps) {
-  const wasmModule = useWASM().wasmModule
-  const [particleCount, setParticleCount] = useState<number | null>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
+  const [generation, setGeneration] = useState<Generation | null>(null)
   const [canvasVersion, setCanvasVersion] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
   const prefersReducedMotion = useReducedMotion()
 
+  const offscreenRef = useRef<HTMLCanvasElement | null>(null)
+  const textureRef = useRef<THREE.CanvasTexture | null>(null)
+  const versionRef = useRef(0)
+
   useEffect(() => {
     if (!containerRef.current) return
+    let timeout: ReturnType<typeof setTimeout> | null = null
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0]
-      if (entry) {
-        setContainerSize({
-          width: Math.floor(entry.contentRect.width),
-          height: Math.floor(entry.contentRect.height),
-        })
-      }
+      if (!entry) return
+      const { width, height } = entry.contentRect
+      if (timeout) clearTimeout(timeout)
+      timeout = setTimeout(() => {
+        setContainerSize({ width: Math.floor(width), height: Math.floor(height) })
+      }, RESIZE_DEBOUNCE_MS)
     })
     observer.observe(containerRef.current)
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      if (timeout) clearTimeout(timeout)
+    }
   }, [])
 
+  // Rasterize the text into a small offscreen canvas (1 texel per particle cell) and upload
+  // it as a GPU texture — no getImageData, no pixel loop, no per-particle CPU arrays.
   useEffect(() => {
-    if (!wasmModule || !containerSize.width || !containerSize.height) return
+    const { width, height } = containerSize
+    if (!width || !height) return
 
-    let cancelled = false
-    queueMicrotask(() => {
-      if (cancelled) return
+    if (!offscreenRef.current) offscreenRef.current = document.createElement('canvas')
+    const canvas = offscreenRef.current
+    const gridW = Math.max(1, Math.round(width / SKIP))
+    const gridH = Math.max(1, Math.round(height / SKIP))
+    canvas.width = gridW
+    canvas.height = gridH
 
-      try {
-        setParticleCount(
-          generateParticles(text, containerSize.width, containerSize.height, wasmModule)
-        )
-      } catch (error) {
-        console.error('Failed to generate pixels:', error)
-      }
-    })
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.clearRect(0, 0, gridW, gridH)
+    ctx.font = `bold ${calculateFontSize(text, width, height) / SKIP}px "Geist Mono"`
+    ctx.fillStyle = '#ffffff'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(text, gridW / 2, gridH / 2)
 
-    return () => {
-      cancelled = true
+    if (!textureRef.current) {
+      const texture = new THREE.CanvasTexture(canvas)
+      texture.minFilter = THREE.NearestFilter
+      texture.magFilter = THREE.NearestFilter
+      texture.generateMipmaps = false
+      texture.flipY = false // match cell.y → screen.y so glyphs render upright
+      textureRef.current = texture
     }
-  }, [canvasVersion, containerSize.height, containerSize.width, text, wasmModule])
+    textureRef.current.needsUpdate = true
+
+    versionRef.current += 1
+    setGeneration({
+      texture: textureRef.current,
+      gridW,
+      gridH,
+      width,
+      height,
+      version: versionRef.current,
+    })
+  }, [text, containerSize, canvasVersion])
+
+  useEffect(() => {
+    return () => {
+      textureRef.current?.dispose()
+      textureRef.current = null
+    }
+  }, [])
 
   const handleContextLost = () => {
-    setParticleCount(null)
     setCanvasVersion((version) => version + 1)
   }
 
@@ -243,11 +218,13 @@ export default function ScatterText({ text }: ScatterTextProps) {
       className="absolute min-h-full min-w-full"
       aria-hidden="true"
     >
-      {particleCount !== null ? (
+      {generation ? (
         <Canvas
           key={canvasVersion}
           ref={markWebGLCanvas}
           camera={SCATTER_CAMERA}
+          frameloop="demand"
+          dpr={[1, 1.5]}
           style={{
             position: 'absolute',
             top: 0,
@@ -257,10 +234,7 @@ export default function ScatterText({ text }: ScatterTextProps) {
           }}
         >
           <CanvasContextEvents onContextLost={handleContextLost} />
-          <ScatterRenderer
-            particleCount={particleCount}
-            prefersReducedMotion={prefersReducedMotion}
-          />
+          <ScatterRenderer generation={generation} prefersReducedMotion={prefersReducedMotion} />
         </Canvas>
       ) : null}
     </div>
