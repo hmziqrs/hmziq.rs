@@ -3,30 +3,60 @@ import rehypeRaw from 'rehype-raw'
 
 interface MarkdownRendererProps {
   content: string
+  /**
+   * Number of levels to shift rendered heading tags down.
+   * Set to `1` when rendered under a page-level <h1> so that
+   * markdown headings start at <h2> and the document outline
+   * stays sequential (WCAG 1.3.1).
+   */
+  headingOffset?: number
 }
 
-// TODO: When used inside pages that already render an h1 (e.g. project detail pages),
-// heading levels should be shifted by an offset to avoid skipping levels and preserve
-// the document outline. Consider adding a `headingOffset` prop (e.g. start at h2/h3).
-export function MarkdownRenderer({ content }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, headingOffset = 0 }: MarkdownRendererProps) {
+  const shift = (level: number) =>
+    ('h' + Math.min(6, Math.max(1, level + headingOffset))) as
+      | 'h1'
+      | 'h2'
+      | 'h3'
+      | 'h4'
+      | 'h5'
+      | 'h6'
   return (
     <Markdown
       rehypePlugins={[rehypeRaw]}
       components={{
-        h1: ({ children }) => (
-          <h1 className="mt-8 mb-4 font-mono text-xl font-bold text-white first:mt-0">
-            {children}
-          </h1>
-        ),
-        h2: ({ children }) => (
-          <h2 className="mt-6 mb-3 font-mono text-lg font-semibold text-white/90">{children}</h2>
-        ),
-        h3: ({ children }) => (
-          <h3 className="mt-5 mb-2 font-mono text-base font-semibold text-white/80">{children}</h3>
-        ),
-        h4: ({ children }) => (
-          <h4 className="mt-4 mb-2 font-mono text-sm font-semibold text-white/70">{children}</h4>
-        ),
+        h1: ({ children }) => {
+          const Tag = shift(1)
+          return (
+            <Tag className="mt-8 mb-4 font-mono text-xl font-bold text-white first:mt-0">
+              {children}
+            </Tag>
+          )
+        },
+        h2: ({ children }) => {
+          const Tag = shift(2)
+          return (
+            <Tag className="mt-6 mb-3 font-mono text-lg font-semibold text-white/90">
+              {children}
+            </Tag>
+          )
+        },
+        h3: ({ children }) => {
+          const Tag = shift(3)
+          return (
+            <Tag className="mt-5 mb-2 font-mono text-base font-semibold text-white/80">
+              {children}
+            </Tag>
+          )
+        },
+        h4: ({ children }) => {
+          const Tag = shift(4)
+          return (
+            <Tag className="mt-4 mb-2 font-mono text-sm font-semibold text-white/70">
+              {children}
+            </Tag>
+          )
+        },
         p: ({ children }) => (
           <p className="mb-3 text-sm leading-relaxed text-white/60">{children}</p>
         ),

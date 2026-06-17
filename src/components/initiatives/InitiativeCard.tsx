@@ -38,7 +38,7 @@ export function InitiativeCard({ initiative }: { initiative: Initiative }) {
           View details
         </span>
         {initiative.href && (
-          <span className="inline-flex items-center gap-1 font-mono text-[11px] text-white/40">
+          <span className="inline-flex items-center gap-1 font-mono text-[11px] text-white/55">
             <ExternalLink size={10} aria-hidden="true" />
             Website
           </span>

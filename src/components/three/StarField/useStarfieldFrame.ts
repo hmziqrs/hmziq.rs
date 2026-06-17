@@ -39,6 +39,7 @@ export function useStarfieldFrame({
 
   useFrame((state) => {
     if (!wasmModule || !sharedMemoryRef.current) return
+    if (reducedMotionRef.current) return
 
     try {
       const sharedMemory = sharedMemoryRef.current
@@ -87,9 +88,6 @@ export function useStarfieldFrame({
       if (geometry && sharedMemory.refreshViewsIfNeeded()) {
         bindStarfieldGeometry(geometry, sharedMemory)
       }
-
-      // Skip rotation, twinkle, and sparkle when reduced motion is preferred
-      if (reducedMotionRef.current) return
 
       const baseRotationSpeedX = 0.02
       const baseRotationSpeedY = 0.01

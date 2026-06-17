@@ -61,7 +61,7 @@ export function InitiativeDetail({ initiative }: { initiative: Initiative }) {
         <>
           <hr className="mb-10 border-white/10" />
           <article>
-            <MarkdownRenderer content={initiative.content} />
+            <MarkdownRenderer content={initiative.content} headingOffset={1} />
           </article>
         </>
       )}

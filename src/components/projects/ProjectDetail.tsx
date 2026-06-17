@@ -145,7 +145,7 @@ export function ProjectDetail({ project }: { project: Project }) {
         <>
           <hr className="mb-10 border-white/10" />
           <article className="prose-project">
-            <MarkdownRenderer content={project.readme} />
+            <MarkdownRenderer content={project.readme} headingOffset={1} />
           </article>
         </>
       )}
