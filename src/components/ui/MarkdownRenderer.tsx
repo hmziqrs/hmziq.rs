@@ -98,7 +98,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         ),
         // GitHub READMEs use <div> for inline image rows (screenshots, badges)
         // and <div align="center"> for centered content
-        div: ({ children, node, ...props }) => {
+        div: ({ children, ...props }) => {
           const align = (props as Record<string, unknown>).align as string | undefined
           return (
             <div

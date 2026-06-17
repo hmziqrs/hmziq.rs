@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router'
 import { ExternalLink, Package, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 
