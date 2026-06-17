@@ -128,6 +128,24 @@ html {
   animation: shimmer 2s ease-in-out infinite;
 }
 
+/* CSS starfield backdrop (shown until the WebGL field loads) */
+@keyframes star-twinkle {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.css-star-layer {
+  animation-name: star-twinkle;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+  will-change: opacity;
+}
+
 /* Decorative animations */
 
 @keyframes pulseOpacity {

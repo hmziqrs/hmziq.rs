@@ -17,9 +17,14 @@ export function WASMProvider({ children }: { children: ReactNode }) {
     loadWASM()
       .then((module) => {
         setWasmModule(module)
+      })
+      .catch((error) => {
+        // Degrade gracefully: the CSS starfield remains as the backdrop.
+        console.error(error)
+      })
+      .finally(() => {
         setIsLoading(false)
       })
-      .catch(console.error)
   }, [])
 
   return <WASMContext.Provider value={{ wasmModule, isLoading }}>{children}</WASMContext.Provider>

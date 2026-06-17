@@ -1,4 +1,4 @@
-import type { StarMemoryPointers, FrameUpdateResult } from './starfield'
+import type { StarMemoryPointers } from './starfield'
 import type { ScatterTextPointers } from './scatter-text'
 
 let wasmModule: WASMModule | null = null
@@ -7,26 +7,6 @@ let loadPromise: Promise<WASMModule> | null = null
 export interface WASMModule {
   memory: WebAssembly.Memory
   initialize_star_memory_pool: (count: number) => StarMemoryPointers
-  update_frame_simd: (
-    time: number,
-    delta_time: number,
-    camera_matrix_ptr: number,
-    is_moving: boolean,
-    click_time: number,
-    current_speed_multiplier: number
-  ) => FrameUpdateResult
-  calculate_speed_multiplier: (
-    is_moving: boolean,
-    click_time: number,
-    current_time: number,
-    current_multiplier: number
-  ) => number
-  calculate_rotation_delta: (
-    base_speed_x: number,
-    base_speed_y: number,
-    speed_multiplier: number,
-    delta_time: number
-  ) => number
   destroy_star_memory_pool: () => void
   set_text_pixels: (
     pixel_data: Uint8Array,
@@ -70,9 +50,6 @@ export async function loadWASM(): Promise<WASMModule> {
       wasmModule = {
         memory: wasmImport.get_wasm_memory(),
         initialize_star_memory_pool: wasmImport.initialize_star_memory_pool,
-        update_frame_simd: wasmImport.update_frame_simd,
-        calculate_speed_multiplier: wasmImport.calculate_speed_multiplier,
-        calculate_rotation_delta: wasmImport.calculate_rotation_delta,
         destroy_star_memory_pool: wasmImport.destroy_star_memory_pool,
         set_text_pixels: wasmImport.set_text_pixels,
         get_scatter_text_pointers: wasmImport.get_scatter_text_pointers,

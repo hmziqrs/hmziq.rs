@@ -4,19 +4,15 @@ use wasm_bindgen::prelude::*;
 
 use crate::math::{fast_sin_lookup_simd_16, seed_random, seed_random_simd_batch_16};
 
-use std::simd::cmp::SimdPartialOrd;
 use std::simd::f32x16;
 use std::simd::Select;
+use std::simd::cmp::SimdPartialOrd;
 
 const SIMD_BATCH_SIZE: usize = 16;
 
 // SAFETY: thread_local safe in WASM single-threaded
 thread_local! {
     static STAR_MEMORY_POOL: RefCell<Option<StarMemoryPool>> = const { RefCell::new(None) };
-}
-
-thread_local! {
-    static ROTATION_DELTA_BUFFER: RefCell<[f32; 2]> = const { RefCell::new([0.0; 2]) };
 }
 
 #[repr(C)]
@@ -28,9 +24,6 @@ pub struct StarMemoryPool {
     colors_g: Vec<f32>,
     colors_b: Vec<f32>,
     sizes: Vec<f32>,
-    twinkles: Vec<f32>,
-    sparkles: Vec<f32>,
-    visibility_mask: Vec<u64>, // Bitpacked: 64 stars per u64
     count: usize,
 }
 
@@ -39,22 +32,15 @@ impl StarMemoryPool {
         let aligned_count = count.div_ceil(SIMD_BATCH_SIZE) * SIMD_BATCH_SIZE;
 
         Self {
-            positions_x: Self::create_aligned_vec(aligned_count, 0.0),
-            positions_y: Self::create_aligned_vec(aligned_count, 0.0),
-            positions_z: Self::create_aligned_vec(aligned_count, 0.0),
-            colors_r: Self::create_aligned_vec(aligned_count, 1.0),
-            colors_g: Self::create_aligned_vec(aligned_count, 1.0),
-            colors_b: Self::create_aligned_vec(aligned_count, 1.0),
-            sizes: Self::create_aligned_vec(aligned_count, 1.0),
-            twinkles: Self::create_aligned_vec(aligned_count, 1.0),
-            sparkles: Self::create_aligned_vec(aligned_count, 0.0),
-            visibility_mask: vec![u64::MAX; aligned_count.div_ceil(64)],
+            positions_x: vec![0.0; aligned_count],
+            positions_y: vec![0.0; aligned_count],
+            positions_z: vec![0.0; aligned_count],
+            colors_r: vec![1.0; aligned_count],
+            colors_g: vec![1.0; aligned_count],
+            colors_b: vec![1.0; aligned_count],
+            sizes: vec![1.0; aligned_count],
             count,
         }
-    }
-
-    fn create_aligned_vec(size: usize, default_value: f32) -> Vec<f32> {
-        vec![default_value; size]
     }
 
     fn get_pointers(&mut self) -> StarMemoryPointers {
@@ -66,9 +52,6 @@ impl StarMemoryPool {
             colors_g_ptr: self.colors_g.as_mut_ptr() as u32,
             colors_b_ptr: self.colors_b.as_mut_ptr() as u32,
             sizes_ptr: self.sizes.as_mut_ptr() as u32,
-            twinkles_ptr: self.twinkles.as_mut_ptr() as u32,
-            sparkles_ptr: self.sparkles.as_mut_ptr() as u32,
-            visibility_ptr: self.visibility_mask.as_mut_ptr() as u32,
             count: self.count,
             positions_x_length: self.positions_x.len(),
             positions_y_length: self.positions_y.len(),
@@ -77,9 +60,6 @@ impl StarMemoryPool {
             colors_g_length: self.colors_g.len(),
             colors_b_length: self.colors_b.len(),
             sizes_length: self.sizes.len(),
-            twinkles_length: self.twinkles.len(),
-            sparkles_length: self.sparkles.len(),
-            visibility_length: self.visibility_mask.len(),
         }
     }
 }
@@ -93,9 +73,6 @@ pub struct StarMemoryPointers {
     pub colors_g_ptr: u32,
     pub colors_b_ptr: u32,
     pub sizes_ptr: u32,
-    pub twinkles_ptr: u32,
-    pub sparkles_ptr: u32,
-    pub visibility_ptr: u32,
     pub count: usize,
     pub positions_x_length: usize,
     pub positions_y_length: usize,
@@ -104,13 +81,6 @@ pub struct StarMemoryPointers {
     pub colors_g_length: usize,
     pub colors_b_length: usize,
     pub sizes_length: usize,
-    pub twinkles_length: usize,
-    pub sparkles_length: usize,
-    pub visibility_length: usize,
-}
-
-fn simd_sin_lookup_batch_16(values: f32x16) -> f32x16 {
-    fast_sin_lookup_simd_16(values)
 }
 
 fn generate_star_colors_simd_direct(
@@ -119,8 +89,6 @@ fn generate_star_colors_simd_direct(
     colors_b: &mut [f32],
     count: usize,
 ) {
-    use std::simd::f32x16;
-
     let white_r = f32x16::splat(1.0);
     let white_g = f32x16::splat(1.0);
     let white_b = f32x16::splat(1.0);
@@ -198,8 +166,6 @@ fn generate_star_colors_simd_direct(
 }
 
 fn generate_star_sizes_simd_direct(sizes: &mut [f32], count: usize, size_multiplier: f32) {
-    use std::simd::f32x16;
-
     let threshold_70 = f32x16::splat(0.7);
     let small_base = f32x16::splat(1.0);
     let small_range = f32x16::splat(1.5);
@@ -341,15 +307,7 @@ pub fn initialize_star_memory_pool(count: usize) -> StarMemoryPointers {
         count,
     );
 
-    generate_star_sizes_simd_direct(
-        &mut pool.sizes,
-        count,
-        1.0,
-    );
-
-    for i in 0..count {
-        pool.twinkles[i] = 0.8 + seed_random(i as i32 + 7000) * 0.2;
-    }
+    generate_star_sizes_simd_direct(&mut pool.sizes, count, 1.0);
 
     let pointers = pool.get_pointers();
 
@@ -365,290 +323,4 @@ pub fn destroy_star_memory_pool() {
     STAR_MEMORY_POOL.with(|pool_cell| {
         *pool_cell.borrow_mut() = None;
     });
-}
-
-fn calculate_effects_into_buffers_simd(
-    positions_x: &[f32],
-    positions_y: &[f32],
-    twinkles: &mut [f32],
-    sparkles: &mut [f32],
-    count: usize,
-    time: f32,
-) {
-    let time_3 = time * 3.0;
-    let time_15 = time * 15.0;
-    let chunks = count / SIMD_BATCH_SIZE;
-    let unrolled_chunks = chunks / 2;
-    let remaining_chunks = chunks % 2;
-    for unroll_idx in 0..unrolled_chunks {
-        let chunk = unroll_idx * 2;
-        let base_idx = chunk * SIMD_BATCH_SIZE;
-
-        let x_slice = &positions_x[base_idx..base_idx + SIMD_BATCH_SIZE];
-        let y_slice = &positions_y[base_idx..base_idx + SIMD_BATCH_SIZE];
-
-        let x_vec = f32x16::from_slice(x_slice);
-        let y_vec = f32x16::from_slice(y_slice);
-
-        let time_3_vec = f32x16::splat(time_3);
-        let factor_10 = f32x16::splat(10.0);
-        let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
-        let twinkle_sin = simd_sin_lookup_batch_16(twinkle_arg);
-        let twinkle_scale = f32x16::splat(0.3);
-        let twinkle_offset = f32x16::splat(0.7);
-        let twinkle_base = twinkle_sin * twinkle_scale + twinkle_offset;
-
-        let time_15_vec = f32x16::splat(time_15);
-        let factor_20 = f32x16::splat(20.0);
-        let factor_30 = f32x16::splat(30.0);
-        let sparkle_arg = time_15_vec + x_vec * factor_20 + y_vec * factor_30;
-        let sparkle_phase = simd_sin_lookup_batch_16(sparkle_arg);
-
-        let sparkle_threshold = f32x16::splat(0.98);
-        let sparkle_scale = f32x16::splat(50.0);
-        let sparkle_mask = sparkle_phase.simd_gt(sparkle_threshold);
-        let sparkle_values = sparkle_mask.select(
-            (sparkle_phase - sparkle_threshold) * sparkle_scale,
-            f32x16::splat(0.0),
-        );
-
-        let final_twinkle = twinkle_base + sparkle_values;
-
-        let twinkle_array: [f32; SIMD_BATCH_SIZE] = final_twinkle.to_array();
-        let sparkle_array: [f32; SIMD_BATCH_SIZE] = sparkle_values.to_array();
-
-        twinkles[base_idx..(SIMD_BATCH_SIZE + base_idx)]
-            .copy_from_slice(&twinkle_array[..SIMD_BATCH_SIZE]);
-        sparkles[base_idx..(SIMD_BATCH_SIZE + base_idx)]
-            .copy_from_slice(&sparkle_array[..SIMD_BATCH_SIZE]);
-
-        let chunk2 = chunk + 1;
-        let base_idx2 = chunk2 * SIMD_BATCH_SIZE;
-
-        let x_slice2 = &positions_x[base_idx2..base_idx2 + SIMD_BATCH_SIZE];
-        let y_slice2 = &positions_y[base_idx2..base_idx2 + SIMD_BATCH_SIZE];
-
-        let x_vec2 = f32x16::from_slice(x_slice2);
-        let y_vec2 = f32x16::from_slice(y_slice2);
-
-        let twinkle_arg2 = time_3_vec + x_vec2 * factor_10 + y_vec2 * factor_10;
-        let twinkle_sin2 = simd_sin_lookup_batch_16(twinkle_arg2);
-        let twinkle_base2 = twinkle_sin2 * twinkle_scale + twinkle_offset;
-
-        let sparkle_arg2 = time_15_vec + x_vec2 * factor_20 + y_vec2 * factor_30;
-        let sparkle_phase2 = simd_sin_lookup_batch_16(sparkle_arg2);
-        let sparkle_mask2 = sparkle_phase2.simd_gt(sparkle_threshold);
-        let sparkle_values2 = sparkle_mask2.select(
-            (sparkle_phase2 - sparkle_threshold) * sparkle_scale,
-            f32x16::splat(0.0),
-        );
-
-        let final_twinkle2 = twinkle_base2 + sparkle_values2;
-
-        let twinkle_array2: [f32; SIMD_BATCH_SIZE] = final_twinkle2.to_array();
-        let sparkle_array2: [f32; SIMD_BATCH_SIZE] = sparkle_values2.to_array();
-
-        twinkles[base_idx2..(SIMD_BATCH_SIZE + base_idx2)]
-            .copy_from_slice(&twinkle_array2[..SIMD_BATCH_SIZE]);
-        sparkles[base_idx2..(SIMD_BATCH_SIZE + base_idx2)]
-            .copy_from_slice(&sparkle_array2[..SIMD_BATCH_SIZE]);
-    }
-
-    for chunk in (unrolled_chunks * 2)..(unrolled_chunks * 2 + remaining_chunks) {
-        let base_idx = chunk * SIMD_BATCH_SIZE;
-
-        let x_slice = &positions_x[base_idx..base_idx + SIMD_BATCH_SIZE];
-        let y_slice = &positions_y[base_idx..base_idx + SIMD_BATCH_SIZE];
-
-        let x_vec = f32x16::from_slice(x_slice);
-        let y_vec = f32x16::from_slice(y_slice);
-
-        let time_3_vec = f32x16::splat(time_3);
-        let factor_10 = f32x16::splat(10.0);
-        let twinkle_arg = time_3_vec + x_vec * factor_10 + y_vec * factor_10;
-        let twinkle_sin = simd_sin_lookup_batch_16(twinkle_arg);
-        let twinkle_scale = f32x16::splat(0.3);
-        let twinkle_offset = f32x16::splat(0.7);
-        let twinkle_base = twinkle_sin * twinkle_scale + twinkle_offset;
-
-        let time_15_vec = f32x16::splat(time_15);
-        let factor_20 = f32x16::splat(20.0);
-        let factor_30 = f32x16::splat(30.0);
-        let sparkle_arg = time_15_vec + x_vec * factor_20 + y_vec * factor_30;
-        let sparkle_phase = simd_sin_lookup_batch_16(sparkle_arg);
-
-        let sparkle_threshold = f32x16::splat(0.98);
-        let sparkle_scale = f32x16::splat(50.0);
-        let sparkle_mask = sparkle_phase.simd_gt(sparkle_threshold);
-        let sparkle_values = sparkle_mask.select(
-            (sparkle_phase - sparkle_threshold) * sparkle_scale,
-            f32x16::splat(0.0),
-        );
-
-        let final_twinkle = twinkle_base + sparkle_values;
-
-        let twinkle_array: [f32; SIMD_BATCH_SIZE] = final_twinkle.to_array();
-        let sparkle_array: [f32; SIMD_BATCH_SIZE] = sparkle_values.to_array();
-
-        twinkles[base_idx..(SIMD_BATCH_SIZE + base_idx)]
-            .copy_from_slice(&twinkle_array[..SIMD_BATCH_SIZE]);
-        sparkles[base_idx..(SIMD_BATCH_SIZE + base_idx)]
-            .copy_from_slice(&sparkle_array[..SIMD_BATCH_SIZE]);
-    }
-
-    let remaining_start = chunks * SIMD_BATCH_SIZE;
-    for i in remaining_start..count {
-        let x = positions_x[i];
-        let y = positions_y[i];
-
-        let twinkle_base =
-            crate::math::fast_sin_lookup(time * 3.0 + x * 10.0 + y * 10.0) * 0.3 + 0.7;
-        let sparkle_phase = crate::math::fast_sin_lookup(time * 15.0 + x * 20.0 + y * 30.0);
-        let sparkle = if sparkle_phase > 0.98 {
-            (sparkle_phase - 0.98) / 0.02
-        } else {
-            0.0
-        };
-
-        twinkles[i] = twinkle_base + sparkle;
-        sparkles[i] = sparkle;
-    }
-}
-
-#[wasm_bindgen]
-pub fn calculate_rotation_delta(
-    base_speed_x: f32,
-    base_speed_y: f32,
-    speed_multiplier: f32,
-    delta_time: f32,
-) -> u32 {
-    ROTATION_DELTA_BUFFER.with(|buffer| {
-        let mut buf = buffer.borrow_mut();
-        buf[0] = base_speed_x * speed_multiplier * delta_time;
-        buf[1] = base_speed_y * speed_multiplier * delta_time;
-        buf.as_ptr() as u32
-    })
-}
-
-#[wasm_bindgen]
-pub fn calculate_speed_multiplier(
-    is_moving: bool,
-    click_time: f64,
-    current_time: f64,
-    current_multiplier: f32,
-) -> f32 {
-    let movement_boost: f32 = if is_moving { 8.0 } else { 1.0 };
-
-    let time_since_click = current_time - click_time;
-    let click_boost: f32 = if time_since_click < 0.5 {
-        let click_decay = 1.0 - (time_since_click / 0.5) as f32;
-        1.0 + 8.0 * click_decay
-    } else {
-        1.0
-    };
-
-    let combined_boost = movement_boost * click_boost;
-    let speed_multiplier = combined_boost.min(15.0);
-
-    current_multiplier + (speed_multiplier - current_multiplier) * 0.2
-}
-
-#[wasm_bindgen]
-pub struct FrameUpdateResult {
-    pub visible_count: usize,
-    pub positions_dirty: bool,
-    pub effects_dirty: bool,
-    pub culling_dirty: bool,
-}
-
-fn extract_frustum_planes(vp: &[f32]) -> [[f32; 4]; 6] {
-    // Column-major layout: vp[col * 4 + row]
-    let (r0, r1, r2, r3) = (vp[0], vp[4], vp[8], vp[12]);
-    let (r4, r5, r6, r7) = (vp[1], vp[5], vp[9], vp[13]);
-    let (r8, r9, r10, r11) = (vp[2], vp[6], vp[10], vp[14]);
-    let (r12, r13, r14, r15) = (vp[3], vp[7], vp[11], vp[15]);
-
-    [
-        // Left:   row3 + row0
-        [r3 + r0, r7 + r4, r11 + r8, r15 + r12],
-        // Right:  row3 - row0
-        [r3 - r0, r7 - r4, r11 - r8, r15 - r12],
-        // Bottom: row3 + row1
-        [r3 + r1, r7 + r5, r11 + r9, r15 + r13],
-        // Top:    row3 - row1
-        [r3 - r1, r7 - r5, r11 - r9, r15 - r13],
-        // Near:   row3 + row2
-        [r3 + r2, r7 + r6, r11 + r10, r15 + r14],
-        // Far:    row3 - row2
-        [r3 - r2, r7 - r6, r11 - r10, r15 - r14],
-    ]
-}
-
-#[wasm_bindgen]
-pub fn update_frame_simd(
-    time: f32,
-    _delta_time: f32,
-    camera_matrix_ptr: *const f32,
-    _is_moving: bool,
-    _click_time: f32,
-    _current_speed_multiplier: f32,
-) -> FrameUpdateResult {
-    STAR_MEMORY_POOL.with(|pool_cell| {
-        if let Some(pool) = pool_cell.borrow_mut().as_mut() {
-            let count = pool.count;
-
-            calculate_effects_into_buffers_simd(
-                &pool.positions_x,
-                &pool.positions_y,
-                &mut pool.twinkles,
-                &mut pool.sparkles,
-                count,
-                time,
-            );
-
-            let visible_count = if !camera_matrix_ptr.is_null() {
-                // Read view-projection matrix (column-major 4x4)
-                let vp = unsafe { std::slice::from_raw_parts(camera_matrix_ptr, 16) };
-
-                // Extract frustum planes from VP matrix (Gribb-Hartmann method)
-                let planes = extract_frustum_planes(vp);
-
-                // Count visible stars
-                let mut visible = 0;
-                for i in 0..count {
-                    let x = pool.positions_x[i];
-                    let y = pool.positions_y[i];
-                    let z = pool.positions_z[i];
-
-                    let mut inside = true;
-                    for plane in &planes {
-                        if x * plane[0] + y * plane[1] + z * plane[2] + plane[3] < 0.0 {
-                            inside = false;
-                            break;
-                        }
-                    }
-                    if inside {
-                        visible += 1;
-                    }
-                }
-                visible
-            } else {
-                count
-            };
-
-            FrameUpdateResult {
-                visible_count,
-                positions_dirty: true,
-                effects_dirty: true,
-                culling_dirty: false,
-            }
-        } else {
-            FrameUpdateResult {
-                visible_count: 0,
-                positions_dirty: false,
-                effects_dirty: false,
-                culling_dirty: false,
-            }
-        }
-    })
 }

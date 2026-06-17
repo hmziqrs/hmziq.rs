@@ -13,12 +13,15 @@ export function WASMCanvas({ children, loadingFallback, errorFallback }: WASMCan
   const { isLoading } = useWASM()
 
   if (isLoading) {
+    // Distinguish an explicit `null` (render nothing — caller supplies its own
+    // backdrop) from an omitted prop (show the default loading indicator).
+    if (loadingFallback !== undefined) {
+      return loadingFallback
+    }
     return (
-      loadingFallback ?? (
-        <output className="flex items-center justify-center" aria-live="polite">
-          <div className="text-gray-300">Loading WASM module…</div>
-        </output>
-      )
+      <output className="flex items-center justify-center" aria-live="polite">
+        <div className="text-gray-300">Loading WASM module…</div>
+      </output>
     )
   }
 

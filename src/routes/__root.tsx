@@ -1,15 +1,12 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router'
-import { lazy } from 'react'
 
-import { WASMCanvas } from '~/components/wasm/WASMCanvas'
+import { StarFieldBackground } from '~/components/three/StarFieldBackground'
 import metadataData from '~/content/data/metadata.json'
 import userData from '~/content/data/user.json'
 import { AnalyticsProvider } from '~/contexts/AnalyticsContext'
 import { WASMProvider } from '~/contexts/WASMContext'
 import { homeDescription, homeTitle, siteUrl } from '~/lib/seo'
-
-const StarField3D = lazy(() => import('~/components/three/StarField'))
 
 import appCss from '~/styles.css?url'
 
@@ -108,26 +105,7 @@ function RootDocument({ children }: { readonly children: React.ReactNode }) {
         </div>
         <WASMProvider>
           <AnalyticsProvider>
-            <WASMCanvas
-              loadingFallback={
-                <div
-                  aria-hidden="true"
-                  aria-busy="true"
-                  className="fixed inset-0"
-                  style={{ backgroundColor: '#000000', zIndex: -10 }}
-                />
-              }
-              errorFallback={
-                /* Decorative: solid background, no meaningful content */
-                <div
-                  aria-hidden="true"
-                  className="fixed inset-0"
-                  style={{ backgroundColor: '#000000', zIndex: -10 }}
-                />
-              }
-            >
-              <StarField3D />
-            </WASMCanvas>
+            <StarFieldBackground />
             <div id="root" className="relative" style={{ zIndex: 2 }}>
               {children}
             </div>

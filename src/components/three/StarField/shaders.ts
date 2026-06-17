@@ -1,4 +1,7 @@
 export const VERTEX_SHADER = `
+  uniform float uTime;
+  uniform float uBoot;
+
   // SoA attributes for SIMD
   attribute float positionX;
   attribute float positionY;
@@ -7,26 +10,35 @@ export const VERTEX_SHADER = `
   attribute float colorG;
   attribute float colorB;
   attribute float size;
-  attribute float twinkle;
-  attribute float sparkle;
 
   varying vec3 vColor;
   varying float vSize;
   varying float vTwinkle;
   varying float vSparkle;
+  varying float vBoot;
 
   void main() {
     // Reconstruct from SoA
-    vec3 position = vec3(positionX, positionY, positionZ);
-    vec3 customColor = vec3(colorR, colorG, colorB);
-
-    vColor = customColor;
+    vec3 starPosition = vec3(positionX, positionY, positionZ);
+    vColor = vec3(colorR, colorG, colorB);
     vSize = size;
-    vTwinkle = twinkle;
+    vBoot = uBoot;
+
+    // Radial-expand boot: collapse toward origin (floored at 0.2 to avoid the
+    // origin singularity where gl_PointSize = 300 / -z explodes) then expand out.
+    vec3 position = mix(starPosition * 0.2, starPosition, uBoot);
+
+    // Twinkle + sparkle are pure functions of time and final position — computed
+    // here instead of being uploaded as per-frame attributes from WASM.
+    float twinkleBase = sin(uTime * 3.0 + positionX * 10.0 + positionY * 10.0) * 0.3 + 0.7;
+    float sparklePhase = sin(uTime * 15.0 + positionX * 20.0 + positionY * 30.0);
+    float sparkle = sparklePhase > 0.98 ? (sparklePhase - 0.98) / 0.02 : 0.0;
+    vTwinkle = twinkleBase + sparkle;
     vSparkle = sparkle;
 
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = size * (300.0 / -mvPosition.z);
+    // Clamp so collapsed/near stars can't blow up into full-screen additive overdraw.
+    gl_PointSize = min(size * (300.0 / -mvPosition.z), 64.0);
     gl_Position = projectionMatrix * mvPosition;
   }
 `
@@ -36,6 +48,7 @@ export const FRAGMENT_SHADER = `
   varying float vSize;
   varying float vTwinkle;
   varying float vSparkle;
+  varying float vBoot;
 
   void main() {
     vec2 center = gl_PointCoord - 0.5;
@@ -57,7 +70,8 @@ export const FRAGMENT_SHADER = `
     }
 
     vec3 finalColor = min(vColor + glow, vec3(1.0));
-    float finalAlpha = alpha + spike * 0.5;
+    // vBoot fades stars in as they expand outward during the boot animation.
+    float finalAlpha = (alpha + spike * 0.5) * vBoot;
 
     gl_FragColor = vec4(finalColor * vTwinkle, finalAlpha);
   }

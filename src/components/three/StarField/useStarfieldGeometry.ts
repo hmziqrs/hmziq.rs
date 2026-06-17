@@ -1,3 +1,4 @@
+import { useThree } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 
@@ -10,72 +11,39 @@ interface UseStarfieldGeometryOptions {
   starMeshRef: React.RefObject<THREE.Points | null>
 }
 
+// Stars are generated in a shell of max radius 150 (see initialize_star_memory_pool).
+// The field only rotates about the origin, so a fixed bounding sphere is exact and
+// avoids an O(n) bounds scan on every (re)bind.
+const STAR_FIELD_RADIUS = 150
+
+// Geometry attribute name -> shared-memory buffer key.
+const ATTRIBUTE_BINDINGS = [
+  ['positionX', 'positions_x'],
+  ['positionY', 'positions_y'],
+  ['positionZ', 'positions_z'],
+  ['colorR', 'colors_r'],
+  ['colorG', 'colors_g'],
+  ['colorB', 'colors_b'],
+  ['size', 'sizes'],
+] as const
+
 export function bindStarfieldGeometry(
   geometry: THREE.BufferGeometry,
   sharedMem: StarFieldSharedMemory
 ) {
   const starCount = sharedMem.count
-  const positionsX = sharedMem.positions_x
-  const positionsY = sharedMem.positions_y
-  const positionsZ = sharedMem.positions_z
-  const colorsR = sharedMem.colors_r
-  const colorsG = sharedMem.colors_g
-  const colorsB = sharedMem.colors_b
-  const sizes = sharedMem.sizes
-  const twinkles = sharedMem.twinkles
-  const sparkles = sharedMem.sparkles
-
-  if (
-    !positionsX ||
-    !positionsY ||
-    !positionsZ ||
-    !colorsR ||
-    !colorsG ||
-    !colorsB ||
-    !sizes ||
-    !twinkles ||
-    !sparkles
-  ) {
-    return
-  }
 
   for (const key of Object.keys(geometry.attributes)) {
     geometry.deleteAttribute(key)
   }
 
-  geometry.setAttribute('positionX', new THREE.BufferAttribute(positionsX, 1))
-  geometry.setAttribute('positionY', new THREE.BufferAttribute(positionsY, 1))
-  geometry.setAttribute('positionZ', new THREE.BufferAttribute(positionsZ, 1))
-  geometry.setAttribute('colorR', new THREE.BufferAttribute(colorsR, 1))
-  geometry.setAttribute('colorG', new THREE.BufferAttribute(colorsG, 1))
-  geometry.setAttribute('colorB', new THREE.BufferAttribute(colorsB, 1))
-  geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
-  geometry.setAttribute('twinkle', new THREE.BufferAttribute(twinkles, 1))
-  geometry.setAttribute('sparkle', new THREE.BufferAttribute(sparkles, 1))
-
-  let minX = Infinity,
-    maxX = -Infinity
-  let minY = Infinity,
-    maxY = -Infinity
-  let minZ = Infinity,
-    maxZ = -Infinity
-  for (let i = 0; i < starCount; i++) {
-    if (positionsX[i] < minX) minX = positionsX[i]
-    if (positionsX[i] > maxX) maxX = positionsX[i]
-    if (positionsY[i] < minY) minY = positionsY[i]
-    if (positionsY[i] > maxY) maxY = positionsY[i]
-    if (positionsZ[i] < minZ) minZ = positionsZ[i]
-    if (positionsZ[i] > maxZ) maxZ = positionsZ[i]
+  for (const [attribute, bufferKey] of ATTRIBUTE_BINDINGS) {
+    const buffer = sharedMem[bufferKey]
+    if (!buffer) return
+    geometry.setAttribute(attribute, new THREE.BufferAttribute(buffer, 1))
   }
 
-  geometry.boundingBox = new THREE.Box3(
-    new THREE.Vector3(minX, minY, minZ),
-    new THREE.Vector3(maxX, maxY, maxZ)
-  )
-
-  geometry.boundingSphere = new THREE.Sphere()
-  geometry.boundingBox.getBoundingSphere(geometry.boundingSphere)
-
+  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), STAR_FIELD_RADIUS)
   geometry.setDrawRange(0, starCount)
 }
 
@@ -85,6 +53,7 @@ export function useStarfieldGeometry({
   starMeshRef,
 }: UseStarfieldGeometryOptions) {
   const sharedMemoryRef = useRef<StarFieldSharedMemory | null>(null)
+  const invalidate = useThree((state) => state.invalidate)
 
   useEffect(() => {
     if (sharedMemoryRef.current) {
@@ -105,13 +74,17 @@ export function useStarfieldGeometry({
       if (starMeshRef.current?.geometry) {
         bindStarfieldGeometry(starMeshRef.current.geometry, sharedMemoryRef.current)
       }
+
+      // Request a render so the field draws once bound — required under
+      // frameloop="demand" (reduced motion), harmless under "always".
+      invalidate()
     }
 
     return () => {
       sharedMemoryRef.current?.dispose()
       sharedMemoryRef.current = null
     }
-  }, [wasmModule, starCount, starMeshRef])
+  }, [wasmModule, starCount, starMeshRef, invalidate])
 
   return { sharedMemoryRef }
 }
