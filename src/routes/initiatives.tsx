@@ -43,7 +43,7 @@ function InitiativesPage() {
               <h1 className="font-mono text-2xl font-bold tracking-wider text-white md:text-3xl">
                 Initiatives
               </h1>
-              <p className="mt-2 font-mono text-sm text-white/55">
+              <p className="mt-2 font-mono text-sm text-white/65">
                 {initiatives.length} initiatives
               </p>
             </header>

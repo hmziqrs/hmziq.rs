@@ -20,7 +20,7 @@ export function WASMCanvas({ children, loadingFallback, errorFallback }: WASMCan
     }
     return (
       <output className="flex items-center justify-center" aria-live="polite">
-        <div className="text-gray-300">Loading WASM module…</div>
+        <div className="text-white/80">Loading WASM module…</div>
       </output>
     )
   }

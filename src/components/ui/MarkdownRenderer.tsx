@@ -52,13 +52,13 @@ export function MarkdownRenderer({ content, headingOffset = 0 }: MarkdownRendere
         h4: ({ children }) => {
           const Tag = shift(4)
           return (
-            <Tag className="mt-4 mb-2 font-mono text-sm font-semibold text-white/70">
+            <Tag className="mt-4 mb-2 font-mono text-sm font-semibold text-white/80">
               {children}
             </Tag>
           )
         },
         p: ({ children }) => (
-          <p className="mb-3 text-sm leading-relaxed text-white/60">{children}</p>
+          <p className="mb-3 text-sm leading-relaxed text-white/75">{children}</p>
         ),
         a: ({ href, children }) => (
           <a
@@ -74,19 +74,19 @@ export function MarkdownRenderer({ content, headingOffset = 0 }: MarkdownRendere
         strong: ({ children }) => (
           <strong className="font-semibold text-white/80">{children}</strong>
         ),
-        em: ({ children }) => <em className="text-white/60 italic">{children}</em>,
+        em: ({ children }) => <em className="text-white/75 italic">{children}</em>,
         ul: ({ children }) => (
-          <ul className="mb-3 ml-4 list-disc space-y-1 text-sm text-white/60">{children}</ul>
+          <ul className="mb-3 ml-4 list-disc space-y-1 text-sm text-white/75">{children}</ul>
         ),
         ol: ({ children }) => (
-          <ol className="mb-3 ml-4 list-decimal space-y-1 text-sm text-white/60">{children}</ol>
+          <ol className="mb-3 ml-4 list-decimal space-y-1 text-sm text-white/75">{children}</ol>
         ),
         li: ({ children }) => <li className="pl-1">{children}</li>,
         code: ({ className, children }) => {
           const isInline = !className
           if (isInline) {
             return (
-              <code className="rounded bg-white/8 px-1.5 py-0.5 font-mono text-xs text-white/70">
+              <code className="rounded border border-white/10 bg-white/8 px-1.5 py-0.5 font-mono text-xs text-white/80">
                 {children}
               </code>
             )
@@ -94,10 +94,12 @@ export function MarkdownRenderer({ content, headingOffset = 0 }: MarkdownRendere
           return <code className={className}>{children}</code>
         },
         pre: ({ children }) => (
-          <pre className="mb-4 overflow-x-auto rounded-lg bg-white/4 p-4 text-xs">{children}</pre>
+          <pre className="mb-4 overflow-x-auto rounded-lg border border-white/10 bg-white/6 p-4 text-xs">
+            {children}
+          </pre>
         ),
         blockquote: ({ children }) => (
-          <blockquote className="mb-3 border-l-2 border-white/20 pl-4 text-sm text-white/55 italic">
+          <blockquote className="mb-3 border-l-2 border-white/20 pl-4 text-sm text-white/75 italic">
             {children}
           </blockquote>
         ),
@@ -113,7 +115,7 @@ export function MarkdownRenderer({ content, headingOffset = 0 }: MarkdownRendere
             {children}
           </th>
         ),
-        td: ({ children }) => <td className="px-3 py-2 text-xs text-white/60">{children}</td>,
+        td: ({ children }) => <td className="px-3 py-2 text-xs text-white/75">{children}</td>,
         img: ({ src, alt, width, height }) => (
           <img
             src={src}

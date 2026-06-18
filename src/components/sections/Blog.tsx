@@ -43,7 +43,7 @@ export default function Blog() {
           </div>
         </>
       ) : (
-        <p className="text-center font-mono text-xs text-white/55">
+        <p className="text-center font-mono text-xs text-white/65">
           Stay tuned — something is on the way.
         </p>
       )}

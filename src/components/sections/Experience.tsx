@@ -60,7 +60,7 @@ function ExperienceCard({ exp }: { exp: Experience }) {
               onClick={() => setExpanded((v) => !v)}
               aria-expanded={expanded}
               aria-label={`${expanded ? 'Collapse' : 'Expand'} details for ${exp.company ?? exp.role}`}
-              className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/5 text-white/50 transition-all duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:border-white/20 focus-visible:bg-white/10 focus-visible:text-white"
+              className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/5 text-white/60 transition-all duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:border-white/20 focus-visible:bg-white/10 focus-visible:text-white"
             >
               <ChevronDown
                 size={14}
@@ -100,7 +100,7 @@ function ExperienceCard({ exp }: { exp: Experience }) {
                     to="/projects/$slug"
                     params={{ slug: project.slug }}
                     aria-label={`View ${project.title} project`}
-                    className="inline-flex items-center rounded-full border border-white/5 bg-white/5 px-4 py-2 font-mono text-[11px] text-white/55 transition-all duration-200 hover:border-white/15 hover:text-white/75 focus-visible:border-white/15 focus-visible:text-white/75"
+                    className="inline-flex items-center rounded-full border border-white/5 bg-white/5 px-4 py-2 font-mono text-[11px] text-white/70 transition-all duration-200 hover:border-white/15 hover:text-white/75 focus-visible:border-white/15 focus-visible:text-white/75"
                   >
                     {project.title}
                   </Link>

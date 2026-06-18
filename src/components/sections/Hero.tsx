@@ -1,5 +1,6 @@
 import { lazy } from 'react'
 
+import { CTAButton } from '~/components/ui/CTAButton'
 import { ScrollIndicator } from '~/components/ui/ScrollIndicator'
 import { SocialLinks } from '~/components/ui/SocialLinks'
 import { WASMCanvas } from '~/components/wasm/WASMCanvas'
@@ -10,7 +11,8 @@ const ScatterText = lazy(() => import('~/components/three/ScatterText'))
 
 export default function Hero() {
   const prefersReducedMotion = useReducedMotion()
-  const { name, title, tagline } = userData
+  const { name, title, tagline, availability, yearsOfExperience, websites } = userData
+  const cvUrl = websites.cv
 
   return (
     <section
@@ -35,11 +37,38 @@ export default function Hero() {
           </WASMCanvas>
         </div>
 
-        <p className="text-xl font-light md:text-2xl lg:text-3xl">{title}</p>
+        <p className="mt-2 font-mono text-sm font-medium tracking-[0.2em] text-white/65 uppercase md:text-base">
+          {title}
+        </p>
 
-        <p className="max-w-lg py-2 font-mono text-sm font-medium text-white/75">{tagline}</p>
-        <div className="h-4" />
-        <div>
+        <p className="mt-5 max-w-xl py-1 font-mono text-base font-medium text-white/75 md:text-lg">
+          {tagline}
+        </p>
+
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <CTAButton href="#projects" prefersReducedMotion={prefersReducedMotion}>
+            See my work
+          </CTAButton>
+          <CTAButton
+            href={cvUrl}
+            variant="ghost"
+            external
+            prefersReducedMotion={prefersReducedMotion}
+          >
+            Read CV <span aria-hidden="true">↗</span>
+          </CTAButton>
+        </div>
+
+        <p className="mt-6 font-mono text-xs text-white/60">
+          <span aria-hidden="true" className="mr-2">
+            ·
+          </span>
+          {yearsOfExperience} years building production software
+          {availability ? ` · ${availability}` : ''}
+        </p>
+
+        <p className="mt-8 font-mono text-xs text-white/60">or find me on</p>
+        <div className="mt-3">
           <SocialLinks prefersReducedMotion={prefersReducedMotion} />
         </div>
 

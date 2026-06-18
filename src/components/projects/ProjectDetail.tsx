@@ -46,7 +46,7 @@ export function ProjectDetail({ project }: { project: Project }) {
             <h1 className="font-mono text-2xl font-bold tracking-wide text-white md:text-3xl">
               {project.title}
             </h1>
-            <p className="mt-2 text-sm leading-relaxed text-white/60">{project.description}</p>
+            <p className="mt-2 text-sm leading-relaxed text-white/70">{project.description}</p>
           </div>
           {(project.stars ?? 0) > 0 && (
             <span
@@ -70,14 +70,14 @@ export function ProjectDetail({ project }: { project: Project }) {
           {project.type}
         </span>
         {project.context && (
-          <span className="rounded-lg bg-white/4 px-3 py-1 font-mono text-xs text-white/55">
+          <span className="rounded-lg bg-white/4 px-3 py-1 font-mono text-xs text-white/60">
             {project.context}
           </span>
         )}
         {project.period && (
           <time
             dateTime={periodToDatetime(project.period) ?? project.period}
-            className="rounded-lg bg-white/4 px-3 py-1 font-mono text-xs text-white/55"
+            className="rounded-lg bg-white/4 px-3 py-1 font-mono text-xs text-white/60"
           >
             {project.period}
           </time>
@@ -101,13 +101,13 @@ export function ProjectDetail({ project }: { project: Project }) {
             className="group flex items-center gap-4 rounded-lg border border-white/5 bg-white/3 px-4 py-3 transition-all duration-300 hover:border-white/10 hover:bg-white/6 focus-visible:border-white/10 focus-visible:bg-white/6"
           >
             <div className="flex flex-col gap-0.5">
-              <span className="font-mono text-xs text-white/50">Work Experience</span>
+              <span className="font-mono text-xs text-white/60">Work Experience</span>
               <span className="font-mono text-sm text-white/60 transition-colors group-hover:text-white/80 group-focus-visible:text-white/80">
                 {linkedExperience.role}
                 {linkedExperience.company ? ` at ${linkedExperience.company}` : ''}
               </span>
             </div>
-            <span className="ml-auto font-mono text-xs text-white/50">
+            <span className="ml-auto font-mono text-xs text-white/60">
               {linkedExperience.period}
             </span>
             <ArrowRight
@@ -145,7 +145,9 @@ export function ProjectDetail({ project }: { project: Project }) {
         <>
           <hr className="mb-10 border-white/10" />
           <article className="prose-project">
-            <MarkdownRenderer content={project.readme} headingOffset={1} />
+            <div className="mx-auto max-w-2xl">
+              <MarkdownRenderer content={project.readme} headingOffset={1} />
+            </div>
           </article>
         </>
       )}

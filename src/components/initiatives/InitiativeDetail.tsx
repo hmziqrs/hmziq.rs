@@ -31,7 +31,7 @@ export function InitiativeDetail({ initiative }: { initiative: Initiative }) {
             <h1 className="font-mono text-2xl font-bold tracking-wide text-white md:text-3xl">
               {initiative.name}
             </h1>
-            <p className="mt-2 text-sm leading-relaxed text-white/60">{initiative.description}</p>
+            <p className="mt-2 text-sm leading-relaxed text-white/70">{initiative.description}</p>
           </div>
         </div>
       </div>
@@ -61,7 +61,9 @@ export function InitiativeDetail({ initiative }: { initiative: Initiative }) {
         <>
           <hr className="mb-10 border-white/10" />
           <article>
-            <MarkdownRenderer content={initiative.content} headingOffset={1} />
+            <div className="mx-auto max-w-2xl">
+              <MarkdownRenderer content={initiative.content} headingOffset={1} />
+            </div>
           </article>
         </>
       )}

@@ -21,7 +21,7 @@ export function ScrollIndicator({ prefersReducedMotion }: ScrollIndicatorProps) 
           />
         </div>
         <div className="h-2" />
-        <p className="text-sm tracking-widest text-gray-300">{text}</p>
+        <p className="text-sm tracking-widest text-white/80">{text}</p>
       </div>
     </div>
   )

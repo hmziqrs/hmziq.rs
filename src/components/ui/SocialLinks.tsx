@@ -52,7 +52,7 @@ export function SocialLinks({ prefersReducedMotion }: SocialLinksProps) {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`${link.name}: ${link.username} — ${link.description}`}
-              className={`group relative flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-3 font-mono text-white/60 backdrop-blur-sm transition-colors duration-300 hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:border-white/20 focus-visible:bg-white/10 focus-visible:text-white${prefersReducedMotion ? '' : ' transition-transform hover:-translate-y-0.5'}`}
+              className={`group relative flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-3 font-mono text-white/70 backdrop-blur-sm transition-colors duration-300 hover:border-white/20 hover:bg-white/10 hover:text-white focus-visible:border-white/20 focus-visible:bg-white/10 focus-visible:text-white${prefersReducedMotion ? '' : ' transition-transform hover:-translate-y-0.5'}`}
             >
               <SocialIcon platform={link.name} />
               <span className="text-sm text-white/80">{link.username}</span>

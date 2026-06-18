@@ -31,14 +31,14 @@ export function InitiativeCard({ initiative }: { initiative: Initiative }) {
         </span>
       </div>
 
-      <p className="text-xs leading-relaxed text-white/60">{initiative.description}</p>
+      <p className="text-xs leading-relaxed text-white/70">{initiative.description}</p>
 
       <div className="mt-auto flex items-center gap-3 pt-2">
-        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-white/60 transition-colors duration-200 group-focus-within:text-white/60 group-hover:text-white/60">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-white/65 transition-colors duration-200 group-focus-within:text-white/60 group-hover:text-white/60">
           View details
         </span>
         {initiative.href && (
-          <span className="inline-flex items-center gap-1 font-mono text-[11px] text-white/55">
+          <span className="inline-flex items-center gap-1 font-mono text-[11px] text-white/65">
             <ExternalLink size={10} aria-hidden="true" />
             Website
           </span>

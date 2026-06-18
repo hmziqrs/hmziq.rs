@@ -16,7 +16,7 @@ export function MysteryCard() {
         >
           ?
         </span>
-        <p className="text-center text-xs text-white/55 italic">Something is brewing...</p>
+        <p className="text-center text-xs text-white/65 italic">Something is brewing...</p>
         <span
           className="rounded-full border border-amber-500/20 bg-amber-500/5 px-2.5 py-0.5 font-mono text-[10px] font-medium text-amber-400/80"
           aria-label="Status: Coming Soon"

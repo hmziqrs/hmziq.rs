@@ -30,7 +30,7 @@ export function ProjectsListing() {
             <h1 className="font-mono text-2xl font-bold tracking-wider text-white md:text-3xl">
               Projects
             </h1>
-            <p aria-live="polite" className="mt-2 font-mono text-sm text-white/55">
+            <p aria-live="polite" className="mt-2 font-mono text-sm text-white/65">
               {filteredProjects.length} of {projects.length} projects
               {selectedType && ' (filtered)'}
             </p>
@@ -50,7 +50,7 @@ export function ProjectsListing() {
                   className={`rounded-lg px-4 py-2.5 font-mono text-xs transition-all duration-200 ${
                     selectedType === type
                       ? 'bg-white/15 text-white'
-                      : 'bg-white/5 text-white/60 hover:bg-white/8 hover:text-white/60 focus-visible:bg-white/8 focus-visible:text-white/60'
+                      : 'bg-white/5 text-white/70 hover:bg-white/8 hover:text-white/90 focus-visible:bg-white/8 focus-visible:text-white/90'
                   }`}
                 >
                   {type}
@@ -69,13 +69,13 @@ export function ProjectsListing() {
 
           {filteredProjects.length === 0 && (
             <output className="block py-20 text-center">
-              <span className="block font-mono text-sm text-white/55">
+              <span className="block font-mono text-sm text-white/65">
                 No projects match the selected filters.
               </span>
               <button
                 type="button"
                 onClick={() => setSelectedType(undefined)}
-                className="mt-4 font-mono text-sm text-white/50 underline underline-offset-4 transition-colors hover:text-white/70 focus-visible:text-white/70"
+                className="mt-4 font-mono text-sm text-white/65 underline underline-offset-4 transition-colors hover:text-white/90 focus-visible:text-white/90"
               >
                 Clear filter
               </button>

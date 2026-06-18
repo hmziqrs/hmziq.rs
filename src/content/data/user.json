@@ -2,7 +2,8 @@
   "username": "hmziqrs",
   "name": "hmziqrs",
   "title": "Senior Software Engineer",
-  "tagline": "I build full stack software with Rust and TypeScript. Desktop, mobile, terminal, CLI, servers, websites.",
+  "tagline": "I build servers, CLIs, and web apps in Rust and TypeScript.",
+  "availability": "open to work",
   "yearsOfExperience": 9,
   "email": "hmziqrs@gmail.com",
   "skills": [

@@ -42,7 +42,7 @@ export default function Footer() {
               href={tech.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 font-mono text-xs text-white/60 transition-colors hover:text-white focus-visible:text-white"
+              className="flex items-center gap-1.5 font-mono text-xs text-white/70 transition-colors hover:text-white focus-visible:text-white"
             >
               {tech.icon}
               {tech.name}

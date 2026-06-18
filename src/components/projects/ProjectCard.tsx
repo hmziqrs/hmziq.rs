@@ -83,7 +83,7 @@ export function ProjectCard({ project, headingLevel: Heading = 'h2' }: ProjectCa
             ))}
             {project.tech.length > 5 && (
               <span
-                className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/10 font-mono text-[10px] text-white/55"
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/10 font-mono text-[10px] text-white/65"
                 aria-label={`+${project.tech.length - 5} more technologies`}
               >
                 +{project.tech.length - 5}

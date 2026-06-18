@@ -39,20 +39,20 @@ export function BlogPostCard({ post }: { post: BlogPostSummary }) {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <time className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 font-mono text-[10px] text-white/55">
+                <time className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 font-mono text-[11px] text-white/60">
                   {formatBlogDate(post.date)}
                 </time>
-                <span className="rounded-full border border-white/5 bg-white/4 px-2.5 py-0.5 font-mono text-[10px] text-white/50">
+                <span className="rounded-full border border-white/5 bg-white/4 px-2.5 py-0.5 font-mono text-[11px] text-white/60">
                   {post.category}
                 </span>
               </div>
 
-              <p className="line-clamp-2 text-xs leading-relaxed text-white/60">
+              <p className="line-clamp-2 text-xs leading-relaxed text-white/70">
                 {post.description}
               </p>
 
               <div className="mt-auto flex items-center gap-1 pt-1">
-                <span className="font-mono text-[11px] text-white/50 transition-colors group-focus-within:text-white/60 group-hover:text-white/60">
+                <span className="font-mono text-[11px] text-white/65 transition-colors group-focus-within:text-white/80 group-hover:text-white/80">
                   Read post
                 </span>
                 <ExternalLink size={10} className="text-white/40" aria-hidden="true" />
