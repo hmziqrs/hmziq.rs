@@ -136,9 +136,7 @@ export function ProjectDetail({ project }: { project: Project }) {
         <>
           <hr className="border-border-default mb-10" />
           <article className="prose-project">
-            <div className="max-w-content mx-auto">
-              <MarkdownRenderer content={project.readme} headingOffset={1} />
-            </div>
+            <MarkdownRenderer content={project.readme} headingOffset={1} />
           </article>
         </>
       )}

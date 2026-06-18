@@ -60,9 +60,7 @@ export function InitiativeDetail({ initiative }: { initiative: Initiative }) {
         <>
           <hr className="border-border-default mb-10" />
           <article>
-            <div className="max-w-content mx-auto">
-              <MarkdownRenderer content={initiative.content} headingOffset={1} />
-            </div>
+            <MarkdownRenderer content={initiative.content} headingOffset={1} />
           </article>
         </>
       )}

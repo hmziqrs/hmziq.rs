@@ -26,10 +26,19 @@ export interface ButtonProps {
   [key: string]: unknown
 }
 
-const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'text-micro px-3 py-1.5 rounded-md',
-  md: 'text-xs px-4 py-2 rounded-lg',
-  lg: 'text-sm px-6 py-3 rounded-lg',
+const textSizeClasses: Record<ButtonSize, string> = {
+  sm: 'text-micro',
+  md: 'text-xs',
+  lg: 'text-sm',
+}
+
+// Box padding + radius. Skipped for the `link` variant, which renders as an
+// inline text link (BackLink, "Clear filter", footer links) and should carry
+// no button chrome or surrounding padding.
+const boxClasses: Record<ButtonSize, string> = {
+  sm: 'px-3 py-1.5 rounded-md',
+  md: 'px-4 py-2 rounded-lg',
+  lg: 'px-6 py-3 rounded-lg',
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -87,7 +96,8 @@ export function Button({
   const base = [
     'group relative inline-flex items-center justify-center gap-2 font-mono transition-all duration-300 motion-reduce:transition-none focus-ring',
     showShine ? 'overflow-hidden' : '',
-    sizeClasses[size],
+    textSizeClasses[size],
+    variant === 'link' ? '' : boxClasses[size],
     pressed ? 'bg-surface-active text-fg-primary' : variantClasses[variant],
     hasLift ? lift : '',
     className,
