@@ -3,6 +3,7 @@ import {
   SiAngular,
   SiAstro,
   SiBun,
+  SiCloudflare,
   SiCloudflareworkers,
   SiCss,
   SiDart,
@@ -117,12 +118,14 @@ const techIconMap: Record<string, TechIconEntry> = {
   'Immutable.js': { color: '#3C3C3C', abbr: 'Im' },
   'better-auth': { color: '#000000', abbr: 'BA' },
   Provider: { color: '#6B7280', abbr: 'Pr' },
-  GPUI: { color: '#8B5CF6', abbr: 'GP' },
+  GPUI: { color: '#8B5CF6', abbr: 'GP', showInSkills: true },
+  Ratatui: { icon: SiRatatui, color: '#14B8A6', showInSkills: true },
   egui: { color: '#6B7280', abbr: 'eg' },
   Bloc: { color: '#00B4D8', abbr: 'Bl' },
   Elasticsearch: { icon: SiElasticsearch, color: '#005571' },
   Polygon: { icon: SiPolygon, color: '#7B3FE4' },
   HonoJS: { icon: SiHono, color: '#E36002', showInSkills: true },
+  TanStack: { icon: SiTanstack, color: '#3B82F6', showInSkills: true },
 
   // Runtime & Build
   Bun: { icon: SiBun, color: '#FBF0DF' },
@@ -143,6 +146,7 @@ const techIconMap: Record<string, TechIconEntry> = {
   Docker: { icon: SiDocker, color: '#2496ED', showInSkills: true },
   Firebase: { icon: SiFirebase, color: '#FFCA28' },
   AWS: { color: '#FF9900', abbr: 'AW' },
+  Cloudflare: { icon: SiCloudflare, color: '#F38020', showInSkills: true },
   'Cloudflare Workers': { icon: SiCloudflareworkers, color: '#F48120' },
   'GitHub Actions': { icon: SiGithubactions, color: '#2088FF' },
 
