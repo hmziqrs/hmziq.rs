@@ -14,7 +14,9 @@ export function PageContainer({
   contentStyle,
 }: PageContainerProps) {
   const mainClassName = className ? `relative min-h-screen ${className}` : 'relative min-h-screen'
-  const innerClassName = contentClassName ? `relative ${contentClassName}` : 'relative'
+  const innerClassName = contentClassName
+    ? `relative mx-auto w-full max-w-page ${contentClassName}`
+    : 'relative mx-auto w-full max-w-page'
 
   return (
     <main className={mainClassName}>

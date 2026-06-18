@@ -1,7 +1,8 @@
 import { Link } from '@tanstack/react-router'
 import { Star, ArrowRight } from 'lucide-react'
 
-import { GlassCard } from '~/components/ui/GlassCard'
+import { Card } from '~/components/ui/Card'
+import { Tag } from '~/components/ui/Tag'
 import { TechIcon } from '~/components/ui/TechIcon'
 import { findInitiativeBySlug } from '~/content/initiatives'
 import type { Project } from '~/content/projects'
@@ -22,27 +23,27 @@ export function ProjectCard({ project, headingLevel: Heading = 'h2' }: ProjectCa
         aria-label={`${project.title} — ${project.description}`}
         className="block h-full"
       >
-        <GlassCard className="group flex h-full flex-col gap-3 px-6 py-4">
+        <Card variant="glass" interactive className="flex h-full flex-col gap-3 px-6 py-4">
           <div className="flex items-start justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
-              <Heading className="truncate font-mono text-sm font-semibold tracking-wide text-white group-focus-within:text-white/90 group-hover:text-white/90">
+              <Heading className="text-fg-heading group-hover:text-fg-heading-hover group-focus-within:text-fg-heading-hover truncate font-mono text-sm font-semibold tracking-wide">
                 {project.title}
               </Heading>
               {project.context && (
-                <span className="shrink-0 rounded bg-white/6 px-1.5 py-0.5 font-mono text-[10px] text-white/65">
+                <Tag size="xs" className="shrink-0">
                   {project.context}
-                </span>
+                </Tag>
               )}
               {initiativeSlug && (
-                <span className="shrink-0 rounded border border-emerald-500/20 bg-emerald-500/5 px-1.5 py-0.5 font-mono text-[10px] text-emerald-400/80">
+                <Tag variant="status" size="xs" className="shrink-0">
                   {findInitiativeBySlug(initiativeSlug)?.name ?? initiativeSlug}
-                </span>
+                </Tag>
               )}
             </div>
             <div className="flex shrink-0 items-center gap-2">
               {(project.stars ?? 0) > 0 && (
                 <span
-                  className="flex items-center gap-1 font-mono text-xs text-white/65"
+                  className="text-fg-secondary flex items-center gap-1 font-mono text-xs"
                   aria-label={`${project.stars} GitHub stars`}
                 >
                   <Star
@@ -57,12 +58,12 @@ export function ProjectCard({ project, headingLevel: Heading = 'h2' }: ProjectCa
               <ArrowRight
                 size={14}
                 aria-hidden="true"
-                className="text-white/30 transition-all duration-300 group-focus-within:translate-x-0.5 group-focus-within:text-white/60 group-hover:translate-x-0.5 group-hover:text-white/60"
+                className="text-fg-faint group-hover:text-fg-secondary group-focus-within:text-fg-secondary transition-all duration-300 group-focus-within:translate-x-0.5 group-hover:translate-x-0.5"
               />
             </div>
           </div>
 
-          <p className="line-clamp-2 text-xs leading-relaxed text-white/60">
+          <p className="text-fg-secondary line-clamp-2 text-xs leading-relaxed">
             {project.description}
           </p>
 
@@ -70,27 +71,29 @@ export function ProjectCard({ project, headingLevel: Heading = 'h2' }: ProjectCa
             {project.tech.slice(0, 5).map((tech) => (
               <span className="group/badge relative inline-flex" key={tech}>
                 <span
-                  className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/10 transition-colors group-hover/badge:border-white/20 group-hover/badge:bg-white/15"
+                  className="border-border-subtle bg-surface-raised group-hover/badge:border-border-hover group-hover/badge:bg-surface-overlay flex h-7 w-7 items-center justify-center rounded-md border transition-colors"
                   title={tech}
                 >
                   <TechIcon tech={tech} />
                   <span className="sr-only">{tech}</span>
                 </span>
-                <span className="pointer-events-none absolute -top-8 left-1/2 z-50 -translate-x-1/2 rounded bg-neutral-900 px-2 py-1 font-mono text-[10px] whitespace-nowrap text-white/80 opacity-0 shadow-lg transition-opacity group-hover/badge:opacity-100">
+                <span className="text-fg-meta text-micro pointer-events-none absolute -top-8 left-1/2 z-50 -translate-x-1/2 rounded bg-neutral-900 px-2 py-1 font-mono whitespace-nowrap opacity-0 shadow-lg transition-opacity group-hover/badge:opacity-100">
                   {tech}
                 </span>
               </span>
             ))}
             {project.tech.length > 5 && (
-              <span
-                className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/10 font-mono text-[10px] text-white/65"
+              <Tag
+                size="xs"
+                as="span"
+                className="border-border-subtle bg-surface-raised flex h-7 w-7 items-center justify-center rounded-md"
                 aria-label={`+${project.tech.length - 5} more technologies`}
               >
                 +{project.tech.length - 5}
-              </span>
+              </Tag>
             )}
           </div>
-        </GlassCard>
+        </Card>
       </Link>
     </article>
   )

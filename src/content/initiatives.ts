@@ -1,5 +1,11 @@
 export type InitiativeStatus = 'active' | 'coming-soon'
 
+/**
+ * Semantic status key consumed by <Tag variant="status" status={...}>.
+ * Maps the domain statuses above onto the Tag primitive's two visual states.
+ */
+export type InitiativeStatusKey = 'active' | 'pending'
+
 export type InitiativeIconName = 'package' | 'sparkles'
 
 export interface Initiative {
@@ -37,14 +43,17 @@ No roadmap. I build what I need, publish when the tests pass, and fix things whe
   },
 ]
 
-export const statusConfig: Record<InitiativeStatus, { label: string; className: string }> = {
+export const statusConfig: Record<
+  InitiativeStatus,
+  { label: string; status: InitiativeStatusKey }
+> = {
   active: {
     label: 'Active',
-    className: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400/80',
+    status: 'active',
   },
   'coming-soon': {
     label: 'Coming Soon',
-    className: 'border-amber-500/20 bg-amber-500/5 text-amber-400/80',
+    status: 'pending',
   },
 }
 

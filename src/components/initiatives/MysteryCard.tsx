@@ -1,4 +1,5 @@
-import { GlassCard } from '~/components/ui/GlassCard'
+import { Card } from '~/components/ui/Card'
+import { Tag } from '~/components/ui/Tag'
 import { useReducedMotion } from '~/hooks/useReducedMotion'
 
 export function MysteryCard() {
@@ -6,9 +7,13 @@ export function MysteryCard() {
 
   return (
     <li className="h-full" aria-label="Unannounced initiative — coming soon">
-      <GlassCard className="flex h-full flex-col items-center justify-center gap-3 px-6 py-5">
+      <Card
+        variant="glass"
+        interactive
+        className="flex h-full flex-col items-center justify-center gap-3 px-6 py-5"
+      >
         <span
-          className="font-mono text-3xl font-bold text-white/25"
+          className="text-fg-faint font-mono text-3xl font-bold"
           aria-hidden="true"
           style={{
             animation: prefersReducedMotion ? 'none' : 'pulseOpacity 3s ease-in-out infinite',
@@ -16,14 +21,11 @@ export function MysteryCard() {
         >
           ?
         </span>
-        <p className="text-center text-xs text-white/65 italic">Something is brewing...</p>
-        <span
-          className="rounded-full border border-amber-500/20 bg-amber-500/5 px-2.5 py-0.5 font-mono text-[10px] font-medium text-amber-400/80"
-          aria-label="Status: Coming Soon"
-        >
+        <p className="text-fg-secondary text-center text-xs italic">Something is brewing...</p>
+        <Tag variant="status" status="pending" size="xs" aria-label="Status: Coming Soon">
           Coming Soon
-        </span>
-      </GlassCard>
+        </Tag>
+      </Card>
     </li>
   )
 }

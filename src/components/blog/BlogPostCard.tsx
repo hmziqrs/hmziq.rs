@@ -1,6 +1,7 @@
 import { ExternalLink } from 'lucide-react'
 
-import { GlassCard } from '~/components/ui/GlassCard'
+import { Card } from '~/components/ui/Card'
+import { Tag } from '~/components/ui/Tag'
 import { formatBlogDate, getBlogPostUrl } from '~/lib/blog-api'
 import type { BlogPostSummary } from '~/types/blog'
 
@@ -17,7 +18,7 @@ export function BlogPostCard({ post }: { post: BlogPostSummary }) {
         className="block h-full"
       >
         <article aria-label={post.title}>
-          <GlassCard className="flex h-full flex-col px-0 py-0">
+          <Card variant="glass" interactive className="flex h-full flex-col px-0 py-0">
             {post.cover && (
               <div className="overflow-hidden">
                 <img
@@ -33,32 +34,30 @@ export function BlogPostCard({ post }: { post: BlogPostSummary }) {
 
             <div className="flex flex-1 flex-col gap-3 px-6 py-5">
               <div className="flex items-start justify-between gap-2">
-                <h3 className="font-mono text-sm font-semibold tracking-wide text-white">
+                <h3 className="text-fg-primary font-mono text-sm font-semibold tracking-wide">
                   {post.title}
                 </h3>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <time className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 font-mono text-[11px] text-white/60">
+                <Tag as="time" size="sm" dateTime={post.date}>
                   {formatBlogDate(post.date)}
-                </time>
-                <span className="rounded-full border border-white/5 bg-white/4 px-2.5 py-0.5 font-mono text-[11px] text-white/60">
-                  {post.category}
-                </span>
+                </Tag>
+                <Tag size="sm">{post.category}</Tag>
               </div>
 
-              <p className="line-clamp-2 text-xs leading-relaxed text-white/70">
+              <p className="text-fg-link line-clamp-2 text-xs leading-relaxed">
                 {post.description}
               </p>
 
               <div className="mt-auto flex items-center gap-1 pt-1">
-                <span className="font-mono text-[11px] text-white/65 transition-colors group-focus-within:text-white/80 group-hover:text-white/80">
+                <span className="text-caption text-fg-secondary group-focus-within:text-fg-heading group-hover:text-fg-heading font-mono transition-colors">
                   Read post
                 </span>
-                <ExternalLink size={10} className="text-white/40" aria-hidden="true" />
+                <ExternalLink size={10} className="text-fg-muted" aria-hidden="true" />
               </div>
             </div>
-          </GlassCard>
+          </Card>
         </article>
         <span className="sr-only">(opens in new tab)</span>
       </a>

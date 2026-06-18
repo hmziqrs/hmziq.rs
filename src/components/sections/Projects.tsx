@@ -1,8 +1,8 @@
-import { Link } from '@tanstack/react-router'
 import { ArrowRight } from 'lucide-react'
 
 import { Section } from '~/components/layout/Section'
 import { ProjectCard } from '~/components/projects/ProjectCard'
+import { Button } from '~/components/ui/Button'
 import { getTopProjectsByStars } from '~/content/projects'
 
 export default function Projects() {
@@ -23,13 +23,9 @@ export default function Projects() {
       </ul>
 
       <div className="mt-10 text-center">
-        <Link
-          to="/projects"
-          className="inline-flex items-center gap-2 rounded-lg bg-white/6 px-6 py-3 font-mono text-sm text-white/70 backdrop-blur-sm transition-all duration-300 hover:bg-white/10 hover:text-white focus-visible:bg-white/10 focus-visible:text-white"
-        >
+        <Button variant="ghost" size="lg" to="/projects" trailingIcon={<ArrowRight size={16} />}>
           View all projects
-          <ArrowRight size={16} aria-hidden="true" />
-        </Link>
+        </Button>
       </div>
     </Section>
   )

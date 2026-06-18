@@ -8,7 +8,9 @@ import type { Project, ProjectLink as ProjectLinks } from '~/content/projects'
 import { periodToDatetime } from '~/lib/dateUtils'
 
 import { BackLink } from '../ui/BackLink'
+import { Card } from '../ui/Card'
 import { MarkdownRenderer } from '../ui/MarkdownRenderer'
+import { Tag } from '../ui/Tag'
 import { TechIcon } from '../ui/TechIcon'
 import { ProjectLink } from './ProjectLink'
 
@@ -43,14 +45,14 @@ export function ProjectDetail({ project }: { project: Project }) {
       <div className="mb-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="font-mono text-2xl font-bold tracking-wide text-white md:text-3xl">
+            <h1 className="text-fg-primary font-mono text-2xl font-bold tracking-wide md:text-3xl">
               {project.title}
             </h1>
-            <p className="mt-2 text-sm leading-relaxed text-white/70">{project.description}</p>
+            <p className="text-fg-link mt-2 text-sm leading-relaxed">{project.description}</p>
           </div>
           {(project.stars ?? 0) > 0 && (
             <span
-              className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white/6 px-3 py-1.5 font-mono text-sm text-white/60"
+              className="bg-surface-button text-fg-meta flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 font-mono text-sm"
               aria-label={`${project.stars} GitHub stars`}
             >
               <Star
@@ -66,27 +68,18 @@ export function ProjectDetail({ project }: { project: Project }) {
       </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <span className="rounded-lg bg-white/6 px-3 py-1 font-mono text-xs text-white/60">
-          {project.type}
-        </span>
-        {project.context && (
-          <span className="rounded-lg bg-white/4 px-3 py-1 font-mono text-xs text-white/60">
-            {project.context}
-          </span>
-        )}
+        <Tag size="md">{project.type}</Tag>
+        {project.context && <Tag size="md">{project.context}</Tag>}
         {project.period && (
-          <time
-            dateTime={periodToDatetime(project.period) ?? project.period}
-            className="rounded-lg bg-white/4 px-3 py-1 font-mono text-xs text-white/60"
-          >
+          <Tag as="time" size="md" dateTime={periodToDatetime(project.period) ?? project.period}>
             {project.period}
-          </time>
+          </Tag>
         )}
         {project.initiative && (
           <Link
             to="/initiatives/$slug"
             params={{ slug: project.initiative }}
-            className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-1 font-mono text-xs text-emerald-400/80 transition-opacity hover:opacity-80"
+            className="border-accent-success/20 bg-accent-success/5 text-accent-success focus-ring inline-flex items-center rounded-full border px-3 py-1 font-mono text-xs transition-opacity hover:opacity-80"
           >
             {findInitiativeBySlug(project.initiative)?.name ?? project.initiative}
           </Link>
@@ -95,27 +88,25 @@ export function ProjectDetail({ project }: { project: Project }) {
 
       {linkedExperience && (
         <div className="mb-6">
-          <Link
-            to="/"
-            hash="experience"
-            className="group flex items-center gap-4 rounded-lg border border-white/5 bg-white/3 px-4 py-3 transition-all duration-300 hover:border-white/10 hover:bg-white/6 focus-visible:border-white/10 focus-visible:bg-white/6"
-          >
-            <div className="flex flex-col gap-0.5">
-              <span className="font-mono text-xs text-white/60">Work Experience</span>
-              <span className="font-mono text-sm text-white/60 transition-colors group-hover:text-white/80 group-focus-visible:text-white/80">
-                {linkedExperience.role}
-                {linkedExperience.company ? ` at ${linkedExperience.company}` : ''}
+          <Card variant="glass" interactive>
+            <Link to="/" hash="experience" className="group flex items-center gap-4 px-4 py-3">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-fg-secondary font-mono text-xs">Work Experience</span>
+                <span className="text-fg-secondary group-hover:text-fg-primary group-focus-visible:text-fg-primary font-mono text-sm transition-colors">
+                  {linkedExperience.role}
+                  {linkedExperience.company ? ` at ${linkedExperience.company}` : ''}
+                </span>
+              </div>
+              <span className="text-fg-secondary ml-auto font-mono text-xs">
+                {linkedExperience.period}
               </span>
-            </div>
-            <span className="ml-auto font-mono text-xs text-white/60">
-              {linkedExperience.period}
-            </span>
-            <ArrowRight
-              size={14}
-              className="shrink-0 text-white/20 transition-transform group-hover:translate-x-0.5 group-hover:text-white/40 group-focus-visible:translate-x-0.5 group-focus-visible:text-white/40"
-              aria-hidden="true"
-            />
-          </Link>
+              <ArrowRight
+                size={14}
+                className="text-fg-faint group-hover:text-fg-muted group-focus-visible:text-fg-muted shrink-0 transition-transform group-hover:translate-x-0.5 group-focus-visible:translate-x-0.5"
+                aria-hidden="true"
+              />
+            </Link>
+          </Card>
         </div>
       )}
 
@@ -123,7 +114,7 @@ export function ProjectDetail({ project }: { project: Project }) {
         {project.tech.map((tech) => (
           <li
             key={tech}
-            className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/10 px-3 py-1 font-mono text-xs text-white/70"
+            className="border-border-default bg-surface-overlay text-fg-link flex items-center gap-1.5 rounded-lg border px-3 py-1 font-mono text-xs"
           >
             <TechIcon tech={tech} size={12} />
             {tech}
@@ -143,9 +134,9 @@ export function ProjectDetail({ project }: { project: Project }) {
 
       {project.readme && (
         <>
-          <hr className="mb-10 border-white/10" />
+          <hr className="border-border-default mb-10" />
           <article className="prose-project">
-            <div className="mx-auto max-w-2xl">
+            <div className="max-w-content mx-auto">
               <MarkdownRenderer content={project.readme} headingOffset={1} />
             </div>
           </article>

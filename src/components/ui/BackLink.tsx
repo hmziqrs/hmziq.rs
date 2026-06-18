@@ -1,5 +1,6 @@
-import { Link } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
+
+import { Button } from '~/components/ui/Button'
 
 interface BackLinkProps {
   to: string
@@ -9,12 +10,14 @@ interface BackLinkProps {
 
 export function BackLink({ to, children = 'Back', className = '' }: BackLinkProps) {
   return (
-    <Link
+    <Button
+      variant="link"
+      size="md"
       to={to}
-      className={`inline-flex items-center gap-2 font-mono text-sm text-white/70 transition-colors hover:text-white/70 focus-visible:text-white/70 ${className}`}
+      leadingIcon={<ArrowLeft size={14} />}
+      className={className}
     >
-      <ArrowLeft size={14} aria-hidden="true" />
       {children}
-    </Link>
+    </Button>
   )
 }

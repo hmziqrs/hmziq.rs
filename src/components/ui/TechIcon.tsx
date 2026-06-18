@@ -12,7 +12,7 @@ export function TechIcon({ tech, size = 14 }: TechIconProps) {
   if (!abbr) return null
 
   return (
-    <span className="font-mono text-[9px] font-bold" style={{ color }} aria-hidden="true">
+    <span className="text-micro font-mono font-bold" style={{ color }} aria-hidden="true">
       {abbr}
     </span>
   )

@@ -2,49 +2,53 @@ import { Link } from '@tanstack/react-router'
 import { ExternalLink, Package, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-import { GlassCard } from '~/components/ui/GlassCard'
+import { Card } from '~/components/ui/Card'
+import { Tag } from '~/components/ui/Tag'
 import { statusConfig, type Initiative, type InitiativeIconName } from '~/content/initiatives'
 
 const icons: Record<InitiativeIconName, ReactNode> = {
-  package: <Package size={20} className="text-white/70" />,
-  sparkles: <Sparkles size={20} className="text-white/70" />,
+  package: <Package size={20} className="text-fg-link" />,
+  sparkles: <Sparkles size={20} className="text-fg-link" />,
 }
 
 export function InitiativeCard({ initiative }: { initiative: Initiative }) {
   const badge = statusConfig[initiative.status]
   const card = (
-    <GlassCard className="flex h-full flex-col gap-3 px-6 py-5">
+    <Card variant="glass" interactive className="flex h-full flex-col gap-3 px-6 py-5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <span className="text-white/60" aria-hidden="true">
+          <span className="text-fg-meta" aria-hidden="true">
             {icons[initiative.iconName]}
           </span>
-          <h3 className="font-mono text-sm font-semibold tracking-wide text-white">
+          <h3 className="text-fg-primary font-mono text-sm font-semibold tracking-wide">
             {initiative.name}
           </h3>
         </div>
-        <span
-          className={`shrink-0 rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-medium ${badge.className}`}
+        <Tag
+          variant="status"
+          status={badge.status}
+          size="xs"
+          className="shrink-0"
           aria-label={`Status: ${badge.label}`}
         >
           {badge.label}
-        </span>
+        </Tag>
       </div>
 
-      <p className="text-xs leading-relaxed text-white/70">{initiative.description}</p>
+      <p className="text-fg-link text-xs leading-relaxed">{initiative.description}</p>
 
       <div className="mt-auto flex items-center gap-3 pt-2">
-        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-white/65 transition-colors duration-200 group-focus-within:text-white/60 group-hover:text-white/60">
+        <span className="text-caption text-fg-secondary group-focus-within:text-fg-meta group-hover:text-fg-meta inline-flex items-center gap-1.5 font-mono transition-colors duration-200">
           View details
         </span>
         {initiative.href && (
-          <span className="inline-flex items-center gap-1 font-mono text-[11px] text-white/65">
+          <span className="text-caption text-fg-secondary inline-flex items-center gap-1 font-mono">
             <ExternalLink size={10} aria-hidden="true" />
             Website
           </span>
         )}
       </div>
-    </GlassCard>
+    </Card>
   )
 
   return (

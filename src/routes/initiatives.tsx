@@ -30,20 +30,23 @@ function InitiativesPage() {
       <PageContainer contentClassName="px-6 py-20">
         <ErrorBoundary
           fallback={
-            <div role="alert" className="flex min-h-screen items-center justify-center text-white">
+            <div
+              role="alert"
+              className="text-fg-primary flex min-h-screen items-center justify-center"
+            >
               Something went wrong
             </div>
           }
         >
-          <div className="mx-auto max-w-6xl">
+          <div className="max-w-page mx-auto">
             <header className="mb-12">
               <div className="mb-6">
                 <BackLink to="/">Back home</BackLink>
               </div>
-              <h1 className="font-mono text-2xl font-bold tracking-wider text-white md:text-3xl">
+              <h1 className="text-fg-primary font-mono text-2xl font-bold tracking-wider md:text-3xl">
                 Initiatives
               </h1>
-              <p className="mt-2 font-mono text-sm text-white/65">
+              <p className="text-fg-secondary mt-2 font-mono text-sm">
                 {initiatives.length} initiatives
               </p>
             </header>
@@ -62,7 +65,7 @@ function InitiativesPage() {
     <ErrorBoundary
       fallback={
         <PageContainer contentClassName="flex min-h-screen items-center justify-center">
-          <div className="text-white" role="alert">
+          <div className="text-fg-primary" role="alert">
             Something went wrong
           </div>
         </PageContainer>

@@ -28,7 +28,7 @@ export function MarkdownRenderer({ content, headingOffset = 0 }: MarkdownRendere
         h1: ({ children }) => {
           const Tag = shift(1)
           return (
-            <Tag className="mt-8 mb-4 font-mono text-xl font-bold text-white first:mt-0">
+            <Tag className="text-fg-primary mt-8 mb-4 font-mono text-xl font-bold first:mt-0">
               {children}
             </Tag>
           )
@@ -36,7 +36,7 @@ export function MarkdownRenderer({ content, headingOffset = 0 }: MarkdownRendere
         h2: ({ children }) => {
           const Tag = shift(2)
           return (
-            <Tag className="mt-6 mb-3 font-mono text-lg font-semibold text-white/90">
+            <Tag className="text-fg-heading-hover mt-6 mb-3 font-mono text-lg font-semibold">
               {children}
             </Tag>
           )
@@ -44,7 +44,7 @@ export function MarkdownRenderer({ content, headingOffset = 0 }: MarkdownRendere
         h3: ({ children }) => {
           const Tag = shift(3)
           return (
-            <Tag className="mt-5 mb-2 font-mono text-base font-semibold text-white/80">
+            <Tag className="text-fg-heading mt-5 mb-2 font-mono text-base font-semibold">
               {children}
             </Tag>
           )
@@ -52,41 +52,41 @@ export function MarkdownRenderer({ content, headingOffset = 0 }: MarkdownRendere
         h4: ({ children }) => {
           const Tag = shift(4)
           return (
-            <Tag className="mt-4 mb-2 font-mono text-sm font-semibold text-white/80">
+            <Tag className="text-fg-heading mt-4 mb-2 font-mono text-sm font-semibold">
               {children}
             </Tag>
           )
         },
         p: ({ children }) => (
-          <p className="mb-3 text-sm leading-relaxed text-white/75">{children}</p>
+          <p className="text-fg-body mb-3 text-sm leading-relaxed">{children}</p>
         ),
         a: ({ href, children }) => (
           <a
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-white/70 underline underline-offset-4 transition-colors hover:text-white focus-visible:rounded-sm focus-visible:text-white focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            className="text-fg-link hover:text-fg-heading-hover focus-visible:text-fg-heading-hover underline underline-offset-4 transition-colors focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           >
             {children}
             <span className="sr-only"> (opens in new tab)</span>
           </a>
         ),
         strong: ({ children }) => (
-          <strong className="font-semibold text-white/80">{children}</strong>
+          <strong className="text-fg-heading font-semibold">{children}</strong>
         ),
-        em: ({ children }) => <em className="text-white/75 italic">{children}</em>,
+        em: ({ children }) => <em className="text-fg-body italic">{children}</em>,
         ul: ({ children }) => (
-          <ul className="mb-3 ml-4 list-disc space-y-1 text-sm text-white/75">{children}</ul>
+          <ul className="text-fg-body mb-3 ml-4 list-disc space-y-1 text-sm">{children}</ul>
         ),
         ol: ({ children }) => (
-          <ol className="mb-3 ml-4 list-decimal space-y-1 text-sm text-white/75">{children}</ol>
+          <ol className="text-fg-body mb-3 ml-4 list-decimal space-y-1 text-sm">{children}</ol>
         ),
         li: ({ children }) => <li className="pl-1">{children}</li>,
         code: ({ className, children }) => {
           const isInline = !className
           if (isInline) {
             return (
-              <code className="rounded border border-white/10 bg-white/8 px-1.5 py-0.5 font-mono text-xs text-white/80">
+              <code className="border-border-default bg-surface-overlay text-fg-heading rounded border px-1.5 py-0.5 font-mono text-xs">
                 {children}
               </code>
             )
@@ -94,28 +94,30 @@ export function MarkdownRenderer({ content, headingOffset = 0 }: MarkdownRendere
           return <code className={className}>{children}</code>
         },
         pre: ({ children }) => (
-          <pre className="mb-4 overflow-x-auto rounded-lg border border-white/10 bg-white/6 p-4 text-xs">
+          <pre className="border-border-default bg-surface-button mb-4 overflow-x-auto rounded-lg border p-4 text-xs">
             {children}
           </pre>
         ),
         blockquote: ({ children }) => (
-          <blockquote className="mb-3 border-l-2 border-white/20 pl-4 text-sm text-white/75 italic">
+          <blockquote className="border-border-hover text-fg-body mb-3 border-l-2 pl-4 text-sm italic">
             {children}
           </blockquote>
         ),
-        hr: () => <hr className="my-6 border-white/10" />,
+        hr: () => <hr className="border-border-default my-6" />,
         table: ({ children }) => (
           <div className="mb-4 overflow-x-auto">
             <table className="w-full text-sm">{children}</table>
           </div>
         ),
-        thead: ({ children }) => <thead className="border-b border-white/10">{children}</thead>,
+        thead: ({ children }) => (
+          <thead className="border-border-default border-b">{children}</thead>
+        ),
         th: ({ children }) => (
-          <th className="px-3 py-2 text-left font-mono text-xs font-semibold text-white/70">
+          <th className="text-fg-link px-3 py-2 text-left font-mono text-xs font-semibold">
             {children}
           </th>
         ),
-        td: ({ children }) => <td className="px-3 py-2 text-xs text-white/75">{children}</td>,
+        td: ({ children }) => <td className="text-fg-body px-3 py-2 text-xs">{children}</td>,
         img: ({ src, alt, width, height }) => (
           <img
             src={src}

@@ -1,11 +1,10 @@
 import { Section } from '~/components/layout/Section'
-import { GlassCard } from '~/components/ui/GlassCard'
+import { Card } from '~/components/ui/Card'
 import { TechIcon } from '~/components/ui/TechIcon'
 import userData from '~/content/data/user.json'
-import { useReducedMotion } from '~/hooks/useReducedMotion'
 
 export default function Skills() {
-  const prefersReducedMotion = useReducedMotion()
+  const skills = userData.skills
 
   return (
     <Section
@@ -13,23 +12,17 @@ export default function Skills() {
       heading="Skills"
       className="relative flex items-center justify-center px-6 py-20"
     >
-      <ul className="flex max-w-6xl list-none flex-row flex-wrap justify-center gap-4">
-        {userData.skills.map((skill) => (
+      <ul className="flex flex-wrap items-center justify-center gap-4">
+        {skills.map((skill) => (
           <li key={skill}>
-            <GlassCard
-              className={`flex items-center gap-3 px-4 py-3 ${
-                prefersReducedMotion
-                  ? ''
-                  : 'transition-transform duration-300 hover:scale-[1.15] hover:rotate-3'
-              }`}
+            <Card
+              variant="glass"
+              interactive
+              className="text-fg-primary inline-flex items-center gap-2 px-5 py-2.5 font-mono text-sm md:text-base"
             >
-              <span className="flex h-5 w-5 items-center justify-center">
-                <TechIcon tech={skill} size={20} />
-              </span>
-              <span className="font-mono text-sm font-medium tracking-wide text-white">
-                {skill}
-              </span>
-            </GlassCard>
+              <TechIcon tech={skill} size={16} />
+              {skill}
+            </Card>
           </li>
         ))}
       </ul>

@@ -11,7 +11,7 @@ const ScatterText = lazy(() => import('~/components/three/ScatterText'))
 
 export default function Hero() {
   const prefersReducedMotion = useReducedMotion()
-  const { name, title, tagline, availability, yearsOfExperience, websites } = userData
+  const { name, title, tagline, websites } = userData
   const cvUrl = websites.cv
 
   return (
@@ -29,7 +29,9 @@ export default function Hero() {
           <WASMCanvas
             loadingFallback={
               <div className="h-32 w-full">
-                <div className="text-6xl font-bold text-white md:text-7xl lg:text-8xl">{name}</div>
+                <div className="text-fg-primary text-6xl font-bold md:text-7xl lg:text-8xl">
+                  {name}
+                </div>
               </div>
             }
           >
@@ -37,11 +39,11 @@ export default function Hero() {
           </WASMCanvas>
         </div>
 
-        <p className="mt-2 font-mono text-sm font-medium tracking-[0.2em] text-white/65 uppercase md:text-base">
+        <p className="text-fg-meta mt-2 font-mono text-sm font-medium tracking-[0.2em] uppercase md:text-base">
           {title}
         </p>
 
-        <p className="mt-5 max-w-xl py-1 font-mono text-base font-medium text-white/75 md:text-lg">
+        <p className="max-w-hero text-fg-body mt-5 py-1 font-mono text-base font-medium md:text-lg">
           {tagline}
         </p>
 
@@ -59,16 +61,7 @@ export default function Hero() {
           </CTAButton>
         </div>
 
-        <p className="mt-6 font-mono text-xs text-white/60">
-          <span aria-hidden="true" className="mr-2">
-            ·
-          </span>
-          {yearsOfExperience} years building production software
-          {availability ? ` · ${availability}` : ''}
-        </p>
-
-        <p className="mt-8 font-mono text-xs text-white/60">or find me on</p>
-        <div className="mt-3">
+        <div className="mt-10">
           <SocialLinks prefersReducedMotion={prefersReducedMotion} />
         </div>
 

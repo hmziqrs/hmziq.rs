@@ -10,7 +10,17 @@ import { pageHead } from '~/lib/seo'
 export const Route = createFileRoute('/projects/$slug')({
   head: ({ params }) => {
     const project = findProjectBySlug(params.slug)
-    if (!project) return { meta: [{ title: 'Project Not Found' }] }
+    if (!project) {
+      const head = pageHead({
+        path: `/projects/${params.slug}`,
+        title: 'Not found',
+        description: 'The project you are looking for does not exist or has been moved.',
+      })
+      return {
+        ...head,
+        meta: [...head.meta, { name: 'robots', content: 'noindex' }],
+      }
+    }
     return pageHead({
       path: `/projects/${project.slug}`,
       title: `${project.title} - Projects`,
@@ -28,7 +38,7 @@ function ProjectDetailPage() {
     return (
       <PageContainer contentClassName="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="font-mono text-2xl font-bold text-white">Project not found</h1>
+          <h1 className="text-fg-primary font-mono text-2xl font-bold">Project not found</h1>
           <BackLink to="/projects" className="mt-4">
             Back to projects
           </BackLink>
@@ -41,12 +51,15 @@ function ProjectDetailPage() {
     <PageContainer contentClassName="px-6 py-20">
       <ErrorBoundary
         fallback={
-          <div role="alert" className="flex min-h-screen items-center justify-center text-white">
+          <div
+            role="alert"
+            className="text-fg-primary flex min-h-screen items-center justify-center"
+          >
             Something went wrong
           </div>
         }
       >
-        <div className="mx-auto max-w-6xl">
+        <div className="max-w-page mx-auto">
           <ProjectDetail project={project} />
         </div>
       </ErrorBoundary>

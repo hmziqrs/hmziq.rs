@@ -31,7 +31,7 @@ function ProjectsPage() {
     <ErrorBoundary
       fallback={
         <PageContainer contentClassName="flex min-h-screen items-center justify-center">
-          <div className="text-white" role="alert">
+          <div className="text-fg-primary" role="alert">
             Something went wrong
           </div>
         </PageContainer>
