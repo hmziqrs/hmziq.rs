@@ -281,3 +281,102 @@ html {
     opacity: 0.3;
   }
 }
+
+/* ────────────────────────────────────────────────────────────
+   Skills — full-bleed infinite horizontal marquee.
+   The cards reuse <Card variant="glass" interactive ...> unchanged;
+   only the container becomes a scrolling full-viewport-width band.
+
+   Two hard rules for the frosted-glass cards (backdrop-filter):
+   1. NEVER mask this subtree — masking an ancestor disables
+      backdrop-filter, so the edge fade uses overlay layers instead.
+   2. The transform/animation lives on the __track wrapper only,
+      never on the glass elements or their direct parents.
+   ──────────────────────────────────────────────────────────── */
+.skills-marquee {
+  position: relative;
+  /* Break out of the centered max-w-page containers → full viewport width. */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  overflow: hidden;
+}
+
+/* Edge fades painted ON TOP of the track. Overlays (not a CSS mask) so the
+   cards' backdrop-filter keeps sampling the star field behind them. */
+.skills-marquee::before,
+.skills-marquee::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 8vw;
+  pointer-events: none;
+}
+
+.skills-marquee::before {
+  left: 0;
+  background: linear-gradient(to right, #000, transparent);
+}
+
+.skills-marquee::after {
+  right: 0;
+  background: linear-gradient(to left, #000, transparent);
+}
+
+.skills-marquee__track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: skills-marquee-scroll 40s linear infinite;
+}
+
+/* Pause the band when the cursor is anywhere over it. */
+.skills-marquee__track:hover {
+  animation-play-state: paused;
+}
+
+.skills-marquee__group {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 1rem; /* matches the original gap-4 between cards */
+  padding-right: 1rem; /* carries the rhythm across the group seam */
+}
+
+@keyframes skills-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Reduced motion: stop the loop, drop the duplicate, and lay the cards out
+   as a static, centered, wrapping row. `animation: none` sets animation-name
+   to none, which stops the loop outright. */
+@media (prefers-reduced-motion: reduce) {
+  .skills-marquee {
+    width: auto;
+    margin-left: 0;
+    overflow: visible;
+  }
+
+  /* No fades on the contained static wrap. */
+  .skills-marquee::before,
+  .skills-marquee::after {
+    display: none;
+  }
+
+  .skills-marquee__track {
+    animation: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .skills-marquee__group[aria-hidden='true'] {
+    display: none;
+  }
+}
