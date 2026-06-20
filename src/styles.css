@@ -299,6 +299,9 @@ html {
   width: 100vw;
   margin-left: calc(50% - 50vw);
   overflow: hidden;
+  /* Vertical room so each card's top tooltip (~32px) sits inside the
+     overflow clip box instead of being cut off. */
+  padding-block: 2.5rem;
 }
 
 /* Edge fades painted ON TOP of the track. Overlays (not a CSS mask) so the

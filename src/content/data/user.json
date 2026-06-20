@@ -5,24 +5,6 @@
   "tagline": "I build CLI, mobile, web, desktop, server, and anything.",
   "yearsOfExperience": 9,
   "email": "hmziqrs@gmail.com",
-  "skills": [
-    "Flutter",
-    "Dioxus",
-    "React",
-    "React Native",
-    "Next.JS",
-    "TanStack",
-    "HonoJS",
-    "AdonisJS",
-    "Axum",
-    "GPUI",
-    "Ratatui",
-    "Docker",
-    "Cloudflare",
-    "CI/CD",
-    "Architecture",
-    "Animations"
-  ],
   "websites": {
     "portfolio": "https://hmziq.rs",
     "cv": "https://cv.hmziq.rs"
