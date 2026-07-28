@@ -82,7 +82,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy ./out --project-name=hmziqrs --branch=master
+          command: pages deploy ./out --project-name=hmziqrs
 
   # deploy-github-pages:
   #   needs: build
