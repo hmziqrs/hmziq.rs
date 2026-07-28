@@ -6,13 +6,14 @@
   "yearsOfExperience": 9,
   "email": "hmziqrs@gmail.com",
   "websites": {
+    "alternative": "https://hmziq.xyz",
     "portfolio": "https://hmziq.rs",
     "cv": "https://cv.hmziq.rs"
   },
   "social": {
-    "github": null,
+    "github": "hmziqrs",
     "linkedin": "hmziqrs",
-    "twitter": null,
-    "instagram": null
+    "twitter": "hmziqrs",
+    "instagram": "hmziqrs"
   }
 }
