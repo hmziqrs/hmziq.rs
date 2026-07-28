@@ -8,6 +8,8 @@ import { fetchBlogPosts } from './src/lib/blog-api'
 
 const VIRTUAL_ID = 'virtual:content'
 const RESOLVED_ID = '\0' + VIRTUAL_ID
+const USER_DATA_PATH = path.resolve(process.cwd(), 'src/content/data/user.json')
+const PUBLIC_OUT_DIR = path.resolve(process.cwd(), '.output/public')
 
 interface ContentOptions {
   projectsDir?: string
@@ -67,6 +69,15 @@ export function contentPlugin(options: ContentOptions = {}): Plugin {
         `export const experiences = ${JSON.stringify(experiences)};`,
         `export const blogPosts = ${blogPosts};`,
       ].join('\n')
+    },
+    generateBundle(outputOptions) {
+      if (!outputOptions.dir || path.resolve(outputOptions.dir) !== PUBLIC_OUT_DIR) return
+
+      this.emitFile({
+        type: 'asset',
+        fileName: 'me.json',
+        source: fs.readFileSync(USER_DATA_PATH),
+      })
     },
     // Rebuild when content files change
     handleHotUpdate({ file, server }) {
