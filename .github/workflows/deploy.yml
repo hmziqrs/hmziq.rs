@@ -12,9 +12,6 @@ concurrency:
   group: 'deploy'
   cancel-in-progress: false
 
-env:
-  ENV_VARS: ${{ vars.ENV_VARS }}
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -54,9 +51,6 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
-
-      - name: set .env
-        run: echo $ENV_VARS | base64 -d > .env
 
       - name: Build
         run: bun run build
