@@ -1,47 +1,21 @@
-import { Canvas } from '@react-three/fiber'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import * as THREE from 'three'
+import { useEffect, useRef, useState } from 'react'
 
 import { useWASM } from '~/contexts/WASMContext'
 import { useReducedMotion } from '~/hooks/useReducedMotion'
+import type { WASMModule } from '~/lib/wasm/core'
 
-import { CanvasContextEvents } from '../CanvasContextEvents'
-import { VERTEX_SHADER, FRAGMENT_SHADER } from './shaders'
 import { useStarfield } from './useStarfield'
 
-const STARFIELD_CAMERA = { position: [0, 0, 50] as [number, number, number], fov: 75 } as const
-
-function markStarfieldCanvas(canvas: HTMLCanvasElement | null) {
-  if (canvas) canvas.dataset.webglCanvas = 'starfield'
-}
-
-interface StarsProps {
+interface StarfieldCanvasProps {
+  wasmModule: WASMModule | null
   onFirstFrame?: () => void
+  onContextLost?: () => void
 }
 
-function Stars({ onFirstFrame }: StarsProps) {
-  const { wasmModule } = useWASM()
-  const starMeshRef = useRef<THREE.Points>(null)
+function StarfieldCanvas({ wasmModule, onFirstFrame, onContextLost }: StarfieldCanvasProps) {
+  const canvasRef = useStarfield({ wasmModule, onFirstFrame, onContextLost })
 
-  // Stable uniforms object — its identity must not change or R3F rebuilds the material.
-  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uBoot: { value: 0 } }), [])
-
-  useStarfield({ wasmModule, starMeshRef, onFirstFrame })
-
-  return (
-    // eslint-disable-next-line react-hooks-js/refs -- ref passed to Three.js element, not read during render
-    <points ref={starMeshRef}>
-      <bufferGeometry />
-      <shaderMaterial
-        uniforms={uniforms}
-        vertexShader={VERTEX_SHADER}
-        fragmentShader={FRAGMENT_SHADER}
-        transparent
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-      />
-    </points>
-  )
+  return <canvas ref={canvasRef} data-webgl-canvas="starfield" className="block h-full w-full" />
 }
 
 interface StarFieldCanvasProps {
@@ -50,6 +24,7 @@ interface StarFieldCanvasProps {
 }
 
 function StarFieldCanvas({ onReady, onContextLost }: StarFieldCanvasProps) {
+  const { wasmModule } = useWASM()
   const prefersReducedMotion = useReducedMotion()
   const [canvasVersion, setCanvasVersion] = useState(0)
   const [visible, setVisible] = useState(false)
@@ -90,16 +65,12 @@ function StarFieldCanvas({ onReady, onContextLost }: StarFieldCanvasProps) {
       }}
       aria-hidden="true"
     >
-      <Canvas
+      <StarfieldCanvas
         key={canvasVersion}
-        ref={markStarfieldCanvas}
-        camera={STARFIELD_CAMERA}
-        frameloop={prefersReducedMotion ? 'demand' : 'always'}
-        style={{ background: '#000000' }}
-      >
-        <CanvasContextEvents onContextLost={recoverContext} />
-        <Stars onFirstFrame={handleFirstFrame} />
-      </Canvas>
+        wasmModule={wasmModule}
+        onFirstFrame={handleFirstFrame}
+        onContextLost={recoverContext}
+      />
     </div>
   )
 }

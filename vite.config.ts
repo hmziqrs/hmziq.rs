@@ -2,6 +2,7 @@ import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
 import { devtools } from '@tanstack/devtools-vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import { redact } from '@tanstack/redact/vite'
 import viteReact, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { nitro } from 'nitro/vite'
 import { defineConfig } from 'vite-plus'
@@ -89,6 +90,7 @@ export default defineConfig(({ command, isPreview }) => ({
   resolve: { tsconfigPaths: true },
   envPrefix: ['NEXT_PUBLIC_'],
   server: { port: 3000 },
+  ssr: { noExternal: true },
   plugins: [
     contentPlugin(),
     devtools(),
@@ -108,6 +110,7 @@ export default defineConfig(({ command, isPreview }) => ({
     viteReact(),
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
+    redact(),
   ],
   environments: {
     client: { build: { outDir: '.output/public' } },

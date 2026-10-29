@@ -1,10 +1,11 @@
-import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 import { useReducedMotion } from '~/hooks/useReducedMotion'
 import type { WASMModule } from '~/lib/wasm/core'
 import { StarFieldSharedMemory } from '~/lib/wasm/starfield'
+
+import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders'
 
 // Stars are generated in a shell of max radius 150 (see initialize_star_memory_pool).
 // The field only rotates about the origin, so a fixed bounding sphere is exact and
@@ -55,180 +56,248 @@ function getStarCount(width: number, height: number) {
   return Math.ceil(rawCount / 8) * 8
 }
 
+function initialStarCount() {
+  if (typeof window === 'undefined') return 0
+  return getStarCount(window.innerWidth, window.innerHeight)
+}
+
 interface UseStarfieldOptions {
   wasmModule: WASMModule | null
-  starMeshRef: React.RefObject<THREE.Points | null>
   onFirstFrame?: () => void
+  onContextLost?: () => void
 }
 
 /**
- * Drives the whole star field: density (responsive), geometry lifecycle over the
- * WASM-generated buffers, DOM interaction (movement/click boosts), and the
- * per-frame loop (radial-expand boot + rotation, with twinkle/sparkle in the shader).
+ * Drives the whole star field with plain Three.js: renderer lifecycle, responsive
+ * density, geometry binding over the WASM-generated buffers, DOM interaction
+ * (movement/click boosts), and the per-frame loop (radial-expand boot + rotation,
+ * with twinkle/sparkle in the shader).
  */
-export function useStarfield({ wasmModule, starMeshRef, onFirstFrame }: UseStarfieldOptions) {
+export function useStarfield({ wasmModule, onFirstFrame, onContextLost }: UseStarfieldOptions) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const prefersReducedMotion = useReducedMotion()
   const reducedMotionRef = useRef(prefersReducedMotion)
+
   useEffect(() => {
     reducedMotionRef.current = prefersReducedMotion
-  })
+  }, [prefersReducedMotion])
 
-  const invalidate = useThree((state) => state.invalidate)
-
-  const [starCount, setStarCount] = useState(() =>
-    getStarCount(window.innerWidth, window.innerHeight)
-  )
+  const [starCount, setStarCount] = useState(initialStarCount)
 
   const sharedMemoryRef = useRef<StarFieldSharedMemory | null>(null)
+  const geometryRef = useRef<THREE.BufferGeometry | null>(null)
+  const needsRenderRef = useRef(true)
 
-  // Interaction state.
-  const isMovingRef = useRef(false)
-  const shouldBoostFromClick = useRef(false)
-  const scrollProgressRef = useRef(0)
+  const onFirstFrameRef = useRef(onFirstFrame)
+  const onContextLostRef = useRef(onContextLost)
 
-  // Frame state.
-  const clickTimeRef = useRef(-Infinity)
-  const speedMultiplierRef = useRef(1)
-  const rotationXRef = useRef(0)
-  const rotationYRef = useRef(0)
-  const lastFrameTimeRef = useRef(0)
-  const bootStartRef = useRef(-1)
-  const firstFrameFiredRef = useRef(false)
+  useEffect(() => {
+    onFirstFrameRef.current = onFirstFrame
+    onContextLostRef.current = onContextLost
+  }, [onFirstFrame, onContextLost])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
+    renderer.setClearColor(0x000000, 1)
+
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000)
+    camera.position.z = CAMERA_Z_BASE
+
+    const geometry = new THREE.BufferGeometry()
+    const uniforms = { uTime: { value: 0 }, uBoot: { value: 0 } }
+    const material = new THREE.ShaderMaterial({
+      uniforms,
+      vertexShader: VERTEX_SHADER,
+      fragmentShader: FRAGMENT_SHADER,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    })
+    const points = new THREE.Points(geometry, material)
+    scene.add(points)
+
+    geometryRef.current = geometry
+
+    const resizeRenderer = () => {
+      const width = canvas.clientWidth || window.innerWidth
+      const height = canvas.clientHeight || window.innerHeight
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+      renderer.setSize(width, height, false)
+      camera.aspect = width / Math.max(height, 1)
+      camera.updateProjectionMatrix()
+      needsRenderRef.current = true
+    }
+
+    resizeRenderer()
+
+    let resizeTimeout: ReturnType<typeof setTimeout> | null = null
+    const handleResize = () => {
+      resizeRenderer()
+      if (resizeTimeout) clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(() => {
+        setStarCount(getStarCount(window.innerWidth, window.innerHeight))
+      }, 150)
+    }
+    window.addEventListener('resize', handleResize)
+
+    const handleContextLost = (event: Event) => {
+      event.preventDefault()
+      onContextLostRef.current?.()
+    }
+    canvas.addEventListener('webglcontextlost', handleContextLost, false)
+
+    // Interaction state.
+    let isMoving = false
+    let moveTimeout: ReturnType<typeof setTimeout> | null = null
+    let shouldBoostFromClick = false
+    let scrollProgress = 0
+
+    const markMoving = () => {
+      isMoving = true
+      if (moveTimeout) clearTimeout(moveTimeout)
+      moveTimeout = setTimeout(() => {
+        isMoving = false
+      }, 100)
+    }
+
+    const handleClick = () => {
+      shouldBoostFromClick = true
+    }
+
+    const handleScroll = () => {
+      markMoving()
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+      scrollProgress = maxScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maxScroll)) : 0
+    }
+
+    window.addEventListener('mousemove', markMoving)
+    window.addEventListener('click', handleClick)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    // Frame state.
+    let clickTime = -Infinity
+    let speedMultiplier = 1
+    let rotationX = 0
+    let rotationY = 0
+    let bootStart = -1
+    let firstFrame = false
+    let raf = 0
+    const start = performance.now()
+    let lastFrame = start
+
+    const render = () => {
+      renderer.render(scene, camera)
+    }
+
+    const tick = (now: number) => {
+      raf = requestAnimationFrame(tick)
+      const time = (now - start) / 1000
+      const deltaTime = Math.min((now - lastFrame) / 1000, MAX_DELTA)
+      lastFrame = now
+
+      const sharedMemory = sharedMemoryRef.current
+      if (!sharedMemory) return
+      if (sharedMemory.refreshViewsIfNeeded()) {
+        bindStarfieldGeometry(geometry, sharedMemory)
+        needsRenderRef.current = true
+      }
+
+      const reducedMotion = reducedMotionRef.current
+
+      if (reducedMotion) {
+        uniforms.uBoot.value = 1
+        uniforms.uTime.value = 0
+        if (needsRenderRef.current) {
+          render()
+          needsRenderRef.current = false
+        }
+        if (!firstFrame) {
+          firstFrame = true
+          onFirstFrameRef.current?.()
+        }
+        return
+      }
+
+      // Radial-expand boot.
+      if (bootStart < 0) bootStart = time
+      uniforms.uBoot.value = easeOutCubic(Math.min(1, (time - bootStart) / BOOT_DURATION))
+      uniforms.uTime.value = time
+
+      // Click boost records the most recent click time.
+      if (shouldBoostFromClick) {
+        clickTime = time
+        shouldBoostFromClick = false
+      }
+
+      // Speed multiplier: movement (8x) and decaying click (+8x) boosts, clamped + eased.
+      const movementBoost = isMoving ? 8 : 1
+      const timeSinceClick = time - clickTime
+      const clickBoost = timeSinceClick < 0.5 ? 1 + 8 * (1 - timeSinceClick / 0.5) : 1
+      const target = Math.min(movementBoost * clickBoost, 15)
+      speedMultiplier += (target - speedMultiplier) * 0.2
+
+      rotationX += BASE_ROTATION_X * speedMultiplier * deltaTime
+      rotationY += BASE_ROTATION_Y * speedMultiplier * deltaTime
+      points.rotation.x = rotationX
+      points.rotation.y = rotationY
+
+      // Scroll-driven zoom: ease the camera toward the scroll-mapped distance.
+      const targetZ = CAMERA_Z_BASE + (CAMERA_Z_ZOOMED - CAMERA_Z_BASE) * scrollProgress
+      camera.position.z += (targetZ - camera.position.z) * CAMERA_ZOOM_LERP
+
+      render()
+
+      if (!firstFrame) {
+        firstFrame = true
+        onFirstFrameRef.current?.()
+      }
+    }
+
+    raf = requestAnimationFrame(tick)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('mousemove', markMoving)
+      window.removeEventListener('click', handleClick)
+      window.removeEventListener('scroll', handleScroll)
+      canvas.removeEventListener('webglcontextlost', handleContextLost)
+      if (resizeTimeout) clearTimeout(resizeTimeout)
+      if (moveTimeout) clearTimeout(moveTimeout)
+      geometry.dispose()
+      material.dispose()
+      renderer.dispose()
+      geometryRef.current = null
+    }
+  }, [])
 
   // Geometry lifecycle: (re)generate the WASM pool and bind it when density changes.
   useEffect(() => {
+    const geometry = geometryRef.current
+    if (!geometry) return
+
     sharedMemoryRef.current?.dispose()
     sharedMemoryRef.current = null
 
-    const geometry = starMeshRef.current?.geometry
-    if (geometry) {
-      for (const key of Object.keys(geometry.attributes)) {
-        geometry.deleteAttribute(key)
-      }
+    for (const key of Object.keys(geometry.attributes)) {
+      geometry.deleteAttribute(key)
     }
 
     if (wasmModule && starCount > 0) {
       sharedMemoryRef.current = new StarFieldSharedMemory(wasmModule, starCount)
-      if (geometry) bindStarfieldGeometry(geometry, sharedMemoryRef.current)
-      // Request a render so the field draws once bound — required under
-      // frameloop="demand" (reduced motion), harmless under "always".
-      invalidate()
+      bindStarfieldGeometry(geometry, sharedMemoryRef.current)
+      needsRenderRef.current = true
     }
 
     return () => {
       sharedMemoryRef.current?.dispose()
       sharedMemoryRef.current = null
     }
-  }, [wasmModule, starCount, starMeshRef, invalidate])
+  }, [wasmModule, starCount])
 
-  // DOM interaction: responsive density + movement/click speed boosts.
-  useEffect(() => {
-    let resizeTimeout: ReturnType<typeof setTimeout> | null = null
-    let moveTimeout: ReturnType<typeof setTimeout> | null = null
-
-    const handleResize = () => {
-      if (resizeTimeout) clearTimeout(resizeTimeout)
-      resizeTimeout = setTimeout(() => {
-        setStarCount(getStarCount(window.innerWidth, window.innerHeight))
-      }, 150)
-    }
-
-    const markMoving = () => {
-      isMovingRef.current = true
-      if (moveTimeout) clearTimeout(moveTimeout)
-      moveTimeout = setTimeout(() => {
-        isMovingRef.current = false
-      }, 100)
-    }
-
-    // Decorative easter-egg interaction — pointer-only by design (no keyboard
-    // equivalent needed for non-essential visual feedback).
-    const handleClick = () => {
-      shouldBoostFromClick.current = true
-    }
-
-    const handleScroll = () => {
-      markMoving()
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight
-      scrollProgressRef.current =
-        maxScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maxScroll)) : 0
-    }
-
-    window.addEventListener('resize', handleResize)
-    window.addEventListener('mousemove', markMoving)
-    window.addEventListener('click', handleClick)
-    window.addEventListener('scroll', handleScroll, { passive: true })
-
-    return () => {
-      window.removeEventListener('resize', handleResize)
-      window.removeEventListener('mousemove', markMoving)
-      window.removeEventListener('click', handleClick)
-      window.removeEventListener('scroll', handleScroll)
-      if (resizeTimeout) clearTimeout(resizeTimeout)
-      if (moveTimeout) clearTimeout(moveTimeout)
-    }
-  }, [])
-
-  useFrame((state) => {
-    const mesh = starMeshRef.current
-    const sharedMemory = sharedMemoryRef.current
-    if (!mesh || !sharedMemory) return
-
-    // Re-bind only if WASM memory was detached/grown (e.g. scatter-text allocations).
-    if (mesh.geometry && sharedMemory.refreshViewsIfNeeded()) {
-      bindStarfieldGeometry(mesh.geometry, sharedMemory)
-    }
-
-    const uniforms = (mesh.material as THREE.ShaderMaterial).uniforms
-    if (!uniforms?.uBoot || !uniforms?.uTime) return
-
-    const time = state.clock.elapsedTime
-    const rawDelta = lastFrameTimeRef.current === 0 ? 0.016 : time - lastFrameTimeRef.current
-    lastFrameTimeRef.current = time
-    const deltaTime = Math.min(rawDelta, MAX_DELTA)
-
-    const reducedMotion = reducedMotionRef.current
-
-    // Radial-expand boot. Reduced motion jumps straight to the settled field.
-    if (reducedMotion) {
-      uniforms.uBoot.value = 1
-    } else {
-      if (bootStartRef.current < 0) bootStartRef.current = time
-      uniforms.uBoot.value = easeOutCubic(
-        Math.min(1, (time - bootStartRef.current) / BOOT_DURATION)
-      )
-    }
-
-    // Twinkle/sparkle advance with time; frozen for reduced motion.
-    uniforms.uTime.value = reducedMotion ? 0 : time
-
-    if (!firstFrameFiredRef.current) {
-      firstFrameFiredRef.current = true
-      onFirstFrame?.()
-    }
-
-    if (reducedMotion) return
-
-    // Click boost records the most recent click time.
-    if (shouldBoostFromClick.current) {
-      clickTimeRef.current = time
-      shouldBoostFromClick.current = false
-    }
-
-    // Speed multiplier: movement (8x) and decaying click (+8x) boosts, clamped + eased.
-    const movementBoost = isMovingRef.current ? 8 : 1
-    const timeSinceClick = time - clickTimeRef.current
-    const clickBoost = timeSinceClick < 0.5 ? 1 + 8 * (1 - timeSinceClick / 0.5) : 1
-    const target = Math.min(movementBoost * clickBoost, 15)
-    speedMultiplierRef.current += (target - speedMultiplierRef.current) * 0.2
-
-    rotationXRef.current += BASE_ROTATION_X * speedMultiplierRef.current * deltaTime
-    rotationYRef.current += BASE_ROTATION_Y * speedMultiplierRef.current * deltaTime
-    mesh.rotation.x = rotationXRef.current
-    mesh.rotation.y = rotationYRef.current
-
-    // Scroll-driven zoom: ease the camera toward the scroll-mapped distance.
-    const targetZ = CAMERA_Z_BASE + (CAMERA_Z_ZOOMED - CAMERA_Z_BASE) * scrollProgressRef.current
-    state.camera.position.z += (targetZ - state.camera.position.z) * CAMERA_ZOOM_LERP
-  })
+  return canvasRef
 }
